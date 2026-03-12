@@ -1,0 +1,247 @@
+/* =========================================================
+   1. CẤU HÌNH CHUNG
+   ========================================================= */
+@import
+	url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap')
+	;
+
+:root {
+	--primary-color: #00ffcc; /* Xanh ngọc sáng neon để nổi trên nền tối */
+	--text-light: #ffffff;
+	--bg-gradient-start: #00bfa5;
+	--bg-gradient-end: #005f52; /* Xanh đậm hơn để tạo độ sâu */
+}
+
+body {
+	font-family: 'Montserrat', sans-serif;
+	color: var(--text-light);
+	margin: 0;
+	/* NỀN: Gradient từ Xanh Ngọc -> Xanh Đậm (Giúp chữ trắng nổi bật) */
+	background: linear-gradient(135deg, var(--bg-gradient-start) 0%,
+		var(--bg-gradient-end) 100%);
+	min-height: 100vh;
+	background-attachment: fixed;
+	background-repeat: no-repeat;
+}
+
+/* =========================================================
+   2. HEADER & NAVBAR
+   ========================================================= */
+.navbar {
+	background-color: #ffffff !important;
+	padding: 12px 0 !important;
+	position: sticky;
+	top: 0;
+	z-index: 1000;
+	box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+}
+
+.navbar .nav-link, .navbar .navbar-brand {
+	color: #333 !important;
+}
+
+/* =========================================================
+   3. BANNER ĐẦU TRANG
+   ========================================================= */
+.page-header {
+	background: linear-gradient(rgba(0, 0, 0, 0.4), rgba(0, 0, 0, 0.4)),
+		url('/spa_pic/webpic26.jpg') center/cover no-repeat;
+	height: 400px;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	text-align: center;
+	color: #fff;
+	margin-bottom: 60px;
+	box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+}
+
+.page-header h1 {
+	font-size: 3.5rem;
+	font-weight: 800;
+	text-transform: uppercase;
+	margin-bottom: 10px;
+	text-shadow: 2px 2px 10px rgba(0, 0, 0, 0.5); /* Bóng chữ đậm */
+}
+
+.page-header p {
+	font-size: 1.2rem;
+	opacity: 0.95;
+	text-shadow: 1px 1px 5px rgba(0, 0, 0, 0.5);
+}
+
+/* =========================================================
+   4. NỘI DUNG CHI TIẾT
+   ========================================================= */
+.detail-content h2 {
+	color: #fff; /* Tiêu đề Trắng */
+	font-weight: 800;
+	margin-bottom: 20px;
+	text-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+}
+
+.detail-content p {
+	line-height: 1.8;
+	color: #f0f0f0; /* Chữ trắng kem */
+	font-weight: 500;
+	margin-bottom: 20px;
+}
+
+/* Danh sách dịch vụ */
+.service-list-check li {
+	margin-bottom: 12px;
+	display: flex;
+	align-items: center;
+	gap: 15px;
+	color: #fff;
+	font-size: 1.1rem;
+	font-weight: 500;
+}
+
+.service-list-check i {
+	color: var(--primary-color); /* Icon màu xanh neon */
+	font-size: 1.4rem;
+	text-shadow: 0 0 10px rgba(0, 255, 204, 0.6);
+	/* Hiệu ứng phát sáng nhẹ */
+}
+
+/* =========================================================
+   5. HỘP BẢNG GIÁ (GLASSMORPHISM)
+   ========================================================= */
+.price-box {
+	/* Hiệu ứng kính mờ tối màu sang trọng */
+	background: rgba(0, 0, 0, 0.6);
+	backdrop-filter: blur(10px);
+	border: 1px solid rgba(255, 255, 255, 0.2);
+	border-radius: 20px;
+	padding: 35px;
+	color: #fff;
+	box-shadow: 0 20px 50px rgba(0, 0, 0, 0.3);
+}
+
+.price-box h3 {
+	color: var(--primary-color);
+	text-align: center;
+	margin-bottom: 30px;
+	font-weight: 800;
+	letter-spacing: 1px;
+}
+
+.price-row {
+	display: flex;
+	justify-content: space-between;
+	margin-bottom: 18px;
+	border-bottom: 1px dashed rgba(255, 255, 255, 0.3);
+	padding-bottom: 12px;
+	font-size: 1.05rem;
+}
+
+.price-row strong {
+	color: #ff9f43; /* Màu cam vàng nổi bật trên nền tối */
+	font-weight: 700;
+}
+
+/* Nút Đặt Lịch trong bảng giá */
+.btn-booking-spa {
+	background-color: var(--primary-color);
+	color: #004d40; /* Chữ màu xanh đậm */
+	width: 100%;
+	padding: 15px;
+	border-radius: 50px;
+	font-weight: 800;
+	text-align: center;
+	display: block;
+	text-decoration: none;
+	margin-top: 25px;
+	transition: 0.3s;
+	text-transform: uppercase;
+	box-shadow: 0 5px 15px rgba(0, 255, 204, 0.4);
+}
+
+.btn-booking-spa:hover {
+	background-color: #fff;
+	color: var(--primary-color);
+	transform: translateY(-3px);
+}
+
+/* =========================================================
+   6. GALLERY GRID (LƯỚI ẢNH)
+   ========================================================= */
+.gallery-section {
+	padding: 80px 0;
+}
+
+.gallery-title {
+	text-align: center;
+	margin-bottom: 50px;
+	color: #fff;
+	font-weight: 800;
+	font-size: 2.5rem;
+	text-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+}
+
+.gallery-grid {
+	display: grid;
+	grid-template-columns: repeat(4, 1fr);
+	gap: 20px;
+	grid-auto-rows: 220px;
+}
+
+.gallery-item {
+	position: relative;
+	border-radius: 20px;
+	overflow: hidden;
+	cursor: pointer;
+	box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+	border: 2px solid rgba(255, 255, 255, 0.1);
+}
+
+.gallery-item img {
+	width: 100%;
+	height: 100%;
+	object-fit: cover;
+	transition: transform 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+
+.gallery-item:hover img {
+	transform: scale(1.15);
+}
+
+.btn-main-booking {
+	background-color: var(--primary-color);
+	color: #004d40;
+	width: 60%;
+	padding: 15px;
+	border-radius: 50px;
+	font-weight: 800;
+	text-align: center;
+	display: block;
+	text-decoration: none;
+	transition: 0.3s;
+	text-transform: uppercase;
+	box-shadow: 0 5px 15px rgba(0, 255, 204, 0.4);
+}
+
+.btn-main-booking:hover {
+	background-color: #fff;
+	transform: scale(1.05);
+}
+
+.gallery-item:hover .overlay-btn {
+	bottom: 25px;
+	opacity: 1;
+}
+
+/* Kích thước đặc biệt */
+.gallery-item.tall {
+	grid-row: span 2;
+}
+
+.gallery-item.wide {
+	grid-column: span 2;
+}
+
+.gallery-item.big {
+	grid-column: span 2;
+	grid-row: span 2;
+}

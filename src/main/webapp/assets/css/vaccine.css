@@ -1,0 +1,144 @@
+@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap');
+
+:root {
+    --primary-color: #00bfa5;
+    --secondary-color: #26a69a;
+    --dark-green: #004d40;
+    --bg-light: #e0f2f1;
+}
+
+body {
+    font-family: 'Montserrat', sans-serif;
+    color: #333;
+}
+
+/* --- HEADER --- */
+.vaccine-header {
+    background: linear-gradient(rgba(0, 77, 64, 0.85), rgba(0, 77, 64, 0.85)), url('../vaccine_pic/vaccine_banner.jpg');
+    background-size: cover;
+    background-position: center;
+    padding: 100px 0;
+    text-align: center;
+    color: #fff;
+}
+.vaccine-header h1 { font-weight: 800; font-size: 2.8rem; margin: 15px 0; }
+.sub-heading { background: rgba(255,255,255,0.2); padding: 5px 15px; border-radius: 20px; text-transform: uppercase; font-size: 0.9rem; letter-spacing: 1px; }
+
+/* --- WHY SECTION --- */
+.section-title { font-weight: 700; color: var(--dark-green); margin-bottom: 10px; }
+
+.why-card {
+    background: #fff;
+    border-radius: 15px;
+    overflow: hidden;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+    height: 100%;
+    transition: 0.3s;
+    text-align: center;
+    padding-bottom: 20px;
+}
+.why-card:hover { transform: translateY(-5px); }
+.why-card img { width: 100%; height: 200px; object-fit: cover; margin-bottom: 20px; }
+.why-card h4 { font-weight: 700; color: var(--secondary-color); margin-bottom: 10px; }
+.why-card p { padding: 0 20px; font-size: 0.9rem; color: #666; }
+
+/* --- PACKAGES (Nền xanh) --- */
+.packages-section {
+    background-color: var(--secondary-color);
+    padding: 80px 0;
+}
+.price-card {
+    background: #fff;
+    border-radius: 20px;
+    padding: 30px;
+    height: 100%;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+}
+.price-header {
+    text-align: center;
+    margin-bottom: 25px;
+    padding-bottom: 15px;
+    border-bottom: 2px solid #eee;
+}
+.price-header i { font-size: 50px; margin-bottom: 10px; display: block; }
+.price-header h3 { font-weight: 700; margin: 0; }
+
+.dog-header i { color: #f39c12; } /* Màu cam cho chó */
+.cat-header i { color: #9b59b6; } /* Màu tím cho mèo */
+
+.price-list { list-style: none; padding: 0; }
+.price-list li {
+    margin-bottom: 15px;
+    padding-left: 25px;
+    position: relative;
+    font-size: 1rem;
+}
+.price-list li::before {
+    content: "\2713"; /* Dấu tích */
+    position: absolute;
+    left: 0;
+    color: var(--secondary-color);
+    font-weight: bold;
+}
+
+.btn-book-dog, .btn-book-cat {
+    display: inline-block;
+    padding: 10px 30px;
+    border-radius: 50px;
+    text-decoration: none;
+    font-weight: 700;
+    transition: 0.3s;
+}
+.btn-book-dog { background: #f39c12; color: #fff; }
+.btn-book-dog:hover { background: #d35400; color: #fff; }
+
+.btn-book-cat { background: #9b59b6; color: #fff; }
+.btn-book-cat:hover { background: #8e44ad; color: #fff; }
+
+/* --- TIMELINE SCHEDULE --- */
+.schedule-head { font-weight: 700; color: var(--dark-green); margin-bottom: 25px; border-left: 5px solid var(--primary-color); padding-left: 15px; }
+
+.timeline-box {
+    border-left: 3px solid #ddd;
+    padding-left: 30px;
+    margin-left: 10px;
+}
+.time-item {
+    position: relative;
+    margin-bottom: 30px;
+}
+.time-item::before {
+    content: "";
+    width: 16px;
+    height: 16px;
+    background: var(--primary-color);
+    border-radius: 50%;
+    position: absolute;
+    left: -39px;
+    top: 5px;
+    border: 3px solid #fff;
+    box-shadow: 0 0 5px rgba(0,0,0,0.2);
+}
+.time-date {
+    display: inline-block;
+    background: var(--bg-light);
+    color: var(--dark-green);
+    font-weight: 700;
+    padding: 3px 10px;
+    border-radius: 5px;
+    font-size: 0.85rem;
+    margin-bottom: 5px;
+}
+.time-item p { margin: 0; font-weight: 500; }
+
+/* --- NOTE SECTION --- */
+.note-section { padding-bottom: 60px; }
+.alert-box {
+    background: #fff3cd;
+    border: 1px solid #ffeeba;
+    color: #856404;
+    padding: 30px;
+    border-radius: 15px;
+}
+.alert-box h3 { font-size: 1.5rem; font-weight: 700; margin-bottom: 20px; }
+.alert-box ul li { margin-bottom: 10px; }

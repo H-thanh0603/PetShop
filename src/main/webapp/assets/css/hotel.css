@@ -1,0 +1,156 @@
+@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap');
+
+/* =========================================================
+   1. CẤU HÌNH VIDEO NỀN (BACKGROUND VIDEO)
+   ========================================================= */
+.back-video {
+    position: fixed;
+    right: 0;
+    bottom: 0;
+    min-width: 100%;
+    min-height: 100%;
+    z-index: -2; /* Đẩy video xuống lớp sâu nhất */
+    object-fit: cover;
+}
+
+/* Lớp phủ màu đen mờ để chữ dễ đọc hơn */
+.video-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5); /* Đen mờ 50% */
+    z-index: -1; /* Nằm trên video nhưng dưới nội dung */
+}
+
+/* =========================================================
+   2. NỘI DUNG CHÍNH (CONTENT WRAPPER)
+   ========================================================= */
+.content-wrapper {
+    position: relative;
+    z-index: 1; /* Đảm bảo nội dung nổi lên trên video */
+    padding-bottom: 50px;
+}
+
+/* Header riêng cho trang này (Trong suốt, không ảnh nền) */
+.page-header-transparent {
+    text-align: center;
+    padding: 100px 0 50px; /* Cách top nhiều hơn để tránh menu */
+    color: #fff;
+}
+
+.page-header-transparent h1 {
+    font-size: 3.5rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    text-shadow: 2px 2px 10px rgba(0,0,0,0.5);
+    margin-bottom: 15px;
+}
+
+.page-header-transparent p {
+    font-size: 1.3rem;
+    font-weight: 500;
+    text-shadow: 1px 1px 5px rgba(0,0,0,0.5);
+}
+
+/* =========================================================
+   3. PHẦN GIỚI THIỆU (BÊN TRÁI)
+   ========================================================= */
+.text-white-section {
+    color: #fff;
+}
+
+.text-white-section h2 {
+    font-weight: 700;
+    margin-bottom: 20px;
+    text-shadow: 1px 1px 5px rgba(0,0,0,0.5);
+    color: #00ffcc; /* Tiêu đề màu xanh neon cho nổi */
+}
+
+.text-white-section p {
+    font-size: 1.1rem;
+    line-height: 1.7;
+    margin-bottom: 20px;
+    text-shadow: 1px 1px 3px rgba(0,0,0,0.8);
+}
+
+/* Danh sách tiện ích */
+.check-list {
+    margin-top: 20px;
+}
+
+.check-list li {
+    font-size: 1.1rem;
+    margin-bottom: 12px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    text-shadow: 1px 1px 3px rgba(0,0,0,0.8);
+}
+
+.check-list i {
+    color: #00ffcc; /* Icon tích xanh */
+    font-size: 1.5rem;
+}
+
+/* =========================================================
+   4. BẢNG GIÁ DỊCH VỤ (BÊN PHẢI)
+   ========================================================= */
+.price-box {
+    background: rgba(255, 255, 255, 0.95); /* Nền trắng đục 95% */
+    padding: 35px;
+    border-radius: 20px;
+    box-shadow: 0 15px 40px rgba(0,0,0,0.4);
+    color: #333; /* Chữ màu đen để dễ đọc trên nền trắng */
+}
+
+.text-primary-custom {
+    color: #008f7a; /* Màu xanh đậm thương hiệu */
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.price-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 15px;
+    border-bottom: 1px dashed #ccc;
+    padding-bottom: 12px;
+    font-size: 1.05rem;
+    font-weight: 500;
+}
+
+/* Giá tiền */
+.price-tag {
+    color: #d63031; /* Màu đỏ nổi bật */
+    font-weight: 700;
+    font-size: 1.1rem;
+}
+
+/* Nút Đặt Phòng */
+.btn-booking-now {
+    display: block;
+    width: 100%;
+    padding: 15px;
+    background-color: #00bfa5;
+    color: #fff;
+    text-align: center;
+    border-radius: 50px;
+    font-weight: 700;
+    font-size: 1.1rem;
+    text-decoration: none;
+    text-transform: uppercase;
+    margin-top: 25px;
+    transition: all 0.3s ease;
+    box-shadow: 0 5px 15px rgba(0, 191, 165, 0.4);
+}
+
+.btn-booking-now:hover {
+    background-color: #008f7a;
+    color: #fff;
+    transform: translateY(-3px);
+    box-shadow: 0 8px 20px rgba(0, 191, 165, 0.6);
+}

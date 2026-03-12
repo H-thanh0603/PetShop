@@ -1,0 +1,361 @@
+/**
+ * ╔══════════════════════════════════════════════════════════════════════════════╗
+ * ║              CANCEL APPOINTMENT - CSS STYLES & COLOR GUIDELINES              ║
+ * ╠══════════════════════════════════════════════════════════════════════════════╣
+ * ║  Color Palette:                                                              ║
+ * ║  • Danger (Hủy):     #dc3545 (Primary), #c82333 (Hover), #f8d7da (Light BG) ║
+ * ║  • Inactive (Đã hủy): #6c757d (Badge), #f8f9fa (Card BG), #adb5bd (Text)    ║
+ * ║  • Success (Toast):   #28a745 (Primary), #d4edda (Light BG)                 ║
+ * ║  • Warning (Undo):    #ffc107 (Countdown), #fff3cd (Light BG)               ║
+ * ║  • Info (Khôi phục):  #17a2b8 (Primary), #d1ecf1 (Light BG)                 ║
+ * ╚══════════════════════════════════════════════════════════════════════════════╝
+ */
+
+/* ═══════════════════════════════════════════════════════════════════════════════
+   1. MODAL STYLES
+═══════════════════════════════════════════════════════════════════════════════ */
+
+/* Cancel Icon Wrapper */
+.cancel-icon-wrapper {
+    width: 48px;
+    height: 48px;
+    background: linear-gradient(135deg, #f8d7da 0%, #f5c6cb 100%);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.cancel-icon-wrapper i {
+    font-size: 1.5rem;
+    color: #dc3545;
+}
+
+/* Appointment Summary Box */
+.appointment-summary {
+    background-color: #fff3cd;
+    border-left: 4px solid #ffc107;
+}
+
+.appointment-summary p {
+    color: #856404;
+    font-size: 0.95rem;
+}
+
+/* Modal Buttons */
+#confirmCancelBtn {
+    min-width: 150px;
+    transition: all 0.3s ease;
+}
+
+#confirmCancelBtn:disabled {
+    opacity: 0.7;
+    cursor: not-allowed;
+}
+
+#confirmCancelBtn .btn-loading {
+    display: none;
+}
+
+#confirmCancelBtn.loading .btn-text {
+    display: none;
+}
+
+#confirmCancelBtn.loading .btn-loading {
+    display: inline-flex !important;
+    align-items: center;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════════
+   2. APPOINTMENT CARD STATES
+═══════════════════════════════════════════════════════════════════════════════ */
+
+/* Default State */
+.appointment-card {
+    position: relative;
+    transition: all 0.3s ease;
+    border-left: 4px solid #0b1a33;
+}
+
+.appointment-card:hover {
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    transform: translateY(-2px);
+}
+
+/* Border Colors by Status */
+.appointment-card.border-pending { border-left-color: #ffc107; }
+.appointment-card.border-confirmed { border-left-color: #28a745; }
+.appointment-card.border-completed { border-left-color: #6f42c1; }
+.appointment-card.border-rejected { border-left-color: #dc3545; }
+.appointment-card.border-cancelled { border-left-color: #6c757d; }
+
+/* Loading State - Chỉ disable thẻ đang xử lý */
+.appointment-card.card-loading {
+    pointer-events: none;
+    opacity: 0.6;
+    position: relative;
+}
+
+.appointment-card.card-loading::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(255, 255, 255, 0.7);
+    z-index: 10;
+    border-radius: inherit;
+}
+
+.appointment-card.card-loading::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 30px;
+    height: 30px;
+    margin: -15px 0 0 -15px;
+    border: 3px solid #f3f3f3;
+    border-top: 3px solid #dc3545;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    z-index: 11;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+/* Inactive/Cancelled State */
+.appointment-card.card-inactive {
+    background-color: #f8f9fa !important;
+    opacity: 0.85;
+}
+
+.appointment-card.card-inactive .card-body {
+    color: #6c757d;
+}
+
+.appointment-card.card-inactive h5,
+.appointment-card.card-inactive strong,
+.appointment-card.card-inactive .fw-bold {
+    color: #6c757d !important;
+}
+
+.appointment-card.card-inactive .text-primary,
+.appointment-card.card-inactive .text-success,
+.appointment-card.card-inactive .text-info {
+    color: #adb5bd !important;
+}
+
+/* Table Row Inactive State */
+tr.row-inactive {
+    background-color: #f8f9fa !important;
+    opacity: 0.8;
+}
+
+tr.row-inactive td {
+    color: #6c757d !important;
+}
+
+tr.row-inactive strong {
+    color: #6c757d !important;
+}
+
+tr.row-loading {
+    pointer-events: none;
+    opacity: 0.5;
+    position: relative;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════════
+   3. STATUS BADGES
+═══════════════════════════════════════════════════════════════════════════════ */
+
+.status-badge {
+    padding: 5px 12px;
+    border-radius: 20px;
+    font-size: 0.85rem;
+    font-weight: 500;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.status-pending { 
+    background-color: #ffc107; 
+    color: #000; 
+}
+
+.status-confirmed { 
+    background-color: #28a745; 
+    color: #fff; 
+}
+
+.status-completed { 
+    background-color: #6f42c1; 
+    color: #fff; 
+}
+
+.status-rejected { 
+    background-color: #dc3545; 
+    color: #fff; 
+}
+
+.status-cancelled { 
+    background-color: #6c757d; 
+    color: #fff; 
+}
+
+/* Cancelled Badge - Alternative Light Style */
+.status-cancelled-light {
+    background-color: #e9ecef;
+    color: #6c757d;
+    border: 1px solid #ced4da;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════════
+   4. ACTION BUTTONS
+═══════════════════════════════════════════════════════════════════════════════ */
+
+.action-btn {
+    padding: 6px 12px;
+    font-size: 0.85rem;
+    margin: 2px;
+    border-radius: 6px;
+    transition: all 0.2s ease;
+}
+
+.action-btn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+}
+
+/* Cancel Button - Danger Style */
+.btn-cancel-appointment {
+    background-color: #dc3545;
+    border-color: #dc3545;
+    color: #fff;
+}
+
+.btn-cancel-appointment:hover {
+    background-color: #c82333;
+    border-color: #bd2130;
+}
+
+/* Rebook Button - Primary Style */
+.btn-rebook {
+    background-color: #0b1a33;
+    border-color: #0b1a33;
+    color: #fff;
+}
+
+.btn-rebook:hover {
+    background-color: #1a3a5c;
+    border-color: #1a3a5c;
+}
+
+/* View Details Button - Secondary Style */
+.btn-view-details {
+    background-color: transparent;
+    border-color: #6c757d;
+    color: #6c757d;
+}
+
+.btn-view-details:hover {
+    background-color: #6c757d;
+    color: #fff;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════════
+   5. TOAST NOTIFICATIONS
+═══════════════════════════════════════════════════════════════════════════════ */
+
+.toast {
+    min-width: 350px;
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+.toast-body {
+    padding: 12px 16px;
+}
+
+/* Undo Progress Bar */
+.undo-progress-bar {
+    height: 4px;
+    background: linear-gradient(90deg, #ffc107 0%, #ff9800 100%);
+    width: 100%;
+    animation: undoCountdown 10s linear forwards;
+}
+
+@keyframes undoCountdown {
+    from { width: 100%; }
+    to { width: 0%; }
+}
+
+/* Undo Countdown Badge */
+.undo-countdown {
+    min-width: 24px;
+    font-size: 0.75rem;
+}
+
+/* Toast Types */
+.toast-success .toast-body { background-color: #28a745; }
+.toast-error .toast-body { background-color: #dc3545; }
+.toast-info .toast-body { background-color: #17a2b8; }
+.toast-warning .toast-body { background-color: #ffc107; color: #000; }
+
+/* ═══════════════════════════════════════════════════════════════════════════════
+   6. ANIMATIONS
+═══════════════════════════════════════════════════════════════════════════════ */
+
+/* Fade In Animation */
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(-10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* Status Change Animation */
+@keyframes statusChange {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.1); }
+    100% { transform: scale(1); }
+}
+
+.status-badge.animate {
+    animation: statusChange 0.3s ease;
+}
+
+/* Card State Transition */
+.appointment-card.transitioning {
+    animation: fadeIn 0.3s ease;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════════
+   7. RESPONSIVE ADJUSTMENTS
+═══════════════════════════════════════════════════════════════════════════════ */
+
+@media (max-width: 768px) {
+    .toast {
+        min-width: 280px;
+        margin: 0 10px;
+    }
+    
+    .toast-body {
+        flex-direction: column;
+        gap: 10px;
+    }
+    
+    #undoBtn {
+        width: 100%;
+        justify-content: center;
+    }
+    
+    .action-btn {
+        padding: 8px 10px;
+        font-size: 0.8rem;
+    }
+}
