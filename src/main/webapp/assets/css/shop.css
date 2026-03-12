@@ -1,0 +1,119 @@
+@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap');
+
+:root {
+    --primary-color: #00ffcc; /* Xanh ngọc neon */
+    --text-light: #ffffff;
+    --bg-gradient-start: #00bfa5;
+    --bg-gradient-end: #005f52;
+    --card-bg: #ffffff;
+}
+
+body {
+    font-family: 'Montserrat', sans-serif;
+    color: #333;
+    margin: 0;
+    /* Nền Xanh Ngọc Đặc Trưng */
+    background: linear-gradient(135deg, var(--bg-gradient-start) 0%, var(--bg-gradient-end) 100%);
+    min-height: 100vh;
+    background-attachment: fixed;
+    background-repeat: no-repeat;
+}
+
+/* --- SHOP HEADER --- */
+.shop-header {
+    text-align: center;
+    padding: 60px 0 20px;
+    color: #fff;
+}
+.shop-header h1 { font-weight: 800; text-transform: uppercase; margin-bottom: 10px; }
+.shop-header p { font-size: 1.1rem; opacity: 0.9; }
+
+/* --- DANH MỤC TRÒN (CATEGORIES) --- */
+.cat-circle {
+    width: 100px;
+    height: 100px;
+    border-radius: 50%;
+    background: #fff;
+    margin: 0 auto 10px;
+    overflow: hidden;
+    padding: 5px; /* Viền trắng */
+    transition: transform 0.3s ease;
+    cursor: pointer;
+}
+.cat-circle img {
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    object-fit: cover;
+}
+.cat-circle:hover { transform: scale(1.1); box-shadow: 0 0 15px rgba(0,255,204,0.6); }
+.cat-name { color: #fff; font-weight: 600; font-size: 0.95rem; }
+
+/* --- PRODUCT CARD (THẺ SẢN PHẨM) --- */
+.product-card {
+    background: #fff;
+    border-radius: 15px;
+    overflow: hidden;
+    position: relative;
+    transition: all 0.3s ease;
+    height: 100%;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+}
+
+.product-card:hover { transform: translateY(-5px); box-shadow: 0 10px 25px rgba(0,0,0,0.3); }
+
+/* Nhãn giảm giá */
+.badge-discount {
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    background: #d63031;
+    color: #fff;
+    padding: 3px 8px;
+    border-radius: 5px;
+    font-size: 0.8rem;
+    font-weight: 700;
+}
+
+.product-img {
+    width: 100%;
+    height: 200px;
+    object-fit: contain; /* Ảnh sản phẩm không bị cắt */
+    padding: 20px;
+    background: #fff;
+    border-bottom: 1px solid #eee;
+}
+
+.product-info { padding: 15px; text-align: left; }
+
+.brand { font-size: 0.8rem; color: #008f7a; font-weight: 700; text-transform: uppercase; }
+
+.product-title {
+    font-size: 1rem;
+    font-weight: 600;
+    color: #333;
+    margin: 5px 0 10px;
+    display: -webkit-box;
+    -webkit-line-clamp: 2; /* Cắt chữ nếu quá dài */
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    height: 48px; /* Cố định chiều cao tên */
+}
+
+.price-box { margin-bottom: 15px; }
+.old-price { text-decoration: line-through; color: #999; font-size: 0.9rem; margin-right: 8px; }
+.new-price { color: #d63031; font-weight: 700; font-size: 1.1rem; }
+
+/* Nút Thêm vào giỏ */
+.btn-add-cart {
+    width: 100%;
+    border: none;
+    background: #00bfa5;
+    color: #fff;
+    padding: 10px;
+    border-radius: 8px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: 0.3s;
+}
+.btn-add-cart:hover { background: #008f7a; }

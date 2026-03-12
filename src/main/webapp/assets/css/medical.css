@@ -1,0 +1,123 @@
+@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap');
+
+:root {
+    --primary-color: #00bfa5;
+    --dark-green: #004d40;
+    --light-bg: #f4fbf9;
+}
+
+body {
+    font-family: 'Montserrat', sans-serif;
+    color: #333;
+}
+
+/* --- BANNER --- */
+.medical-header {
+    background: linear-gradient(to right, #00bfa5, #004d40);
+    padding: 80px 0;
+    text-align: center;
+    color: #fff;
+    /* Nếu có ảnh nền thì uncomment dòng dưới */
+    /* background: linear-gradient(rgba(0, 77, 64, 0.8), rgba(0, 77, 64, 0.8)), url('../medical_pic/banner_med.jpg'); */
+}
+.medical-header h1 { font-weight: 800; font-size: 2.8rem; margin: 15px 0; }
+.sub-heading { background: rgba(255,255,255,0.2); padding: 5px 15px; border-radius: 20px; text-transform: uppercase; font-size: 0.9rem; letter-spacing: 1px; }
+
+/* --- QUY TRÌNH (STEPS) --- */
+.section-title { font-weight: 700; color: var(--dark-green); margin-bottom: 10px; }
+.step-box {
+    padding: 20px;
+    transition: 0.3s;
+}
+.step-icon {
+    width: 80px;
+    height: 80px;
+    background: var(--light-bg);
+    color: var(--primary-color);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 40px;
+    margin: 0 auto 20px;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+    transition: 0.3s;
+}
+.step-box:hover .step-icon {
+    background: var(--primary-color);
+    color: #fff;
+    transform: rotateY(180deg);
+}
+.step-box h5 { font-weight: 700; margin-bottom: 10px; }
+.step-box p { font-size: 0.9rem; color: #666; }
+
+/* --- SERVICES SECTION (Dark Bg) --- */
+.services-section {
+    background-color: var(--dark-green);
+    padding: 80px 0;
+}
+
+/* Card Dịch vụ */
+.med-card {
+    background: #fff;
+    border-radius: 15px;
+    overflow: hidden;
+    height: 100%;
+    transition: 0.3s;
+}
+.med-card:hover { transform: translateY(-5px); }
+.med-card img {
+    width: 100%;
+    height: 200px;
+    object-fit: cover;
+}
+.med-card-body { padding: 25px; }
+.med-card-body h4 { font-weight: 700; font-size: 1.1rem; color: var(--dark-green); margin-bottom: 10px; }
+.med-card-body p { font-size: 0.9rem; color: #555; margin-bottom: 0; }
+
+/* Box Cấp cứu đặc biệt */
+.med-card-contact {
+    background: var(--primary-color);
+    color: #fff;
+    border-radius: 15px;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 30px;
+    text-align: center;
+}
+.med-card-contact i { font-size: 50px; margin-bottom: 15px; animation: pulse 1.5s infinite; }
+.btn-emergency {
+    background: #fff;
+    color: var(--primary-color);
+    padding: 10px 30px;
+    border-radius: 50px;
+    text-decoration: none;
+    font-weight: 700;
+    margin-top: 20px;
+    transition: 0.3s;
+}
+.btn-emergency:hover { background: var(--dark-green); color: #fff; }
+
+@keyframes pulse {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.1); }
+    100% { transform: scale(1); }
+}
+
+/* --- BUTTON CHUNG --- */
+.btn-main {
+    display: inline-block;
+    background: var(--primary-color);
+    color: #fff;
+    padding: 12px 40px;
+    border-radius: 50px;
+    text-decoration: none;
+    font-weight: 700;
+    font-size: 1.1rem;
+    box-shadow: 0 5px 15px rgba(0, 191, 165, 0.4);
+    transition: 0.3s;
+}
+.btn-main:hover { background: var(--dark-green); color: #fff; }
