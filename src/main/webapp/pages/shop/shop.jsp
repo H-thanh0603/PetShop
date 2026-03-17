@@ -216,48 +216,48 @@
         </div>
     </section>
 
-    <section class="container mt-4">
-        <h3 class="section-title mb-4">Bộ Sưu Tập Cho Mèo Con</h3>
-        
-        <div class="row text-center g-4">
-            <div class="col-4 col-md-2">
-                <div class="cat-circle">
-                    <img src="${pageContext.request.contextPath}/assets/images/shop_pic/cate_pate.jpg" alt="Pate">
-                </div>
-                <p class="cat-name">Pate Mèo Con</p>
-            </div>
-            <div class="col-4 col-md-2">
-                <div class="cat-circle">
-                    <img src="${pageContext.request.contextPath}/assets/images/shop_pic/cate_food.jpg" alt="Food">
-                </div>
-                <p class="cat-name">Thức Ăn Hạt</p>
-            </div>
-            <div class="col-4 col-md-2">
-                <div class="cat-circle">
-                    <img src="${pageContext.request.contextPath}/assets/images/shop_pic/cate_sand.jpg" alt="Sand">
-                </div>
-                <p class="cat-name">Cát Vệ Sinh</p>
-            </div>
-            <div class="col-4 col-md-2">
-                <div class="cat-circle">
-                    <img src="${pageContext.request.contextPath}/assets/images/shop_pic/cate_shampoo.jpg" alt="Shampoo">
-                </div>
-                <p class="cat-name">Sữa Tắm</p>
-            </div>
-            <div class="col-4 col-md-2">
-                <div class="cat-circle">
-                    <img src="${pageContext.request.contextPath}/assets/images/shop_pic/cate_toy.jpg" alt="Toy">
-                </div>
-                <p class="cat-name">Đồ Chơi</p>
-            </div>
-            <div class="col-4 col-md-2">
-                <div class="cat-circle">
-                    <img src="${pageContext.request.contextPath}/assets/images/shop_pic/cate_house.jpg" alt="House">
-                </div>
-                <p class="cat-name">Nhà Cho Mèo</p>
-            </div>
-        </div>
-    </section>
+<%--    <section class="container mt-4">--%>
+<%--        <h3 class="section-title mb-4">Bộ Sưu Tập Cho Mèo Con</h3>--%>
+<%--        --%>
+<%--        <div class="row text-center g-4">--%>
+<%--            <div class="col-4 col-md-2">--%>
+<%--                <div class="cat-circle">--%>
+<%--                    <img src="${pageContext.request.contextPath}/assets/images/shop_pic/cate_pate.jpg" alt="Pate">--%>
+<%--                </div>--%>
+<%--                <p class="cat-name">Pate Mèo Con</p>--%>
+<%--            </div>--%>
+<%--            <div class="col-4 col-md-2">--%>
+<%--                <div class="cat-circle">--%>
+<%--                    <img src="${pageContext.request.contextPath}/assets/images/shop_pic/cate_food.jpg" alt="Food">--%>
+<%--                </div>--%>
+<%--                <p class="cat-name">Thức Ăn Hạt</p>--%>
+<%--            </div>--%>
+<%--            <div class="col-4 col-md-2">--%>
+<%--                <div class="cat-circle">--%>
+<%--                    <img src="${pageContext.request.contextPath}/assets/images/shop_pic/cate_sand.jpg" alt="Sand">--%>
+<%--                </div>--%>
+<%--                <p class="cat-name">Cát Vệ Sinh</p>--%>
+<%--            </div>--%>
+<%--            <div class="col-4 col-md-2">--%>
+<%--                <div class="cat-circle">--%>
+<%--                    <img src="${pageContext.request.contextPath}/assets/images/shop_pic/cate_shampoo.jpg" alt="Shampoo">--%>
+<%--                </div>--%>
+<%--                <p class="cat-name">Sữa Tắm</p>--%>
+<%--            </div>--%>
+<%--            <div class="col-4 col-md-2">--%>
+<%--                <div class="cat-circle">--%>
+<%--                    <img src="${pageContext.request.contextPath}/assets/images/shop_pic/cate_toy.jpg" alt="Toy">--%>
+<%--                </div>--%>
+<%--                <p class="cat-name">Đồ Chơi</p>--%>
+<%--            </div>--%>
+<%--            <div class="col-4 col-md-2">--%>
+<%--                <div class="cat-circle">--%>
+<%--                    <img src="${pageContext.request.contextPath}/assets/images/shop_pic/cate_house.jpg" alt="House">--%>
+<%--                </div>--%>
+<%--                <p class="cat-name">Nhà Cho Mèo</p>--%>
+<%--            </div>--%>
+<%--        </div>--%>
+<%--    </section>--%>
 
     <section class="container mt-5 mb-5">
         <div class="d-flex justify-content-between align-items-center mb-4">

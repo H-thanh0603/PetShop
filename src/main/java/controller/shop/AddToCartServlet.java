@@ -46,13 +46,11 @@ public class AddToCartServlet extends HttpServlet {
             }
             
             session.setAttribute("cart", cart);
-            
             // Nếu user đã đăng nhập, lưu vào database
             if (user != null) {
                 CartDAO cartDAO = new CartDAO();
                 cartDAO.addToCart(user.getId(), productId, quantity);
             }
-            
             int totalQuantity = 0;
             for (CartItem item : cart.values()) {
                 totalQuantity += item.getQuantity();
