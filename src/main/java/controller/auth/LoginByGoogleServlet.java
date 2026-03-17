@@ -53,7 +53,12 @@ public class LoginByGoogleServlet extends HttpServlet {
         CartDAO cartDAO = new CartDAO();
         Map<Integer, CartItem> cart = cartDAO.getCartByUserId(user.getId());
         session.setAttribute("cart", cart);
-
+// Tính tổng số lượng
+        int totalQuantity = 0;
+        for (CartItem item : cart.values()) {
+            totalQuantity += item.getQuantity();
+        }
+        session.setAttribute("totalQuantity", totalQuantity);
         response.sendRedirect(request.getContextPath() + "/home");
     }
 }
