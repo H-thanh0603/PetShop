@@ -1,0 +1,139 @@
+/* --- CẤU HÌNH CHUNG --- */
+@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap');
+
+:root {
+    --primary-color: #00bfa5;
+    --secondary-color: #008f7a;
+    --text-dark: #2c3e50;
+    --text-gray: #666;
+    --bg-light: #f9f9f9;
+}
+
+body {
+    font-family: 'Montserrat', sans-serif;
+    color: #ffffff; 
+    /* Nền gradient xanh ngọc */
+    background: linear-gradient(135deg, #ffffff 0%, #00bfa5 100%);
+    min-height: 100vh;
+    background-attachment: fixed;
+    background-repeat: no-repeat;
+    margin: 0;
+}
+
+/* --- 1. PAGE HEADER (BANNER) --- */
+.page-header {
+    background: linear-gradient(rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.5)), 
+                url('https://images.unsplash.com/photo-1576201836106-db1758fd1c97?w=1600&auto=format&fit=crop') center/cover no-repeat;
+    height: 350px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    color: #fff;
+    margin-bottom: 60px;
+}
+
+.page-header h1 {
+    font-size: 3rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    margin-bottom: 10px;
+}
+
+.page-header p {
+    font-size: 1.1rem;
+    opacity: 0.9;
+}
+
+/* --- 2. SERVICE CARDS --- */
+.services-section {
+    padding-bottom: 80px;
+}
+
+.service-box {
+    background: #fff;
+    padding: 40px 30px;
+    border-radius: 15px;
+    box-shadow: 0 5px 20px rgba(0,0,0,0.05);
+    border: 1px solid #eee;
+    text-align: center;
+    transition: all 0.3s ease;
+    height: 100%;
+}
+
+.service-box:hover {
+    transform: translateY(-10px);
+    box-shadow: 0 15px 30px rgba(0, 191, 165, 0.15);
+    border-color: var(--primary-color);
+}
+
+.icon-wrapper {
+    width: 80px;
+    height: 80px;
+    line-height: 80px;
+    background-color: #e0f2f1;
+    color: var(--primary-color);
+    font-size: 40px;
+    border-radius: 50%;
+    margin: 0 auto 25px;
+    transition: 0.3s;
+}
+
+.service-box:hover .icon-wrapper {
+    background-color: var(--primary-color);
+    color: #fff;
+}
+
+.service-box h4 {
+    font-size: 1.25rem;
+    font-weight: 700;
+    margin-bottom: 15px;
+    color: var(--text-dark);
+}
+
+.service-box p {
+    color: var(--text-gray);
+    font-size: 0.95rem;
+    line-height: 1.6;
+    margin-bottom: 25px;
+}
+
+.read-more-btn {
+    display: inline-block;
+    color: var(--primary-color);
+    font-weight: 600;
+    text-decoration: none;
+    transition: 0.3s;
+}
+
+.read-more-btn:hover {
+    color: var(--secondary-color);
+    letter-spacing: 1px;
+}
+
+/* --- 3. NAVBAR ĐỒNG BỘ --- */
+.navbar {
+    background-color: #ffffff !important;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    position: sticky;
+    top: 0;
+    z-index: 1000;
+    /* Độ dày chuẩn 12px giống các trang khác */
+    padding: 12px 0 !important; 
+}
+
+.navbar .nav-link {
+    font-size: 1rem !important;
+    color: #2c3e50 !important;
+    font-weight: 600;
+}
+
+.navbar .navbar-brand {
+    font-size: 1.5rem !important;
+    color: #2c3e50 !important;
+}
+
+.lang-select {
+    color: #2c3e50 !important;
+}
