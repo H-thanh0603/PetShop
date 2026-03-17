@@ -188,12 +188,8 @@
 						<div class="col-md-3 mb-3">
 							<label class="form-label fw-bold">Số lượng:</label>
 							<div class="input-group">
-								<button class="btn btn-outline-secondary" type="button"
-									onclick="decreaseQty()">-</button>
 								<input type="number" id="qtyInput" name="quantity"
 									class="form-control text-center" value="1" min="1" max="99">
-								<button class="btn btn-outline-secondary" type="button"
-									onclick="increaseQty()">+</button>
 							</div>
 						</div>
 
