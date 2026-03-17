@@ -41,4 +41,5 @@ build/
 .DS_Store
 
 ### Log files ###
-*.log
+*.log
+secrets.properties

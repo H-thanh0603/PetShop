@@ -16,8 +16,8 @@ public class ReviewDAO {
         
         // Cần JOIN với bảng Users để lấy tên người dùng (giả sử cột tên là 'fullname')
         // Nếu bảng Users của bạn cột tên là 'username' thì sửa 'u.fullname' thành 'u.username'
-        String query = "SELECT r.*, u.fullname FROM Reviews r " +
-                       "JOIN Users u ON r.user_id = u.id " +
+        String query = "SELECT r.*, u.fullname FROM reviews r " +
+                       "JOIN users u ON r.user_id = u.id " +
                        "WHERE r.product_id = ? ORDER BY r.created_at DESC";
                        
         try {
@@ -49,7 +49,7 @@ public class ReviewDAO {
     // 2. Thêm đánh giá mới
     public void addReview(Review review) {
         // Chỉ insert các trường cần thiết, id tự tăng, created_at tự động
-        String query = "INSERT INTO Reviews (product_id, user_id, rating, comment) VALUES (?, ?, ?, ?)";
+        String query = "INSERT INTO reviews (product_id, user_id, rating, comment) VALUES (?, ?, ?, ?)";
         try {
             Connection conn = new DBContext().getConnection();
             PreparedStatement ps = conn.prepareStatement(query);

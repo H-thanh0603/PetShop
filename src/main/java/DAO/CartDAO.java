@@ -15,7 +15,7 @@ public class CartDAO {
     
     // Lưu hoặc cập nhật item trong giỏ hàng
     public void saveCartItem(int userId, int productId, int quantity) {
-        String query = "INSERT INTO Cart (user_id, product_id, quantity) VALUES (?, ?, ?) " +
+        String query = "INSERT INTO cart (user_id, product_id, quantity) VALUES (?, ?, ?) " +
                        "ON DUPLICATE KEY UPDATE quantity = ?";
         try (Connection conn = new DBContext().getConnection();
              PreparedStatement ps = conn.prepareStatement(query)) {
@@ -32,9 +32,9 @@ public class CartDAO {
     // Cập nhật số lượng (cộng thêm)
     public void addToCart(int userId, int productId, int quantityToAdd) {
         // Kiểm tra xem đã có trong giỏ chưa
-        String checkQuery = "SELECT quantity FROM Cart WHERE user_id = ? AND product_id = ?";
-        String insertQuery = "INSERT INTO Cart (user_id, product_id, quantity) VALUES (?, ?, ?)";
-        String updateQuery = "UPDATE Cart SET quantity = quantity + ? WHERE user_id = ? AND product_id = ?";
+        String checkQuery = "SELECT quantity FROM cart WHERE user_id = ? AND product_id = ?";
+        String insertQuery = "INSERT INTO cart (user_id, product_id, quantity) VALUES (?, ?, ?)";
+        String updateQuery = "UPDATE cart SET quantity = quantity + ? WHERE user_id = ? AND product_id = ?";
         
         try (Connection conn = new DBContext().getConnection()) {
             PreparedStatement checkPs = conn.prepareStatement(checkQuery);
@@ -64,7 +64,7 @@ public class CartDAO {
     
     // Xóa item khỏi giỏ hàng
     public void removeFromCart(int userId, int productId) {
-        String query = "DELETE FROM Cart WHERE user_id = ? AND product_id = ?";
+        String query = "DELETE FROM cart WHERE user_id = ? AND product_id = ?";
         try (Connection conn = new DBContext().getConnection();
              PreparedStatement ps = conn.prepareStatement(query)) {
             ps.setInt(1, userId);
@@ -77,7 +77,7 @@ public class CartDAO {
     
     // Cập nhật số lượng cụ thể
     public void updateCartQuantity(int userId, int productId, int newQuantity) {
-        String query = "UPDATE Cart SET quantity = ? WHERE user_id = ? AND product_id = ?";
+        String query = "UPDATE cart SET quantity = ? WHERE user_id = ? AND product_id = ?";
         try (Connection conn = new DBContext().getConnection();
              PreparedStatement ps = conn.prepareStatement(query)) {
             ps.setInt(1, newQuantity);
@@ -91,7 +91,7 @@ public class CartDAO {
     
     // Xóa toàn bộ giỏ hàng của user
     public void clearCart(int userId) {
-        String query = "DELETE FROM Cart WHERE user_id = ?";
+        String query = "DELETE FROM cart WHERE user_id = ?";
         try (Connection conn = new DBContext().getConnection();
              PreparedStatement ps = conn.prepareStatement(query)) {
             ps.setInt(1, userId);
@@ -104,7 +104,7 @@ public class CartDAO {
     // Load giỏ hàng của user từ database
     public Map<Integer, CartItem> getCartByUserId(int userId) {
         Map<Integer, CartItem> cart = new HashMap<>();
-        String query = "SELECT product_id, quantity FROM Cart WHERE user_id = ?";
+        String query = "SELECT product_id, quantity FROM cart WHERE user_id = ?";
         
         try (Connection conn = new DBContext().getConnection();
              PreparedStatement ps = conn.prepareStatement(query)) {
@@ -128,7 +128,7 @@ public class CartDAO {
     
     // Đếm tổng số lượng sản phẩm trong giỏ
     public int getTotalQuantity(int userId) {
-        String query = "SELECT SUM(quantity) as total FROM Cart WHERE user_id = ?";
+        String query = "SELECT SUM(quantity) as total FROM cart WHERE user_id = ?";
         try (Connection conn = new DBContext().getConnection();
              PreparedStatement ps = conn.prepareStatement(query)) {
             ps.setInt(1, userId);

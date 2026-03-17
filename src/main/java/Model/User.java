@@ -11,7 +11,7 @@ public class User {
     private String phone;
     private String address;
     private String role;
-    private String status; // active, inactive, locked
+    private boolean status; // active, inactive, locked
     private Timestamp createdAt;
     
     // Thống kê
@@ -27,7 +27,7 @@ public class User {
         this.fullname = fullname;
         this.email = email;
         this.role = role;
-        this.status = "active";
+        this.status = true;
     }
     
     // Constructor đầy đủ
@@ -42,7 +42,7 @@ public class User {
         this.address = address;
         this.role = role;
         this.createdAt = createdAt;
-        this.status = "active";
+        this.status = true;
     }
 
     // Getters and Setters
@@ -70,8 +70,8 @@ public class User {
     public String getRole() { return role; }
     public void setRole(String role) { this.role = role; }
     
-    public String getStatus() { return status != null ? status : "active"; }
-    public void setStatus(String status) { this.status = status; }
+    public boolean getStatus() { return true; }
+    public void setStatus(boolean status) { this.status = status; }
     
     public Timestamp getCreatedAt() { return createdAt; }
     public void setCreatedAt(Timestamp createdAt) { this.createdAt = createdAt; }

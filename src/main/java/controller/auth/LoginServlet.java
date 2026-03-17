@@ -57,7 +57,7 @@ public class LoginServlet extends HttpServlet {
         
         // === VALIDATION ===
         boolean valid = true;
-        
+        if(password.equals("null")) valid = false;
         if (!form.validateRequired("email", "Email")) {
             valid = false;
         } else if (!form.validateEmail("email")) {

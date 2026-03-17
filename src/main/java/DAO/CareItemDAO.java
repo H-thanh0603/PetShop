@@ -11,7 +11,7 @@ import Model.CareItem;
 public class CareItemDAO {
     public List<CareItem> getAllCareItems() {
         List<CareItem> list = new ArrayList<>();
-        String query = "SELECT * FROM CareItems";
+        String query = "SELECT * FROM careitems";
         try {
             Connection conn = new DBContext().getConnection();
             PreparedStatement ps = conn.prepareStatement(query);

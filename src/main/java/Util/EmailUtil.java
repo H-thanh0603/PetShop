@@ -21,8 +21,7 @@ public class EmailUtil {
     public static boolean sendEmail(String toEmail, String subject, String htmlContent) {
         try {
             // Cấu hình SMTP properties
-            Properties props = new Properties();
-            props.put("mail.smtp.host", EmailConfig.getSmtpHost());
+            Properties props = new Properties();props.put("mail.smtp.host", EmailConfig.getSmtpHost());
             props.put("mail.smtp.port", EmailConfig.getSmtpPort());
             props.put("mail.smtp.auth", String.valueOf(EmailConfig.isSmtpAuth()));
             props.put("mail.smtp.starttls.enable", String.valueOf(EmailConfig.isSmtpStarttls()));
