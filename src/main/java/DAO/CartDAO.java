@@ -150,4 +150,17 @@ public class CartDAO {
             addToCart(userId, entry.getKey(), entry.getValue().getQuantity());
         }
     }
+
+    public void updateQuantity(int id, int productId, int quantity) {
+        String query = "UPDATE cart SET quantity = ? WHERE user_id = ? AND product_id = ?";
+        try (Connection conn = new DBContext().getConnection();
+             PreparedStatement ps = conn.prepareStatement(query)) {
+            ps.setInt(1, quantity);
+            ps.setInt(2, id);
+            ps.setInt(3, productId);
+            ps.executeUpdate();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
 }
