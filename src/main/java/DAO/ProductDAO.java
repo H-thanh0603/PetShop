@@ -188,6 +188,38 @@ public class ProductDAO {
         }
         return list;
     }
-    
+
+    // 9. Phân trang danh sách sản phẩm
+    public List<Product> getProductsByPage (int index, int size){
+        List<Product> list = new ArrayList<>();
+
+        String query = "SELECT * FROM products LIMIT ? OFFSET?";
+        try {
+            Connection connection = new DBContext().getConnection();
+            PreparedStatement ps = connection.prepareStatement(query);
+
+            ps.setInt(1, size);
+            ps.setInt(2, (index-1)*size);
+
+            ResultSet rs = ps.executeQuery();
+            while (rs.next()){
+                String desc = rs.getString("Mô tả");
+                if (desc == null) desc = "";
+
+                list.add(new Product(
+                        rs.getInt("id"),
+                        rs.getString("name"),
+                        rs.getString("image"),
+                        rs.getDouble("price"),
+                        rs.getInt("discount"),
+                        desc
+                ));
+            }
+            connection.close();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return list;
+    }
     
 }
