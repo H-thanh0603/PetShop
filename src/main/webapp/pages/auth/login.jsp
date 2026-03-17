@@ -84,7 +84,49 @@
         a:hover {
             color: #1565c0;
         }
+        .social-login{
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+        }
+
+        .social-item{
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            cursor: pointer;
+            transition: 0.3s;
+            font-size: 22px;
+        }
+
+        /* Google */
+        .google{
+            border: 2px solid #db4437;
+            color: #db4437;
+        }
+
+        .google:hover{
+            background: #db4437;
+            color: white;
+            transform: translateY(-5px);
+        }
+
+        /* Facebook */
+        .facebook{
+            border: 2px solid #1877f2;
+            color: #1877f2;
+        }
+
+        .facebook:hover{
+            background: #1877f2;
+            color: white;
+            transform: translateY(-5px);
+        }
     </style>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
 </head>
 <body>
     <div class="login-container">
@@ -140,7 +182,20 @@
             <button type="submit" class="btn btn-login w-100 mb-3">
                 <i class='bx bx-log-in'></i> Đăng nhập
             </button>
-            
+<%--            login by gg and fb--%>
+            <div class="social-login">
+                <div class="social-item google" title="Login by google">
+                    <a href="https://accounts.google.com/o/oauth2/auth?scope=email profile openid&redirect_uri=http://localhost:8080/PetShop_war/LoginByGoogleServlet&response_type=code&client_id=875562698779-ahopbc7kehsmb02gvpi4r9rhb2o8309q.apps.googleusercontent.com&approval_prompt=force">
+                        <i class="bi bi-google"></i>
+                    </a>
+                </div>
+                <div class="social-item facebook" title="Login by facebook">
+                    <a href="https://www.facebook.com/v19.0/dialog/oauth?client_id=1485991816200631&redirect_uri=http://localhost:8080/PetShop_war/LoginByFacebookServlet&scope=email,public_profile">
+                        <i class="bi bi-facebook"></i>
+                    </a>
+                </div>
+            </div>
+
             <div class="text-center">
                 <p class="mb-2">Chưa có tài khoản? <a href="${pageContext.request.contextPath}/register" class="text-decoration-none">Đăng ký ngay</a></p>
                 <p><a href="${pageContext.request.contextPath}/home" class="text-muted"><i class='bx bx-arrow-back'></i> Quay về trang chủ</a></p>

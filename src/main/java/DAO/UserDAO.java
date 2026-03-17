@@ -1,10 +1,9 @@
 package DAO;
 
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.Timestamp;
+import java.sql.*;
+
 import Context.DBContext;
+import Model.FbAccount.Account;
 import Model.User;
 
 public class UserDAO {
@@ -492,7 +491,7 @@ public class UserDAO {
                 
                 try { user.setPhone(rs.getString("phone")); } catch (Exception e) {}
                 try { user.setAddress(rs.getString("address")); } catch (Exception e) {}
-                try { user.setStatus(rs.getString("status")); } catch (Exception e) { user.setStatus("active"); }
+                try { user.setStatus(rs.getBoolean("status")); } catch (Exception e) { user.setStatus(true); }
                 try { user.setOrderCount(rs.getInt("order_count")); } catch (Exception e) {}
                 try { user.setTotalSpent(rs.getDouble("total_spent")); } catch (Exception e) {}
                 
@@ -510,7 +509,7 @@ public class UserDAO {
         StringBuilder query = new StringBuilder(
             "SELECT u.*, " +
             "(SELECT COUNT(*) FROM orders WHERE user_id = u.id) as order_count, " +
-            "(SELECT SUM(total_amount) FROM orders WHERE user_id = u.id AND status != 'Cancelled') as total_spent " +
+            "(SELECT SUM(total_amount) FROM orders WHERE user_id = u.id AND status != 0) as total_spent " +
             "FROM users u WHERE 1=1 ");
         
         if (keyword != null && !keyword.isEmpty()) {
@@ -546,7 +545,7 @@ public class UserDAO {
                     user.setRole(rs.getString("role"));
                     user.setCreatedAt(rs.getTimestamp("created_at"));
                     try { user.setPhone(rs.getString("phone")); } catch (Exception e) {}
-                    try { user.setStatus(rs.getString("status")); } catch (Exception e) { user.setStatus("active"); }
+                    try { user.setStatus(rs.getBoolean("status")); } catch (Exception e) { user.setStatus(true); }
                     try { user.setOrderCount(rs.getInt("order_count")); } catch (Exception e) {}
                     try { user.setTotalSpent(rs.getDouble("total_spent")); } catch (Exception e) {}
                     list.add(user);
@@ -601,7 +600,7 @@ public class UserDAO {
     
     // Thêm user mới (admin tạo)
     public boolean addUser(String username, String password, String fullname, String email, String phone, String role) {
-        String query = "INSERT INTO users (username, password, fullname, email, phone, role, status) VALUES (?, ?, ?, ?, ?, ?, 'active')";
+        String query = "INSERT INTO users (username, password, fullname, email, phone, role, status) VALUES (?, ?, ?, ?, ?, ?, 1)";
         try (Connection conn = new DBContext().getConnection();
              PreparedStatement ps = conn.prepareStatement(query)) {
             ps.setString(1, username);
@@ -615,5 +614,37 @@ public class UserDAO {
             e.printStackTrace();
         }
         return false;
+    }
+    public boolean HaveEmail(String email){
+        String query = "SELECT count(*) FROM users WHERE email = ?";
+        try (Connection conn = new DBContext().getConnection();
+             PreparedStatement ps = conn.prepareStatement(query)) {
+
+            ps.setString(1, email);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    int count = rs.getInt(1);
+                    if (count == 0) {
+                        return true;
+                    }
+                }
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return false;
+    }
+    public void insertUser(String name, String email) {
+        String query = "insert into users (username, email, role, status, password) VALUES (?, ?, ?, 1, ?)";
+        try(Connection connection = new DBContext().getConnection();
+        PreparedStatement ps = connection.prepareStatement(query)) {
+            ps.setString(1, name);
+            ps.setString(2, email);
+            ps.setString(3, "user");
+            ps.setString(4, "null");
+            ps.executeUpdate();
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        }
     }
 }

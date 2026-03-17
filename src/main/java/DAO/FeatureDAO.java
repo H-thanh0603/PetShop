@@ -11,7 +11,7 @@ import Model.Feature;
 public class FeatureDAO {
     public List<Feature> getAllFeatures() {
         List<Feature> list = new ArrayList<>();
-        String query = "SELECT * FROM Features";
+        String query = "SELECT * FROM features";
         try {
             Connection conn = new DBContext().getConnection();
             PreparedStatement ps = conn.prepareStatement(query);
