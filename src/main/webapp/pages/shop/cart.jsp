@@ -33,7 +33,7 @@
         .cart-summary { background: white; padding: 25px; border-radius: 10px; box-shadow: 0 5px 20px rgba(0,0,0,0.05); position: sticky; top: 20px; }
         .summary-row.total { border-top: 2px dashed #eee; padding-top: 15px; margin-top: 15px; font-weight: 800; color: #10314d; font-size: 1.2rem; display: flex; justify-content: space-between; }
         .btn-checkout { background-color: #10314d; color: white; font-weight: 600; padding: 12px; border-radius: 50px; text-transform: uppercase; width: 100%; border: none; transition: 0.3s; }
-        .btn-checkout:hover { background-color: #0a2135; transform: translateY(-2px); }
+        .btn-checkout:hover { background-color: #0a2135; color: white; transform: translateY(-2px); }
         .modal-header { background-color: #10314d; color: white; }
         .modal-title { font-weight: 700; }
         .btn-close-white { filter: invert(1) grayscale(100%) brightness(200%); }
@@ -77,7 +77,8 @@
                 <a href="${pageContext.request.contextPath}/shop" class="btn btn-checkout px-5 mt-3" style="width: auto;">Mua sắm ngay</a>
             </div>
         </c:if>
-
+<%--        form chỗ này--%>
+        <form action="${pageContext.request.contextPath}/checkout" method="post" id="checkoutForm">--%>
         <%-- Hiển thị giỏ hàng khi đã đăng nhập và có sản phẩm --%>
         <c:if test="${not empty sessionScope.user and not empty sessionScope.cart}">
             <div class="row">
@@ -148,63 +149,65 @@
                             </span>
                         </div>
                         <p class="small text-muted mt-2 mb-4"><i class='bx bx-check-circle'></i> Đã bao gồm thuế VAT</p>
-                        <button type="button" class="btn btn-checkout" data-bs-toggle="modal" data-bs-target="#checkoutModal">
+                        <button type="submit" class="btn btn-checkout" data-bs-toggle="modal" data-bs-target="#checkoutModal">
                             Tiến hành thanh toán <i class='bx bx-right-arrow-alt'></i>
                         </button>
                     </div>
                 </div>
             </div>
         </c:if>
+<%--        kết form--%>
+        </form>
     </div>
 
 
     <!-- Modal Thanh toán -->
-    <div class="modal fade" id="checkoutModal" tabindex="-1" aria-hidden="true">
-        <div class="modal-dialog modal-dialog-centered">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title"><i class='bx bxs-truck'></i> Thông Tin Giao Hàng</h5>
-                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
-                </div>
-                <div class="modal-body">
-                    <form action="${pageContext.request.contextPath}/checkout" method="post" id="checkoutForm">
-                        <div class="mb-3">
-                            <label class="form-label fw-bold">Họ và tên người nhận</label>
-                            <div class="input-group">
-                                <span class="input-group-text"><i class='bx bx-user'></i></span>
-                                <input type="text" class="form-control" name="fullname" 
-                                       value="${sessionScope.user != null ? sessionScope.user.fullname : ''}" required placeholder="Nhập họ tên">
-                            </div>
-                        </div>
-                        <div class="mb-3">
-                            <label class="form-label fw-bold">Số điện thoại</label>
-                            <div class="input-group">
-                                <span class="input-group-text"><i class='bx bx-phone'></i></span>
-                                <input type="text" class="form-control" name="phone" required placeholder="Nhập số điện thoại">
-                            </div>
-                        </div>
-                        <div class="mb-3">
-                            <label class="form-label fw-bold">Địa chỉ giao hàng</label>
-                            <div class="input-group">
-                                <span class="input-group-text"><i class='bx bx-map'></i></span>
-                                <textarea class="form-control" name="address" rows="2" required placeholder="Số nhà, đường, phường/xã..."></textarea>
-                            </div>
-                        </div>
-                        <div class="mb-3">
-                            <label class="form-label fw-bold">Ghi chú (Tùy chọn)</label>
-                            <textarea class="form-control" name="note" rows="2" placeholder="Ví dụ: Giao giờ hành chính..."></textarea>
-                        </div>
-                        <input type="hidden" name="totalAmount" id="hiddenTotalAmount" value="${totalAmount}">
-                        <div class="d-grid gap-2">
-                            <button type="submit" class="btn btn-success fw-bold py-2">
-                                <i class='bx bx-check-circle'></i> XÁC NHẬN ĐẶT HÀNG
-                            </button>
-                        </div>
-                    </form>
-                </div>
-            </div>
-        </div>
-    </div>
+<%--    <div class="modal fade" id="checkoutModal" tabindex="-1" aria-hidden="true">--%>
+<%--        <div class="modal-dialog modal-dialog-centered">--%>
+<%--            <div class="modal-content">--%>
+<%--                <div class="modal-header">--%>
+<%--                    <h5 class="modal-title"><i class='bx bxs-truck'></i> Thông Tin Giao Hàng</h5>--%>
+<%--                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>--%>
+<%--                </div>--%>
+<%--                <div class="modal-body">--%>
+<%--                    <form action="${pageContext.request.contextPath}/checkout" method="post" id="checkoutForm">--%>
+<%--                        <div class="mb-3">--%>
+<%--                            <label class="form-label fw-bold">Họ và tên người nhận</label>--%>
+<%--                            <div class="input-group">--%>
+<%--                                <span class="input-group-text"><i class='bx bx-user'></i></span>--%>
+<%--                                <input type="text" class="form-control" name="fullname" --%>
+<%--                                       value="${sessionScope.user != null ? sessionScope.user.fullname : ''}" required placeholder="Nhập họ tên">--%>
+<%--                            </div>--%>
+<%--                        </div>--%>
+<%--                        <div class="mb-3">--%>
+<%--                            <label class="form-label fw-bold">Số điện thoại</label>--%>
+<%--                            <div class="input-group">--%>
+<%--                                <span class="input-group-text"><i class='bx bx-phone'></i></span>--%>
+<%--                                <input type="text" class="form-control" name="phone" required placeholder="Nhập số điện thoại">--%>
+<%--                            </div>--%>
+<%--                        </div>--%>
+<%--                        <div class="mb-3">--%>
+<%--                            <label class="form-label fw-bold">Địa chỉ giao hàng</label>--%>
+<%--                            <div class="input-group">--%>
+<%--                                <span class="input-group-text"><i class='bx bx-map'></i></span>--%>
+<%--                                <textarea class="form-control" name="address" rows="2" required placeholder="Số nhà, đường, phường/xã..."></textarea>--%>
+<%--                            </div>--%>
+<%--                        </div>--%>
+<%--                        <div class="mb-3">--%>
+<%--                            <label class="form-label fw-bold">Ghi chú (Tùy chọn)</label>--%>
+<%--                            <textarea class="form-control" name="note" rows="2" placeholder="Ví dụ: Giao giờ hành chính..."></textarea>--%>
+<%--                        </div>--%>
+<%--                        <input type="hidden" name="totalAmount" id="hiddenTotalAmount" value="${totalAmount}">--%>
+<%--                        <div class="d-grid gap-2">--%>
+<%--                            <button type="submit" class="btn btn-success fw-bold py-2">--%>
+<%--                                <i class='bx bx-check-circle'></i> XÁC NHẬN ĐẶT HÀNG--%>
+<%--                            </button>--%>
+<%--                        </div>--%>
+<%--                    </form>--%>
+<%--                </div>--%>
+<%--            </div>--%>
+<%--        </div>--%>
+<%--    </div>--%>
 
     <!-- Modal Xác nhận xóa sản phẩm -->
     <div class="modal fade delete-modal" id="deleteModal" tabindex="-1" aria-hidden="true">
@@ -234,7 +237,7 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 
     <script>
-        function openDeleteModal(productId, productName) {
+        function openDeletefModal(productId, productName) {
             document.getElementById('deleteProductName').textContent = productName;
             document.getElementById('confirmDeleteBtn').href = '${pageContext.request.contextPath}/cart?action=remove&id=' + productId;
             var deleteModal = new bootstrap.Modal(document.getElementById('deleteModal'));
