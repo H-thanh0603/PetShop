@@ -647,4 +647,18 @@ public class UserDAO {
             throw new RuntimeException(e);
         }
     }
+
+    public void updateProfile(int id, String fullname, String phone, String address){
+        String sql = "UPDATE users SET fullname=?, phone=?, address=? WHERE id=?";
+        try(Connection con = DBContext.getConnection();
+            PreparedStatement ps = con.prepareStatement(sql)){
+            ps.setString(1, fullname);
+            ps.setString(2, phone);
+            ps.setString(3, address);
+            ps.setInt(4, id);
+            ps.executeUpdate();
+        }catch(Exception e){
+            e.printStackTrace();
+        }
+    }
 }
