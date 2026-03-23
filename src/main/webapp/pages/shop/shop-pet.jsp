@@ -119,7 +119,7 @@
         .product-card .name {
             font-size: 0.9rem; font-weight: 600; color: #1a1a1a;
             margin: 6px 0 8px; height: 40px; overflow: hidden;
-            display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;
+            display: -webkit-box; -webkit-line-clamp: 2; line-clamp: 2; -webkit-box-orient: vertical;
         }
         .product-card .name a { color: #1a1a1a; text-decoration: none; }
         .product-card .name a:hover { color: #e8613c; }
