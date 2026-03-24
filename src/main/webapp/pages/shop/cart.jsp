@@ -78,7 +78,7 @@
             </div>
         </c:if>
 <%--        form chỗ này--%>
-        <form action="${pageContext.request.contextPath}/checkout" method="post" id="checkoutForm">--%>
+        <form action="${pageContext.request.contextPath}/checkout" method="get" id="checkoutForm">--%>
         <%-- Hiển thị giỏ hàng khi đã đăng nhập và có sản phẩm --%>
         <c:if test="${not empty sessionScope.user and not empty sessionScope.cart}">
             <div class="row">
@@ -149,7 +149,7 @@
                             </span>
                         </div>
                         <p class="small text-muted mt-2 mb-4"><i class='bx bx-check-circle'></i> Đã bao gồm thuế VAT</p>
-                        <button type="submit" class="btn btn-checkout" data-bs-toggle="modal" data-bs-target="#checkoutModal">
+                        <button type="submit" class="btn btn-checkout">
                             Tiến hành thanh toán <i class='bx bx-right-arrow-alt'></i>
                         </button>
                     </div>

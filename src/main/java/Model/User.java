@@ -20,7 +20,7 @@ public class User {
 
     public User() {}
 
-    public User(int id, String username, String password, String fullname, String email, String role) {
+    public User(int id, String username, String password, String fullname, String email, String role, String phone, String address) {
         this.id = id;
         this.username = username;
         this.password = password;
@@ -28,6 +28,8 @@ public class User {
         this.email = email;
         this.role = role;
         this.status = true;
+        this.phone = phone;
+        this.address = address;
     }
     
     // Constructor đầy đủ

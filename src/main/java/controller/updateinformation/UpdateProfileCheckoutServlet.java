@@ -22,14 +22,12 @@ public class UpdateProfileCheckoutServlet extends HttpServlet {
 
         String fullname = request.getParameter("fullname");
         String phone = request.getParameter("phone");
-        String address = request.getParameter("address");
 
         UserDAO dao = new UserDAO();
-        dao.updateProfile(user.getId(), fullname, phone, address);
+        dao.updateProfile(user.getId(), fullname, phone);
 
         user.setFullname(fullname);
         user.setPhone(phone);
-        user.setAddress(address);
 
         session.setAttribute("user", user);
 
