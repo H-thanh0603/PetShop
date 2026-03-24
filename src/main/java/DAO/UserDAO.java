@@ -25,7 +25,9 @@ public class UserDAO {
                         rs.getString("password"),
                         rs.getString("fullname"),
                         rs.getString("email"),
-                        rs.getString("role")
+                        rs.getString("role"),
+                            rs.getString("phone"),
+                            rs.getString("address")
                     );
                 }
             }
@@ -52,7 +54,9 @@ public class UserDAO {
                         rs.getString("password"),
                         rs.getString("fullname"),
                         rs.getString("email"),
-                        rs.getString("role")
+                        rs.getString("role"),
+                            rs.getString("phone"),
+                            rs.getString("address")
                     );
                 }
             }
@@ -80,7 +84,9 @@ public class UserDAO {
                         rs.getString("password"),
                         rs.getString("fullname"),
                         rs.getString("email"),
-                        rs.getString("role")
+                        rs.getString("role"),
+                            rs.getString("phone"),
+                            rs.getString("address")
                     );
                 }
             }
@@ -154,7 +160,9 @@ public class UserDAO {
                         rs.getString("password"),
                         rs.getString("fullname"),
                         rs.getString("email"),
-                        rs.getString("role")
+                        rs.getString("role"),
+                            rs.getString("phone"),
+                            rs.getString("address")
                     );
                 }
             }
@@ -185,7 +193,9 @@ public class UserDAO {
                         rs.getString("password"),
                         rs.getString("fullname"),
                         rs.getString("email"),
-                        rs.getString("role")
+                        rs.getString("role"),
+                            rs.getString("phone"),
+                            rs.getString("address")
                     );
                 }
             }
@@ -265,7 +275,9 @@ public class UserDAO {
                         rs.getString("password"),
                         rs.getString("fullname"),
                         rs.getString("email"),
-                        rs.getString("role")
+                        rs.getString("role"),
+                            rs.getString("phone"),
+                            rs.getString("address")
                     );
                 }
             }
@@ -290,29 +302,29 @@ public class UserDAO {
     }
     
     // Đăng ký user mới (chỉ với email, không cần username/password)
-    public User registerWithEmail(String email, String fullname) {
-        // Tạo username từ email
-        String username = email.split("@")[0] + "_" + System.currentTimeMillis() % 10000;
-        String query = "INSERT INTO users (username, password, fullname, email, role) VALUES (?, '', ?, ?, 'user')";
-        try (Connection conn = new DBContext().getConnection();
-             PreparedStatement ps = conn.prepareStatement(query, PreparedStatement.RETURN_GENERATED_KEYS)) {
-            
-            ps.setString(1, username);
-            ps.setString(2, fullname);
-            ps.setString(3, email);
-            
-            if (ps.executeUpdate() > 0) {
-                try (ResultSet rs = ps.getGeneratedKeys()) {
-                    if (rs.next()) {
-                        return new User(rs.getInt(1), username, "", fullname, email, "user");
-                    }
-                }
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-        return null;
-    }
+//    public User registerWithEmail(String email, String fullname) {
+//        // Tạo username từ email
+//        String username = email.split("@")[0] + "_" + System.currentTimeMillis() % 10000;
+//        String query = "INSERT INTO users (username, password, fullname, email, role) VALUES (?, '', ?, ?, 'user')";
+//        try (Connection conn = new DBContext().getConnection();
+//             PreparedStatement ps = conn.prepareStatement(query, PreparedStatement.RETURN_GENERATED_KEYS)) {
+//
+//            ps.setString(1, username);
+//            ps.setString(2, fullname);
+//            ps.setString(3, email);
+//
+//            if (ps.executeUpdate() > 0) {
+//                try (ResultSet rs = ps.getGeneratedKeys()) {
+//                    if (rs.next()) {
+//                        return new User(rs.getInt(1), username, "", fullname, email, "user");
+//                    }
+//                }
+//            }
+//        } catch (Exception e) {
+//            e.printStackTrace();
+//        }
+//        return null;
+//    }
     
     // ========== ADMIN FUNCTIONS ==========
     
@@ -331,7 +343,9 @@ public class UserDAO {
                     rs.getString("password"),
                     rs.getString("fullname"),
                     rs.getString("email"),
-                    rs.getString("role")
+                    rs.getString("role"),
+                        rs.getString("phone"),
+                        rs.getString("address")
                 ));
             }
         } catch (Exception e) {
@@ -356,7 +370,9 @@ public class UserDAO {
                         rs.getString("password"),
                         rs.getString("fullname"),
                         rs.getString("email"),
-                        rs.getString("role")
+                        rs.getString("role"),
+                            rs.getString("phone"),
+                            rs.getString("address")
                     ));
                 }
             }
@@ -648,16 +664,27 @@ public class UserDAO {
         }
     }
 
-    public void updateProfile(int id, String fullname, String phone, String address){
-        String sql = "UPDATE users SET fullname=?, phone=?, address=? WHERE id=?";
+    public void updateProfile(int id, String fullname, String phone){
+        String sql = "UPDATE users SET fullname=?, phone=? WHERE id=?";
         try(Connection con = DBContext.getConnection();
             PreparedStatement ps = con.prepareStatement(sql)){
             ps.setString(1, fullname);
             ps.setString(2, phone);
-            ps.setString(3, address);
-            ps.setInt(4, id);
+            ps.setInt(3, id);
             ps.executeUpdate();
         }catch(Exception e){
+            e.printStackTrace();
+        }
+    }
+    public void updateAddress(int userId, String address) {
+        String sql = "UPDATE users SET address = ? WHERE id = ?";
+        try (Connection con = DBContext.getConnection();
+             PreparedStatement ps = con.prepareStatement(sql)) {
+
+            ps.setString(1, address);
+            ps.setInt(2, userId);
+            ps.executeUpdate();
+        } catch (Exception e) {
             e.printStackTrace();
         }
     }
