@@ -40,7 +40,7 @@ public class CheckoutServlet extends HttpServlet {
             return;
         }
         AddressDao addressDAO = new AddressDao();
-        List<Address> addressList = addressDAO.getAddressesByUser(user.getId());
+        List<Address> addressList = addressDAO.getAddressesByUserId(user.getId());
         List<CartItem> cartItems = new ArrayList<>(cart.values());
         double totalAmount = 0;
         for (CartItem item : cart.values()) {

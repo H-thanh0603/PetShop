@@ -67,6 +67,9 @@ public class Address {
     public void setDefaultt(boolean defaultt) {
         this.defaultt = defaultt;
     }
+    public boolean getDefaultt() {
+        return defaultt;
+    }
 
     public void setProvince(String province) {
         this.province = province;
