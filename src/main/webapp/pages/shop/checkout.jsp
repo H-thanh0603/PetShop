@@ -374,6 +374,60 @@
         .address-form .btn-secondary:hover {
             background: #e4e7f2;
         }
+        .btn-danger {
+            background: linear-gradient(45deg, #ff4d4f, #ff7875);
+            border: none;
+            color: #fff;
+            padding: 10px 16px;
+            border-radius: 10px;
+            font-size: 14px;
+            cursor: pointer;
+            transition: 0.25s ease;
+        }
+
+        .btn-danger:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 6px 16px rgba(255, 77, 79, 0.28);
+        }
+
+        .delete-modal {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.35);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 9999;
+        }
+
+        .delete-modal-content {
+            width: 360px;
+            max-width: calc(100% - 24px);
+            background: #fff;
+            border-radius: 16px;
+            padding: 22px;
+            box-shadow: 0 18px 40px rgba(0, 0, 0, 0.18);
+            animation: fadeIn 0.2s ease;
+        }
+
+        .delete-modal-content h4 {
+            margin: 0 0 10px;
+            font-size: 18px;
+            color: #2f3542;
+        }
+
+        .delete-modal-content p {
+            margin: 0 0 18px;
+            font-size: 14px;
+            color: #666;
+            line-height: 1.5;
+        }
+
+        .delete-modal-actions {
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+        }
 
         /* spacing */
         .mb-3 {
@@ -579,9 +633,27 @@
 
                                         <div class="d-flex gap-2">
                                             <button type="submit" class="btn btn-primary">Cập nhật</button>
+                                            <button type="button" class="btn btn-danger" onclick="confirmDeleteAddress()">Xóa</button>
                                             <button type="button" class="btn btn-secondary" onclick="toggleEditForm(false)">Đóng</button>
                                         </div>
                                     </form>
+                                    <form id="deleteAddressForm"
+                                          method="post"
+                                          action="${pageContext.request.contextPath}/addresses"
+                                          style="display:none;">
+                                        <input type="hidden" name="_method" value="delete">
+                                        <input type="hidden" id="deleteAddressId" name="id">
+                                    </form>
+                                    <div id="deleteConfirmModal" class="delete-modal" style="display:none;">
+                                        <div class="delete-modal-content">
+                                            <h4>Xác nhận xóa</h4>
+                                            <p>Bạn đã chắc chắn muốn xóa địa chỉ này chưa?</p>
+                                            <div class="delete-modal-actions">
+                                                <button type="button" class="btn btn-danger" onclick="deleteAddressNow()">Rồi</button>
+                                                <button type="button" class="btn btn-secondary" onclick="closeDeleteConfirm()">Chưa</button>
+                                            </div>
+                                        </div>
+                                    </div>
                                 </div>
                             </c:forEach>
                         </c:when>
@@ -1010,6 +1082,21 @@
             if (shouldShow && !provincesLoaded) {
                 await loadProvinces();
             }
+        }
+        function confirmDeleteAddress() {
+            const id = document.getElementById("editAddressId").value;
+            if (!id) return;
+
+            document.getElementById("deleteAddressId").value = id;
+            document.getElementById("deleteConfirmModal").style.display = "flex";
+        }
+
+        function closeDeleteConfirm() {
+            document.getElementById("deleteConfirmModal").style.display = "none";
+        }
+
+        function deleteAddressNow() {
+            document.getElementById("deleteAddressForm").submit();
         }
 
 
