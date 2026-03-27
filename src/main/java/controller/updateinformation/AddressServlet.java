@@ -48,6 +48,18 @@ public class AddressServlet extends HttpServlet {
 
         request.setCharacterEncoding("UTF-8");
 
+        String method = request.getParameter("_method");
+        if ("put".equalsIgnoreCase(method)) {
+            handleUpdate(request, response);
+            return;
+        }
+
+        handleAdd(request, response);
+    }
+
+    private void handleAdd(HttpServletRequest request, HttpServletResponse response)
+            throws IOException {
+
         HttpSession session = request.getSession();
         User user = (User) session.getAttribute("user");
 
@@ -60,25 +72,64 @@ public class AddressServlet extends HttpServlet {
         String province = request.getParameter("province");
         String district = request.getParameter("district");
         String ward = request.getParameter("ward");
-
         boolean isDefault = request.getParameter("isDefault") != null;
 
-        // validate
         if (addressDetail == null || addressDetail.trim().isEmpty()
                 || province == null || province.trim().isEmpty()
                 || district == null || district.trim().isEmpty()
                 || ward == null || ward.trim().isEmpty()) {
-
             response.sendRedirect(request.getContextPath() + "/checkout");
             return;
         }
 
-        // nếu chưa có địa chỉ → auto default
         if (!dao.hasAnyAddress(user.getId())) {
             isDefault = true;
         }
 
         dao.addAddress(
+                user.getId(),
+                isDefault,
+                Timestamp.valueOf(LocalDateTime.now()),
+                addressDetail.trim(),
+                province.trim(),
+                district.trim(),
+                ward.trim()
+        );
+
+        response.sendRedirect(request.getContextPath() + "/checkout");
+    }
+
+    private void handleUpdate(HttpServletRequest request, HttpServletResponse response)
+            throws IOException {
+
+        HttpSession session = request.getSession();
+        User user = (User) session.getAttribute("user");
+
+        if (user == null) {
+            response.sendRedirect(request.getContextPath() + "/login");
+            return;
+        }
+
+        String idRaw = request.getParameter("id");
+        String addressDetail = request.getParameter("addressDetail");
+        String province = request.getParameter("province");
+        String district = request.getParameter("district");
+        String ward = request.getParameter("ward");
+        boolean isDefault = request.getParameter("isDefault") != null;
+
+        if (idRaw == null || idRaw.trim().isEmpty()
+                || addressDetail == null || addressDetail.trim().isEmpty()
+                || province == null || province.trim().isEmpty()
+                || district == null || district.trim().isEmpty()
+                || ward == null || ward.trim().isEmpty()) {
+            response.sendRedirect(request.getContextPath() + "/checkout");
+            return;
+        }
+
+        int id = Integer.parseInt(idRaw);
+
+        dao.updateAddress(
+                id,
                 user.getId(),
                 isDefault,
                 Timestamp.valueOf(LocalDateTime.now()),
