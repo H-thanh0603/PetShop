@@ -225,4 +225,57 @@ public class AddressDao {
 
         return null;
     }
+    public boolean deleteAddress(int addressId, int userId) {
+        String sql = "DELETE FROM addresses WHERE id = ? AND user_id = ?";
+
+        try (Connection conn = DBContext.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+
+            ps.setInt(1, addressId);
+            ps.setInt(2, userId);
+
+            return ps.executeUpdate() > 0;
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return false;
+    }
+    public boolean isDefaultAddress(int addressId, int userId) {
+        String sql = "SELECT `default` FROM addresses WHERE id = ? AND user_id = ?";
+
+        try (Connection conn = DBContext.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+
+            ps.setInt(1, addressId);
+            ps.setInt(2, userId);
+
+            ResultSet rs = ps.executeQuery();
+            if (rs.next()) {
+                return rs.getBoolean("default");
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return false;
+    }
+
+    public void setNewestAddressAsDefault(int userId) {
+        String sql = "UPDATE addresses SET `default` = 1 " +
+                "WHERE id = (" +
+                "   SELECT id FROM (" +
+                "       SELECT id FROM addresses WHERE user_id = ? ORDER BY created_at DESC LIMIT 1" +
+                "   ) t" +
+                ")";
+
+        try (Connection conn = DBContext.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+
+            ps.setInt(1, userId);
+            ps.executeUpdate();
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
 }
