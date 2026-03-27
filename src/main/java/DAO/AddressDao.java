@@ -144,4 +144,85 @@ public class AddressDao {
         }
         return false;
     }
+
+    public void updateAddress(int id, int userId, boolean isDefault, Timestamp updatedAt,
+                              String address, String province, String district, String ward) {
+
+        String resetSql = "UPDATE addresses SET `default` = 0 WHERE user_id = ?";
+        String updateSql = "UPDATE addresses "
+                + "SET `default` = ?, created_at = ?, address = ?, province = ?, district = ?, ward = ? "
+                + "WHERE id = ? AND user_id = ?";
+
+        Connection conn = null;
+        PreparedStatement psReset = null;
+        PreparedStatement psUpdate = null;
+
+        try {
+            conn = DBContext.getConnection();
+            conn.setAutoCommit(false);
+
+            if (isDefault) {
+                psReset = conn.prepareStatement(resetSql);
+                psReset.setInt(1, userId);
+                psReset.executeUpdate();
+            }
+
+            psUpdate = conn.prepareStatement(updateSql);
+            psUpdate.setBoolean(1, isDefault);
+            psUpdate.setTimestamp(2, updatedAt);
+            psUpdate.setString(3, address);
+            psUpdate.setString(4, province);
+            psUpdate.setString(5, district);
+            psUpdate.setString(6, ward);
+            psUpdate.setInt(7, id);
+            psUpdate.setInt(8, userId);
+            psUpdate.executeUpdate();
+
+            conn.commit();
+        } catch (Exception e) {
+            e.printStackTrace();
+            try {
+                if (conn != null) conn.rollback();
+            } catch (Exception ex) {
+                ex.printStackTrace();
+            }
+        } finally {
+            try {
+                if (psReset != null) psReset.close();
+                if (psUpdate != null) psUpdate.close();
+                if (conn != null) conn.close();
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
+    }
+
+    public Address getAddressById(int id, int userId) {
+        String sql = "SELECT * FROM addresses WHERE id = ? AND user_id = ?";
+
+        try (Connection conn = DBContext.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+
+            ps.setInt(1, id);
+            ps.setInt(2, userId);
+
+            ResultSet rs = ps.executeQuery();
+            if (rs.next()) {
+                Model.Address a = new Model.Address();
+                a.setId(rs.getInt("id"));
+                a.setUserId(rs.getInt("user_id"));
+                a.setDefaultt(rs.getBoolean("default"));
+                a.setAddress(rs.getString("address"));
+                a.setCreateAt(rs.getTimestamp("created_at"));
+                a.setProvince(rs.getString("province"));
+                a.setDistrict(rs.getString("district"));
+                a.setWard(rs.getString("ward"));
+                return a;
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        return null;
+    }
 }
