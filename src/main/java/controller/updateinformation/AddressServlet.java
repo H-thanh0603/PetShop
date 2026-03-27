@@ -53,10 +53,40 @@ public class AddressServlet extends HttpServlet {
             handleUpdate(request, response);
             return;
         }
-
+        if ("delete".equalsIgnoreCase(method)) {
+            handleDelete(request, response);
+            return;
+        }
         handleAdd(request, response);
     }
+    private void handleDelete(HttpServletRequest request, HttpServletResponse response)
+            throws IOException {
 
+        HttpSession session = request.getSession();
+        User user = (User) session.getAttribute("user");
+
+        if (user == null) {
+            response.sendRedirect(request.getContextPath() + "/login");
+            return;
+        }
+
+        String idRaw = request.getParameter("id");
+        if (idRaw == null || idRaw.trim().isEmpty()) {
+            response.sendRedirect(request.getContextPath() + "/checkout");
+            return;
+        }
+
+        int addressId = Integer.parseInt(idRaw);
+
+        boolean wasDefault = dao.isDefaultAddress(addressId, user.getId());
+        boolean deleted = dao.deleteAddress(addressId, user.getId());
+
+        if (deleted && wasDefault && dao.hasAnyAddress(user.getId())) {
+            dao.setNewestAddressAsDefault(user.getId());
+        }
+
+        response.sendRedirect(request.getContextPath() + "/checkout");
+    }
     private void handleAdd(HttpServletRequest request, HttpServletResponse response)
             throws IOException {
 
