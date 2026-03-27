@@ -189,41 +189,208 @@
             gap: 12px;
         }
 
-        .address-card {
-            border: 1px solid #eee;
-            padding: 12px;
+
+        .left, .right { width: 100%; }
+        .address-form { display: none; border: 1px solid #ccc; padding: 10px; margin-top: 10px; }
+        .address-section {
+            background: #fff;
+            padding: 20px;
+            border-radius: 16px;
+            margin-bottom: 20px;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.05);
+        }
+
+        .address-list {
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
+            margin-top: 12px;
+        }
+
+        .address-item {
+            display: flex;
+            align-items: flex-start;
+            gap: 10px;
+            padding: 14px 16px;
+            border: 1px solid #e9ecf5;
+            border-radius: 14px;
+            background: #fcfcff;
+            transition: all 0.25s ease;
+            line-height: 1.6;
+        }
+
+        .address-item:hover {
+            border-color: #4a6cf7;
+            background: #f7f9ff;
+            transform: translateY(-1px);
+        }
+
+        .address-item strong {
+            flex-shrink: 0;
+            font-size: 12px;
+            font-weight: 600;
+            color: #fff;
+            background: linear-gradient(45deg, #4a6cf7, #6f8cff);
+            padding: 4px 10px;
+            border-radius: 999px;
+            min-width: fit-content;
+        }
+
+        .address-item span {
+            color: #2f3542;
+            font-size: 14px;
+            word-break: break-word;
+        }
+
+        .address-list p {
+            margin: 0;
+            color: #888;
+            font-style: italic;
+        }
+
+        .btn-add {
+            background: linear-gradient(45deg, #ff4d4f, #ff7875);
+            color: #fff;
+            border: none;
+            padding: 8px 12px;
             border-radius: 10px;
             cursor: pointer;
-            transition: 0.2s;
+            font-size: 13px;
+            font-weight: 500;
+            transition: 0.25s ease;
         }
 
-        .address-card:hover {
-            border-color: #ff4d4f;
+        .btn-add:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 6px 16px rgba(255, 77, 79, 0.25);
+        }
+        .address-form {
+            background: #ffffff;
+            padding: 20px;
+            border-radius: 16px;
+            margin-top: 16px;
+            border: 1px solid #e9ecf5;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.05);
+            max-width: 500px;
+            animation: fadeIn 0.3s ease;
         }
 
-        .address-card.active {
-            border: 2px solid #ff4d4f;
-            background: #fff1f0;
+        /* Label */
+        .address-form .form-label {
+            font-size: 13px;
+            font-weight: 600;
+            color: #2f3542;
+            margin-bottom: 6px;
         }
 
-        .badge-default {
-            background: #ff4d4f;
-            color: #fff;
-            padding: 2px 8px;
-            margin-left: 10px;
-            border-radius: 6px;
+        /* Input + Select */
+        .address-form .form-control,
+        .address-form .form-select {
+            width: 100%;
+            padding: 10px 12px;
+            border-radius: 10px;
+            border: 1px solid #dcdfe6;
+            font-size: 14px;
+            transition: all 0.2s ease;
+            background: #fff;
+        }
+
+        /* Focus effect */
+        .address-form .form-control:focus,
+        .address-form .form-select:focus {
+            border-color: #4a6cf7;
+            box-shadow: 0 0 0 3px rgba(74, 108, 247, 0.15);
+            outline: none;
+        }
+
+        /* Disabled select */
+        .address-form select:disabled {
+            background: #f5f6fa;
+            cursor: not-allowed;
+        }
+
+        /* Error message */
+        .address-form .text-danger {
+            color: #ff4d4f;
             font-size: 12px;
+            margin-top: 4px;
         }
 
-        .address-actions button {
-            background: none;
-            border: none;
-            color: #555;
-            margin-left: 10px;
+        /* Checkbox */
+        .address-form .form-check {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .address-form .form-check-input {
+            width: 16px;
+            height: 16px;
             cursor: pointer;
         }
-        .left, .right { width: 50%; }
-        .address-form { display: none; border: 1px solid #ccc; padding: 10px; margin-top: 10px; }
+
+        .address-form .form-check-label {
+            font-size: 13px;
+            color: #444;
+            cursor: pointer;
+        }
+
+        /* Button group */
+        .address-form .d-flex {
+            display: flex;
+            gap: 10px;
+            margin-top: 10px;
+        }
+
+        /* Save button */
+        .address-form .btn-primary {
+            background: linear-gradient(45deg, #4a6cf7, #6f8cff);
+            border: none;
+            color: #fff;
+            padding: 10px 16px;
+            border-radius: 10px;
+            font-size: 14px;
+            cursor: pointer;
+            transition: 0.25s ease;
+        }
+
+        .address-form .btn-primary:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 6px 16px rgba(74, 108, 247, 0.3);
+        }
+
+        /* Cancel button */
+        .address-form .btn-secondary {
+            background: #f1f3f9;
+            border: none;
+            color: #555;
+            padding: 10px 16px;
+            border-radius: 10px;
+            font-size: 14px;
+            cursor: pointer;
+            transition: 0.25s ease;
+        }
+
+        .address-form .btn-secondary:hover {
+            background: #e4e7f2;
+        }
+
+        /* spacing */
+        .mb-3 {
+            margin-bottom: 14px;
+        }
+
+        /* animation */
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(8px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
     </style>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 </head>
@@ -335,55 +502,85 @@
 
 
                 <div class="info-row">
-                    <span>Địa chỉ giao hàng${size}</span>
+                    <span>Địa chỉ giao hàng</span>
                     <button type="button" class="btn-add" onclick="toggleForm()">+ Thêm địa chỉ mới</button>
                 </div>
 
                 <div id="addressList" class="address-list">
-                    <c:forEach var="addr" items="${addressList}">
-                        <c:if test="${addr.defaultt}">
-                            <p>${addr.address}, ${addr.ward}, ${addr.district}, ${addr.province}</p>
-                        </c:if>
-                    </c:forEach>
-
-                    <form method="get" action="addresses">
-                        <select name="defaultId" onchange="this.form.submit()">
-                            <option value="">Chọn địa chỉ</option>
+                    <c:choose>
+                        <c:when test="${not empty addressList}">
                             <c:forEach var="addr" items="${addressList}">
-                                <c:if test="${!addr.defaultt}">
-                                    <option value="${addr.id}">${addr.address}, ${addr.ward}, ${addr.district}, ${addr.province}</option>
-                                </c:if>
+                                <div class="address-item">
+                                    <c:if test="${addr.defaultt}">
+                                        <strong>Mặc định</strong>
+                                    </c:if>
+                                    <span>
+                        ${addr.address}, ${addr.ward}, ${addr.district}, ${addr.province}
+                    </span>
+                                </div>
                             </c:forEach>
-                        </select>
-                    </form>
+                        </c:when>
+                        <c:otherwise>
+                            <p>Chưa có địa chỉ nào.</p>
+                        </c:otherwise>
+                    </c:choose>
                 </div>
 
-<%--                form địa chỉ--%>
                 <div class="right">
-                    <form id="addressForm" class="address-form" method="post" action="addresses">
-                        <label>Tỉnh/Thành:</label>
-                        <select id="province" name="province" onchange="populateDistrict()">
-                            <c:forEach var="p" items="${['Hà Nội','Hồ Chí Minh']}">
-                                <option value="${p}">${p}</option>
-                            </c:forEach>
-                        </select><br><br>
+                    <form id="addressForm"
+                          class="address-form"
+                          method="post"
+                          action="${pageContext.request.contextPath}/addresses"
+                          style="display:none;"
+                          onsubmit="return validateAddressForm();">
 
-                        <label>Quận/Huyện:</label>
-                        <select id="district" name="district" onchange="populateWard()"></select><br><br>
+                        <div class="mb-3">
+                            <label for="province" class="form-label">Tỉnh/Thành:</label>
+                            <select id="province" name="province" class="form-select" required>
+                                <option value="">-- Chọn tỉnh/thành --</option>
+                            </select>
+                            <div class="text-danger small mt-1" id="provinceError"></div>
+                        </div>
 
-                        <label>Phường/Xã:</label>
-                        <select id="ward" name="ward"></select><br><br>
+                        <div class="mb-3">
+                            <label for="district" class="form-label">Quận/Huyện:</label>
+                            <select id="district" name="district" class="form-select" required disabled>
+                                <option value="">-- Chọn quận/huyện --</option>
+                            </select>
+                            <div class="text-danger small mt-1" id="districtError"></div>
+                        </div>
 
-                        <label>Chi tiết:</label>
-                        <input type="text" name="addressDetail" required><br><br>
+                        <div class="mb-3">
+                            <label for="ward" class="form-label">Phường/Xã:</label>
+                            <select id="ward" name="ward" class="form-select" required disabled>
+                                <option value="">-- Chọn phường/xã --</option>
+                            </select>
+                            <div class="text-danger small mt-1" id="wardError"></div>
+                        </div>
 
-                        <label>Đặt làm mặc định:</label>
-                        <input type="checkbox" name="isDefault"><br><br>
+                        <div class="mb-3">
+                            <label for="addressDetail" class="form-label">Chi tiết:</label>
+                            <input type="text"
+                                   id="addressDetail"
+                                   name="addressDetail"
+                                   class="form-control"
+                                   maxlength="255"
+                                   placeholder="Số nhà, tên đường..."
+                                   required>
+                            <div class="text-danger small mt-1" id="addressDetailError"></div>
+                        </div>
 
-                        <button type="submit">Lưu</button>
+                        <div class="form-check mb-3">
+                            <input type="checkbox" id="isDefault" name="isDefault" value="true" class="form-check-input">
+                            <label for="isDefault" class="form-check-label">Đặt làm mặc định</label>
+                        </div>
+
+                        <div class="d-flex gap-2">
+                            <button type="submit" class="btn btn-primary">Lưu</button>
+                            <button type="button" class="btn btn-secondary" onclick="toggleForm(false)">Đóng</button>
+                        </div>
                     </form>
                 </div>
-            </div>
 
 
 
@@ -428,106 +625,224 @@
 
 <script>
 
-    // Mock dữ liệu tỉnh/quận/phường Việt Nam
-    const data = {
-        "Hà Nội": {
-            "Quận Hoàn Kiếm": ["Phường Hàng Trống", "Phường Hàng Bạc"],
-            "Quận Ba Đình": ["Phường Điện Biên", "Phường Trúc Bạch"]
-        },
-        "Hồ Chí Minh": {
-            "Quận 1": ["Phường Bến Nghé", "Phường Tân Định"],
-            "Quận 3": ["Phường Võ Thị Sáu", "Phường Nguyễn Thái Bình"]
-        }
-    };
 
-    function populateDistrict() {
-        const province = document.getElementById("province").value;
+        // Dùng v1 để khớp cấu trúc tỉnh -> quận/huyện -> phường/xã
+        const API_BASE = "https://provinces.open-api.vn/api/v1";
+
+        let provincesLoaded = false;
+
+        function clearAddressErrors() {
+        document.getElementById("provinceError").textContent = "";
+        document.getElementById("districtError").textContent = "";
+        document.getElementById("wardError").textContent = "";
+        document.getElementById("addressDetailError").textContent = "";
+    }
+
+        function resetAddressFormOptions() {
+        const provinceSelect = document.getElementById("province");
         const districtSelect = document.getElementById("district");
-        districtSelect.innerHTML = "";
-        for (let d in data[province]) {
-            districtSelect.add(new Option(d, d));
-        }
-        populateWard();
-    }
-
-    function populateWard() {
-        const province = document.getElementById("province").value;
-        const district = document.getElementById("district").value;
         const wardSelect = document.getElementById("ward");
-        wardSelect.innerHTML = "";
-        data[province][district].forEach(w => {
-            wardSelect.add(new Option(w, w));
-        });
+
+        if (!provinceSelect || !districtSelect || !wardSelect) return;
+
+        districtSelect.innerHTML = '<option value="">-- Chọn quận/huyện --</option>';
+        wardSelect.innerHTML = '<option value="">-- Chọn phường/xã --</option>';
+        districtSelect.disabled = true;
+        wardSelect.disabled = true;
     }
 
-    function toggleForm() {
+        async function toggleForm(forceShow) {
         const form = document.getElementById("addressForm");
-        form.style.display = form.style.display === "none" ? "block" : "none";
+        if (!form) return;
+
+        const shouldShow = (typeof forceShow === "boolean")
+        ? forceShow
+        : (form.style.display === "none" || form.style.display === "");
+
+        form.style.display = shouldShow ? "block" : "none";
+
+        if (shouldShow && !provincesLoaded) {
+        await loadProvinces();
+    }
     }
 
-    <%--function addAddress() {--%>
-    <%--    const fullname = document.getElementById("fullname").value;--%>
-    <%--    const phone = document.getElementById("phone").value;--%>
-    <%--    const address = document.getElementById("address").value;--%>
-    <%--    const isDefault = document.getElementById("isDefault").checked;--%>
+        async function loadProvinces() {
+        const provinceSelect = document.getElementById("province");
+        if (!provinceSelect) return;
 
-    <%--    fetch('/user/address/add', {--%>
-    <%--        method: 'POST',--%>
-    <%--        headers: {'Content-Type': 'application/x-www-form-urlencoded'},--%>
-    <%--        body: `fullname=${fullname}&phone=${phone}&address=${address}&isDefault=${isDefault}`--%>
-    <%--    }).then(() => location.reload());--%>
-    <%--}--%>
+        provinceSelect.disabled = true;
+        provinceSelect.innerHTML = '<option value="">Đang tải tỉnh/thành...</option>';
+        resetAddressFormOptions();
 
-    <%--function selectAddress(id, element) {--%>
-    <%--    fetch("/user/address/select", {--%>
-    <%--        method: "POST",--%>
-    <%--        headers: {--%>
-    <%--            "Content-Type": "application/x-www-form-urlencoded"--%>
-    <%--        },--%>
-    <%--        body: "id=" + id--%>
-    <%--    })--%>
-    <%--        .then(res => res.text())--%>
-    <%--        .then(data => {--%>
-    <%--            // remove active tất cả--%>
-    <%--            document.querySelectorAll('.address-card')--%>
-    <%--                .forEach(el => el.classList.remove('active'));--%>
+        try {
+        const res = await fetch(API_BASE + "/p/");
+        if (!res.ok) {
+        throw new Error("HTTP " + res.status);
+    }
 
-    <%--            // add active cái được chọn--%>
-    <%--            element.classList.add('active');--%>
-    <%--        });--%>
-    <%--}--%>
+        const provinces = await res.json();
 
-    <%--function deleteAddress(id) {--%>
-    <%--    fetch("/user/address/delete", {--%>
-    <%--        method: "POST",--%>
-    <%--        headers: {--%>
-    <%--            "Content-Type": "application/x-www-form-urlencoded"--%>
-    <%--        },--%>
-    <%--        body: "id=" + id--%>
-    <%--    })--%>
-    <%--        .then(res => res.json())--%>
-    <%--        .then(data => {--%>
-    <%--            renderAddress(data.addressList);--%>
-    <%--            showToast("Đã xóa");--%>
-    <%--        });--%>
-    <%--}--%>
+        provinceSelect.innerHTML = '<option value="">-- Chọn tỉnh/thành --</option>';
 
-    <%--function renderAddress(list) {--%>
-    <%--    let html = "";--%>
+        provinces.forEach(function (p) {
+        const option = document.createElement("option");
+        option.value = p.name;
+        option.textContent = p.name;
+        option.dataset.code = p.code;
+        provinceSelect.appendChild(option);
+    });
 
-    <%--    list.forEach(addr => {--%>
-    <%--        html += `--%>
-    <%--    <div class="address-card ${addr.isDefault ? 'active' : ''}" onclick="selectAddress(${addr.id})">--%>
-    <%--        <div>${addr.address} ${addr.isDefault ? '<span class="badge-default">Mặc định</span>' : ''}</div>--%>
-    <%--        <div>--%>
-    <%--            <button onclick="event.stopPropagation(); deleteAddress(${addr.id})">Xóa</button>--%>
-    <%--        </div>--%>
-    <%--    </div>--%>
-    <%--    `;--%>
-    <%--    });--%>
+        provinceSelect.disabled = false;
+        provincesLoaded = true;
+    } catch (e) {
+        console.error("Lỗi load tỉnh/thành:", e);
+        provinceSelect.innerHTML = '<option value="">Không tải được tỉnh/thành</option>';
+        alert("Không tải được danh sách tỉnh/thành. Vui lòng thử lại.");
+    }
+    }
 
-    <%--    document.getElementById("addressList").innerHTML = html;--%>
-    <%--}--%>
+        async function loadDistricts(provinceCode) {
+        const districtSelect = document.getElementById("district");
+        const wardSelect = document.getElementById("ward");
+
+        districtSelect.disabled = true;
+        wardSelect.disabled = true;
+        districtSelect.innerHTML = '<option value="">Đang tải quận/huyện...</option>';
+        wardSelect.innerHTML = '<option value="">-- Chọn phường/xã --</option>';
+
+        if (!provinceCode) {
+        districtSelect.innerHTML = '<option value="">-- Chọn quận/huyện --</option>';
+        return;
+    }
+
+        try {
+        const res = await fetch(API_BASE + "/p/" + provinceCode + "?depth=2");
+        if (!res.ok) {
+        throw new Error("HTTP " + res.status);
+    }
+
+        const province = await res.json();
+        districtSelect.innerHTML = '<option value="">-- Chọn quận/huyện --</option>';
+
+        if (province.districts && province.districts.length > 0) {
+        province.districts.forEach(function (d) {
+        const option = document.createElement("option");
+        option.value = d.name;
+        option.textContent = d.name;
+        option.dataset.code = d.code;
+        districtSelect.appendChild(option);
+    });
+        districtSelect.disabled = false;
+    } else {
+        districtSelect.innerHTML = '<option value="">Không có quận/huyện</option>';
+    }
+    } catch (e) {
+        console.error("Lỗi load quận/huyện:", e);
+        districtSelect.innerHTML = '<option value="">Không tải được quận/huyện</option>';
+        alert("Không tải được danh sách quận/huyện. Vui lòng thử lại.");
+    }
+    }
+
+        async function loadWards(districtCode) {
+        const wardSelect = document.getElementById("ward");
+        wardSelect.disabled = true;
+        wardSelect.innerHTML = '<option value="">Đang tải phường/xã...</option>';
+
+        if (!districtCode) {
+        wardSelect.innerHTML = '<option value="">-- Chọn phường/xã --</option>';
+        return;
+    }
+
+        try {
+        const res = await fetch(API_BASE + "/d/" + districtCode + "?depth=2");
+        if (!res.ok) {
+        throw new Error("HTTP " + res.status);
+    }
+
+        const district = await res.json();
+        wardSelect.innerHTML = '<option value="">-- Chọn phường/xã --</option>';
+
+        if (district.wards && district.wards.length > 0) {
+        district.wards.forEach(function (w) {
+        const option = document.createElement("option");
+        option.value = w.name;
+        option.textContent = w.name;
+        option.dataset.code = w.code;
+        wardSelect.appendChild(option);
+    });
+        wardSelect.disabled = false;
+    } else {
+        wardSelect.innerHTML = '<option value="">Không có phường/xã</option>';
+    }
+    } catch (e) {
+        console.error("Lỗi load phường/xã:", e);
+        wardSelect.innerHTML = '<option value="">Không tải được phường/xã</option>';
+        alert("Không tải được danh sách phường/xã. Vui lòng thử lại.");
+    }
+    }
+
+        function validateAddressForm() {
+        clearAddressErrors();
+
+        const province = document.getElementById("province").value.trim();
+        const district = document.getElementById("district").value.trim();
+        const ward = document.getElementById("ward").value.trim();
+        const addressDetail = document.getElementById("addressDetail").value.trim();
+
+        let isValid = true;
+
+        if (!province) {
+        document.getElementById("provinceError").textContent = "Vui lòng chọn tỉnh/thành.";
+        isValid = false;
+    }
+
+        if (!district) {
+        document.getElementById("districtError").textContent = "Vui lòng chọn quận/huyện.";
+        isValid = false;
+    }
+
+        if (!ward) {
+        document.getElementById("wardError").textContent = "Vui lòng chọn phường/xã.";
+        isValid = false;
+    }
+
+        if (!addressDetail) {
+        document.getElementById("addressDetailError").textContent = "Vui lòng nhập địa chỉ chi tiết.";
+        isValid = false;
+    } else if (addressDetail.length < 5) {
+        document.getElementById("addressDetailError").textContent = "Địa chỉ chi tiết phải có ít nhất 5 ký tự.";
+        isValid = false;
+    } else if (addressDetail.length > 255) {
+        document.getElementById("addressDetailError").textContent = "Địa chỉ chi tiết không được vượt quá 255 ký tự.";
+        isValid = false;
+    }
+
+        return isValid;
+    }
+
+        document.addEventListener("DOMContentLoaded", function () {
+        const provinceSelect = document.getElementById("province");
+        const districtSelect = document.getElementById("district");
+
+        if (provinceSelect) {
+        provinceSelect.addEventListener("change", function () {
+        clearAddressErrors();
+        const selected = this.options[this.selectedIndex];
+        const provinceCode = selected ? selected.dataset.code : "";
+        loadDistricts(provinceCode);
+    });
+    }
+
+        if (districtSelect) {
+        districtSelect.addEventListener("change", function () {
+        clearAddressErrors();
+        const selected = this.options[this.selectedIndex];
+        const districtCode = selected ? selected.dataset.code : "";
+        loadWards(districtCode);
+    });
+    }
+    });
+
 
     function validateForm() {
         let phone = document.getElementById("phone").value;
@@ -561,11 +876,7 @@
         }
 
     }, 1000);
-    //
-    // function openAddAddressModal() {
-    //     var modal = new bootstrap.Modal(document.getElementById('addAddressModal'));
-    //     modal.show();
-    // }
+
 </script>
 <jsp:include page="/components/footer.jsp"/>
 <%--        modal cập nhật thông tin--%>
