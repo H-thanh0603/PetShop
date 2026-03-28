@@ -487,12 +487,12 @@
 
                 <div class="info-row">
                     <span>Tổng tiền hàng</span>
-                    <span>${totalAmount}₫</span>
+                    <span>${totalAmount} ₫</span>
                 </div>
 
                 <div class="info-row">
                     <span>Phí ship</span>
-                    <span>30.000 ₫</span>
+                    <span>${shippingFee} ₫</span>
                 </div>
 
                 <div class="info-row">
@@ -734,10 +734,17 @@
                 <textarea class="form-control mb-3" rows="3" placeholder="Nhập ghi chú cho shop..."></textarea>
 
                 <label>🎟 Mã giảm giá</label>
-                <div class="input-group mb-3">
-                    <input class="form-control" placeholder="Nhập mã coupon">
-                    <button class="btn btn-primary">Áp dụng</button>
-                </div>
+                <form action="${pageContext.request.contextPath}/checkout" method="post">
+                    <input type="hidden" name="action" value="applyCoupon">
+                    <div class="input-group mb-3">
+                        <input name="couponCode" class="form-control" placeholder="Nhập mã coupon">
+                        <button type="submit" class="btn btn-primary">Áp dụng</button>
+                    </div>
+                </form>
+
+                <c:if test="${not empty couponMessage}">
+                    <div class="alert alert-info">${couponMessage}</div>
+                </c:if>
 
                 <label class="mb-2">💳 Phương thức thanh toán</label>
 
