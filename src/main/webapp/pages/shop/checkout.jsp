@@ -564,26 +564,6 @@
                     <c:choose>
                         <c:when test="${not empty addressList}">
                             <c:forEach var="addr" items="${addressList}">
-                                <div class="address-item">
-                                    <c:if test="${addr.defaultt}">
-                                        <strong>Mặc định</strong>
-                                    </c:if>
-                                    <span>
-                                        ${addr.address}, ${addr.ward}, ${addr.district}, ${addr.province}
-                                    </span>
-                                    <button type="button"
-                                            class="btn btn-secondary"
-                                            onclick="openEditAddress(
-                                                    '${addr.id}',
-                                                    '${addr.province}',
-                                                    '${addr.district}',
-                                                    '${addr.ward}',
-                                                    '${addr.address}',
-                                                    '${addr.defaultt}'
-                                                    )">
-                                        Sửa
-                                    </button>
-                                </div>
                                 <div class="right">
                                     <form id="editAddressForm"
                                           class="address-form"
@@ -594,7 +574,9 @@
 
                                         <input type="hidden" name="_method" value="put">
                                         <input type="hidden" id="editAddressId" name="id">
-
+                                        <span>
+                                            <strong>Sửa Thông Tin</strong>
+                                        </span>
                                         <div class="mb-3">
                                             <label for="editProvince" class="form-label">Tỉnh/Thành:</label>
                                             <select id="editProvince" name="province" class="form-select" required>
@@ -637,6 +619,7 @@
                                             <button type="button" class="btn btn-secondary" onclick="toggleEditForm(false)">Đóng</button>
                                         </div>
                                     </form>
+
                                     <form id="deleteAddressForm"
                                           method="post"
                                           action="${pageContext.request.contextPath}/addresses"
@@ -644,6 +627,7 @@
                                         <input type="hidden" name="_method" value="delete">
                                         <input type="hidden" id="deleteAddressId" name="id">
                                     </form>
+
                                     <div id="deleteConfirmModal" class="delete-modal" style="display:none;">
                                         <div class="delete-modal-content">
                                             <h4>Xác nhận xóa</h4>
@@ -655,6 +639,27 @@
                                         </div>
                                     </div>
                                 </div>
+                                <div class="address-item">
+                                    <c:if test="${addr.defaultt}">
+                                        <strong>Mặc định</strong>
+                                    </c:if>
+                                    <span>
+                                        ${addr.address}, ${addr.ward}, ${addr.district}, ${addr.province}
+                                    </span>
+                                    <button type="button"
+                                            class="btn btn-secondary"
+                                            onclick="openEditAddress(
+                                                    '${addr.id}',
+                                                    '${addr.province}',
+                                                    '${addr.district}',
+                                                    '${addr.ward}',
+                                                    '${addr.address}',
+                                                    '${addr.defaultt}'
+                                                    )">
+                                        Sửa
+                                    </button>
+                                </div>
+
                             </c:forEach>
                         </c:when>
                         <c:otherwise>
@@ -669,7 +674,9 @@
                           action="${pageContext.request.contextPath}/addresses"
                           style="display:none;"
                           onsubmit="return validateAddressForm();">
-
+                        <span>
+                        <strong>Thêm Địa Chỉ</strong>
+                        </span>
                         <div class="mb-3">
                             <label for="province" class="form-label">Tỉnh/Thành:</label>
                             <select id="province" name="province" class="form-select" required>
@@ -717,6 +724,7 @@
                         </div>
                     </form>
                 </div>
+
 
 
 
@@ -863,102 +871,133 @@
         }
 
         function toggleEditForm(show) {
-        const form = document.getElementById("editAddressForm");
-        form.style.display = show ? "block" : "none";
-    }
+            const form = document.getElementById("editAddressForm");
+            if (!form) return;
+            form.style.display = show ? "block" : "none";
+        }
 
         async function loadEditProvinces(selectedProvince) {
-        const provinceSelect = document.getElementById("editProvince");
-        provinceSelect.innerHTML = '<option value="">-- Chọn tỉnh/thành --</option>';
+            const provinceSelect = document.getElementById("editProvince");
+            provinceSelect.innerHTML = '<option value="">-- Chọn tỉnh/thành --</option>';
+            provinceSelect.disabled = true;
 
-        const res = await fetch(API_BASE + "/p/");
-        const provinces = await res.json();
+            try {
+                const res = await fetch(API_BASE + "/p/");
+                if (!res.ok) throw new Error("HTTP " + res.status);
 
-        provinces.forEach(function (p) {
-        const option = document.createElement("option");
-        option.value = p.name;
-        option.textContent = p.name;
-        option.dataset.code = p.code;
+                const provinces = await res.json();
 
-        if (p.name === selectedProvince) {
-        option.selected = true;
-    }
+                provinces.forEach(p => {
+                    const option = document.createElement("option");
+                    option.value = p.name;
+                    option.textContent = p.name;
+                    option.dataset.code = p.code;
 
-        provinceSelect.appendChild(option);
-    });
-    }
+                    if (p.name === selectedProvince) {
+                        option.selected = true;
+                    }
+
+                    provinceSelect.appendChild(option);
+                });
+
+                provinceSelect.disabled = false;
+            } catch (e) {
+                console.error("Lỗi load tỉnh edit:", e);
+                provinceSelect.innerHTML = '<option value="">Không tải được tỉnh/thành</option>';
+            }
+        }
 
         async function loadEditDistricts(provinceCode, selectedDistrict) {
-        const districtSelect = document.getElementById("editDistrict");
-        const wardSelect = document.getElementById("editWard");
+            const districtSelect = document.getElementById("editDistrict");
+            const wardSelect = document.getElementById("editWard");
 
-        districtSelect.innerHTML = '<option value="">-- Chọn quận/huyện --</option>';
-        wardSelect.innerHTML = '<option value="">-- Chọn phường/xã --</option>';
-        districtSelect.disabled = true;
-        wardSelect.disabled = true;
+            districtSelect.innerHTML = '<option value="">-- Chọn quận/huyện --</option>';
+            wardSelect.innerHTML = '<option value="">-- Chọn phường/xã --</option>';
+            districtSelect.disabled = true;
+            wardSelect.disabled = true;
 
-        const res = await fetch(API_BASE + "/p/" + provinceCode + "?depth=2");
-        const province = await res.json();
+            if (!provinceCode) return;
 
-        province.districts.forEach(function (d) {
-        const option = document.createElement("option");
-        option.value = d.name;
-        option.textContent = d.name;
-        option.dataset.code = d.code;
+            try {
+                const res = await fetch(API_BASE + "/p/" + provinceCode + "?depth=2");
+                if (!res.ok) throw new Error("HTTP " + res.status);
 
-        if (d.name === selectedDistrict) {
-        option.selected = true;
-    }
+                const province = await res.json();
 
-        districtSelect.appendChild(option);
-    });
+                (province.districts || []).forEach(d => {
+                    const option = document.createElement("option");
+                    option.value = d.name;
+                    option.textContent = d.name;
+                    option.dataset.code = d.code;
 
-        districtSelect.disabled = false;
-    }
+                    if (d.name === selectedDistrict) {
+                        option.selected = true;
+                    }
+
+                    districtSelect.appendChild(option);
+                });
+
+                districtSelect.disabled = false;
+            } catch (e) {
+                console.error("Lỗi load quận/huyện edit:", e);
+                districtSelect.innerHTML = '<option value="">Không tải được quận/huyện</option>';
+            }
+        }
 
         async function loadEditWards(districtCode, selectedWard) {
-        const wardSelect = document.getElementById("editWard");
-        wardSelect.innerHTML = '<option value="">-- Chọn phường/xã --</option>';
-        wardSelect.disabled = true;
+            const wardSelect = document.getElementById("editWard");
+            wardSelect.innerHTML = '<option value="">-- Chọn phường/xã --</option>';
+            wardSelect.disabled = true;
 
-        const res = await fetch(API_BASE + "/d/" + districtCode + "?depth=2");
-        const district = await res.json();
+            if (!districtCode) return;
 
-        district.wards.forEach(function (w) {
-        const option = document.createElement("option");
-        option.value = w.name;
-        option.textContent = w.name;
-        option.dataset.code = w.code;
+            try {
+                const res = await fetch(API_BASE + "/d/" + districtCode + "?depth=2");
+                if (!res.ok) throw new Error("HTTP " + res.status);
 
-        if (w.name === selectedWard) {
-        option.selected = true;
-    }
+                const district = await res.json();
 
-        wardSelect.appendChild(option);
-    });
+                (district.wards || []).forEach(w => {
+                    const option = document.createElement("option");
+                    option.value = w.name;
+                    option.textContent = w.name;
+                    option.dataset.code = w.code;
 
-        wardSelect.disabled = false;
-    }
+                    if (w.name === selectedWard) {
+                        option.selected = true;
+                    }
+
+                    wardSelect.appendChild(option);
+                });
+
+                wardSelect.disabled = false;
+            } catch (e) {
+                console.error("Lỗi load phường/xã edit:", e);
+                wardSelect.innerHTML = '<option value="">Không tải được phường/xã</option>';
+            }
+        }
 
         async function openEditAddress(id, province, district, ward, address, isDefault) {
-        document.getElementById("editAddressId").value = id;
-        document.getElementById("editAddressDetail").value = address;
-        document.getElementById("editIsDefault").checked = (isDefault === 'true');
+            document.getElementById("editAddressId").value = id;
+            document.getElementById("editAddressDetail").value = address;
+            document.getElementById("editIsDefault").checked = (isDefault === "true");
 
-        toggleEditForm(true);
+            toggleEditForm(true);
 
-        await loadEditProvinces(province);
+            await loadEditProvinces(province);
 
-        const provinceSelect = document.getElementById("editProvince");
-        const provinceCode = provinceSelect.options[provinceSelect.selectedIndex].dataset.code;
+            const provinceSelect = document.getElementById("editProvince");
+            const provinceOption = provinceSelect.options[provinceSelect.selectedIndex];
+            const provinceCode = provinceOption ? provinceOption.dataset.code : "";
 
-        await loadEditDistricts(provinceCode, district);
+            await loadEditDistricts(provinceCode, district);
 
-        const districtSelect = document.getElementById("editDistrict");
-        const districtCode = districtSelect.options[districtSelect.selectedIndex].dataset.code;
+            const districtSelect = document.getElementById("editDistrict");
+            const districtOption = districtSelect.options[districtSelect.selectedIndex];
+            const districtCode = districtOption ? districtOption.dataset.code : "";
 
-        await loadEditWards(districtCode, ward);
-    }
+            await loadEditWards(districtCode, ward);
+        }
         function validateAddressForm() {
             clearAddressErrors();
 
