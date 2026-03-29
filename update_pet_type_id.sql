@@ -5,6 +5,9 @@ USE `petvaccine`;
 -- Dựa trên category để gán đúng loại thú cưng
 -- =============================================
 
+-- Tắt safe update mode
+SET SQL_SAFE_UPDATES = 0;
+
 -- Lấy ID của pet_types
 SET @dog_id = (SELECT id FROM pet_types WHERE code = 'dog' LIMIT 1);
 SET @cat_id = (SELECT id FROM pet_types WHERE code = 'cat' LIMIT 1);
@@ -16,6 +19,9 @@ WHERE category LIKE '%Chó%' OR category LIKE '%cho chó%' OR category LIKE '%Ch
 -- Cập nhật sản phẩm MÈO (category chứa "Mèo")
 UPDATE products SET pet_type_id = @cat_id 
 WHERE category LIKE '%Mèo%' OR category LIKE '%cho mèo%' OR category LIKE '%Cho Mèo%';
+
+-- Bật lại safe update mode
+SET SQL_SAFE_UPDATES = 1;
 
 -- Kiểm tra kết quả
 SELECT 
