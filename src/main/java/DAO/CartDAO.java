@@ -76,17 +76,28 @@ public class CartDAO {
     }
     
     // Cập nhật số lượng cụ thể
-    public void updateCartQuantity(int userId, int productId, int newQuantity) {
+    public boolean updateCartQuantity(int userId, int productId, int newQuantity) {
         String query = "UPDATE cart SET quantity = ? WHERE user_id = ? AND product_id = ?";
+
         try (Connection conn = new DBContext().getConnection();
              PreparedStatement ps = conn.prepareStatement(query)) {
+
+            // fix quantity < 1
+            if (newQuantity < 1) {
+                newQuantity = 1;
+            }
+
             ps.setInt(1, newQuantity);
             ps.setInt(2, userId);
             ps.setInt(3, productId);
-            ps.executeUpdate();
+
+            int rows = ps.executeUpdate();
+            return rows > 0;
+
         } catch (Exception e) {
             e.printStackTrace();
         }
+        return false;
     }
     
     // Xóa toàn bộ giỏ hàng của user
@@ -148,19 +159,6 @@ public class CartDAO {
         
         for (Map.Entry<Integer, CartItem> entry : sessionCart.entrySet()) {
             addToCart(userId, entry.getKey(), entry.getValue().getQuantity());
-        }
-    }
-
-    public void updateQuantity(int id, int productId, int quantity) {
-        String query = "UPDATE cart SET quantity = ? WHERE user_id = ? AND product_id = ?";
-        try (Connection conn = new DBContext().getConnection();
-             PreparedStatement ps = conn.prepareStatement(query)) {
-            ps.setInt(1, quantity);
-            ps.setInt(2, id);
-            ps.setInt(3, productId);
-            ps.executeUpdate();
-        } catch (Exception e) {
-            e.printStackTrace();
         }
     }
 }
