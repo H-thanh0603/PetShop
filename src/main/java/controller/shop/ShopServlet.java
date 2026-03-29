@@ -18,6 +18,7 @@ import Model.PetType;
 @WebServlet("/shop")
 public class ShopServlet extends HttpServlet {
     private static final long serialVersionUID = 1L;
+    private static final int SHOP_SECTION_PAGE_SIZE = 12;
 
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
@@ -32,6 +33,9 @@ public class ShopServlet extends HttpServlet {
         String priceRange = request.getParameter("priceRange");
         String discountOnly = request.getParameter("discountOnly");
         String pet = request.getParameter("pet"); // dog, cat, fish, bird, ...
+        int popularPage = parsePage(request.getParameter("popularPage"));
+        int salePage = parsePage(request.getParameter("salePage"));
+        int catalogPage = parsePage(request.getParameter("catalogPage"));
 
         // Lấy danh sách loại thú cưng active để hiển thị trên navbar/menu
         List<PetType> activePetTypes = petTypeDao.getActivePetTypes();
@@ -117,13 +121,9 @@ public class ShopServlet extends HttpServlet {
             }
         }
 
-        // Lấy sản phẩm giảm giá
-        List<Product> discountProducts = productDao.getDiscountedProductsList();
-
         // Đẩy dữ liệu sang JSP
         request.setAttribute("products", products);
         request.setAttribute("categories", categories);
-        request.setAttribute("discountProducts", discountProducts);
         request.setAttribute("selectedCategory", category);
         request.setAttribute("searchKeyword", search);
         request.setAttribute("selectedSort", sort);
@@ -133,12 +133,28 @@ public class ShopServlet extends HttpServlet {
         request.setAttribute("selectedPetType", selectedPetType);
         request.setAttribute("totalProducts", products.size());
 
-        // Chọn JSP phù hợp
         if (pet == null && category == null && search == null && priceRange == null && discountOnly == null) {
-            // Trang chính: sản phẩm nổi bật + danh mục
+            List<Product> popularProducts = productDao.getPopularProductsPage(popularPage, SHOP_SECTION_PAGE_SIZE);
+            List<Product> discountProducts = productDao.getDiscountedProductsPage(salePage, SHOP_SECTION_PAGE_SIZE);
+            List<Product> catalogProducts = productDao.getAllProductsPage(catalogPage, SHOP_SECTION_PAGE_SIZE);
+
+            int popularTotal = productDao.getTotalPopularProductsCount();
+            int discountTotal = productDao.getTotalDiscountedProductsCount();
+            int catalogTotal = productDao.getTotalProductsCount();
+
+            request.setAttribute("popularProducts", popularProducts);
+            request.setAttribute("discountProducts", discountProducts);
+            request.setAttribute("catalogProducts", catalogProducts);
+            request.setAttribute("popularPage", popularPage);
+            request.setAttribute("salePage", salePage);
+            request.setAttribute("catalogPage", catalogPage);
+            request.setAttribute("popularTotalPages", getTotalPages(popularTotal, SHOP_SECTION_PAGE_SIZE));
+            request.setAttribute("saleTotalPages", getTotalPages(discountTotal, SHOP_SECTION_PAGE_SIZE));
+            request.setAttribute("catalogTotalPages", getTotalPages(catalogTotal, SHOP_SECTION_PAGE_SIZE));
+            request.setAttribute("totalProducts", catalogTotal);
             request.getRequestDispatcher("/pages/shop/shop.jsp").forward(request, response);
         } else {
-            // Trang lọc theo pet/category/search
+            request.setAttribute("discountProducts", productDao.getDiscountedProductsList());
             request.getRequestDispatcher("/pages/shop/shop-pet.jsp").forward(request, response);
         }
     }
@@ -146,5 +162,19 @@ public class ShopServlet extends HttpServlet {
     protected void doPost(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
         doGet(request, response);
+    }
+
+    private int parsePage(String value) {
+        try {
+            int page = Integer.parseInt(value);
+            return Math.max(page, 1);
+        } catch (Exception e) {
+            return 1;
+        }
+    }
+
+    private int getTotalPages(int totalItems, int pageSize) {
+        if (totalItems <= 0) return 1;
+        return (int) Math.ceil((double) totalItems / pageSize);
     }
 }

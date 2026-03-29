@@ -11,6 +11,23 @@ import Model.Product;
 
 public class ProductDAO {
 
+    private Product mapProduct(ResultSet rs) throws Exception {
+        String desc = rs.getString("description");
+        if (desc == null) desc = "";
+        String cat = rs.getString("category");
+        if (cat == null) cat = "";
+
+        return new Product(
+            rs.getInt("id"),
+            rs.getString("name"),
+            rs.getString("image"),
+            rs.getDouble("price"),
+            rs.getInt("discount"),
+            desc,
+            cat
+        );
+    }
+
     // 1. Lấy danh sách tất cả (Cho trang Shop)
     public List<Product> getAllProducts() {
         List<Product> list = new ArrayList<>();
@@ -22,20 +39,7 @@ public class ProductDAO {
             ResultSet rs = ps.executeQuery();
 
             while (rs.next()) {
-                String desc = rs.getString("description");
-                if (desc == null) desc = ""; 
-                String cat = rs.getString("category");
-                if (cat == null) cat = "";
-
-                list.add(new Product(
-                    rs.getInt("id"),
-                    rs.getString("name"),
-                    rs.getString("image"),
-                    rs.getDouble("price"),
-                    rs.getInt("discount"),
-                    desc,
-                    cat
-                ));
+                list.add(mapProduct(rs));
             }
             conn.close();
         } catch (Exception e) {
@@ -55,14 +59,7 @@ public class ProductDAO {
             ps.setString(1, petTypeCode);
             ResultSet rs = ps.executeQuery();
             while (rs.next()) {
-                String desc = rs.getString("description");
-                if (desc == null) desc = "";
-                String cat = rs.getString("category");
-                if (cat == null) cat = "";
-                list.add(new Product(
-                    rs.getInt("id"), rs.getString("name"), rs.getString("image"),
-                    rs.getDouble("price"), rs.getInt("discount"), desc, cat
-                ));
+                list.add(mapProduct(rs));
             }
         } catch (Exception e) {
             e.printStackTrace();
@@ -79,14 +76,7 @@ public class ProductDAO {
             ps.setString(1, "%" + petTypeName + "%");
             ResultSet rs = ps.executeQuery();
             while (rs.next()) {
-                String desc = rs.getString("description");
-                if (desc == null) desc = "";
-                String cat = rs.getString("category");
-                if (cat == null) cat = "";
-                list.add(new Product(
-                    rs.getInt("id"), rs.getString("name"), rs.getString("image"),
-                    rs.getDouble("price"), rs.getInt("discount"), desc, cat
-                ));
+                list.add(mapProduct(rs));
             }
         } catch (Exception e) {
             e.printStackTrace();
@@ -165,12 +155,7 @@ public class ProductDAO {
             ps.setString(1, category);
             ResultSet rs = ps.executeQuery();
             while (rs.next()) {
-                String desc = rs.getString("description");
-                if (desc == null) desc = "";
-                list.add(new Product(
-                    rs.getInt("id"), rs.getString("name"), rs.getString("image"),
-                    rs.getDouble("price"), rs.getInt("discount"), desc, category
-                ));
+                list.add(mapProduct(rs));
             }
         } catch (Exception e) {
             e.printStackTrace();
@@ -189,14 +174,7 @@ public class ProductDAO {
             ps.setString(2, pattern);
             ResultSet rs = ps.executeQuery();
             while (rs.next()) {
-                String desc = rs.getString("description");
-                if (desc == null) desc = "";
-                String cat = rs.getString("category");
-                if (cat == null) cat = "";
-                list.add(new Product(
-                    rs.getInt("id"), rs.getString("name"), rs.getString("image"),
-                    rs.getDouble("price"), rs.getInt("discount"), desc, cat
-                ));
+                list.add(mapProduct(rs));
             }
         } catch (Exception e) {
             e.printStackTrace();
@@ -212,19 +190,105 @@ public class ProductDAO {
              PreparedStatement ps = conn.prepareStatement(query);
              ResultSet rs = ps.executeQuery()) {
             while (rs.next()) {
-                String desc = rs.getString("description");
-                if (desc == null) desc = "";
-                String cat = rs.getString("category");
-                if (cat == null) cat = "";
-                list.add(new Product(
-                    rs.getInt("id"), rs.getString("name"), rs.getString("image"),
-                    rs.getDouble("price"), rs.getInt("discount"), desc, cat
-                ));
+                list.add(mapProduct(rs));
             }
         } catch (Exception e) {
             e.printStackTrace();
         }
         return list;
+    }
+
+    public List<Product> getDiscountedProductsPage(int page, int size) {
+        List<Product> list = new ArrayList<>();
+        String query = "SELECT * FROM products WHERE discount > 0 ORDER BY discount DESC, id DESC LIMIT ? OFFSET ?";
+        try (Connection conn = DBContext.getConnection();
+             PreparedStatement ps = conn.prepareStatement(query)) {
+            ps.setInt(1, size);
+            ps.setInt(2, Math.max(0, (page - 1) * size));
+            ResultSet rs = ps.executeQuery();
+            while (rs.next()) {
+                list.add(mapProduct(rs));
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return list;
+    }
+
+    public int getTotalDiscountedProductsCount() {
+        String query = "SELECT COUNT(*) FROM products WHERE discount > 0";
+        try (Connection conn = DBContext.getConnection();
+             PreparedStatement ps = conn.prepareStatement(query);
+             ResultSet rs = ps.executeQuery()) {
+            if (rs.next()) return rs.getInt(1);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return 0;
+    }
+
+    public List<Product> getAllProductsPage(int page, int size) {
+        List<Product> list = new ArrayList<>();
+        String query = "SELECT * FROM products ORDER BY id DESC LIMIT ? OFFSET ?";
+        try (Connection conn = DBContext.getConnection();
+             PreparedStatement ps = conn.prepareStatement(query)) {
+            ps.setInt(1, size);
+            ps.setInt(2, Math.max(0, (page - 1) * size));
+            ResultSet rs = ps.executeQuery();
+            while (rs.next()) {
+                list.add(mapProduct(rs));
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return list;
+    }
+
+    public int getTotalProductsCount() {
+        String query = "SELECT COUNT(*) FROM products";
+        try (Connection conn = DBContext.getConnection();
+             PreparedStatement ps = conn.prepareStatement(query);
+             ResultSet rs = ps.executeQuery()) {
+            if (rs.next()) return rs.getInt(1);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return 0;
+    }
+
+    public List<Product> getPopularProductsPage(int page, int size) {
+        List<Product> list = new ArrayList<>();
+        String query = "SELECT p.*, COALESCE(SUM(oi.quantity), 0) AS total_sold " +
+                       "FROM products p " +
+                       "LEFT JOIN order_items oi ON oi.product_id = p.id " +
+                       "LEFT JOIN orders o ON o.id = oi.order_id AND o.status != 'Cancelled' " +
+                       "GROUP BY p.id " +
+                       "ORDER BY total_sold DESC, p.discount DESC, p.id DESC " +
+                       "LIMIT ? OFFSET ?";
+        try (Connection conn = DBContext.getConnection();
+             PreparedStatement ps = conn.prepareStatement(query)) {
+            ps.setInt(1, size);
+            ps.setInt(2, Math.max(0, (page - 1) * size));
+            ResultSet rs = ps.executeQuery();
+            while (rs.next()) {
+                list.add(mapProduct(rs));
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return list;
+    }
+
+    public int getTotalPopularProductsCount() {
+        String query = "SELECT COUNT(*) FROM products";
+        try (Connection conn = DBContext.getConnection();
+             PreparedStatement ps = conn.prepareStatement(query);
+             ResultSet rs = ps.executeQuery()) {
+            if (rs.next()) return rs.getInt(1);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return 0;
     }
 
     // 2. Lấy 1 sản phẩm theo ID (Cho trang Chi tiết)
