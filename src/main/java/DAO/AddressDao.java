@@ -252,7 +252,7 @@ public class AddressDao {
 
             ResultSet rs = ps.executeQuery();
             if (rs.next()) {
-                return rs.getBoolean("default");
+                return rs.getBoolean("defaultt");
             }
         } catch (Exception e) {
             e.printStackTrace();
