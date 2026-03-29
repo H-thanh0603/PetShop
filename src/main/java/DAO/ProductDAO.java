@@ -167,11 +167,31 @@ public class ProductDAO {
     public List<Product> searchProducts(String keyword) {
         List<Product> list = new ArrayList<>();
         String query = "SELECT * FROM products WHERE name LIKE ? OR description LIKE ?";
-        try (Connection conn = new DBContext().getConnection();
+        try (Connection conn = DBContext.getConnection();
              PreparedStatement ps = conn.prepareStatement(query)) {
             String pattern = "%" + keyword + "%";
             ps.setString(1, pattern);
             ps.setString(2, pattern);
+            ResultSet rs = ps.executeQuery();
+            while (rs.next()) {
+                list.add(mapProduct(rs));
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return list;
+    }
+    
+    // Tìm kiếm sản phẩm với giới hạn số lượng (cho autocomplete)
+    public List<Product> searchProductsLimit(String keyword, int limit) {
+        List<Product> list = new ArrayList<>();
+        String query = "SELECT * FROM products WHERE name LIKE ? OR description LIKE ? LIMIT ?";
+        try (Connection conn = DBContext.getConnection();
+             PreparedStatement ps = conn.prepareStatement(query)) {
+            String pattern = "%" + keyword + "%";
+            ps.setString(1, pattern);
+            ps.setString(2, pattern);
+            ps.setInt(3, limit);
             ResultSet rs = ps.executeQuery();
             while (rs.next()) {
                 list.add(mapProduct(rs));
@@ -371,19 +391,111 @@ public class ProductDAO {
             
             ps.setInt(1, id);
             return ps.executeUpdate() > 0;
+    // 7. Đếm sản phẩm đang giảm giá (Thống kê)
+    public int getDiscountedProducts() {
+        String query = "SELECT COUNT(*) FROM Products WHERE discount > 0";
+        try (Connection conn = DBContext.getConnection();
+             PreparedStatement ps = conn.prepareStatement(query);
+             ResultSet rs = ps.executeQuery()) {
+            
+            if (rs.next()) return rs.getInt(1);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return 0;
+    }
+    
+    // Giảm tồn kho khi đặt hàng
+    public boolean decreaseStock(int productId, int quantity) {
+        String query = "UPDATE products SET stock = stock - ? WHERE id = ? AND stock >= ?";
+        try (Connection conn = DBContext.getConnection();
+             PreparedStatement ps = conn.prepareStatement(query)) {
+            ps.setInt(1, quantity);
+            ps.setInt(2, productId);
+            ps.setInt(3, quantity);
+            return ps.executeUpdate() > 0;
         } catch (Exception e) {
             e.printStackTrace();
         }
         return false;
     }
     
-    // 6. Đếm tổng sản phẩm (Thống kê)
-    public int getTotalProducts() {
-        String query = "SELECT COUNT(*) FROM Products";
-        try (Connection conn = new DBContext().getConnection();
+    // Tăng tồn kho (khi hủy đơn)
+    public boolean increaseStock(int productId, int quantity) {
+        String query = "UPDATE products SET stock = stock + ? WHERE id = ?";
+        try (Connection conn = DBContext.getConnection();
+             PreparedStatement ps = conn.prepareStatement(query)) {
+            ps.setInt(1, quantity);
+            ps.setInt(2, productId);
+            return ps.executeUpdate() > 0;
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return false;
+    }
+    
+    // Lấy tồn kho của sản phẩm
+    public int getStock(int productId) {
+        String query = "SELECT stock FROM products WHERE id = ?";
+        try (Connection conn = DBContext.getConnection();
+             PreparedStatement ps = conn.prepareStatement(query)) {
+            ps.setInt(1, productId);
+            ResultSet rs = ps.executeQuery();
+            if (rs.next()) {
+                return rs.getInt("stock");
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return 0;
+    }
+    
+    // Cập nhật tồn kho
+    public boolean updateStock(int productId, int newStock) {
+        String query = "UPDATE products SET stock = ? WHERE id = ?";
+        try (Connection conn = DBContext.getConnection();
+             PreparedStatement ps = conn.prepareStatement(query)) {
+            ps.setInt(1, newStock);
+            ps.setInt(2, productId);
+            return ps.executeUpdate() > 0;
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return false;
+    }
+    
+    // Lấy sản phẩm sắp hết hàng (stock < threshold)
+    public List<Product> getLowStockProducts(int threshold) {
+        List<Product> list = new ArrayList<>();
+        String query = "SELECT * FROM products WHERE stock < ? AND stock > 0 ORDER BY stock ASC";
+        try (Connection conn = DBContext.getConnection();
+             PreparedStatement ps = conn.prepareStatement(query)) {
+            ps.setInt(1, threshold);
+            ResultSet rs = ps.executeQuery();
+            while (rs.next()) {
+                list.add(mapProduct(rs));
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return list;
+    }
+    
+    // Lấy sản phẩm hết hàng
+    public List<Product> getOutOfStockProducts() {
+        List<Product> list = new ArrayList<>();
+        String query = "SELECT * FROM products WHERE stock <= 0";
+        try (Connection conn = DBContext.getConnection();
              PreparedStatement ps = conn.prepareStatement(query);
              ResultSet rs = ps.executeQuery()) {
-            
+            while (rs.next()) {
+                list.add(mapProduct(rs));
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return list;
+    }       
             if (rs.next()) return rs.getInt(1);
         } catch (Exception e) {
             e.printStackTrace();
@@ -437,8 +549,42 @@ public class ProductDAO {
         return list;
     }
 
-    // 9. Phân trang danh sách sản phẩm
-    public List<Product> getProductsByPage (int index, int size){
+    // Giảm tồn kho khi đặt hàng
+    public boolean decreaseStock(int productId, int quantity) {
+        String query = "UPDATE products SET stock = stock - ? WHERE id = ? AND stock >= ?";
+        try (Connection conn = DBContext.getConnection();
+             PreparedStatement ps = conn.prepareStatement(query)) {
+            ps.setInt(1, quantity);
+            ps.setInt(2, productId);
+            ps.setInt(3, quantity);
+            return ps.executeUpdate() > 0;
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return false;
+    }
+    
+    // Tăng tồn kho khi hủy đơn
+    public boolean increaseStock(int productId, int quantity) {
+        String query = "UPDATE products SET stock = stock + ? WHERE id = ?";
+        try (Connection conn = DBContext.getConnection();
+             PreparedStatement ps = conn.prepareStatement(query)) {
+            ps.setInt(1, quantity);
+            ps.setInt(2, productId);
+            return ps.executeUpdate() > 0;
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return false;
+    }
+    
+    // Kiểm tra tồn kho
+    public int getStock(int productId) {
+        String query = "SELECT stock FROM products WHERE id = ?";
+        try (Connection conn = DBContext.getConnection();
+             PreparedStatement ps = conn.prepareStatement(query)) {
+            ps.setInt(1, productId);
+      
         List<Product> list = new ArrayList<>();
 
         String query = "SELECT * FROM products LIMIT ? OFFSET?";
