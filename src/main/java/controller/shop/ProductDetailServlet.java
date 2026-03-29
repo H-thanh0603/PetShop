@@ -39,9 +39,13 @@ public class ProductDetailServlet extends HttpServlet {
 
             ReviewDAO rDao = new ReviewDAO();
             List<Review> listReviews = rDao.getReviewsByProductId(id);
+            double avgRating = rDao.getAverageRating(id);
+            int reviewCount = rDao.countReviews(id);
             
             request.setAttribute("detail", p);
             request.setAttribute("listReviews", listReviews);
+            request.setAttribute("avgRating", avgRating);
+            request.setAttribute("reviewCount", reviewCount);
             
             List<Product> listRelated = pDao.getRelatedProducts(id); 
             request.setAttribute("relatedProducts", listRelated);
