@@ -3,30 +3,33 @@ package DAO;
 import java.sql.*;
 
 import Context.DBContext;
-import Model.FbAccount.Account;
 import Model.User;
+import Util.PasswordUtil;
 
 public class UserDAO {
     
-    // Kiểm tra đăng nhập bằng username
+    // Kiểm tra đăng nhập bằng username (hỗ trợ BCrypt)
     public User login(String username, String password) {
-        String query = "SELECT * FROM users WHERE username = ? AND password = ?";
-        try (Connection conn = new DBContext().getConnection();
+        String query = "SELECT * FROM users WHERE username = ?";
+        try (Connection conn = DBContext.getConnection();
              PreparedStatement ps = conn.prepareStatement(query)) {
             
             ps.setString(1, username);
-            ps.setString(2, password);
             
             try (ResultSet rs = ps.executeQuery()) {
                 if (rs.next()) {
-                    return new User(
-                        rs.getInt("id"),
-                        rs.getString("username"),
-                        rs.getString("password"),
-                        rs.getString("fullname"),
-                        rs.getString("email"),
-                        rs.getString("role")
-                    );
+                    String storedPassword = rs.getString("password");
+                    // Verify password với BCrypt
+                    if (PasswordUtil.verifyPassword(password, storedPassword)) {
+                        return new User(
+                            rs.getInt("id"),
+                            rs.getString("username"),
+                            storedPassword,
+                            rs.getString("fullname"),
+                            rs.getString("email"),
+                            rs.getString("role")
+                        );
+                    }
                 }
             }
         } catch (Exception e) {
@@ -35,25 +38,28 @@ public class UserDAO {
         return null;
     }
     
-    // Kiểm tra đăng nhập bằng email
+    // Kiểm tra đăng nhập bằng email (hỗ trợ BCrypt)
     public User loginByEmail(String email, String password) {
-        String query = "SELECT * FROM users WHERE email = ? AND password = ?";
-        try (Connection conn = new DBContext().getConnection();
+        String query = "SELECT * FROM users WHERE email = ?";
+        try (Connection conn = DBContext.getConnection();
              PreparedStatement ps = conn.prepareStatement(query)) {
             
             ps.setString(1, email);
-            ps.setString(2, password);
             
             try (ResultSet rs = ps.executeQuery()) {
                 if (rs.next()) {
-                    return new User(
-                        rs.getInt("id"),
-                        rs.getString("username"),
-                        rs.getString("password"),
-                        rs.getString("fullname"),
-                        rs.getString("email"),
-                        rs.getString("role")
-                    );
+                    String storedPassword = rs.getString("password");
+                    // Verify password với BCrypt
+                    if (PasswordUtil.verifyPassword(password, storedPassword)) {
+                        return new User(
+                            rs.getInt("id"),
+                            rs.getString("username"),
+                            storedPassword,
+                            rs.getString("fullname"),
+                            rs.getString("email"),
+                            rs.getString("role")
+                        );
+                    }
                 }
             }
         } catch (Exception e) {
@@ -62,26 +68,29 @@ public class UserDAO {
         return null;
     }
     
-    // Kiểm tra đăng nhập bằng email hoặc username
+    // Kiểm tra đăng nhập bằng email hoặc username (hỗ trợ BCrypt)
     public User loginByEmailOrUsername(String emailOrUsername, String password) {
-        String query = "SELECT * FROM users WHERE (email = ? OR username = ?) AND password = ?";
-        try (Connection conn = new DBContext().getConnection();
+        String query = "SELECT * FROM users WHERE email = ? OR username = ?";
+        try (Connection conn = DBContext.getConnection();
              PreparedStatement ps = conn.prepareStatement(query)) {
             
             ps.setString(1, emailOrUsername);
             ps.setString(2, emailOrUsername);
-            ps.setString(3, password);
             
             try (ResultSet rs = ps.executeQuery()) {
                 if (rs.next()) {
-                    return new User(
-                        rs.getInt("id"),
-                        rs.getString("username"),
-                        rs.getString("password"),
-                        rs.getString("fullname"),
-                        rs.getString("email"),
-                        rs.getString("role")
-                    );
+                    String storedPassword = rs.getString("password");
+                    // Verify password với BCrypt
+                    if (PasswordUtil.verifyPassword(password, storedPassword)) {
+                        return new User(
+                            rs.getInt("id"),
+                            rs.getString("username"),
+                            storedPassword,
+                            rs.getString("fullname"),
+                            rs.getString("email"),
+                            rs.getString("role")
+                        );
+                    }
                 }
             }
         } catch (Exception e) {
@@ -93,7 +102,7 @@ public class UserDAO {
     // Kiểm tra username đã tồn tại
     public boolean checkUsernameExists(String username) {
         String query = "SELECT * FROM users WHERE username = ?";
-        try (Connection conn = new DBContext().getConnection();
+        try (Connection conn = DBContext.getConnection();
              PreparedStatement ps = conn.prepareStatement(query)) {
             
             ps.setString(1, username);
@@ -106,14 +115,15 @@ public class UserDAO {
         return false;
     }
     
-    // Đăng ký user mới
+    // Đăng ký user mới (hash password với BCrypt)
     public boolean register(String username, String password, String fullname, String email) {
+        String hashedPassword = PasswordUtil.hashPassword(password);
         String query = "INSERT INTO users (username, password, fullname, email, role) VALUES (?, ?, ?, ?, 'user')";
-        try (Connection conn = new DBContext().getConnection();
+        try (Connection conn = DBContext.getConnection();
              PreparedStatement ps = conn.prepareStatement(query)) {
             
             ps.setString(1, username);
-            ps.setString(2, password);
+            ps.setString(2, hashedPassword);
             ps.setString(3, fullname);
             ps.setString(4, email);
             return ps.executeUpdate() > 0;
@@ -658,6 +668,37 @@ public class UserDAO {
             ps.setInt(4, id);
             ps.executeUpdate();
         }catch(Exception e){
+            e.printStackTrace();
+        }
+    }
+    
+    // Migrate mật khẩu cũ sang BCrypt (chạy một lần)
+    public void migratePasswordsToBCrypt() {
+        String selectQuery = "SELECT id, password FROM users WHERE password NOT LIKE '$2%'";
+        String updateQuery = "UPDATE users SET password = ? WHERE id = ?";
+        
+        try (Connection conn = DBContext.getConnection();
+             PreparedStatement selectPs = conn.prepareStatement(selectQuery);
+             ResultSet rs = selectPs.executeQuery()) {
+            
+            while (rs.next()) {
+                int userId = rs.getInt("id");
+                String plainPassword = rs.getString("password");
+                
+                // Bỏ qua password rỗng hoặc null
+                if (plainPassword == null || plainPassword.isEmpty() || plainPassword.equals("null")) {
+                    continue;
+                }
+                
+                String hashedPassword = PasswordUtil.hashPassword(plainPassword);
+                
+                try (PreparedStatement updatePs = conn.prepareStatement(updateQuery)) {
+                    updatePs.setString(1, hashedPassword);
+                    updatePs.setInt(2, userId);
+                    updatePs.executeUpdate();
+                }
+            }
+        } catch (Exception e) {
             e.printStackTrace();
         }
     }
