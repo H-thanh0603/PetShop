@@ -78,7 +78,7 @@
             </div>
         </c:if>
 <%--        form chỗ này--%>
-        <form action="${pageContext.request.contextPath}/checkout" method="get" id="checkoutForm">--%>
+        <form action="${pageContext.request.contextPath}/checkout" method="get" id="checkoutForm">
         <%-- Hiển thị giỏ hàng khi đã đăng nhập và có sản phẩm --%>
         <c:if test="${not empty sessionScope.user and not empty sessionScope.cart}">
             <div class="row">
@@ -160,55 +160,6 @@
         </form>
     </div>
 
-
-    <!-- Modal Thanh toán -->
-<%--    <div class="modal fade" id="checkoutModal" tabindex="-1" aria-hidden="true">--%>
-<%--        <div class="modal-dialog modal-dialog-centered">--%>
-<%--            <div class="modal-content">--%>
-<%--                <div class="modal-header">--%>
-<%--                    <h5 class="modal-title"><i class='bx bxs-truck'></i> Thông Tin Giao Hàng</h5>--%>
-<%--                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>--%>
-<%--                </div>--%>
-<%--                <div class="modal-body">--%>
-<%--                    <form action="${pageContext.request.contextPath}/checkout" method="post" id="checkoutForm">--%>
-<%--                        <div class="mb-3">--%>
-<%--                            <label class="form-label fw-bold">Họ và tên người nhận</label>--%>
-<%--                            <div class="input-group">--%>
-<%--                                <span class="input-group-text"><i class='bx bx-user'></i></span>--%>
-<%--                                <input type="text" class="form-control" name="fullname" --%>
-<%--                                       value="${sessionScope.user != null ? sessionScope.user.fullname : ''}" required placeholder="Nhập họ tên">--%>
-<%--                            </div>--%>
-<%--                        </div>--%>
-<%--                        <div class="mb-3">--%>
-<%--                            <label class="form-label fw-bold">Số điện thoại</label>--%>
-<%--                            <div class="input-group">--%>
-<%--                                <span class="input-group-text"><i class='bx bx-phone'></i></span>--%>
-<%--                                <input type="text" class="form-control" name="phone" required placeholder="Nhập số điện thoại">--%>
-<%--                            </div>--%>
-<%--                        </div>--%>
-<%--                        <div class="mb-3">--%>
-<%--                            <label class="form-label fw-bold">Địa chỉ giao hàng</label>--%>
-<%--                            <div class="input-group">--%>
-<%--                                <span class="input-group-text"><i class='bx bx-map'></i></span>--%>
-<%--                                <textarea class="form-control" name="address" rows="2" required placeholder="Số nhà, đường, phường/xã..."></textarea>--%>
-<%--                            </div>--%>
-<%--                        </div>--%>
-<%--                        <div class="mb-3">--%>
-<%--                            <label class="form-label fw-bold">Ghi chú (Tùy chọn)</label>--%>
-<%--                            <textarea class="form-control" name="note" rows="2" placeholder="Ví dụ: Giao giờ hành chính..."></textarea>--%>
-<%--                        </div>--%>
-<%--                        <input type="hidden" name="totalAmount" id="hiddenTotalAmount" value="${totalAmount}">--%>
-<%--                        <div class="d-grid gap-2">--%>
-<%--                            <button type="submit" class="btn btn-success fw-bold py-2">--%>
-<%--                                <i class='bx bx-check-circle'></i> XÁC NHẬN ĐẶT HÀNG--%>
-<%--                            </button>--%>
-<%--                        </div>--%>
-<%--                    </form>--%>
-<%--                </div>--%>
-<%--            </div>--%>
-<%--        </div>--%>
-<%--    </div>--%>
-
     <!-- Modal Xác nhận xóa sản phẩm -->
     <div class="modal fade delete-modal" id="deleteModal" tabindex="-1" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered modal-sm">
@@ -237,7 +188,7 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 
     <script>
-        function openDeletefModal(productId, productName) {
+        function openDeleteModal(productId, productName) {
             document.getElementById('deleteProductName').textContent = productName;
             document.getElementById('confirmDeleteBtn').href = '${pageContext.request.contextPath}/cart?action=remove&id=' + productId;
             var deleteModal = new bootstrap.Modal(document.getElementById('deleteModal'));
