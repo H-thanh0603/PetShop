@@ -350,7 +350,7 @@
                 <i class='bx bx-cart'></i>
                 <%-- Chỉ hiển thị badge khi user đã đăng nhập VÀ có sản phẩm trong giỏ --%>
                 <c:if test="${not empty sessionScope.totalQuantity and sessionScope.totalQuantity > 0}">
-                    <span class="cart-badge">
+                    <span class="cart-badge" id="cart-count">
                         ${sessionScope.totalQuantity}
                     </span>
                 </c:if>
