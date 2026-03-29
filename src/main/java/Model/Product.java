@@ -8,7 +8,8 @@ public class Product {
     private String image;
     private double price;    
     private int discount;     
-    private String description; // Giữ lại thuộc tính mới này
+    private String description;
+    private String category;
     
     // 1. Constructor rỗng (Bắt buộc)
     public Product() {
@@ -22,6 +23,12 @@ public class Product {
         this.price = price;
         this.discount = discount;
         this.description = description;
+    }
+
+    // 3. Constructor đầy đủ 7 tham số (có category)
+    public Product(int id, String name, String image, double price, int discount, String description, String category) {
+        this(id, name, image, price, discount, description);
+        this.category = category;
     }
 
     // --- GETTERS & SETTERS ---
@@ -40,9 +47,11 @@ public class Product {
     public int getDiscount() { return discount; }
     public void setDiscount(int discount) { this.discount = discount; }
     
-    // QUAN TRỌNG: Giữ Getter/Setter cho Description
     public String getDescription() { return description; }
     public void setDescription(String description) { this.description = description; }
+
+    public String getCategory() { return category; }
+    public void setCategory(String category) { this.category = category; }
 
     // (Đã XÓA setOldPrice vì không dùng nữa)
 
