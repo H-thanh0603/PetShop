@@ -506,7 +506,9 @@
                     <span>Tổng thanh toán</span>
                     <span>${finalTotal} ₫</span>
                 </div>
-
+                <c:if test="${not empty shippingMessage}">
+                    <div class="alert alert-warning mt-2">${shippingMessage}</div>
+                </c:if>
             </div>
         </div>
 
@@ -558,6 +560,9 @@
                 <div class="info-row">
                     <span>Địa chỉ giao hàng</span>
                     <button type="button" class="btn-add" onclick="toggleForm()">+ Thêm địa chỉ mới</button>
+                </div>
+                <div class="info-row">
+                    <span>Danh sách địa chỉ</span>
                 </div>
 
                 <div id="addressList" class="address-list">

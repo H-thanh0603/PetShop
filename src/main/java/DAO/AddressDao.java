@@ -11,7 +11,7 @@ public class AddressDao {
 
     public List<Address> getAddressesByUserId(int userId) {
         List<Address> list = new ArrayList<>();
-        String sql = "SELECT * FROM addresses WHERE user_id = ? ORDER BY `default` DESC, created_at DESC";
+        String sql = "SELECT * FROM addresses WHERE user_id = ? ORDER BY defaultt DESC, created_at DESC";
 
         try (Connection conn = DBContext.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
@@ -23,7 +23,7 @@ public class AddressDao {
                 Address a = new Address();
                 a.setId(rs.getInt("id"));
                 a.setUserId(rs.getInt("user_id"));
-                a.setDefaultt(rs.getBoolean("default"));
+                a.setDefaultt(rs.getBoolean("defaultt"));
                 a.setAddress(rs.getString("address"));
                 a.setCreateAt(rs.getTimestamp("created_at"));
                 a.setProvince(rs.getString("province"));
@@ -47,12 +47,12 @@ public class AddressDao {
             conn = DBContext.getConnection();
             conn.setAutoCommit(false);
 
-            String sql1 = "UPDATE addresses SET `default` = 0 WHERE user_id = ?";
+            String sql1 = "UPDATE addresses SET defaultt = 0 WHERE user_id = ?";
             ps1 = conn.prepareStatement(sql1);
             ps1.setInt(1, userId);
             ps1.executeUpdate();
 
-            String sql2 = "UPDATE addresses SET `default` = 1 WHERE id = ? AND user_id = ?";
+            String sql2 = "UPDATE addresses SET defaultt = 1 WHERE id = ? AND user_id = ?";
             ps2 = conn.prepareStatement(sql2);
             ps2.setInt(1, addressId);
             ps2.setInt(2, userId);
@@ -81,8 +81,8 @@ public class AddressDao {
     public void addAddress(int userId, boolean defaultt, Timestamp createdAt,
                            String address, String province, String district, String ward) {
 
-        String resetSql = "UPDATE addresses SET `default` = 0 WHERE user_id = ?";
-        String insertSql = "INSERT INTO addresses (user_id, `default`, created_at, address, province, district, ward) "
+        String resetSql = "UPDATE addresses SET defaultt = 0 WHERE user_id = ?";
+        String insertSql = "INSERT INTO addresses (user_id, defaultt, created_at, address, province, district, ward) "
                 + "VALUES (?, ?, ?, ?, ?, ?, ?)";
 
         Connection conn = null;
@@ -148,9 +148,9 @@ public class AddressDao {
     public void updateAddress(int id, int userId, boolean isDefault, Timestamp updatedAt,
                               String address, String province, String district, String ward) {
 
-        String resetSql = "UPDATE addresses SET `default` = 0 WHERE user_id = ?";
+        String resetSql = "UPDATE addresses SET defaultt = 0 WHERE user_id = ?";
         String updateSql = "UPDATE addresses "
-                + "SET `default` = ?, created_at = ?, address = ?, province = ?, district = ?, ward = ? "
+                + "SET defaultt = ?, created_at = ?, address = ?, province = ?, district = ?, ward = ? "
                 + "WHERE id = ? AND user_id = ?";
 
         Connection conn = null;
@@ -242,7 +242,7 @@ public class AddressDao {
         return false;
     }
     public boolean isDefaultAddress(int addressId, int userId) {
-        String sql = "SELECT `default` FROM addresses WHERE id = ? AND user_id = ?";
+        String sql = "SELECT defaultt FROM addresses WHERE id = ? AND user_id = ?";
 
         try (Connection conn = DBContext.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
@@ -261,7 +261,7 @@ public class AddressDao {
     }
 
     public void setNewestAddressAsDefault(int userId) {
-        String sql = "UPDATE addresses SET `default` = 1 " +
+        String sql = "UPDATE addresses SET defaultt = 1 " +
                 "WHERE id = (" +
                 "   SELECT id FROM (" +
                 "       SELECT id FROM addresses WHERE user_id = ? ORDER BY created_at DESC LIMIT 1" +
@@ -277,5 +277,32 @@ public class AddressDao {
         } catch (Exception e) {
             e.printStackTrace();
         }
+    }
+    public Address getDefaultAddressByUserId(int userId) {
+        String sql = "SELECT * FROM addresses WHERE user_id = ? AND defaultt = 1 LIMIT 1";
+
+        try (Connection conn = DBContext.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+
+            ps.setInt(1, userId);
+            ResultSet rs = ps.executeQuery();
+
+            if (rs.next()) {
+                Address a = new Address();
+                a.setId(rs.getInt("id"));
+                a.setUserId(rs.getInt("user_id"));
+                a.setDefaultt(rs.getBoolean("defaultt"));
+                a.setAddress(rs.getString("address"));
+                a.setCreateAt(rs.getTimestamp("created_at"));
+                a.setProvince(rs.getString("province"));
+                a.setDistrict(rs.getString("district"));
+                a.setWard(rs.getString("ward"));
+                return a;
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        return null;
     }
 }

@@ -33,7 +33,8 @@ public class ProductDAO {
                     rs.getString("image"),
                     rs.getDouble("price"),
                     rs.getInt("discount"),
-                    desc 
+                    rs.getString("description"),
+                    rs.getInt("weight")
                 ));
             }
             conn.close();
@@ -63,7 +64,8 @@ public class ProductDAO {
                     rs.getString("image"),
                     rs.getDouble("price"),
                     rs.getInt("discount"),
-                    desc 
+                        rs.getString("description"),
+                        rs.getInt("weight")
                 );
             }
             conn.close();
@@ -179,7 +181,8 @@ public class ProductDAO {
                     rs.getString("image"),
                     rs.getDouble("price"),
                     rs.getInt("discount"),
-                    desc 
+                        rs.getString("description"),
+                        rs.getInt("weight")
                 ));
             }
             conn.close();
@@ -212,7 +215,8 @@ public class ProductDAO {
                         rs.getString("image"),
                         rs.getDouble("price"),
                         rs.getInt("discount"),
-                        desc
+                        rs.getString("description"),
+                        rs.getInt("weight")
                 ));
             }
             connection.close();
