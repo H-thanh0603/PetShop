@@ -343,7 +343,7 @@
                                                     </c:if>
                                                 </div>
                                                 <form action="${pageContext.request.contextPath}/add-to-cart" method="post" style="margin:0;">
-                                                    <input type="hidden" name="productId" value="${p.id}">
+                                                    <input type="hidden" name="id" value="${p.id}">
                                                     <input type="hidden" name="quantity" value="1">
                                                     <button type="submit" class="btn-cart" title="Thêm vào giỏ">
                                                         <i class='bx bx-cart-add'></i>

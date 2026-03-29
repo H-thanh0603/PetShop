@@ -463,7 +463,7 @@
                                                 <c:if test="${p.discount > 0}"><span>${p.formattedOldPrice}</span></c:if>
                                             </div>
                                             <form action="${pageContext.request.contextPath}/add-to-cart" method="post" style="margin:0;">
-                                                <input type="hidden" name="productId" value="${p.id}">
+                                                <input type="hidden" name="id" value="${p.id}">
                                                 <input type="hidden" name="quantity" value="1">
                                                 <button type="submit" class="cart-btn"><i class='bx bx-cart-add'></i></button>
                                             </form>
@@ -519,7 +519,7 @@
                                                 <span>${p.formattedOldPrice}</span>
                                             </div>
                                             <form action="${pageContext.request.contextPath}/add-to-cart" method="post" style="margin:0;">
-                                                <input type="hidden" name="productId" value="${p.id}">
+                                                <input type="hidden" name="id" value="${p.id}">
                                                 <input type="hidden" name="quantity" value="1">
                                                 <button type="submit" class="cart-btn"><i class='bx bx-cart-add'></i></button>
                                             </form>
@@ -581,7 +581,7 @@
                                                 <c:if test="${p.discount > 0}"><span>${p.formattedOldPrice}</span></c:if>
                                             </div>
                                             <form action="${pageContext.request.contextPath}/add-to-cart" method="post" style="margin:0;">
-                                                <input type="hidden" name="productId" value="${p.id}">
+                                                <input type="hidden" name="id" value="${p.id}">
                                                 <input type="hidden" name="quantity" value="1">
                                                 <button type="submit" class="cart-btn"><i class='bx bx-cart-add'></i></button>
                                             </form>
