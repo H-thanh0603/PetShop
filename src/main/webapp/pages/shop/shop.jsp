@@ -66,159 +66,334 @@
         }
         .hero-stat strong {
             display: block;
-            font-size: 1.45rem;
+            font-size: 1.5rem;
             font-weight: 800;
+            margin-bottom: 4px;
         }
         .hero-stat span {
-            display: block;
-            margin-top: 4px;
-            font-size: 0.84rem;
-            color: rgba(255,255,255,0.84);
+            font-size: 0.8rem;
+            color: rgba(255,255,255,0.82);
         }
-        .shop-shell {
-            margin-top: -22px;
+        .hero-pills {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+        .hero-pill {
+            padding: 9px 13px;
+            border-radius: 999px;
+            text-decoration: none;
+            color: #fff;
+            background: rgba(255,255,255,0.10);
+            border: 1px solid rgba(255,255,255,0.10);
+            font-size: 0.86rem;
+        }
+        .hero-pill:hover { color: #fff; background: rgba(255,255,255,0.16); }
+
+        .trust-wrap {
+            margin-top: -28px;
             position: relative;
             z-index: 2;
         }
-        .filter-bar {
+        .trust-grid {
             background: rgba(255,255,255,0.96);
             border-radius: 28px;
-            padding: 20px;
             box-shadow: var(--shadow-soft);
+            padding: 18px;
             display: grid;
             grid-template-columns: repeat(4, 1fr);
             gap: 14px;
         }
-        .filter-field {
-            display: flex;
-            flex-direction: column;
-            gap: 8px;
-        }
-        .filter-label {
-            font-size: 0.82rem;
-            font-weight: 700;
-            color: var(--ink-soft);
-        }
-        .filter-control {
-            width: 100%;
-            min-height: 48px;
-            border-radius: 16px;
-            border: 1px solid var(--border);
-            background: var(--white);
-            padding: 0 14px;
-            color: var(--ink);
-            font-weight: 500;
-        }
-        .filter-actions {
+        .trust-card {
             display: flex;
             align-items: center;
-            gap: 10px;
-            flex-wrap: wrap;
+            gap: 14px;
+            padding: 14px 16px;
+            border-radius: 20px;
+            background: var(--primary-soft-2);
         }
-        .btn-filter,
-        .btn-filter-secondary {
-            min-height: 48px;
+        .trust-icon {
+            width: 48px;
+            height: 48px;
             border-radius: 16px;
-            padding: 0 18px;
-            font-weight: 700;
-            text-decoration: none;
-            display: inline-flex;
+            display: flex;
             align-items: center;
             justify-content: center;
-            gap: 8px;
-            border: none;
-        }
-        .btn-filter {
-            background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+            font-size: 1.35rem;
             color: #fff;
+            background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+            flex-shrink: 0;
         }
-        .btn-filter:hover { color: #fff; }
-        .btn-filter-secondary {
-            background: var(--primary-soft);
+        .trust-card strong {
+            display: block;
+            font-size: 0.95rem;
+            margin-bottom: 2px;
+        }
+        .trust-card span {
+            color: var(--text-secondary);
+            font-size: 0.82rem;
+        }
+
+        .pet-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 18px;
+        }
+        .pet-card {
+            background: var(--white);
+            border-radius: 26px;
+            padding: 22px;
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            text-decoration: none;
+            color: var(--ink);
+            border: 1px solid rgba(0, 191, 165, 0.10);
+            box-shadow: var(--shadow-green);
+            transition: all 0.25s ease;
+        }
+        .pet-card:hover { color: var(--ink); transform: translateY(-4px); }
+        .pet-icon {
+            width: 62px;
+            height: 62px;
+            border-radius: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: linear-gradient(135deg, var(--primary-soft), #ffffff);
+            color: var(--primary-dark);
+            font-size: 1.9rem;
+            flex-shrink: 0;
+        }
+        .pet-card strong {
+            display: block;
+            margin-bottom: 4px;
+            font-size: 1rem;
+        }
+        .pet-card span {
+            color: var(--text-secondary);
+            font-size: 0.88rem;
+        }
+
+        .category-shell {
+            background: linear-gradient(180deg, #ffffff 0%, #fbfefe 100%);
+            border-radius: 32px;
+            padding: 28px;
+            border: 1px solid rgba(0, 191, 165, 0.10);
+            box-shadow: var(--shadow-soft);
+        }
+        .category-track {
+            display: flex;
+            gap: 24px;
+            overflow-x: auto;
+            scroll-snap-type: x mandatory;
+            padding-bottom: 12px;
+            scrollbar-width: none;
+        }
+        .category-track::-webkit-scrollbar { display: none; }
+        .category-card {
+            min-width: 166px;
+            max-width: 166px;
+            text-decoration: none;
+            color: var(--ink-soft);
+            text-align: center;
+            scroll-snap-align: start;
+        }
+        .category-card:hover { color: var(--ink-soft); }
+        .category-icon {
+            width: 150px;
+            height: 150px;
+            margin: 0 auto 18px;
+            border-radius: 50%;
+            border: 6px solid #fff;
+            background: radial-gradient(circle at 28% 28%, #17d8c0 0%, var(--primary) 40%, var(--primary-dark) 74%, #0c6c63 100%);
+            box-shadow: var(--shadow-green);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.25s ease;
+        }
+        .category-card:hover .category-icon {
+            transform: translateY(-4px);
+            box-shadow: 0 22px 42px rgba(0, 143, 122, 0.18);
+        }
+        .category-icon i {
+            color: #fff;
+            font-size: 3.9rem;
+        }
+        .category-card strong {
+            font-size: 1rem;
+            font-weight: 600;
+            line-height: 1.45;
+            min-height: 48px;
+            display: block;
+        }
+
+        .filter-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 18px;
+        }
+        .filter-card {
+            background: var(--white);
+            border-radius: 24px;
+            padding: 24px;
+            box-shadow: var(--shadow-soft);
+            border: 1px solid var(--border);
+            text-decoration: none;
+            color: var(--ink);
+            transition: all 0.25s ease;
+        }
+        .filter-card:hover { color: var(--ink); transform: translateY(-4px); }
+        .filter-card .icon {
+            width: 52px;
+            height: 52px;
+            border-radius: 18px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.4rem;
+            margin-bottom: 16px;
+        }
+        .filter-card strong {
+            display: block;
+            font-size: 1rem;
+            margin-bottom: 8px;
+        }
+        .filter-card p {
+            margin: 0;
+            color: var(--text-secondary);
+            line-height: 1.65;
+            font-size: 0.88rem;
+        }
+
+        .product-layout {
+            display: grid;
+            grid-template-columns: minmax(320px, 0.95fr) minmax(0, 1.05fr);
+            gap: 22px;
+        }
+        .spotlight {
+            background: linear-gradient(145deg, #e9fbf7 0%, #ffffff 100%);
+            border-radius: 32px;
+            padding: 28px;
+            box-shadow: var(--shadow-green);
+            border: 1px solid rgba(0, 191, 165, 0.12);
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+        .spotlight-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 8px 12px;
+            border-radius: 999px;
+            background: rgba(255,255,255,0.88);
+            color: var(--primary-dark);
+            font-size: 0.8rem;
+            font-weight: 700;
+            margin-bottom: 16px;
+        }
+        .spotlight h3 {
+            margin: 0 0 12px;
+            font-size: 1.7rem;
+            font-weight: 800;
+            line-height: 1.2;
+        }
+        .spotlight p {
+            margin: 0 0 16px;
+            color: var(--text-secondary);
+            line-height: 1.75;
+        }
+        .spotlight-price {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 18px;
+        }
+        .spotlight-price .new {
+            font-size: 1.5rem;
+            font-weight: 800;
             color: var(--primary-dark);
         }
-        .btn-filter-secondary:hover { color: var(--primary-dark); }
-        .category-row {
+        .spotlight-price .old {
+            color: var(--text-muted);
+            text-decoration: line-through;
+        }
+        .spotlight-actions {
             display: flex;
             flex-wrap: wrap;
             gap: 12px;
+            margin-bottom: 22px;
         }
-        .category-chip {
+        .btn-soft, .btn-dark {
+            padding: 12px 18px;
+            border-radius: 999px;
+            text-decoration: none;
             display: inline-flex;
             align-items: center;
             gap: 8px;
-            padding: 10px 16px;
-            border-radius: 999px;
-            background: var(--white);
-            border: 1px solid var(--border);
-            color: var(--ink-soft);
-            text-decoration: none;
-            box-shadow: 0 8px 18px rgba(18, 32, 51, 0.05);
-        }
-        .category-chip:hover { color: var(--primary-dark); border-color: rgba(0, 191, 165, 0.24); }
-        .section-head {
-            display: flex;
-            align-items: end;
-            justify-content: space-between;
-            gap: 16px;
-            margin-bottom: 24px;
-        }
-        .section-head h2 {
-            margin: 0 0 8px;
-            font-size: 1.9rem;
-            font-weight: 800;
-            color: var(--ink);
-        }
-        .section-head p {
-            margin: 0;
-            color: var(--text-secondary);
-            max-width: 620px;
-            line-height: 1.7;
-        }
-        .section-link {
-            color: var(--primary-dark);
-            text-decoration: none;
             font-weight: 700;
-            white-space: nowrap;
+            border: none;
         }
-        .section-link:hover { color: var(--primary-dark); text-decoration: underline; }
+        .btn-soft {
+            background: #fff;
+            color: var(--primary-dark);
+            box-shadow: 0 10px 24px rgba(18, 32, 51, 0.08);
+        }
+        .btn-soft:hover { color: var(--primary-dark); }
+        .btn-dark {
+            background: var(--ink-soft);
+            color: #fff;
+        }
+        .btn-dark:hover { color: #fff; }
+        .spotlight-image {
+            min-height: 220px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .spotlight-image img {
+            max-width: 100%;
+            max-height: 220px;
+            object-fit: contain;
+            filter: drop-shadow(0 20px 28px rgba(0,0,0,0.10));
+        }
+
         .product-grid {
             display: grid;
-            grid-template-columns: repeat(4, minmax(0, 1fr));
-            gap: 18px;
-        }
-        .best-seller-grid {
-            display: grid;
-            grid-template-columns: repeat(3, minmax(0, 1fr));
+            grid-template-columns: repeat(2, minmax(0, 1fr));
             gap: 18px;
         }
         .product-card {
             background: var(--white);
             border-radius: 26px;
             overflow: hidden;
-            border: 1px solid rgba(18, 32, 51, 0.06);
             box-shadow: var(--shadow-soft);
-            height: 100%;
-            transition: transform 0.25s ease, box-shadow 0.25s ease;
+            border: 1px solid rgba(18, 32, 51, 0.06);
+            transition: all 0.25s ease;
         }
         .product-card:hover {
             transform: translateY(-4px);
             box-shadow: 0 18px 40px rgba(18, 32, 51, 0.10);
         }
         .product-media {
-            min-height: 220px;
-            padding: 22px;
-            background: linear-gradient(180deg, #f9fcfc 0%, #edf6f6 100%);
+            min-height: 210px;
+            background: linear-gradient(180deg, #f9fcfc 0%, #eef6f6 100%);
             display: flex;
             align-items: center;
             justify-content: center;
+            padding: 20px;
             position: relative;
         }
         .product-media img {
             max-width: 100%;
             max-height: 170px;
             object-fit: contain;
+            transition: transform 0.3s ease;
         }
+        .product-card:hover .product-media img { transform: scale(1.04); }
         .product-badge {
             position: absolute;
             top: 16px;
@@ -231,35 +406,32 @@
             font-weight: 800;
         }
         .product-info { padding: 18px; }
-        .product-category {
-            color: var(--primary-dark);
+        .product-cat {
+            margin-bottom: 8px;
             font-size: 0.72rem;
             font-weight: 800;
+            color: var(--primary-dark);
             text-transform: uppercase;
             letter-spacing: 0.08em;
-            margin-bottom: 8px;
         }
         .product-name {
-            min-height: 48px;
             margin-bottom: 14px;
-            font-weight: 700;
-            font-size: 0.96rem;
+            min-height: 46px;
             line-height: 1.45;
+            font-size: 0.96rem;
+            font-weight: 700;
         }
-        .product-name a {
-            text-decoration: none;
-            color: var(--ink);
-        }
+        .product-name a { color: var(--ink); text-decoration: none; }
         .product-name a:hover { color: var(--primary-dark); }
         .product-meta {
             display: flex;
-            justify-content: space-between;
             align-items: center;
+            justify-content: space-between;
             gap: 12px;
         }
         .price-wrap strong {
             display: block;
-            font-size: 1.02rem;
+            font-size: 1.04rem;
             font-weight: 800;
         }
         .price-wrap span {
@@ -281,58 +453,249 @@
             justify-content: center;
             font-size: 1.15rem;
         }
-        .section-box {
-            background: rgba(255,255,255,0.9);
-            border-radius: 30px;
-            padding: 28px;
-            box-shadow: var(--shadow-soft);
+
+        .sale-shell {
+            display: grid;
+            grid-template-columns: 1.05fr 0.95fr;
+            gap: 20px;
         }
-        .section-box.best-seller-box {
-            background: linear-gradient(180deg, #ffffff 0%, #f9fefd 100%);
+        .sale-banner {
+            position: relative;
+            overflow: hidden;
+            border-radius: 32px;
+            padding: 30px;
+            background: linear-gradient(145deg, #112848 0%, #1a2e5a 52%, #00bfa5 100%);
+            color: #fff;
+            box-shadow: 0 24px 48px rgba(17, 40, 72, 0.18);
         }
-        .pagination-bar {
+        .sale-banner::after {
+            content: "";
+            position: absolute;
+            width: 280px;
+            height: 280px;
+            right: -100px;
+            bottom: -120px;
+            border-radius: 50%;
+            background: rgba(255,255,255,0.06);
+        }
+        .sale-banner h3 {
+            position: relative;
+            z-index: 1;
+            margin: 0 0 12px;
+            font-size: 2rem;
+            font-weight: 800;
+            line-height: 1.15;
+        }
+        .sale-banner p {
+            position: relative;
+            z-index: 1;
+            margin: 0 0 18px;
+            color: rgba(255,255,255,0.84);
+            line-height: 1.75;
+        }
+        .sale-tags {
+            position: relative;
+            z-index: 1;
             display: flex;
-            justify-content: center;
             flex-wrap: wrap;
             gap: 10px;
-            margin-top: 24px;
+            margin-bottom: 18px;
         }
-        .page-btn {
-            min-width: 42px;
-            height: 42px;
-            padding: 0 14px;
+        .sale-tags span {
+            padding: 10px 14px;
             border-radius: 999px;
+            background: rgba(255,255,255,0.10);
             display: inline-flex;
             align-items: center;
-            justify-content: center;
-            text-decoration: none;
-            color: var(--ink-soft);
+            gap: 8px;
+            font-size: 0.88rem;
+        }
+        .sale-mini-grid {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 18px;
+        }
+        .sale-mini-card {
             background: var(--white);
-            border: 1px solid var(--border);
+            border-radius: 24px;
+            padding: 16px;
+            box-shadow: var(--shadow-soft);
+        }
+        .sale-mini-thumb {
+            height: 146px;
+            border-radius: 18px;
+            background: var(--surface);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            margin-bottom: 14px;
+            overflow: hidden;
+        }
+        .sale-mini-thumb img {
+            max-width: 100%;
+            max-height: 118px;
+            object-fit: contain;
+        }
+        .sale-off {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            padding: 6px 10px;
+            border-radius: 999px;
+            background: var(--accent);
+            color: #fff;
+            font-size: 0.75rem;
+            font-weight: 800;
+        }
+        .sale-mini-card h6 {
+            margin: 0 0 10px;
+            min-height: 42px;
+            font-size: 0.94rem;
+            line-height: 1.45;
             font-weight: 700;
         }
-        .page-btn.active {
-            background: linear-gradient(135deg, var(--primary), var(--primary-dark));
-            color: #fff;
-            border-color: transparent;
+        .sale-mini-card h6 a { color: var(--ink); text-decoration: none; }
+        .sale-mini-card h6 a:hover { color: var(--primary-dark); }
+        .sale-mini-card strong { color: var(--primary-dark); }
+        .sale-mini-card span {
+            margin-left: 8px;
+            color: var(--text-muted);
+            text-decoration: line-through;
+            font-size: 0.82rem;
         }
-        .empty-state {
-            text-align: center;
-            padding: 36px 20px;
+
+        .experience-grid {
+            display: grid;
+            grid-template-columns: 1.05fr 0.95fr;
+            gap: 20px;
+        }
+        .service-grid {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 18px;
+        }
+        .service-card {
+            background: var(--white);
+            border-radius: 24px;
+            padding: 24px;
+            box-shadow: var(--shadow-soft);
+            border: 1px solid var(--border);
+        }
+        .service-card .icon {
+            width: 54px;
+            height: 54px;
+            border-radius: 18px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.45rem;
+            margin-bottom: 16px;
+        }
+        .service-card h5 {
+            margin: 0 0 8px;
+            font-size: 1rem;
+            font-weight: 800;
+        }
+        .service-card p {
+            margin: 0;
             color: var(--text-secondary);
+            line-height: 1.7;
+            font-size: 0.9rem;
         }
+        .guide-card {
+            background: linear-gradient(180deg, #ffffff 0%, #f8fefd 100%);
+            border-radius: 30px;
+            padding: 28px;
+            border: 1px solid rgba(0, 191, 165, 0.10);
+            box-shadow: var(--shadow-soft);
+        }
+        .guide-list {
+            display: grid;
+            gap: 16px;
+            margin-top: 18px;
+        }
+        .guide-item {
+            display: flex;
+            gap: 14px;
+            align-items: flex-start;
+        }
+        .guide-step {
+            width: 38px;
+            height: 38px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #fff;
+            font-weight: 800;
+            background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+            flex-shrink: 0;
+        }
+        .guide-item strong {
+            display: block;
+            margin-bottom: 4px;
+            font-size: 0.96rem;
+        }
+        .guide-item p {
+            margin: 0;
+            color: var(--text-secondary);
+            line-height: 1.65;
+            font-size: 0.9rem;
+        }
+        .guide-cta {
+            margin-top: 22px;
+            padding: 18px 20px;
+            border-radius: 20px;
+            background: var(--primary-soft);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 14px;
+            flex-wrap: wrap;
+        }
+        .guide-cta strong {
+            display: block;
+            margin-bottom: 3px;
+            font-size: 1rem;
+        }
+        .guide-cta span {
+            color: var(--text-secondary);
+            font-size: 0.88rem;
+        }
+
         @media (max-width: 1199px) {
-            .filter-bar,
+            .hero-grid,
+            .product-layout,
+            .sale-shell,
+            .experience-grid { grid-template-columns: 1fr; }
+            .trust-grid,
+            .filter-grid { grid-template-columns: repeat(2, 1fr); }
+        }
+        @media (max-width: 991px) {
+            .service-grid,
+            .sale-mini-grid,
             .product-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-            .best-seller-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+            .hero-stats { grid-template-columns: repeat(3, 1fr); }
         }
         @media (max-width: 767px) {
-            .section-pad { padding: 44px 0; }
-            .hero-stats,
-            .filter-bar,
-            .product-grid { grid-template-columns: 1fr; }
-            .best-seller-grid { grid-template-columns: 1fr; }
-            .section-head { flex-direction: column; align-items: start; }
+            .section-pad { padding: 50px 0; }
+            .shop-hero { padding: 78px 0 58px; }
+            .hero-copy h1 { font-size: 2.5rem; }
+            .hero-actions, .hero-tags { flex-direction: column; align-items: stretch; }
+            .trust-grid,
+            .filter-grid,
+            .product-grid,
+            .sale-mini-grid,
+            .service-grid,
+            .hero-stats { grid-template-columns: 1fr; }
+            .category-card { min-width: 142px; max-width: 142px; }
+            .category-icon {
+                width: 126px;
+                height: 126px;
+                margin-bottom: 16px;
+            }
+            .category-icon i { font-size: 3rem; }
         }
     </style>
 </head>
@@ -341,265 +704,368 @@
 
     <section class="shop-hero">
         <div class="container">
-            <h1>Trang Shop</h1>
-            <p>Nơi tập trung toàn bộ sản phẩm đang bán tại PetShop. Bạn có thể xem nhóm bán chạy, hàng đang giảm giá và toàn bộ catalog sản phẩm với phân trang rõ ràng để dễ duyệt khi số lượng mặt hàng tăng lên sau này.</p>
-            <div class="hero-stats">
-                <div class="hero-stat"><strong>${totalProducts}</strong><span>Tổng sản phẩm</span></div>
-                <div class="hero-stat"><strong>${not empty categories ? categories.size() : 0}</strong><span>Danh mục</span></div>
-                <div class="hero-stat"><strong>12</strong><span>Sản phẩm mỗi trang</span></div>
-            </div>
-        </div>
-    </section>
-
-    <div class="shop-shell">
-        <div class="container">
-            <form action="${pageContext.request.contextPath}/shop" method="get" class="filter-bar">
-                <div class="filter-field">
-                    <label class="filter-label" for="shopSearch">Tìm kiếm</label>
-                    <input id="shopSearch" class="filter-control" type="text" name="search" placeholder="Tên sản phẩm..." />
+            <div class="hero-grid">
+                <div class="hero-copy">
+                    <span class="section-kicker"><i class='bx bxs-store'></i> PetShop Marketplace</span>
+                    <h1>Mua sắm cho thú cưng theo cách <span class="highlight">đẹp hơn, nhanh hơn và rõ ràng hơn</span></h1>
+                    <p>Khám phá thế giới sản phẩm chính hãng cho thú cưng, từ thức ăn, đồ chơi, sức khỏe đến phụ kiện chăm sóc hằng ngày.</p>
+                    <div class="hero-actions">
+                        <a href="${pageContext.request.contextPath}/shop?discountOnly=true" class="hero-btn"><i class='bx bxs-hot'></i> Xem ưu đãi hôm nay</a>
+                        <a href="${pageContext.request.contextPath}/shop?sort=name" class="hero-btn-outline"><i class='bx bx-grid-alt'></i> Duyệt toàn bộ sản phẩm</a>
+                    </div>
+                    <div class="hero-tags">
+                        <span class="hero-tag"><i class='bx bx-badge-check'></i> Hàng chính hãng</span>
+                        <span class="hero-tag"><i class='bx bx-timer'></i> Giao nhanh trong ngày</span>
+                        <span class="hero-tag"><i class='bx bx-support'></i> Hỗ trợ 24/7</span>
+                    </div>
                 </div>
-                <div class="filter-field">
-                    <label class="filter-label" for="shopPet">Thú cưng</label>
-                    <select id="shopPet" class="filter-control" name="pet">
-                        <option value="">Tất cả</option>
-                        <c:forEach var="pt" items="${petTypes}">
-                            <option value="${pt.code}">${pt.name}</option>
-                        </c:forEach>
-                    </select>
-                </div>
-                <div class="filter-field">
-                    <label class="filter-label" for="shopCategory">Danh mục</label>
-                    <select id="shopCategory" class="filter-control" name="category">
-                        <option value="">Tất cả</option>
-                        <c:forEach var="cat" items="${categories}">
-                            <option value="${cat}">${cat}</option>
-                        </c:forEach>
-                    </select>
-                </div>
-                <div class="filter-field">
-                    <label class="filter-label" for="shopSort">Sắp xếp</label>
-                    <select id="shopSort" class="filter-control" name="sort">
-                        <option value="">Mặc định</option>
-                        <option value="price-asc">Giá tăng dần</option>
-                        <option value="price-desc">Giá giảm dần</option>
-                        <option value="discount">Giảm giá nhiều nhất</option>
-                        <option value="name">Tên A-Z</option>
-                    </select>
-                </div>
-                <div class="filter-actions" style="grid-column: 1 / -1;">
-                    <button type="submit" class="btn-filter"><i class='bx bx-search-alt-2'></i> Lọc sản phẩm</button>
-                    <a href="${pageContext.request.contextPath}/shop" class="btn-filter-secondary"><i class='bx bx-reset'></i> Đặt lại</a>
-                    <a href="${pageContext.request.contextPath}/shop?discountOnly=true" class="btn-filter-secondary"><i class='bx bxs-discount'></i> Chỉ xem hàng giảm giá</a>
-                </div>
-            </form>
-        </div>
-    </div>
-
-    <section class="section-pad" style="padding-bottom: 20px;">
-        <div class="container">
-            <div class="section-head">
-                <div>
-                    <h2>Danh Mục Sản Phẩm</h2>
-                    <p>Các danh mục hiện có trong cửa hàng để bạn đi nhanh đến đúng nhóm sản phẩm đang cần.</p>
-                </div>
-            </div>
-            <div class="category-row">
-                <c:forEach var="cat" items="${categories}">
-                    <a href="${pageContext.request.contextPath}/shop?category=${cat}" class="category-chip">
+                <div class="hero-side">
+                    <h3>Đi nhanh đến đúng khu mua sắm</h3>
+                    <div class="hero-stats">
+                        <div class="hero-stat"><strong>${totalProducts}</strong><span>Sản phẩm</span></div>
+                        <div class="hero-stat"><strong>${not empty categories ? categories.size() : 0}</strong><span>Danh mục</span></div>
+                        <div class="hero-stat"><strong>${not empty petTypes ? petTypes.size() : 0}</strong><span>Nhóm pet</span></div>
+                    </div>
+                    <div class="hero-pills">
                         <c:choose>
-                            <c:when test="${cat.contains('Thức Ăn')}"><i class='bx bx-bowl-hot'></i></c:when>
-                            <c:when test="${cat.contains('Sữa')}"><i class='bx bx-coffee-togo'></i></c:when>
-                            <c:when test="${cat.contains('Vệ Sinh') || cat.contains('Tắm')}"><i class='bx bx-spray-can'></i></c:when>
-                            <c:when test="${cat.contains('Cát')}"><i class='bx bx-archive'></i></c:when>
-                            <c:when test="${cat.contains('Ăn Uống')}"><i class='bx bx-dish'></i></c:when>
-                            <c:when test="${cat.contains('Sức Khoẻ')}"><i class='bx bx-plus-medical'></i></c:when>
-                            <c:when test="${cat.contains('Huấn Luyện') || cat.contains('Đồ Chơi')}"><i class='bx bx-bone'></i></c:when>
-                            <c:when test="${cat.contains('Dụng Cụ Vệ Sinh')}"><i class='bx bx-brush'></i></c:when>
-                            <c:otherwise><i class='bx bx-paw'></i></c:otherwise>
+                            <c:when test="${not empty petTypes}">
+                                <c:forEach var="pt" items="${petTypes}" varStatus="st">
+                                    <c:if test="${st.index < 4}">
+                                        <a href="${pageContext.request.contextPath}/shop?pet=${pt.code}" class="hero-pill"><i class='bx ${pt.icon}'></i> ${pt.name}</a>
+                                    </c:if>
+                                </c:forEach>
+                            </c:when>
+                            <c:otherwise>
+                                <a href="${pageContext.request.contextPath}/shop?pet=dog" class="hero-pill"><i class='bx bxs-dog'></i> Chó</a>
+                                <a href="${pageContext.request.contextPath}/shop?pet=cat" class="hero-pill"><i class='bx bxs-cat'></i> Mèo</a>
+                            </c:otherwise>
                         </c:choose>
-                        ${cat}
-                    </a>
-                </c:forEach>
+                        <a href="${pageContext.request.contextPath}/shop?discountOnly=true" class="hero-pill"><i class='bx bxs-discount'></i> Sale</a>
+                    </div>
+                </div>
             </div>
         </div>
     </section>
 
-    <section class="section-pad" style="padding-top: 12px;">
+    <section class="trust-wrap">
         <div class="container">
-            <div class="section-box best-seller-box">
-                <div class="section-head">
-                    <div>
-                        <h2>Bán Chạy Nổi Bật</h2>
-                        <p>Một khu ngắn để nhấn vào sản phẩm đang được quan tâm nhiều nhất, tránh lặp với catalog chính.</p>
-                    </div>
+            <div class="trust-grid">
+                <div class="trust-card">
+                    <div class="trust-icon"><i class='bx bx-package'></i></div>
+                    <div><strong>Đóng gói cẩn thận</strong><span>Giữ hàng sạch đẹp khi giao tới tay khách</span></div>
                 </div>
+                <div class="trust-card">
+                    <div class="trust-icon"><i class='bx bx-shield-quarter'></i></div>
+                    <div><strong>Nguồn gốc rõ ràng</strong><span>Ưu tiên sản phẩm chính hãng và uy tín</span></div>
+                </div>
+                <div class="trust-card">
+                    <div class="trust-icon"><i class='bx bx-refresh'></i></div>
+                    <div><strong>Hỗ trợ đổi trả</strong><span>Linh hoạt khi phát sinh lỗi sản phẩm</span></div>
+                </div>
+                <div class="trust-card">
+                    <div class="trust-icon"><i class='bx bx-chat'></i></div>
+                    <div><strong>Tư vấn trước khi mua</strong><span>Giúp chọn đúng nhu cầu của thú cưng</span></div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="section-pad" style="padding-bottom: 24px;">
+        <div class="container">
+            <div class="section-header">
+                <span class="section-kicker"><i class='bx bx-paw'></i> Shop theo bé thú cưng</span>
+                <h2>Dành cho các bạn thú cưng </h2>
+            </div>
+            <div class="pet-grid">
                 <c:choose>
-                    <c:when test="${not empty popularProducts}">
-                        <div class="best-seller-grid">
-                            <c:forEach var="p" items="${popularProducts}">
-                                <div class="product-card">
-                                    <div class="product-media">
-                                        <c:if test="${p.discount > 0}"><span class="product-badge">-${p.discount}%</span></c:if>
-                                        <a href="${pageContext.request.contextPath}/product-detail?id=${p.id}">
-                                            <c:choose>
-                                                <c:when test="${not empty p.image && p.image.startsWith('http')}">
-                                                    <img src="${p.image}" alt="${p.name}" onerror="this.src='https://placehold.co/260x220/e8fbf7/008f7a?text=PetShop'">
-                                                </c:when>
-                                                <c:when test="${not empty p.image}">
-                                                    <img src="${pageContext.request.contextPath}/${p.image}" alt="${p.name}" onerror="this.src='https://placehold.co/260x220/e8fbf7/008f7a?text=PetShop'">
-                                                </c:when>
-                                                <c:otherwise>
-                                                    <img src="https://placehold.co/260x220/e8fbf7/008f7a?text=PetShop" alt="${p.name}">
-                                                </c:otherwise>
-                                            </c:choose>
-                                        </a>
-                                    </div>
-                                    <div class="product-info">
-                                        <div class="product-category">${p.category}</div>
-                                        <div class="product-name"><a href="${pageContext.request.contextPath}/product-detail?id=${p.id}">${p.name}</a></div>
-                                        <div class="product-meta">
-                                            <div class="price-wrap">
-                                                <strong>${p.formattedPrice}</strong>
-                                                <c:if test="${p.discount > 0}"><span>${p.formattedOldPrice}</span></c:if>
-                                            </div>
-                                            <form action="${pageContext.request.contextPath}/add-to-cart" method="post" style="margin:0;">
-                                                <input type="hidden" name="id" value="${p.id}">
-                                                <input type="hidden" name="quantity" value="1">
-                                                <button type="submit" class="cart-btn"><i class='bx bx-cart-add'></i></button>
-                                            </form>
-                                        </div>
-                                    </div>
+                    <c:when test="${not empty petTypes}">
+                        <c:forEach var="pt" items="${petTypes}">
+                            <a href="${pageContext.request.contextPath}/shop?pet=${pt.code}" class="pet-card">
+                                <div class="pet-icon"><i class='bx ${pt.icon}'></i></div>
+                                <div>
+                                    <strong>Dành cho ${pt.name}</strong>
                                 </div>
-                            </c:forEach>
-                        </div>
+                            </a>
+                        </c:forEach>
                     </c:when>
-                    <c:otherwise><div class="empty-state">Chưa có sản phẩm để hiển thị.</div></c:otherwise>
+                    <c:otherwise>
+                        <a href="${pageContext.request.contextPath}/shop?pet=dog" class="pet-card">
+                            <div class="pet-icon"><i class='bx bxs-dog'></i></div>
+                            <div><strong>Dành cho Chó</strong><span>Từ thức ăn tới phụ kiện, vệ sinh và sức khỏe.</span></div>
+                        </a>
+                        <a href="${pageContext.request.contextPath}/shop?pet=cat" class="pet-card">
+                            <div class="pet-icon"><i class='bx bxs-cat'></i></div>
+                            <div><strong>Dành cho Mèo</strong></div>
+                        </a>
+                    </c:otherwise>
                 </c:choose>
+            </div>
+        </div>
+    </section>
+
+    <section class="section-pad">
+        <div class="container">
+            <div class="section-header d-flex flex-wrap justify-content-between align-items-end gap-3">
+                <div>
+                    <span class="section-kicker"><i class='bx bx-category-alt'></i> Danh mục nổi bật</span>
+                    <h2>Danh Mục Được Mua Nhiều</h2>
+                </div>
+                <a href="${pageContext.request.contextPath}/shop?sort=name" class="section-link">Xem toàn bộ danh mục <i class='bx bx-right-arrow-alt'></i></a>
+            </div>
+            <div class="category-shell">
+                <div class="category-track">
+                    <c:forEach var="cat" items="${categories}" varStatus="st">
+                        <c:if test="${st.index < 10}">
+                            <a href="${pageContext.request.contextPath}/shop?category=${cat}" class="category-card">
+                                <div class="category-icon">
+                                    <c:choose>
+                                        <c:when test="${cat.contains('Thức Ăn')}"><i class='bx bx-bowl-hot'></i></c:when>
+                                        <c:when test="${cat.contains('Sữa')}"><i class='bx bx-coffee-togo'></i></c:when>
+                                        <c:when test="${cat.contains('Vệ Sinh') || cat.contains('Tắm')}"><i class='bx bx-spray-can'></i></c:when>
+                                        <c:when test="${cat.contains('Cát')}"><i class='bx bx-archive'></i></c:when>
+                                        <c:when test="${cat.contains('Ăn Uống')}"><i class='bx bx-dish'></i></c:when>
+                                        <c:when test="${cat.contains('Sức Khoẻ')}"><i class='bx bx-plus-medical'></i></c:when>
+                                        <c:when test="${cat.contains('Huấn Luyện') || cat.contains('Đồ Chơi')}"><i class='bx bx-bone'></i></c:when>
+                                        <c:when test="${cat.contains('Dụng Cụ Vệ Sinh')}"><i class='bx bx-brush'></i></c:when>
+                                        <c:otherwise><i class='bx bx-paw'></i></c:otherwise>
+                                    </c:choose>
+                                </div>
+                                <strong>${cat}</strong>
+                            </a>
+                        </c:if>
+                    </c:forEach>
+                </div>
             </div>
         </div>
     </section>
 
     <section class="section-pad" style="padding-top: 0;">
         <div class="container">
-            <div class="section-box">
-                <div class="section-head">
-                    <div>
-                        <h2>Hàng Đang Được Giảm Giá</h2>
-                        <p>Các sản phẩm đang có ưu đãi, mỗi trang hiển thị 12 sản phẩm để dễ theo dõi và chốt đơn.</p>
-                    </div>
-                    <a href="${pageContext.request.contextPath}/shop?discountOnly=true" class="section-link">Xem trang lọc giảm giá</a>
-                </div>
-                <c:choose>
-                    <c:when test="${not empty discountProducts}">
-                        <div class="product-grid">
-                            <c:forEach var="p" items="${discountProducts}">
-                                <div class="product-card">
-                                    <div class="product-media">
-                                        <span class="product-badge">-${p.discount}%</span>
-                                        <a href="${pageContext.request.contextPath}/product-detail?id=${p.id}">
-                                            <c:choose>
-                                                <c:when test="${not empty p.image && p.image.startsWith('http')}">
-                                                    <img src="${p.image}" alt="${p.name}" onerror="this.src='https://placehold.co/260x220/e8fbf7/008f7a?text=Sale'">
-                                                </c:when>
-                                                <c:when test="${not empty p.image}">
-                                                    <img src="${pageContext.request.contextPath}/${p.image}" alt="${p.name}" onerror="this.src='https://placehold.co/260x220/e8fbf7/008f7a?text=Sale'">
-                                                </c:when>
-                                                <c:otherwise>
-                                                    <img src="https://placehold.co/260x220/e8fbf7/008f7a?text=Sale" alt="${p.name}">
-                                                </c:otherwise>
-                                            </c:choose>
-                                        </a>
-                                    </div>
-                                    <div class="product-info">
-                                        <div class="product-category">${p.category}</div>
-                                        <div class="product-name"><a href="${pageContext.request.contextPath}/product-detail?id=${p.id}">${p.name}</a></div>
-                                        <div class="product-meta">
-                                            <div class="price-wrap">
-                                                <strong>${p.formattedPrice}</strong>
-                                                <span>${p.formattedOldPrice}</span>
-                                            </div>
-                                            <form action="${pageContext.request.contextPath}/add-to-cart" method="post" style="margin:0;">
-                                                <input type="hidden" name="id" value="${p.id}">
-                                                <input type="hidden" name="quantity" value="1">
-                                                <button type="submit" class="cart-btn"><i class='bx bx-cart-add'></i></button>
-                                            </form>
-                                        </div>
-                                    </div>
-                                </div>
-                            </c:forEach>
-                        </div>
-                    </c:when>
-                    <c:otherwise><div class="empty-state">Hiện chưa có sản phẩm giảm giá.</div></c:otherwise>
-                </c:choose>
-                <c:if test="${saleTotalPages > 1}">
-                    <div class="pagination-bar">
-                        <c:forEach begin="1" end="${saleTotalPages}" var="i">
-                            <a href="${pageContext.request.contextPath}/shop?salePage=${i}&catalogPage=${catalogPage}" class="page-btn ${i == salePage ? 'active' : ''}">${i}</a>
-                        </c:forEach>
-                    </div>
-                </c:if>
+            <div class="section-header">
+                <span class="section-kicker"><i class='bx bx-slider-alt'></i> Bộ lọc mua sắm nhanh</span>
+                <h2>Lối Tắt Mua Sắm Nhanh</h2>
+            </div>
+            <div class="filter-grid">
+                <a href="${pageContext.request.contextPath}/shop?discountOnly=true" class="filter-card">
+                    <div class="icon" style="background:#fff0e7;color:#ff7a45;"><i class='bx bxs-discount'></i></div>
+                    <strong>Ưu đãi trong ngày</strong>
+                </a>
+                <a href="${pageContext.request.contextPath}/shop?sort=price-asc" class="filter-card">
+                    <div class="icon" style="background:var(--primary-soft);color:var(--primary-dark);"><i class='bx bx-sort-up'></i></div>
+                    <strong>Giá từ thấp đến cao</strong>
+                </a>
+                <a href="${pageContext.request.contextPath}/shop?sort=discount" class="filter-card">
+                    <div class="icon" style="background:#eef4ff;color:#3267ff;"><i class='bx bx-trending-up'></i></div>
+                    <strong>Deal mạnh nhất</strong>
+                </a>
+                <a href="${pageContext.request.contextPath}/shop?sort=name" class="filter-card">
+                    <div class="icon" style="background:#fff7ea;color:#d97706;"><i class='bx bx-list-ul'></i></div>
+                    <strong>Duyệt toàn bộ</strong>
+                </a>
             </div>
         </div>
     </section>
 
-    <section class="section-pad" style="padding-top: 0;">
+    <section class="section-pad">
         <div class="container">
-            <div class="section-box">
-                <div class="section-head">
-                    <div>
-                        <h2>Tất Cả Sản Phẩm</h2>
-                        <p>Toàn bộ sản phẩm trong database được đưa vào khu catalog chính. Mỗi trang hiển thị 12 sản phẩm để sau này bạn thêm nhiều mặt hàng vẫn duyệt được rõ ràng.</p>
-                    </div>
+            <div class="section-header d-flex flex-wrap justify-content-between align-items-end gap-3">
+                <div>
+                    <span class="section-kicker"><i class='bx bx-star'></i> Gợi ý sản phẩm</span>
+                    <h2>Spotlight + lưới sản phẩm hiện đại</h2>
                 </div>
-                <c:choose>
-                    <c:when test="${not empty catalogProducts}">
+                <a href="${pageContext.request.contextPath}/shop?sort=name" class="section-link">Mở toàn bộ sản phẩm <i class='bx bx-right-arrow-alt'></i></a>
+            </div>
+            <c:choose>
+                <c:when test="${not empty products}">
+                    <div class="product-layout">
+                        <div class="spotlight">
+                            <div>
+                                <span class="spotlight-badge"><i class='bx bxs-hot'></i> Sản phẩm nổi bật</span>
+                                <h3>${products[0].name}</h3>
+                                <p>${not empty products[0].description ? products[0].description : 'Lựa chọn đáng chú ý cho nhu cầu chăm sóc hàng ngày của thú cưng.'}</p>
+                                <div class="spotlight-price">
+                                    <span class="new">${products[0].formattedPrice}</span>
+                                    <c:if test="${products[0].discount > 0}">
+                                        <span class="old">${products[0].formattedOldPrice}</span>
+                                    </c:if>
+                                </div>
+                                <div class="spotlight-actions">
+                                    <a href="${pageContext.request.contextPath}/product-detail?id=${products[0].id}" class="btn-soft"><i class='bx bx-show-alt'></i> Xem chi tiết</a>
+                                    <form action="${pageContext.request.contextPath}/add-to-cart" method="post" style="margin:0;">
+                                        <input type="hidden" name="productId" value="${products[0].id}">
+                                        <input type="hidden" name="quantity" value="1">
+                                        <button type="submit" class="btn-dark"><i class='bx bx-cart-add'></i> Thêm vào giỏ</button>
+                                    </form>
+                                </div>
+                            </div>
+                            <div class="spotlight-image">
+                                <c:choose>
+                                    <c:when test="${products[0].image.startsWith('http')}">
+                                        <img src="${products[0].image}" alt="${products[0].name}" onerror="this.src='https://placehold.co/280x280/e6fbf7/008f7a?text=PetShop'">
+                                    </c:when>
+                                    <c:otherwise>
+                                        <img src="${pageContext.request.contextPath}/${products[0].image}" alt="${products[0].name}" onerror="this.src='https://placehold.co/280x280/e6fbf7/008f7a?text=PetShop'">
+                                    </c:otherwise>
+                                </c:choose>
+                            </div>
+                        </div>
                         <div class="product-grid">
-                            <c:forEach var="p" items="${catalogProducts}">
-                                <div class="product-card">
-                                    <div class="product-media">
-                                        <c:if test="${p.discount > 0}"><span class="product-badge">-${p.discount}%</span></c:if>
+                            <c:forEach var="p" items="${products}" varStatus="st">
+                                <c:if test="${st.index > 0 && st.index < 7}">
+                                    <div class="product-card">
+                                        <div class="product-media">
+                                            <c:if test="${p.discount > 0}">
+                                                <span class="product-badge">-${p.discount}%</span>
+                                            </c:if>
+                                            <a href="${pageContext.request.contextPath}/product-detail?id=${p.id}">
+                                                <c:choose>
+                                                    <c:when test="${p.image.startsWith('http')}">
+                                                        <img src="${p.image}" alt="${p.name}" onerror="this.src='https://placehold.co/220x220/e6fbf7/008f7a?text=PetShop'">
+                                                    </c:when>
+                                                    <c:otherwise>
+                                                        <img src="${pageContext.request.contextPath}/${p.image}" alt="${p.name}" onerror="this.src='https://placehold.co/220x220/e6fbf7/008f7a?text=PetShop'">
+                                                    </c:otherwise>
+                                                </c:choose>
+                                            </a>
+                                        </div>
+                                        <div class="product-info">
+                                            <div class="product-cat">${p.category}</div>
+                                            <div class="product-name"><a href="${pageContext.request.contextPath}/product-detail?id=${p.id}">${p.name}</a></div>
+                                            <div class="product-meta">
+                                                <div class="price-wrap">
+                                                    <strong>${p.formattedPrice}</strong>
+                                                    <c:if test="${p.discount > 0}">
+                                                        <span>${p.formattedOldPrice}</span>
+                                                    </c:if>
+                                                </div>
+                                                <form action="${pageContext.request.contextPath}/add-to-cart" method="post" style="margin:0;">
+                                                    <input type="hidden" name="productId" value="${p.id}">
+                                                    <input type="hidden" name="quantity" value="1">
+                                                    <button type="submit" class="cart-btn" title="Thêm vào giỏ"><i class='bx bx-cart-add'></i></button>
+                                                </form>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </c:if>
+                            </c:forEach>
+                        </div>
+                    </div>
+                </c:when>
+                <c:otherwise>
+                    <div class="text-center py-5">
+                        <i class='bx bx-package' style="font-size:4rem;color:var(--text-muted);"></i>
+                        <p class="mt-3 mb-0" style="color:var(--text-secondary);">Hiện chưa có sản phẩm để hiển thị.</p>
+                    </div>
+                </c:otherwise>
+            </c:choose>
+        </div>
+    </section>
+
+    <c:if test="${not empty discountProducts}">
+        <section class="section-pad" style="padding-top: 0;">
+            <div class="container">
+                <div class="section-header d-flex flex-wrap justify-content-between align-items-end gap-3">
+                    <div>
+                        <span class="section-kicker"><i class='bx bxs-discount'></i> Khu khuyến mãi</span>
+                        <h2>Đừng bỏ lỡ các ưu đãi hấp dẫn nhé</h2>
+                        <p>Chúng tôi luôn có những ưu đãi hấp dẫn dành cho mọi người. </p>
+                    </div>
+                    <a href="${pageContext.request.contextPath}/shop?discountOnly=true" class="section-link">Xem tất cả ưu đãi <i class='bx bx-right-arrow-alt'></i></a>
+                </div>
+                <div class="sale-shell">
+                    <div class="sale-banner">
+                        <h3>Ưu đãi tốt cho lần mua sắm tiếp theo của bé cưng</h3>
+                        <p>Luôn có các sản phẩm đang giảm hoặc ưu đãi hấp dẫn khi săn deal hoặc mua combo tiết kiệm.</p>
+                        <div class="sale-tags">
+                            <span><i class='bx bx-check-circle'></i> Giá đang tốt</span>
+                            <span><i class='bx bx-check-circle'></i> Dễ gom đơn</span>
+                            <span><i class='bx bx-check-circle'></i> Phù hợp mua lặp lại</span>
+                        </div>
+                        <a href="${pageContext.request.contextPath}/shop?discountOnly=true" class="hero-btn"><i class='bx bx-right-arrow-alt'></i> Vào khu giảm giá</a>
+                    </div>
+                    <div class="sale-mini-grid">
+                        <c:forEach var="p" items="${discountProducts}" varStatus="st">
+                            <c:if test="${st.index < 4}">
+                                <div class="sale-mini-card">
+                                    <div class="sale-mini-thumb">
+                                        <span class="sale-off">-${p.discount}%</span>
                                         <a href="${pageContext.request.contextPath}/product-detail?id=${p.id}">
                                             <c:choose>
-                                                <c:when test="${not empty p.image && p.image.startsWith('http')}">
-                                                    <img src="${p.image}" alt="${p.name}" onerror="this.src='https://placehold.co/260x220/e8fbf7/008f7a?text=PetShop'">
-                                                </c:when>
-                                                <c:when test="${not empty p.image}">
-                                                    <img src="${pageContext.request.contextPath}/${p.image}" alt="${p.name}" onerror="this.src='https://placehold.co/260x220/e8fbf7/008f7a?text=PetShop'">
+                                                <c:when test="${p.image.startsWith('http')}">
+                                                    <img src="${p.image}" alt="${p.name}" onerror="this.src='https://placehold.co/180x180/e6fbf7/008f7a?text=Sale'">
                                                 </c:when>
                                                 <c:otherwise>
-                                                    <img src="https://placehold.co/260x220/e8fbf7/008f7a?text=PetShop" alt="${p.name}">
+                                                    <img src="${pageContext.request.contextPath}/${p.image}" alt="${p.name}" onerror="this.src='https://placehold.co/180x180/e6fbf7/008f7a?text=Sale'">
                                                 </c:otherwise>
                                             </c:choose>
                                         </a>
                                     </div>
-                                    <div class="product-info">
-                                        <div class="product-category">${p.category}</div>
-                                        <div class="product-name"><a href="${pageContext.request.contextPath}/product-detail?id=${p.id}">${p.name}</a></div>
-                                        <div class="product-meta">
-                                            <div class="price-wrap">
-                                                <strong>${p.formattedPrice}</strong>
-                                                <c:if test="${p.discount > 0}"><span>${p.formattedOldPrice}</span></c:if>
-                                            </div>
-                                            <form action="${pageContext.request.contextPath}/add-to-cart" method="post" style="margin:0;">
-                                                <input type="hidden" name="id" value="${p.id}">
-                                                <input type="hidden" name="quantity" value="1">
-                                                <button type="submit" class="cart-btn"><i class='bx bx-cart-add'></i></button>
-                                            </form>
-                                        </div>
-                                    </div>
+                                    <h6><a href="${pageContext.request.contextPath}/product-detail?id=${p.id}">${p.name}</a></h6>
+                                    <div><strong>${p.formattedPrice}</strong><span>${p.formattedOldPrice}</span></div>
                                 </div>
-                            </c:forEach>
-                        </div>
-                    </c:when>
-                    <c:otherwise><div class="empty-state">Chưa có sản phẩm trong catalog.</div></c:otherwise>
-                </c:choose>
-                <c:if test="${catalogTotalPages > 1}">
-                    <div class="pagination-bar">
-                        <c:forEach begin="1" end="${catalogTotalPages}" var="i">
-                            <a href="${pageContext.request.contextPath}/shop?salePage=${salePage}&catalogPage=${i}" class="page-btn ${i == catalogPage ? 'active' : ''}">${i}</a>
+                            </c:if>
                         </c:forEach>
                     </div>
-                </c:if>
+                </div>
+            </div>
+        </section>
+    </c:if>
+
+    <section class="section-pad">
+        <div class="container">
+            <div class="section-header">
+                <span class="section-kicker"><i class='bx bx-store-alt'></i> Trải nghiệm mua sắm</span>
+                <h2>Luôn có đủ các dịch vụ tiện ích phục vụ khách hàng</h2>
+            </div>
+            <div class="experience-grid">
+                <div class="service-grid">
+                    <div class="service-card">
+                        <div class="icon" style="background:var(--primary-soft);color:var(--primary-dark);"><i class='bx bx-package'></i></div>
+                        <h5>Giao hàng nhanh và có kế hoạch</h5>
+                        <p>Phù hợp cho những đơn cần gấp như thức ăn, cát mèo hay các vật dụng chăm sóc thường xuyên.</p>
+                    </div>
+                    <div class="service-card">
+                        <div class="icon" style="background:#fff1e8;color:#ff7a45;"><i class='bx bx-shield-quarter'></i></div>
+                        <h5>Nguồn gốc sản phẩm rõ ràng</h5>
+                        <p>Chúng tôi luôn cung cấp những sản phẩm chất lượng và có nguồn gốc rõ ràng.</p>
+                    </div>
+                    <div class="service-card">
+                        <div class="icon" style="background:#eef4ff;color:#3267ff;"><i class='bx bx-refresh'></i></div>
+                        <h5>Hỗ trợ sau mua</h5>
+                        <p>Luôn hỗ trợ khách hàng khi đến mua sắm tại shop.</p>
+                    </div>
+                    <div class="service-card">
+                        <div class="icon" style="background:#edfdf4;color:#16a34a;"><i class='bx bx-message-rounded-detail'></i></div>
+                        <h5>Tư vấn đúng nhu cầu</h5>
+                        <p>Chúng tôi có đội ngũ nhân viên tư vẫn nhiệt tình, sẵn sàng hỗ trợ khách hàng</p>
+                    </div>
+                </div>
+                <div class="guide-card">
+                    <span class="section-kicker"><i class='bx bx-bulb'></i> Hướng dẫn chọn nhanh</span>
+                    <h3 style="margin:0 0 6px;font-size:1.45rem;font-weight:800;">Mua đúng món nhanh hơn</h3>
+                    <p style="margin:0;color:var(--text-secondary);line-height:1.75;">Giúp bạn tìm sản phẩm phù hợp cho thú cưng một cách dễ dàng và tiện lợi hơn.</p>
+                    <div class="guide-list">
+                        <div class="guide-item">
+                            <div class="guide-step">1</div>
+                            <div><strong>Chọn theo thú cưng</strong><p>Bắt đầu bằng cách chọn khu vực dành cho chó, mèo hoặc loại thú cưng bạn đang nuôi để xem sản phẩm phù hợp.</p></div>
+                        </div>
+                        <div class="guide-item">
+                            <div class="guide-step">2</div>
+                            <div><strong>Vào danh mục đúng nhu cầu</strong><p>Từ thức ăn, vệ sinh đến sức khỏe, mỗi lối vào đều đã được làm rõ hơn.</p></div>
+                        </div>
+                        <div class="guide-item">
+                            <div class="guide-step">3</div>
+                            <div><strong>So sánh sản phẩm và deal</strong><p>Spotlight và khu sale riêng giúp khách ra quyết định dễ hơn khi mua sắm.</p></div>
+                        </div>
+                    </div>
+                    <div class="guide-cta">
+                        <div>
+                            <strong>Bắt đầu từ đâu?</strong>
+                            <span>Nếu bạn muốn mua nhanh, hãy vào thẳng khu deal hoặc khu danh mục nổi bật.</span>
+                        </div>
+                        <a href="${pageContext.request.contextPath}/shop?discountOnly=true" class="btn-dark"><i class='bx bx-right-arrow-alt'></i> Mở khu ưu đãi</a>
+                    </div>
+                </div>
             </div>
         </div>
     </section>
