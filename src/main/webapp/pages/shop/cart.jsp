@@ -237,7 +237,7 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 
     <script>
-        function openDeletefModal(productId, productName) {
+        function openDeleteModal(productId, productName) {
             document.getElementById('deleteProductName').textContent = productName;
             document.getElementById('confirmDeleteBtn').href = '${pageContext.request.contextPath}/cart?action=remove&id=' + productId;
             var deleteModal = new bootstrap.Modal(document.getElementById('deleteModal'));
