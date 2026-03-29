@@ -33,8 +33,8 @@ public class ProductDAO {
                     rs.getString("image"),
                     rs.getDouble("price"),
                     rs.getInt("discount"),
-                    desc,
-                    cat
+                    rs.getString("description"),
+                        rs.getString("category")
                 ));
             }
             conn.close();
@@ -59,7 +59,7 @@ public class ProductDAO {
                 if (cat == null) cat = "";
                 list.add(new Product(
                     rs.getInt("id"), rs.getString("name"), rs.getString("image"),
-                    rs.getDouble("price"), rs.getInt("discount"), desc, cat
+                    rs.getDouble("price"), rs.getInt("discount"), rs.getString("description"),rs.getString("category")
                 ));
             }
         } catch (Exception e) {
@@ -97,7 +97,7 @@ public class ProductDAO {
                 if (desc == null) desc = "";
                 list.add(new Product(
                     rs.getInt("id"), rs.getString("name"), rs.getString("image"),
-                    rs.getDouble("price"), rs.getInt("discount"), desc, category
+                    rs.getDouble("price"), rs.getInt("discount"), rs.getString("description"),rs.getString("category")
                 ));
             }
         } catch (Exception e) {
@@ -123,7 +123,7 @@ public class ProductDAO {
                 if (cat == null) cat = "";
                 list.add(new Product(
                     rs.getInt("id"), rs.getString("name"), rs.getString("image"),
-                    rs.getDouble("price"), rs.getInt("discount"), desc, cat
+                    rs.getDouble("price"), rs.getInt("discount"),rs.getString("description"),rs.getString("category")
                 ));
             }
         } catch (Exception e) {
@@ -146,7 +146,7 @@ public class ProductDAO {
                 if (cat == null) cat = "";
                 list.add(new Product(
                     rs.getInt("id"), rs.getString("name"), rs.getString("image"),
-                    rs.getDouble("price"), rs.getInt("discount"), desc, cat
+                    rs.getDouble("price"), rs.getInt("discount"), rs.getString("description"),rs.getString("category")
                 ));
             }
         } catch (Exception e) {
@@ -175,7 +175,8 @@ public class ProductDAO {
                     rs.getString("image"),
                     rs.getDouble("price"),
                     rs.getInt("discount"),
-                    desc 
+                        rs.getString("description"),
+                        rs.getString("category")
                 );
             }
             conn.close();
@@ -291,7 +292,8 @@ public class ProductDAO {
                     rs.getString("image"),
                     rs.getDouble("price"),
                     rs.getInt("discount"),
-                    desc 
+                        rs.getString("description"),
+                        rs.getString("category")
                 ));
             }
             conn.close();
@@ -324,7 +326,8 @@ public class ProductDAO {
                         rs.getString("image"),
                         rs.getDouble("price"),
                         rs.getInt("discount"),
-                        desc
+                        rs.getString("description"),
+                        rs.getString("category")
                 ));
             }
             connection.close();

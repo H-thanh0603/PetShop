@@ -9,19 +9,20 @@ public class Product {
     private double price;    
     private int discount;     
     private String description; // Giữ lại thuộc tính mới này
-    
+    private String category;
     // 1. Constructor rỗng (Bắt buộc)
     public Product() {
     }
 
     // 2. Constructor đầy đủ 6 tham số (Dùng cho DAO mới)
-    public Product(int id, String name, String image, double price, int discount, String description) {
+    public Product(int id, String name, String image, double price, int discount, String description, String category) {
         this.id = id;
         this.name = name;
         this.image = image;
         this.price = price;
         this.discount = discount;
         this.description = description;
+        this.category = category;
     }
 
     // --- GETTERS & SETTERS ---
@@ -63,5 +64,13 @@ public class Product {
     public String getFormattedOldPrice() {
         DecimalFormat formatter = new DecimalFormat("###,###");
         return formatter.format(getOldPrice()) + "đ";
+    }
+
+    public String getCategory() {
+        return category;
+    }
+
+    public void setCategory(String category) {
+        this.category = category;
     }
 }
