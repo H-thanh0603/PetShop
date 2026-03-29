@@ -6,7 +6,6 @@ import DAO.AddressDao;
 import DAO.CouponDao;
 import DAO.UserDAO;
 import DAO.OrderDAO;
-import DAO.CouponDao;
 
 import Model.*;
 
@@ -16,6 +15,7 @@ import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
+import services.ShippingService;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -23,8 +23,8 @@ import java.util.Map;
 
 @WebServlet("/checkout")
 public class CheckoutServlet extends HttpServlet {
+    private AddressDao addressDAO = new AddressDao();
     private static final long serialVersionUID = 1L;
-    private static final double SHIPPING_FEE = 30000;
 
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
@@ -48,22 +48,48 @@ public class CheckoutServlet extends HttpServlet {
             return;
         }
 
-        AddressDao addressDAO = new AddressDao();
         List<Address> addressList = addressDAO.getAddressesByUserId(user.getId());
+        Address defaultAddress = addressDAO.getDefaultAddressByUserId(user.getId());
         List<CartItem> cartItems = new ArrayList<>(cart.values());
 
         double totalAmount = 0;
+        int totalWeight = 0;
         for (CartItem item : cart.values()) {
             totalAmount += item.getTotalPrice();
+            int productWeight = item.getProduct().getWeight();
+            if (productWeight <= 0) productWeight = 500;
+            totalWeight += item.getQuantity() * productWeight;
         }
+        int shippingFee = 30000; // fallback
+        String shippingMessage = null;
 
+        if (defaultAddress != null) {
+            try {
+                ShippingService shippingService = new ShippingService();
+
+                shippingFee = shippingService.calculateShippingFee(
+                        defaultAddress.getProvince(),
+                        defaultAddress.getDistrict(),
+                        defaultAddress.getWard(),
+                        totalWeight,
+                        20,
+                        15,
+                        10
+                );
+            } catch (Exception e) {
+                e.printStackTrace();
+                shippingMessage = "Không tính được phí ship realtime, tạm dùng phí ship mặc định.";
+            }
+        } else {
+            shippingMessage = "Chưa có địa chỉ mặc định.";
+        }
         Coupon coupon = (Coupon) session.getAttribute("appliedCoupon");
         double discount = 0;
         if (coupon != null) {
             discount = totalAmount * coupon.getDiscountPercent() / 100.0;
         }
 
-        double finalTotal = totalAmount + SHIPPING_FEE - discount;
+        double finalTotal = totalAmount + shippingFee - discount;
 
         request.setAttribute("addressList", addressList);
         request.setAttribute("totalAmount", totalAmount);
@@ -71,7 +97,9 @@ public class CheckoutServlet extends HttpServlet {
         request.setAttribute("user", user);
         request.setAttribute("discount", discount);
         request.setAttribute("finalTotal", finalTotal);
-        request.setAttribute("shippingFee", SHIPPING_FEE);
+        request.setAttribute("shippingFee", shippingFee);
+        request.setAttribute("shippingMessage", shippingMessage);
+        request.setAttribute("defaultAddress", defaultAddress);
 
         String couponMessage = (String) session.getAttribute("couponMessage");
         if (couponMessage != null) {
@@ -130,22 +158,45 @@ public class CheckoutServlet extends HttpServlet {
             response.sendRedirect(request.getContextPath() + "/shop");
             return;
         }
-
+        Address defaultAddress = addressDAO.getDefaultAddressByUserId(user.getId());
         double totalAmount = 0;
+        int totalWeight = 0;
         for (CartItem item : cart.values()) {
             totalAmount += item.getTotalPrice();
+
+            int productWeight = item.getProduct().getWeight();
+            if (productWeight <= 0) productWeight = 500;
+
+            totalWeight += item.getQuantity() * productWeight;
         }
+
+        int shippingFee = 30000;
+        try {
+            if (defaultAddress != null) {
+                ShippingService shippingService = new ShippingService();
+                shippingFee = shippingService.calculateShippingFee(
+                        defaultAddress.getProvince(),
+                        defaultAddress.getDistrict(),
+                        defaultAddress.getWard(),
+                        totalWeight,
+                        20,
+                        15,
+                        10
+                );
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
 
         Coupon coupon = (Coupon) session.getAttribute("appliedCoupon");
         double discount = 0;
-        String couponCode = null;
 
         if (coupon != null) {
             discount = totalAmount * coupon.getDiscountPercent() / 100.0;
-            couponCode = coupon.getCode();
         }
 
-        double finalTotal = totalAmount + SHIPPING_FEE - discount;
+        double finalTotal = totalAmount + shippingFee - discount;
 
         String fullname = user.getFullname();
         String phone = user.getPhone();
