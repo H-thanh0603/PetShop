@@ -828,7 +828,7 @@
                 <div class="hero-copy">
                     <span class="section-kicker"><i class='bx bxs-store'></i> PetShop Marketplace</span>
                     <h1>Mua sắm cho thú cưng theo cách <span class="highlight">đẹp hơn, nhanh hơn và rõ ràng hơn</span></h1>
-                    <p>Trang shop được làm lại theo kiểu storefront hiện đại: có hero nổi bật, điều hướng nhanh, danh mục trực quan, sản phẩm spotlight, khu deal riêng và các khối tăng niềm tin khi mua hàng.</p>
+                    <p>Khám phá thế giới sản phẩm chính hãng cho thú cưng, từ thức ăn, đồ chơi, sức khỏe đến phụ kiện chăm sóc hằng ngày.</p>
                     <div class="hero-actions">
                         <a href="${pageContext.request.contextPath}/shop?discountOnly=true" class="hero-btn"><i class='bx bxs-hot'></i> Xem ưu đãi hôm nay</a>
                         <a href="${pageContext.request.contextPath}/shop?sort=name" class="hero-btn-outline"><i class='bx bx-grid-alt'></i> Duyệt toàn bộ sản phẩm</a>
@@ -841,7 +841,7 @@
                 </div>
                 <div class="hero-side">
                     <h3>Đi nhanh đến đúng khu mua sắm</h3>
-                    <p>Khách hàng có thể chọn theo thú cưng, mở khu giảm giá, hoặc đi thẳng tới nhóm danh mục được mua nhiều nhất ngay ở đầu trang.</p>
+                    <p>Chọn nhanh theo thú cưng, xem ưu đãi nổi bật hoặc đi thẳng vào các danh mục được khách hàng mua nhiều nhất.</p>
                     <div class="hero-stats">
                         <div class="hero-stat"><strong>${totalProducts}</strong><span>Sản phẩm</span></div>
                         <div class="hero-stat"><strong>${not empty categories ? categories.size() : 0}</strong><span>Danh mục</span></div>
@@ -896,7 +896,7 @@
             <div class="section-header">
                 <span class="section-kicker"><i class='bx bx-paw'></i> Shop theo bé thú cưng</span>
                 <h2>Chọn nhanh khu mua sắm phù hợp</h2>
-                <p>Đây là lớp điều hướng đầu tiên để khách hàng thu hẹp phạm vi sản phẩm chỉ sau một lần chạm.</p>
+                <p>Tìm nhanh khu sản phẩm phù hợp với nhu cầu của từng bé thú cưng.</p>
             </div>
             <div class="pet-grid">
                 <c:choose>
@@ -967,8 +967,8 @@
         <div class="container">
             <div class="section-header">
                 <span class="section-kicker"><i class='bx bx-slider-alt'></i> Bộ lọc mua sắm nhanh</span>
-                <h2>Khối điều hướng giống một trang shop hiện nay</h2>
-                <p>Thay vì bắt đầu từ một lưới sản phẩm dài, người dùng được đi qua các lối tắt phổ biến để chạm vào đúng thứ họ cần nhanh hơn.</p>
+                <h2>Lối Tắt Mua Sắm Nhanh</h2>
+                <p>Đi nhanh đến nhóm sản phẩm phù hợp với mục tiêu mua sắm của bạn chỉ trong một lần chạm.</p>
             </div>
             <div class="filter-grid">
                 <a href="${pageContext.request.contextPath}/shop?discountOnly=true" class="filter-card">
