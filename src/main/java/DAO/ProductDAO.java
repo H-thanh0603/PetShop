@@ -44,13 +44,15 @@ public class ProductDAO {
         return list;
     }
 
-    // Lấy sản phẩm theo loại thú cưng (Chó/Mèo)
-    public List<Product> getProductsByPetType(String petType) {
+    // Lấy sản phẩm theo loại thú cưng (sử dụng pet_type_id)
+    public List<Product> getProductsByPetType(String petTypeCode) {
         List<Product> list = new ArrayList<>();
-        String query = "SELECT * FROM products WHERE category LIKE ?";
-        try (Connection conn = new DBContext().getConnection();
+        String query = "SELECT p.* FROM products p " +
+                       "INNER JOIN pet_types pt ON p.pet_type_id = pt.id " +
+                       "WHERE pt.code = ? AND pt.is_active = 1";
+        try (Connection conn = DBContext.getConnection();
              PreparedStatement ps = conn.prepareStatement(query)) {
-            ps.setString(1, "%" + petType + "%");
+            ps.setString(1, petTypeCode);
             ResultSet rs = ps.executeQuery();
             while (rs.next()) {
                 String desc = rs.getString("description");
@@ -61,6 +63,50 @@ public class ProductDAO {
                     rs.getInt("id"), rs.getString("name"), rs.getString("image"),
                     rs.getDouble("price"), rs.getInt("discount"), desc, cat
                 ));
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return list;
+    }
+
+    // Lấy sản phẩm theo loại thú cưng (fallback - dùng category LIKE nếu chưa có pet_type_id)
+    public List<Product> getProductsByPetTypeFallback(String petTypeName) {
+        List<Product> list = new ArrayList<>();
+        String query = "SELECT * FROM products WHERE category LIKE ?";
+        try (Connection conn = DBContext.getConnection();
+             PreparedStatement ps = conn.prepareStatement(query)) {
+            ps.setString(1, "%" + petTypeName + "%");
+            ResultSet rs = ps.executeQuery();
+            while (rs.next()) {
+                String desc = rs.getString("description");
+                if (desc == null) desc = "";
+                String cat = rs.getString("category");
+                if (cat == null) cat = "";
+                list.add(new Product(
+                    rs.getInt("id"), rs.getString("name"), rs.getString("image"),
+                    rs.getDouble("price"), rs.getInt("discount"), desc, cat
+                ));
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return list;
+    }
+
+    // Lấy danh sách categories theo loại thú cưng
+    public List<String> getCategoriesByPetType(String petTypeCode) {
+        List<String> list = new ArrayList<>();
+        String query = "SELECT DISTINCT p.category FROM products p " +
+                       "INNER JOIN pet_types pt ON p.pet_type_id = pt.id " +
+                       "WHERE pt.code = ? AND p.category IS NOT NULL AND p.category != '' " +
+                       "ORDER BY p.category";
+        try (Connection conn = DBContext.getConnection();
+             PreparedStatement ps = conn.prepareStatement(query)) {
+            ps.setString(1, petTypeCode);
+            ResultSet rs = ps.executeQuery();
+            while (rs.next()) {
+                list.add(rs.getString("category"));
             }
         } catch (Exception e) {
             e.printStackTrace();
