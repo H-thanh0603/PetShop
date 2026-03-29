@@ -289,8 +289,7 @@
     
     /* Search Bar in Navbar - Hiển thị cố định */
     .nav-search-form {
-        margin-left: auto;
-        margin-right: 15px;
+        flex-shrink: 0;
     }
     .nav-search-bar {
         display: flex;
@@ -415,11 +414,10 @@
                     <a class="nav-link" href="${pageContext.request.contextPath}/about">Về chúng tôi</a>
                 </li>
             </ul>
-            
         </div>
         
-        <!-- Search Bar - Hiển thị cố định trên navbar -->
-        <form action="${pageContext.request.contextPath}/shop" method="get" class="nav-search-form d-none d-lg-flex" id="navSearchForm">
+        <!-- Search Bar - Hiển thị cố định trên navbar (giữa menu và buttons) -->
+        <form action="${pageContext.request.contextPath}/shop" method="get" class="nav-search-form d-none d-lg-flex ms-auto me-3" id="navSearchForm">
             <div class="nav-search-bar">
                 <i class='bx bx-search'></i>
                 <input type="text" name="search" placeholder="Tìm kiếm sản phẩm..." autocomplete="off" value="${param.search}">

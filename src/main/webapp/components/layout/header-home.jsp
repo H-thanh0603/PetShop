@@ -50,6 +50,63 @@
     #navbar .navbar-collapse {
         background: transparent !important;
     }
+
+    #navbar .nav-search-form {
+        flex-shrink: 0;
+    }
+    #navbar .nav-search-bar {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        min-width: 260px;
+        padding: 8px 16px;
+        border-radius: 50px;
+        border: 1px solid rgba(255,255,255,0.25);
+        background: rgba(255,255,255,0.12);
+        backdrop-filter: blur(12px);
+        -webkit-backdrop-filter: blur(12px);
+        transition: all 0.3s ease;
+    }
+    #navbar .nav-search-bar:focus-within {
+        border-color: rgba(0,255,204,0.7);
+        background: rgba(255,255,255,0.18);
+        box-shadow: 0 0 0 3px rgba(0,255,204,0.12);
+    }
+    #navbar .nav-search-bar i {
+        color: rgba(255,255,255,0.9) !important;
+        font-size: 1.1rem;
+    }
+    #navbar .nav-search-bar input {
+        width: 100%;
+        border: none;
+        outline: none;
+        background: transparent;
+        color: #ffffff;
+        font-size: 0.9rem;
+        font-weight: 500;
+    }
+    #navbar .nav-search-bar input::placeholder {
+        color: rgba(255,255,255,0.72);
+    }
+
+    #navbar.navbar-scrolled .nav-search-bar {
+        border-color: #d8e3ec;
+        background: #ffffff;
+        box-shadow: 0 8px 24px rgba(11, 26, 51, 0.08);
+    }
+    #navbar.navbar-scrolled .nav-search-bar:focus-within {
+        border-color: #00bfa5;
+        box-shadow: 0 0 0 3px rgba(0, 191, 165, 0.12);
+    }
+    #navbar.navbar-scrolled .nav-search-bar i {
+        color: #64748b !important;
+    }
+    #navbar.navbar-scrolled .nav-search-bar input {
+        color: #0f172a;
+    }
+    #navbar.navbar-scrolled .nav-search-bar input::placeholder {
+        color: #94a3b8;
+    }
     
     /* Dropdown Menu */
     #navbar .dropdown-menu {
@@ -170,6 +227,7 @@
             border-color: #e2e8f0 !important;
         }
         #navbar .btn-nav-cart { color: #334155 !important; margin: 0 auto; }
+        #navbar .nav-search-form { display: none !important; }
     }
 </style>
 
@@ -197,6 +255,13 @@
                 </li>
             </ul>
         </div>
+
+        <form action="${pageContext.request.contextPath}/shop" method="get" class="nav-search-form d-none d-lg-flex ms-auto me-3">
+            <div class="nav-search-bar">
+                <i class='bx bx-search'></i>
+                <input type="text" name="search" placeholder="Tìm kiếm sản phẩm..." autocomplete="off" value="${param.search}">
+            </div>
+        </form>
 
         <div class="d-flex align-items-center gap-3">
             
