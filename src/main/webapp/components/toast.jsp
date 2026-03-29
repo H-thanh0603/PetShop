@@ -6,9 +6,9 @@
     <style>
         .custom-toast-container {
             position: fixed;
-            top: 20px;
+            top: 90px;
             right: 20px;
-            z-index: 105000;
+            z-index: 9999999;
         }
         .custom-toast {
             min-width: 320px;
