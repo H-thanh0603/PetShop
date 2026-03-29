@@ -23,8 +23,21 @@ public class LoginServlet extends HttpServlet {
 
     protected void doGet(HttpServletRequest request, HttpServletResponse response) 
             throws ServletException, IOException {
-        // Kiểm tra email từ đăng ký mới
         HttpSession session = request.getSession();
+        
+        // Lưu URL redirect (từ parameter hoặc referer)
+        String redirectUrl = request.getParameter("redirect");
+        if (redirectUrl == null || redirectUrl.isEmpty()) {
+            String referer = request.getHeader("Referer");
+            if (referer != null && !referer.contains("/login") && !referer.contains("/register")) {
+                redirectUrl = referer;
+            }
+        }
+        if (redirectUrl != null && !redirectUrl.isEmpty()) {
+            session.setAttribute("redirectAfterLogin", redirectUrl);
+        }
+        
+        // Kiểm tra email từ đăng ký mới
         String registeredEmail = (String) session.getAttribute("registeredEmail");
         if (registeredEmail != null) {
             request.setAttribute("savedEmail", registeredEmail);
@@ -119,9 +132,14 @@ public class LoginServlet extends HttpServlet {
                 response.addCookie(emailCookie);
             }
             
-            // Redirect theo role
+            // Redirect theo role hoặc về trang trước
+            String redirectUrl = (String) session.getAttribute("redirectAfterLogin");
+            session.removeAttribute("redirectAfterLogin"); // Xóa sau khi dùng
+            
             if ("admin".equals(user.getRole())) {
                 response.sendRedirect(request.getContextPath() + "/pages/admin/dashboard");
+            } else if (redirectUrl != null && !redirectUrl.isEmpty()) {
+                response.sendRedirect(redirectUrl);
             } else {
                 response.sendRedirect(request.getContextPath() + "/home");
             }

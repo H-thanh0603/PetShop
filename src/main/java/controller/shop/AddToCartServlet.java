@@ -26,9 +26,22 @@ public class AddToCartServlet extends HttpServlet {
 
         int productId = Integer.parseInt(request.getParameter("id"));
         int quantity = Integer.parseInt(request.getParameter("quantity"));
+        String action = request.getParameter("actionType");
 
         HttpSession session = request.getSession();
         User user = (User) session.getAttribute("user");
+        
+        // Nếu là action "buy" và chưa đăng nhập, yêu cầu đăng nhập
+        if ("buy".equals(action) && user == null) {
+            String referer = request.getHeader("Referer");
+            if (referer != null && !referer.isEmpty()) {
+                session.setAttribute("redirectAfterLogin", referer);
+            }
+            session.setAttribute("toastMessage", "Vui lòng đăng nhập để mua hàng!");
+            session.setAttribute("toastType", "warning");
+            response.sendRedirect(request.getContextPath() + "/login");
+            return;
+        }
         
         Map<Integer, CartItem> cart = (Map<Integer, CartItem>) session.getAttribute("cart");
         if (cart == null) cart = new HashMap<>();
@@ -65,8 +78,6 @@ public class AddToCartServlet extends HttpServlet {
         }
         
         // Xử lý điều hướng
-        String action = request.getParameter("actionType");
-        
         if ("buy".equals(action)) {
             response.sendRedirect(request.getContextPath() + "/pages/shop/cart.jsp");
         } else {
