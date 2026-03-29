@@ -89,28 +89,55 @@
             grid-template-columns: repeat(4, 1fr);
             gap: 14px;
         }
-        .filter-pill {
-            background: var(--primary-soft);
-            color: var(--primary-dark);
-            border-radius: 18px;
-            padding: 16px 18px;
-            text-decoration: none;
+        .filter-field {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        .filter-label {
+            font-size: 0.82rem;
+            font-weight: 700;
+            color: var(--ink-soft);
+        }
+        .filter-control {
+            width: 100%;
+            min-height: 48px;
+            border-radius: 16px;
+            border: 1px solid var(--border);
+            background: var(--white);
+            padding: 0 14px;
+            color: var(--ink);
+            font-weight: 500;
+        }
+        .filter-actions {
             display: flex;
             align-items: center;
-            gap: 12px;
-            font-weight: 700;
+            gap: 10px;
+            flex-wrap: wrap;
         }
-        .filter-pill i {
-            width: 38px;
-            height: 38px;
-            border-radius: 12px;
-            display: flex;
+        .btn-filter,
+        .btn-filter-secondary {
+            min-height: 48px;
+            border-radius: 16px;
+            padding: 0 18px;
+            font-weight: 700;
+            text-decoration: none;
+            display: inline-flex;
             align-items: center;
             justify-content: center;
-            background: #fff;
-            font-size: 1.2rem;
+            gap: 8px;
+            border: none;
         }
-        .filter-pill:hover { color: var(--primary-dark); }
+        .btn-filter {
+            background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+            color: #fff;
+        }
+        .btn-filter:hover { color: #fff; }
+        .btn-filter-secondary {
+            background: var(--primary-soft);
+            color: var(--primary-dark);
+        }
+        .btn-filter-secondary:hover { color: var(--primary-dark); }
         .category-row {
             display: flex;
             flex-wrap: wrap;
@@ -158,6 +185,11 @@
         .product-grid {
             display: grid;
             grid-template-columns: repeat(4, minmax(0, 1fr));
+            gap: 18px;
+        }
+        .best-seller-grid {
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
             gap: 18px;
         }
         .product-card {
@@ -255,6 +287,9 @@
             padding: 28px;
             box-shadow: var(--shadow-soft);
         }
+        .section-box.best-seller-box {
+            background: linear-gradient(180deg, #ffffff 0%, #f9fefd 100%);
+        }
         .pagination-bar {
             display: flex;
             justify-content: center;
@@ -289,12 +324,14 @@
         @media (max-width: 1199px) {
             .filter-bar,
             .product-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+            .best-seller-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
         }
         @media (max-width: 767px) {
             .section-pad { padding: 44px 0; }
             .hero-stats,
             .filter-bar,
             .product-grid { grid-template-columns: 1fr; }
+            .best-seller-grid { grid-template-columns: 1fr; }
             .section-head { flex-direction: column; align-items: start; }
         }
     </style>
@@ -316,12 +353,45 @@
 
     <div class="shop-shell">
         <div class="container">
-            <div class="filter-bar">
-                <a href="${pageContext.request.contextPath}/shop?discountOnly=true" class="filter-pill"><i class='bx bxs-discount'></i> Hàng đang giảm giá</a>
-                <a href="${pageContext.request.contextPath}/shop?sort=price-asc" class="filter-pill"><i class='bx bx-sort-up'></i> Giá từ thấp đến cao</a>
-                <a href="${pageContext.request.contextPath}/shop?sort=discount" class="filter-pill"><i class='bx bx-trending-up'></i> Giảm giá mạnh</a>
-                <a href="${pageContext.request.contextPath}/shop?sort=name" class="filter-pill"><i class='bx bx-grid-alt'></i> Duyệt toàn bộ</a>
-            </div>
+            <form action="${pageContext.request.contextPath}/shop" method="get" class="filter-bar">
+                <div class="filter-field">
+                    <label class="filter-label" for="shopSearch">Tìm kiếm</label>
+                    <input id="shopSearch" class="filter-control" type="text" name="search" placeholder="Tên sản phẩm..." />
+                </div>
+                <div class="filter-field">
+                    <label class="filter-label" for="shopPet">Thú cưng</label>
+                    <select id="shopPet" class="filter-control" name="pet">
+                        <option value="">Tất cả</option>
+                        <c:forEach var="pt" items="${petTypes}">
+                            <option value="${pt.code}">${pt.name}</option>
+                        </c:forEach>
+                    </select>
+                </div>
+                <div class="filter-field">
+                    <label class="filter-label" for="shopCategory">Danh mục</label>
+                    <select id="shopCategory" class="filter-control" name="category">
+                        <option value="">Tất cả</option>
+                        <c:forEach var="cat" items="${categories}">
+                            <option value="${cat}">${cat}</option>
+                        </c:forEach>
+                    </select>
+                </div>
+                <div class="filter-field">
+                    <label class="filter-label" for="shopSort">Sắp xếp</label>
+                    <select id="shopSort" class="filter-control" name="sort">
+                        <option value="">Mặc định</option>
+                        <option value="price-asc">Giá tăng dần</option>
+                        <option value="price-desc">Giá giảm dần</option>
+                        <option value="discount">Giảm giá nhiều nhất</option>
+                        <option value="name">Tên A-Z</option>
+                    </select>
+                </div>
+                <div class="filter-actions" style="grid-column: 1 / -1;">
+                    <button type="submit" class="btn-filter"><i class='bx bx-search-alt-2'></i> Lọc sản phẩm</button>
+                    <a href="${pageContext.request.contextPath}/shop" class="btn-filter-secondary"><i class='bx bx-reset'></i> Đặt lại</a>
+                    <a href="${pageContext.request.contextPath}/shop?discountOnly=true" class="btn-filter-secondary"><i class='bx bxs-discount'></i> Chỉ xem hàng giảm giá</a>
+                </div>
+            </form>
         </div>
     </div>
 
@@ -336,7 +406,18 @@
             <div class="category-row">
                 <c:forEach var="cat" items="${categories}">
                     <a href="${pageContext.request.contextPath}/shop?category=${cat}" class="category-chip">
-                        <i class='bx bx-paw'></i> ${cat}
+                        <c:choose>
+                            <c:when test="${cat.contains('Thức Ăn')}"><i class='bx bx-bowl-hot'></i></c:when>
+                            <c:when test="${cat.contains('Sữa')}"><i class='bx bx-coffee-togo'></i></c:when>
+                            <c:when test="${cat.contains('Vệ Sinh') || cat.contains('Tắm')}"><i class='bx bx-spray-can'></i></c:when>
+                            <c:when test="${cat.contains('Cát')}"><i class='bx bx-archive'></i></c:when>
+                            <c:when test="${cat.contains('Ăn Uống')}"><i class='bx bx-dish'></i></c:when>
+                            <c:when test="${cat.contains('Sức Khoẻ')}"><i class='bx bx-plus-medical'></i></c:when>
+                            <c:when test="${cat.contains('Huấn Luyện') || cat.contains('Đồ Chơi')}"><i class='bx bx-bone'></i></c:when>
+                            <c:when test="${cat.contains('Dụng Cụ Vệ Sinh')}"><i class='bx bx-brush'></i></c:when>
+                            <c:otherwise><i class='bx bx-paw'></i></c:otherwise>
+                        </c:choose>
+                        ${cat}
                     </a>
                 </c:forEach>
             </div>
@@ -345,16 +426,16 @@
 
     <section class="section-pad" style="padding-top: 12px;">
         <div class="container">
-            <div class="section-box">
+            <div class="section-box best-seller-box">
                 <div class="section-head">
                     <div>
-                        <h2>Được Mua Nhiều</h2>
-                        <p>Những sản phẩm được ưu tiên hiển thị theo mức độ mua nhiều, mỗi trang hiển thị 12 sản phẩm.</p>
+                        <h2>Bán Chạy Nổi Bật</h2>
+                        <p>Một khu ngắn để nhấn vào sản phẩm đang được quan tâm nhiều nhất, tránh lặp với catalog chính.</p>
                     </div>
                 </div>
                 <c:choose>
                     <c:when test="${not empty popularProducts}">
-                        <div class="product-grid">
+                        <div class="best-seller-grid">
                             <c:forEach var="p" items="${popularProducts}">
                                 <div class="product-card">
                                     <div class="product-media">
@@ -394,13 +475,6 @@
                     </c:when>
                     <c:otherwise><div class="empty-state">Chưa có sản phẩm để hiển thị.</div></c:otherwise>
                 </c:choose>
-                <c:if test="${popularTotalPages > 1}">
-                    <div class="pagination-bar">
-                        <c:forEach begin="1" end="${popularTotalPages}" var="i">
-                            <a href="${pageContext.request.contextPath}/shop?popularPage=${i}&salePage=${salePage}&catalogPage=${catalogPage}" class="page-btn ${i == popularPage ? 'active' : ''}">${i}</a>
-                        </c:forEach>
-                    </div>
-                </c:if>
             </div>
         </div>
     </section>
@@ -460,7 +534,7 @@
                 <c:if test="${saleTotalPages > 1}">
                     <div class="pagination-bar">
                         <c:forEach begin="1" end="${saleTotalPages}" var="i">
-                            <a href="${pageContext.request.contextPath}/shop?popularPage=${popularPage}&salePage=${i}&catalogPage=${catalogPage}" class="page-btn ${i == salePage ? 'active' : ''}">${i}</a>
+                            <a href="${pageContext.request.contextPath}/shop?salePage=${i}&catalogPage=${catalogPage}" class="page-btn ${i == salePage ? 'active' : ''}">${i}</a>
                         </c:forEach>
                     </div>
                 </c:if>
@@ -522,7 +596,7 @@
                 <c:if test="${catalogTotalPages > 1}">
                     <div class="pagination-bar">
                         <c:forEach begin="1" end="${catalogTotalPages}" var="i">
-                            <a href="${pageContext.request.contextPath}/shop?popularPage=${popularPage}&salePage=${salePage}&catalogPage=${i}" class="page-btn ${i == catalogPage ? 'active' : ''}">${i}</a>
+                            <a href="${pageContext.request.contextPath}/shop?salePage=${salePage}&catalogPage=${i}" class="page-btn ${i == catalogPage ? 'active' : ''}">${i}</a>
                         </c:forEach>
                     </div>
                 </c:if>

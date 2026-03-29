@@ -19,6 +19,7 @@ import Model.PetType;
 public class ShopServlet extends HttpServlet {
     private static final long serialVersionUID = 1L;
     private static final int SHOP_SECTION_PAGE_SIZE = 12;
+    private static final int BEST_SELLER_SIZE = 6;
 
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
@@ -33,7 +34,6 @@ public class ShopServlet extends HttpServlet {
         String priceRange = request.getParameter("priceRange");
         String discountOnly = request.getParameter("discountOnly");
         String pet = request.getParameter("pet"); // dog, cat, fish, bird, ...
-        int popularPage = parsePage(request.getParameter("popularPage"));
         int salePage = parsePage(request.getParameter("salePage"));
         int catalogPage = parsePage(request.getParameter("catalogPage"));
 
@@ -134,21 +134,18 @@ public class ShopServlet extends HttpServlet {
         request.setAttribute("totalProducts", products.size());
 
         if (pet == null && category == null && search == null && priceRange == null && discountOnly == null) {
-            List<Product> popularProducts = productDao.getPopularProductsPage(popularPage, SHOP_SECTION_PAGE_SIZE);
+            List<Product> popularProducts = productDao.getPopularProductsPage(1, BEST_SELLER_SIZE);
             List<Product> discountProducts = productDao.getDiscountedProductsPage(salePage, SHOP_SECTION_PAGE_SIZE);
             List<Product> catalogProducts = productDao.getAllProductsPage(catalogPage, SHOP_SECTION_PAGE_SIZE);
 
-            int popularTotal = productDao.getTotalPopularProductsCount();
             int discountTotal = productDao.getTotalDiscountedProductsCount();
             int catalogTotal = productDao.getTotalProductsCount();
 
             request.setAttribute("popularProducts", popularProducts);
             request.setAttribute("discountProducts", discountProducts);
             request.setAttribute("catalogProducts", catalogProducts);
-            request.setAttribute("popularPage", popularPage);
             request.setAttribute("salePage", salePage);
             request.setAttribute("catalogPage", catalogPage);
-            request.setAttribute("popularTotalPages", getTotalPages(popularTotal, SHOP_SECTION_PAGE_SIZE));
             request.setAttribute("saleTotalPages", getTotalPages(discountTotal, SHOP_SECTION_PAGE_SIZE));
             request.setAttribute("catalogTotalPages", getTotalPages(catalogTotal, SHOP_SECTION_PAGE_SIZE));
             request.setAttribute("totalProducts", catalogTotal);
