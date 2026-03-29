@@ -130,6 +130,32 @@ public class ProductDAO {
         return list;
     }
 
+    // Lấy danh mục được mua nhiều dựa trên order_items
+    public List<String> getPopularCategories(int limit) {
+        List<String> list = new ArrayList<>();
+        String query = "SELECT p.category, SUM(oi.quantity) AS total_sold " +
+                       "FROM order_items oi " +
+                       "JOIN products p ON oi.product_id = p.id " +
+                       "JOIN orders o ON oi.order_id = o.id " +
+                       "WHERE o.status != 'Cancelled' " +
+                       "AND p.category IS NOT NULL AND p.category != '' " +
+                       "GROUP BY p.category " +
+                       "ORDER BY total_sold DESC, p.category ASC " +
+                       "LIMIT ?";
+        try (Connection conn = new DBContext().getConnection();
+             PreparedStatement ps = conn.prepareStatement(query)) {
+            ps.setInt(1, limit);
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    list.add(rs.getString("category"));
+                }
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return list;
+    }
+
     // Lấy sản phẩm theo category
     public List<Product> getProductsByCategory(String category) {
         List<Product> list = new ArrayList<>();
