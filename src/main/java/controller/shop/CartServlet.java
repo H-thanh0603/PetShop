@@ -89,56 +89,69 @@ public class CartServlet extends HttpServlet {
         
         response.sendRedirect(request.getContextPath() + "/pages/shop/cart.jsp");
     }
-    
-    private void updateCart(HttpServletRequest request, HttpServletResponse response) 
+
+    private void updateCart(HttpServletRequest request, HttpServletResponse response)
             throws IOException {
-        
+
+        response.setContentType("application/json;charset=UTF-8");
+        response.setCharacterEncoding("UTF-8");
+
         HttpSession session = request.getSession();
         String idStr = request.getParameter("id");
         String quantityStr = request.getParameter("quantity");
-        
+
         if (idStr == null || quantityStr == null) {
-            response.sendRedirect(request.getContextPath() + "/pages/shop/cart.jsp");
+            response.getWriter().write("{\"success\":false,\"message\":\"Thiếu id hoặc quantity\"}");
             return;
         }
-        
-        int productId = Integer.parseInt(idStr);
-        int quantity = Integer.parseInt(quantityStr);
-        User user = (User) session.getAttribute("user");
-        
-        @SuppressWarnings("unchecked")
-        Map<Integer, CartItem> cart = (Map<Integer, CartItem>) session.getAttribute("cart");
-        
-        if (cart != null && cart.containsKey(productId)) {
-            if (quantity <= 0) {
-                // Nếu số lượng <= 0, xóa sản phẩm
-                cart.remove(productId);
-            } else {
-                // Cập nhật số lượng
-                cart.get(productId).setQuantity(quantity);
-            }
-            
-            session.setAttribute("cart", cart);
-            
-            // Cập nhật tổng số lượng
-            int totalQuantity = 0;
-            for (CartItem item : cart.values()) {
-                totalQuantity += item.getQuantity();
-            }
-            session.setAttribute("totalQuantity", totalQuantity);
-            
-            // Nếu user đã đăng nhập, cập nhật database
-            if (user != null) {
-                CartDAO cartDAO = new CartDAO();
+
+        try {
+            int productId = Integer.parseInt(idStr);
+            int quantity = Integer.parseInt(quantityStr);
+            User user = (User) session.getAttribute("user");
+
+            @SuppressWarnings("unchecked")
+            Map<Integer, CartItem> cart = (Map<Integer, CartItem>) session.getAttribute("cart");
+
+            if (cart != null && cart.containsKey(productId)) {
                 if (quantity <= 0) {
-                    cartDAO.removeFromCart(user.getId(), productId);
+                    cart.remove(productId);
                 } else {
-                    cartDAO.updateCartQuantity(user.getId(), productId, quantity);
+                    cart.get(productId).setQuantity(quantity);
                 }
+
+                session.setAttribute("cart", cart);
+
+                int totalQuantity = 0;
+                for (CartItem item : cart.values()) {
+                    totalQuantity += item.getQuantity();
+                }
+                session.setAttribute("totalQuantity", totalQuantity);
+
+                if (user != null) {
+                    CartDAO cartDAO = new CartDAO();
+                    if (quantity <= 0) {
+                        cartDAO.removeFromCart(user.getId(), productId);
+                    } else {
+                        cartDAO.updateCartQuantity(user.getId(), productId, quantity);
+                    }
+                }
+
+                response.getWriter().write(
+                        "{\"success\":true," +
+                                "\"quantity\":" + quantity + "," +
+                                "\"totalQuantity\":" + totalQuantity +
+                                "}"
+                );
+                return;
             }
+
+            response.getWriter().write("{\"success\":false,\"message\":\"Không tìm thấy sản phẩm trong cart\"}");
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            response.getWriter().write("{\"success\":false,\"message\":\"Lỗi server\"}");
         }
-        
-        response.sendRedirect(request.getContextPath() + "/pages/shop/cart.jsp");
     }
     
     private void clearCart(HttpServletRequest request, HttpServletResponse response) 

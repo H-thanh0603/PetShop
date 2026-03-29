@@ -113,9 +113,9 @@
                                             <fmt:formatNumber value="${item.product.price}" type="currency" currencySymbol="đ" maxFractionDigits="0"/>
                                         </td>
                                         <td class="text-center">
-                                            <input type="number" min="1" value="${item.quantity}" 
+                                            <input type="number" min="1" value="${item.quantity}" data-product-id="${item.product.id}"
                                                    class="form-control qty-input d-inline-block"
-                                                   onchange="updateCart(this)">
+                                                   oninput="updateCart(this)">
                                         </td>
                                         <td class="text-center fw-bold text-primary row-total">
                                             <fmt:formatNumber value="${item.totalPrice}" type="currency" currencySymbol="đ" maxFractionDigits="0"/>
@@ -194,15 +194,53 @@
             var deleteModal = new bootstrap.Modal(document.getElementById('deleteModal'));
             deleteModal.show();
         }
-        
-        function updateCart(inputElement) {
-            let row = inputElement.closest('tr');
+
+        function updateCart(input) {
+            const productId = input.dataset.productId;
+            const quantity = parseInt(input.value) || 1;
+
+            let row = input.closest('tr');
             let price = parseFloat(row.querySelector('[data-price]').getAttribute('data-price'));
-            let quantity = parseInt(inputElement.value);
             let newRowTotal = price * quantity;
-            let formattedRowTotal = new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(newRowTotal);
+            let formattedRowTotal = new Intl.NumberFormat('vi-VN', {
+                style: 'currency',
+                currency: 'VND'
+            }).format(newRowTotal);
+
             row.querySelector('.row-total').innerText = formattedRowTotal.replace('₫', 'đ');
             recalculateGrandTotal();
+
+            fetch('<%= request.getContextPath() %>/cart', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded'
+                },
+                body: 'action=update'
+                    + '&id=' + encodeURIComponent(productId)
+                    + '&quantity=' + encodeURIComponent(quantity)
+            })
+                .then(response => response.text())
+                .then(text => {
+                    console.log("Server response:", text);
+                    try {
+                        const data = JSON.parse(text);
+                        if (data.success) {
+                            input.value = data.quantity;
+                            let cartCount = document.getElementById('cart-count');
+                            if(cartCount && data.totalQuantity !== undefined){
+                                cartCount.innerText = data.totalQuantity;
+                            }
+                        } else {
+                            alert(data.message);
+                        }
+                    } catch (e) {
+                        console.error("Response không phải JSON:", text);
+                    }
+                })
+                .catch(error => {
+                    console.error('Lỗi update cart:', error);
+                    alert('Có lỗi xảy ra khi cập nhật giỏ hàng');
+                });
         }
 
         function recalculateGrandTotal() {
@@ -215,7 +253,6 @@
             let formattedGrandTotal = new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(grandTotal).replace('₫', 'đ');
             document.getElementById('cart-subtotal').innerText = formattedGrandTotal;
             document.getElementById('cart-total').innerText = formattedGrandTotal;
-            document.getElementById('hiddenTotalAmount').value = grandTotal;
         }
     </script>
 </body>
