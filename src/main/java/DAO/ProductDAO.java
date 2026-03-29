@@ -12,7 +12,6 @@ import Model.Product;
 public class ProductDAO {
 
     // 1. Lấy danh sách tất cả (Cho trang Shop)
-    // Dùng logic của bạn (HEAD) để lấy description
     public List<Product> getAllProducts() {
         List<Product> list = new ArrayList<>();
         String query = "SELECT * FROM products";
@@ -23,9 +22,10 @@ public class ProductDAO {
             ResultSet rs = ps.executeQuery();
 
             while (rs.next()) {
-                // Xử lý nếu mô tả bị null
                 String desc = rs.getString("description");
                 if (desc == null) desc = ""; 
+                String cat = rs.getString("category");
+                if (cat == null) cat = "";
 
                 list.add(new Product(
                     rs.getInt("id"),
@@ -33,10 +33,122 @@ public class ProductDAO {
                     rs.getString("image"),
                     rs.getDouble("price"),
                     rs.getInt("discount"),
-                    desc 
+                    desc,
+                    cat
                 ));
             }
             conn.close();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return list;
+    }
+
+    // Lấy sản phẩm theo loại thú cưng (Chó/Mèo)
+    public List<Product> getProductsByPetType(String petType) {
+        List<Product> list = new ArrayList<>();
+        String query = "SELECT * FROM products WHERE category LIKE ?";
+        try (Connection conn = new DBContext().getConnection();
+             PreparedStatement ps = conn.prepareStatement(query)) {
+            ps.setString(1, "%" + petType + "%");
+            ResultSet rs = ps.executeQuery();
+            while (rs.next()) {
+                String desc = rs.getString("description");
+                if (desc == null) desc = "";
+                String cat = rs.getString("category");
+                if (cat == null) cat = "";
+                list.add(new Product(
+                    rs.getInt("id"), rs.getString("name"), rs.getString("image"),
+                    rs.getDouble("price"), rs.getInt("discount"), desc, cat
+                ));
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return list;
+    }
+
+    // Lấy danh sách categories
+    public List<String> getAllCategories() {
+        List<String> list = new ArrayList<>();
+        String query = "SELECT DISTINCT category FROM products WHERE category IS NOT NULL AND category != '' ORDER BY category";
+        try (Connection conn = new DBContext().getConnection();
+             PreparedStatement ps = conn.prepareStatement(query);
+             ResultSet rs = ps.executeQuery()) {
+            while (rs.next()) {
+                list.add(rs.getString("category"));
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return list;
+    }
+
+    // Lấy sản phẩm theo category
+    public List<Product> getProductsByCategory(String category) {
+        List<Product> list = new ArrayList<>();
+        String query = "SELECT * FROM products WHERE category = ?";
+        try (Connection conn = new DBContext().getConnection();
+             PreparedStatement ps = conn.prepareStatement(query)) {
+            ps.setString(1, category);
+            ResultSet rs = ps.executeQuery();
+            while (rs.next()) {
+                String desc = rs.getString("description");
+                if (desc == null) desc = "";
+                list.add(new Product(
+                    rs.getInt("id"), rs.getString("name"), rs.getString("image"),
+                    rs.getDouble("price"), rs.getInt("discount"), desc, category
+                ));
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return list;
+    }
+
+    // Tìm kiếm sản phẩm
+    public List<Product> searchProducts(String keyword) {
+        List<Product> list = new ArrayList<>();
+        String query = "SELECT * FROM products WHERE name LIKE ? OR description LIKE ?";
+        try (Connection conn = new DBContext().getConnection();
+             PreparedStatement ps = conn.prepareStatement(query)) {
+            String pattern = "%" + keyword + "%";
+            ps.setString(1, pattern);
+            ps.setString(2, pattern);
+            ResultSet rs = ps.executeQuery();
+            while (rs.next()) {
+                String desc = rs.getString("description");
+                if (desc == null) desc = "";
+                String cat = rs.getString("category");
+                if (cat == null) cat = "";
+                list.add(new Product(
+                    rs.getInt("id"), rs.getString("name"), rs.getString("image"),
+                    rs.getDouble("price"), rs.getInt("discount"), desc, cat
+                ));
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return list;
+    }
+
+    // Lấy sản phẩm giảm giá
+    public List<Product> getDiscountedProductsList() {
+        List<Product> list = new ArrayList<>();
+        String query = "SELECT * FROM products WHERE discount > 0 ORDER BY discount DESC";
+        try (Connection conn = new DBContext().getConnection();
+             PreparedStatement ps = conn.prepareStatement(query);
+             ResultSet rs = ps.executeQuery()) {
+            while (rs.next()) {
+                String desc = rs.getString("description");
+                if (desc == null) desc = "";
+                String cat = rs.getString("category");
+                if (cat == null) cat = "";
+                list.add(new Product(
+                    rs.getInt("id"), rs.getString("name"), rs.getString("image"),
+                    rs.getDouble("price"), rs.getInt("discount"), desc, cat
+                ));
+            }
         } catch (Exception e) {
             e.printStackTrace();
         }

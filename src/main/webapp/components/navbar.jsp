@@ -287,6 +287,40 @@
     
     body { padding-top: 80px !important; margin-top: 0 !important; }
     
+    /* Search Bar in Navbar */
+    .nav-search-bar {
+        display: flex;
+        align-items: center;
+        background: #f5f7fa;
+        border: 1px solid #e8eaed;
+        border-radius: 50px;
+        padding: 8px 16px;
+        gap: 8px;
+        transition: all 0.3s ease;
+        min-width: 220px;
+    }
+    .nav-search-bar:focus-within {
+        border-color: #00bfa5;
+        background: #fff;
+        box-shadow: 0 0 0 3px rgba(0, 191, 165, 0.1);
+    }
+    .nav-search-bar i {
+        color: #999;
+        font-size: 1.1rem;
+    }
+    .nav-search-bar input {
+        border: none;
+        outline: none;
+        background: transparent;
+        font-size: 0.9rem;
+        color: #333;
+        width: 100%;
+        font-family: 'Montserrat', sans-serif;
+    }
+    .nav-search-bar input::placeholder {
+        color: #aaa;
+    }
+    
     @media (max-width: 991px) {
         nav#navbar-main { padding: 12px 0 !important; }
         nav#navbar-main .navbar-collapse {
@@ -335,13 +369,41 @@
                 <li class="nav-item">
                     <a class="nav-link" href="${pageContext.request.contextPath}/home">Trang chủ</a>
                 </li>
-                <li class="nav-item">
-                    <a class="nav-link" href="${pageContext.request.contextPath}/shop">Sản phẩm</a>
+                <li class="nav-item dropdown">
+                    <a class="nav-link dropdown-toggle" href="${pageContext.request.contextPath}/shop" role="button">
+                        Sản phẩm <i class='bx bx-chevron-down'></i>
+                    </a>
+                    <ul class="dropdown-menu dropdown-menu-services">
+                        <li>
+                            <a class="dropdown-item" href="${pageContext.request.contextPath}/shop?pet=dog">
+                                <i class='bx bxs-dog'></i> Dành cho Chó
+                            </a>
+                        </li>
+                        <li>
+                            <a class="dropdown-item" href="${pageContext.request.contextPath}/shop?pet=cat">
+                                <i class='bx bxs-cat'></i> Dành cho Mèo
+                            </a>
+                        </li>
+                        <li><hr class="dropdown-divider"></li>
+                        <li>
+                            <a class="dropdown-item" href="${pageContext.request.contextPath}/shop">
+                                <i class='bx bx-grid-alt'></i> Tất cả sản phẩm
+                            </a>
+                        </li>
+                    </ul>
                 </li>
                 <li class="nav-item">
                     <a class="nav-link" href="${pageContext.request.contextPath}/about">Về chúng tôi</a>
                 </li>
             </ul>
+            
+            <!-- Search Bar -->
+            <form action="${pageContext.request.contextPath}/shop" method="get" class="d-none d-lg-flex mx-3" id="navSearchForm">
+                <div class="nav-search-bar">
+                    <i class='bx bx-search'></i>
+                    <input type="text" name="search" placeholder="Tìm kiếm sản phẩm..." autocomplete="off">
+                </div>
+            </form>
         </div>
 
         <div class="d-flex align-items-center gap-3 navbar-nav-buttons">
