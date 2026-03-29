@@ -287,7 +287,11 @@
     
     body { padding-top: 80px !important; margin-top: 0 !important; }
     
-    /* Search Bar in Navbar */
+    /* Search Bar in Navbar - Hiển thị cố định */
+    .nav-search-form {
+        margin-left: auto;
+        margin-right: 15px;
+    }
     .nav-search-bar {
         display: flex;
         align-items: center;
@@ -297,7 +301,7 @@
         padding: 8px 16px;
         gap: 8px;
         transition: all 0.3s ease;
-        min-width: 220px;
+        min-width: 260px;
     }
     .nav-search-bar:focus-within {
         border-color: #00bfa5;
@@ -374,16 +378,31 @@
                         Sản phẩm <i class='bx bx-chevron-down'></i>
                     </a>
                     <ul class="dropdown-menu dropdown-menu-services">
-                        <li>
-                            <a class="dropdown-item" href="${pageContext.request.contextPath}/shop?pet=dog">
-                                <i class='bx bxs-dog'></i> Dành cho Chó
-                            </a>
-                        </li>
-                        <li>
-                            <a class="dropdown-item" href="${pageContext.request.contextPath}/shop?pet=cat">
-                                <i class='bx bxs-cat'></i> Dành cho Mèo
-                            </a>
-                        </li>
+                        <%-- Hiển thị động các loại thú cưng từ database --%>
+                        <c:choose>
+                            <c:when test="${not empty petTypes}">
+                                <c:forEach var="pt" items="${petTypes}">
+                                    <li>
+                                        <a class="dropdown-item" href="${pageContext.request.contextPath}/shop?pet=${pt.code}">
+                                            <i class='bx ${pt.icon}'></i> Dành cho ${pt.name}
+                                        </a>
+                                    </li>
+                                </c:forEach>
+                            </c:when>
+                            <c:otherwise>
+                                <%-- Fallback nếu chưa có dữ liệu pet_types --%>
+                                <li>
+                                    <a class="dropdown-item" href="${pageContext.request.contextPath}/shop?pet=dog">
+                                        <i class='bx bxs-dog'></i> Dành cho Chó
+                                    </a>
+                                </li>
+                                <li>
+                                    <a class="dropdown-item" href="${pageContext.request.contextPath}/shop?pet=cat">
+                                        <i class='bx bxs-cat'></i> Dành cho Mèo
+                                    </a>
+                                </li>
+                            </c:otherwise>
+                        </c:choose>
                         <li><hr class="dropdown-divider"></li>
                         <li>
                             <a class="dropdown-item" href="${pageContext.request.contextPath}/shop">
@@ -397,14 +416,15 @@
                 </li>
             </ul>
             
-            <!-- Search Bar -->
-            <form action="${pageContext.request.contextPath}/shop" method="get" class="d-none d-lg-flex mx-3" id="navSearchForm">
-                <div class="nav-search-bar">
-                    <i class='bx bx-search'></i>
-                    <input type="text" name="search" placeholder="Tìm kiếm sản phẩm..." autocomplete="off">
-                </div>
-            </form>
         </div>
+        
+        <!-- Search Bar - Hiển thị cố định trên navbar -->
+        <form action="${pageContext.request.contextPath}/shop" method="get" class="nav-search-form d-none d-lg-flex" id="navSearchForm">
+            <div class="nav-search-bar">
+                <i class='bx bx-search'></i>
+                <input type="text" name="search" placeholder="Tìm kiếm sản phẩm..." autocomplete="off" value="${param.search}">
+            </div>
+        </form>
 
         <div class="d-flex align-items-center gap-3 navbar-nav-buttons">
             
