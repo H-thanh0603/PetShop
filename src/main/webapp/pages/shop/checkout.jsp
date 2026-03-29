@@ -562,7 +562,7 @@
                     <button type="button" class="btn-add" onclick="toggleForm()">+ Thêm địa chỉ mới</button>
                 </div>
                 <div class="info-row">
-                    <span>Danh sách địa chỉ</span>
+                    <span><strong>Danh sách địa chỉ</strong></span>
                 </div>
 
                 <div id="addressList" class="address-list">

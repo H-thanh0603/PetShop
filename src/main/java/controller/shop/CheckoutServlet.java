@@ -90,7 +90,7 @@ public class CheckoutServlet extends HttpServlet {
         }
 
         double finalTotal = totalAmount + shippingFee - discount;
-
+        session.removeAttribute("appliedCoupon");
         request.setAttribute("addressList", addressList);
         request.setAttribute("totalAmount", totalAmount);
         request.setAttribute("cartItems", cartItems);
