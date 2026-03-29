@@ -204,6 +204,7 @@
     </div>
     
     <jsp:include page="/components/scripts.jsp" />
+    <jsp:include page="/components/loading-indicator.jsp" />
     <script>
         document.getElementById('togglePassword').addEventListener('click', function() {
             const input = document.getElementById('password');

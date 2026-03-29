@@ -260,6 +260,7 @@
     </div>
     
     <jsp:include page="/components/scripts.jsp" />
+    <jsp:include page="/components/loading-indicator.jsp" />
     <script>
         const contextPath = '${pageContext.request.contextPath}';
         

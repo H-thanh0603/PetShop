@@ -324,6 +324,80 @@
         color: #aaa;
     }
     
+    /* Autocomplete Dropdown */
+    .autocomplete-dropdown {
+        display: none;
+        position: absolute;
+        top: 100%;
+        left: 0;
+        right: 0;
+        background: #fff;
+        border: 1px solid #e8eaed;
+        border-radius: 12px;
+        box-shadow: 0 8px 30px rgba(0, 0, 0, 0.15);
+        margin-top: 8px;
+        max-height: 400px;
+        overflow-y: auto;
+        z-index: 999999;
+    }
+    .autocomplete-dropdown.show {
+        display: block;
+    }
+    .autocomplete-item {
+        display: flex;
+        align-items: center;
+        padding: 10px 15px;
+        cursor: pointer;
+        transition: background 0.15s;
+        text-decoration: none;
+        color: #333;
+    }
+    .autocomplete-item:hover {
+        background: #f5f7fa;
+    }
+    .autocomplete-item img {
+        width: 40px;
+        height: 40px;
+        object-fit: cover;
+        border-radius: 8px;
+        margin-right: 12px;
+    }
+    .autocomplete-item-info {
+        flex: 1;
+        min-width: 0;
+    }
+    .autocomplete-item-name {
+        font-size: 0.9rem;
+        font-weight: 500;
+        color: #333;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+    .autocomplete-item-price {
+        font-size: 0.85rem;
+        color: #00bfa5;
+        font-weight: 600;
+    }
+    .autocomplete-no-result {
+        padding: 15px;
+        text-align: center;
+        color: #999;
+        font-size: 0.9rem;
+    }
+    .autocomplete-loading {
+        padding: 15px;
+        text-align: center;
+        color: #999;
+    }
+    .autocomplete-loading i {
+        animation: spin 1s linear infinite;
+    }
+    @keyframes spin {
+        from { transform: rotate(0deg); }
+        to { transform: rotate(360deg); }
+    }
+    
     @media (max-width: 991px) {
         nav#navbar-main { padding: 12px 0 !important; }
         nav#navbar-main .navbar-collapse {
@@ -418,9 +492,11 @@
         
         <!-- Search Bar - Hiển thị cố định trên navbar (giữa menu và buttons) -->
         <form action="${pageContext.request.contextPath}/shop" method="get" class="nav-search-form d-none d-lg-flex ms-auto me-3" id="navSearchForm">
-            <div class="nav-search-bar">
+            <div class="nav-search-bar" style="position: relative;">
                 <i class='bx bx-search'></i>
-                <input type="text" name="search" placeholder="Tìm kiếm sản phẩm..." autocomplete="off" value="${param.search}">
+                <input type="text" name="search" id="searchInput" placeholder="Tìm kiếm sản phẩm..." autocomplete="off" value="${param.search}">
+                <!-- Autocomplete dropdown -->
+                <div id="autocompleteDropdown" class="autocomplete-dropdown"></div>
             </div>
         </form>
 
@@ -520,5 +596,70 @@ document.addEventListener('DOMContentLoaded', function() {
             });
         }
     });
+    
+    // ========== SEARCH AUTOCOMPLETE ==========
+    var searchInput = document.getElementById('searchInput');
+    var autocompleteDropdown = document.getElementById('autocompleteDropdown');
+    var searchTimeout = null;
+    var contextPath = '${pageContext.request.contextPath}';
+    
+    if (searchInput && autocompleteDropdown) {
+        searchInput.addEventListener('input', function() {
+            var query = this.value.trim();
+            
+            // Clear previous timeout
+            if (searchTimeout) clearTimeout(searchTimeout);
+            
+            if (query.length < 2) {
+                autocompleteDropdown.classList.remove('show');
+                return;
+            }
+            
+            // Show loading
+            autocompleteDropdown.innerHTML = '<div class="autocomplete-loading"><i class="bx bx-loader-alt"></i> Đang tìm...</div>';
+            autocompleteDropdown.classList.add('show');
+            
+            // Debounce 300ms
+            searchTimeout = setTimeout(function() {
+                fetch(contextPath + '/api/search-autocomplete?q=' + encodeURIComponent(query))
+                    .then(function(response) { return response.json(); })
+                    .then(function(products) {
+                        if (products.length === 0) {
+                            autocompleteDropdown.innerHTML = '<div class="autocomplete-no-result">Không tìm thấy sản phẩm</div>';
+                        } else {
+                            var html = '';
+                            products.forEach(function(p) {
+                                var imgSrc = p.image ? (contextPath + '/assets/images/products/' + p.image) : (contextPath + '/assets/images/no-image.png');
+                                var price = new Intl.NumberFormat('vi-VN').format(p.price) + 'đ';
+                                html += '<a href="' + contextPath + '/product-detail?id=' + p.id + '" class="autocomplete-item">';
+                                html += '<img src="' + imgSrc + '" alt="" onerror="this.src=\'' + contextPath + '/assets/images/no-image.png\'">';
+                                html += '<div class="autocomplete-item-info">';
+                                html += '<div class="autocomplete-item-name">' + p.name + '</div>';
+                                html += '<div class="autocomplete-item-price">' + price + '</div>';
+                                html += '</div></a>';
+                            });
+                            autocompleteDropdown.innerHTML = html;
+                        }
+                    })
+                    .catch(function() {
+                        autocompleteDropdown.innerHTML = '<div class="autocomplete-no-result">Có lỗi xảy ra</div>';
+                    });
+            }, 300);
+        });
+        
+        // Đóng autocomplete khi click ra ngoài
+        document.addEventListener('click', function(e) {
+            if (!e.target.closest('.nav-search-bar')) {
+                autocompleteDropdown.classList.remove('show');
+            }
+        });
+        
+        // Đóng autocomplete khi focus ra ngoài
+        searchInput.addEventListener('blur', function() {
+            setTimeout(function() {
+                autocompleteDropdown.classList.remove('show');
+            }, 200);
+        });
+    }
 });
 </script>

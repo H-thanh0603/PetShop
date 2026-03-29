@@ -148,6 +148,7 @@
     </div>
     
     <jsp:include page="/components/scripts.jsp" />
+    <jsp:include page="/components/loading-indicator.jsp" />
     <script>
         function togglePassword(inputId, toggle) {
             const input = document.getElementById(inputId);
