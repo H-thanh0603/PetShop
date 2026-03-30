@@ -9,52 +9,56 @@ public class Product {
     private double price;    
     private int discount;     
     private String description;
+    private String category;
     private int weight;
     
-    // 1. Constructor rỗng (Bắt buộc)
-    public Product() {
-    }
+    public Product() {}
 
-    // 2. Constructor đầy đủ 6 tham số (Dùng cho DAO mới)
-    public Product(int id, String name, String image, double price, int discount, String description, int weight) {
+    // Constructor 6 tham số
+    public Product(int id, String name, String image, double price, int discount, String description) {
         this.id = id;
         this.name = name;
         this.image = image;
         this.price = price;
         this.discount = discount;
         this.description = description;
-        this.weight =  weight;
     }
 
-    // --- GETTERS & SETTERS ---
+    // Constructor 7 tham số (có category)
+    public Product(int id, String name, String image, double price, int discount, String description, String category) {
+        this(id, name, image, price, discount, description);
+        this.category = category;
+    }
+
+    // Constructor 7 tham số (có weight - từ main)
+    public Product(int id, String name, String image, double price, int discount, String description, int weight) {
+        this(id, name, image, price, discount, description);
+        this.weight = weight;
+    }
+
+    // Getters & Setters
     public int getId() { return id; }
     public void setId(int id) { this.id = id; }
-    
     public String getName() { return name; }
     public void setName(String name) { this.name = name; }
-    
     public String getImage() { return image; }
     public void setImage(String image) { this.image = image; }
-    
     public double getPrice() { return price; }
     public void setPrice(double price) { this.price = price; }
-    
     public int getDiscount() { return discount; }
     public void setDiscount(int discount) { this.discount = discount; }
-    
-    // QUAN TRỌNG: Giữ Getter/Setter cho Description
     public String getDescription() { return description; }
     public void setDescription(String description) { this.description = description; }
+    public String getCategory() { return category; }
+    public void setCategory(String category) { this.category = category; }
+    public int getWeight() { return weight; }
+    public void setWeight(int weight) { this.weight = weight; }
 
-    // (Đã XÓA setOldPrice vì không dùng nữa)
-
-    // Hàm tiện ích format giá tiền
     public String getFormattedPrice() {
         DecimalFormat formatter = new DecimalFormat("###,###");
-        return formatter.format(price) + "đ";
+        return formatter.format(price).replace(',', '.') + "đ";
     }
     
-    // Tính giá gốc từ giá bán và % giảm giá (để hiển thị trong JSP)
     public double getOldPrice() {
         if (discount > 0 && discount < 100) {
             return price / (1 - discount / 100.0);
@@ -64,14 +68,6 @@ public class Product {
     
     public String getFormattedOldPrice() {
         DecimalFormat formatter = new DecimalFormat("###,###");
-        return formatter.format(getOldPrice()) + "đ";
-    }
-
-    public int getWeight() {
-        return weight;
-    }
-
-    public void setWeight(int weight) {
-        this.weight = weight;
+        return formatter.format(getOldPrice()).replace(',', '.') + "đ";
     }
 }
