@@ -14,7 +14,7 @@ import Model.Product;
 public class OrderDAO {
 
     public int saveOrder(Order order) {
-        String query = "INSERT INTO orders (user_id, fullname, phone, address, note, total_amount, status) VALUES (?, ?, ?, ?, ?, ?, ?)";
+        String query = "INSERT INTO orders (user_id, fullname, phone, address, note, total_amount, status, payment_method, payment_status, createdAt) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
         try (Connection conn = new DBContext().getConnection();
              PreparedStatement ps = conn.prepareStatement(query, Statement.RETURN_GENERATED_KEYS)) {
             ps.setInt(1, order.getUserId());
@@ -24,6 +24,9 @@ public class OrderDAO {
             ps.setString(5, order.getNote());
             ps.setDouble(6, order.getTotalAmount());
             ps.setString(7, "Pending");
+            ps.setString(8, order.getPayment_method());
+            ps.setBoolean(9, order.getPayment_status());
+            ps.setTimestamp(10, order.getCreatedAt());
             
             ps.executeUpdate();
             try (ResultSet rs = ps.getGeneratedKeys()) {
@@ -54,7 +57,7 @@ public class OrderDAO {
 
     public List<Order> getAllOrders() {
         List<Order> list = new ArrayList<>();
-        String query = "SELECT * FROM orders ORDER BY created_at DESC";
+        String query = "SELECT * FROM orders ORDER BY createdAt DESC";
         try (Connection conn = new DBContext().getConnection();
              PreparedStatement ps = conn.prepareStatement(query);
              ResultSet rs = ps.executeQuery()) {
@@ -68,7 +71,9 @@ public class OrderDAO {
                     rs.getString("note"),
                     rs.getDouble("total_amount"),
                     rs.getString("status"),
-                    rs.getTimestamp("created_at")
+                    rs.getTimestamp("createdAt"),
+                        rs.getString("payment_method"),
+                        rs.getBoolean("payment_status")
                 ));
             }
         } catch (Exception e) {
@@ -93,9 +98,10 @@ public class OrderDAO {
                         rs.getString("note"),
                         rs.getDouble("total_amount"),
                         rs.getString("status"),
-                        rs.getTimestamp("created_at")
+                        rs.getTimestamp("createdAt"),
+                            rs.getString("payment_method"),
+                            rs.getBoolean("payment_status")
                     );
-                    order.setItems(getOrderItems(orderId));
                     return order;
                 }
             }
@@ -126,7 +132,6 @@ public class OrderDAO {
                     p.setId(rs.getInt("product_id"));
                     p.setName(rs.getString("product_name"));
                     p.setImage(rs.getString("product_image"));
-                    item.setProduct(p);
                     
                     list.add(item);
                 }
@@ -164,7 +169,7 @@ public class OrderDAO {
 
     public List<Order> getOrdersByUserId(int userId) {
         List<Order> list = new ArrayList<>();
-        String query = "SELECT * FROM orders WHERE user_id = ? ORDER BY created_at DESC";
+        String query = "SELECT * FROM orders WHERE user_id = ? ORDER BY createdAt DESC";
         try (Connection conn = new DBContext().getConnection();
              PreparedStatement ps = conn.prepareStatement(query)) {
             ps.setInt(1, userId);
@@ -179,7 +184,9 @@ public class OrderDAO {
                         rs.getString("note"),
                         rs.getDouble("total_amount"),
                         rs.getString("status"),
-                        rs.getTimestamp("created_at")
+                        rs.getTimestamp("createdAt"),
+                            rs.getString("payment_method"),
+                            rs.getBoolean("payment_status")
                     ));
                 }
             }
@@ -190,7 +197,7 @@ public class OrderDAO {
     }
 
     public double getTodayRevenue() {
-        String query = "SELECT SUM(total_amount) FROM orders WHERE DATE(created_at) = CURDATE() AND status != 'Cancelled'";
+        String query = "SELECT SUM(total_amount) FROM orders WHERE DATE(createdAt) = CURDATE() AND status != 'Cancelled'";
         try (Connection conn = new DBContext().getConnection();
              PreparedStatement ps = conn.prepareStatement(query);
              ResultSet rs = ps.executeQuery()) {
