@@ -16,6 +16,7 @@ import jakarta.servlet.http.HttpSession;
 
 @WebServlet("/my-orders")
 public class MyOrdersServlet extends HttpServlet {
+    private OrderDAO orderDAO = new OrderDAO();
     private static final long serialVersionUID = 1L;
 
     protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
@@ -44,8 +45,11 @@ public class MyOrdersServlet extends HttpServlet {
                 return;
             }
         }
-
+        int countPending = orderDAO.countPendingOrdersByUserId(user.getId());
+        int countCompleted = orderDAO.countCompletedOrdersByUserId(user.getId());
         List<Order> list = dao.getOrdersByUserId(user.getId());
+        request.setAttribute("countPending", countPending);
+        request.setAttribute("countCompleted", countCompleted);
         request.setAttribute("orders", list);
         request.getRequestDispatcher("/pages/shop/my-orders.jsp").forward(request, response);
     }
