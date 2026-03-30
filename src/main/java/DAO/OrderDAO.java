@@ -207,4 +207,48 @@ public class OrderDAO {
         }
         return 0;
     }
+    // trả về so lượng order đang xử lý
+    public int countPendingOrdersByUserId(int userId) {
+        String sql = "SELECT COUNT(*) FROM orders WHERE user_id = ? AND status = 'Pending'";
+        int count = 0;
+
+        try (
+                Connection conn = DBContext.getConnection();
+                PreparedStatement ps = conn.prepareStatement(sql)
+        ) {
+            ps.setInt(1, userId);
+
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    count = rs.getInt(1);
+                }
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        return count;
+    }
+    // trả về so lượng order đã hoàn thành
+    public int countCompletedOrdersByUserId(int userId) {
+        String sql = "SELECT COUNT(*) FROM orders WHERE user_id = ? AND status = 'Completed'";
+        int count = 0;
+
+        try (
+                Connection conn = DBContext.getConnection();
+                PreparedStatement ps = conn.prepareStatement(sql)
+        ) {
+            ps.setInt(1, userId);
+
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    count = rs.getInt(1);
+                }
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        return count;
+    }
 }
