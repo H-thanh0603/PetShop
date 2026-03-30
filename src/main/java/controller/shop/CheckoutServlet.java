@@ -9,6 +9,7 @@ import DAO.OrderDAO;
 
 import Model.*;
 
+import com.google.gson.Gson;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServlet;
@@ -17,7 +18,10 @@ import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
 import services.ShippingService;
 
+import java.sql.Timestamp;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -124,10 +128,10 @@ public class CheckoutServlet extends HttpServlet {
         }
 
         String action = request.getParameter("action");
-
         if ("applyCoupon".equals(action)) {
             String couponCode = request.getParameter("couponCode");
-
+            String note = request.getParameter("note");
+            session.setAttribute("checkoutNote", note);
             if (couponCode == null || couponCode.trim().isEmpty()) {
                 session.setAttribute("couponMessage", "Vui lòng nhập mã giảm giá");
                 session.removeAttribute("appliedCoupon");
@@ -149,6 +153,7 @@ public class CheckoutServlet extends HttpServlet {
             return;
         }
 
+        Map<String, Object> result = new HashMap<>();
         // PLACE ORDER
         UserDAO userdao = new UserDAO();
         User user = userdao.getUserById(userSession.getId());
@@ -202,19 +207,75 @@ public class CheckoutServlet extends HttpServlet {
         String phone = user.getPhone();
         String address = user.getAddress();
         String note = request.getParameter("note");
+        String paymentMethod = request.getParameter("paymentMethod");
+        if (user.getFullname() == null || user.getPhone() == null) {
+            result.put("success", false);
+            result.put("message", "Thiếu thông tin người nhận.");
+            write(response, result);
+            return;
+        }
+        if (defaultAddress == null) {
+            result.put("success", false);
+            result.put("message", "Bạn chưa có địa chỉ mặc định.");
+            write(response, result);
+            return;
+        }
+        String fullAddress = defaultAddress.getAddress() + ", " +
+                defaultAddress.getWard() + ", " +
+                defaultAddress.getDistrict() + ", " +
+                defaultAddress.getProvince();
+
+//        payment
+        String paymentMethodDb;
+        boolean paymentStatus;
+
+        switch (paymentMethod) {
+            case "cod":
+                paymentMethodDb = "COD";
+                paymentStatus = false;
+                break;
+
+            case "momo":
+                if (!callMomoApi(finalTotal)) {
+                    result.put("success", false);
+                    result.put("message", "Thanh toán MoMo thất bại.");
+                    write(response, result);
+                    return;
+                }
+                paymentMethodDb = "MOMO";
+                paymentStatus = true;
+                break;
+
+            case "bank_transfer":
+                if (!callBankApi(finalTotal)) {
+                    result.put("success", false);
+                    result.put("message", "Thanh toán ngân hàng thất bại.");
+                    write(response, result);
+                    return;
+                }
+                paymentMethodDb = "BANK_TRANSFER";
+                paymentStatus = true;
+                break;
+
+            default:
+                result.put("success", false);
+                result.put("message", "Phương thức thanh toán không hợp lệ.");
+                write(response, result);
+                return;
+        }
+
 
         Order order = new Order();
         order.setUserId(user.getId());
         order.setFullname(fullname);
         order.setPhone(phone);
-        order.setAddress(address);
+        order.setAddress(fullAddress);
         order.setNote(note);
-        order.setTotalAmount(finalTotal); // lưu số tiền sau giảm giá
+        order.setTotalAmount(finalTotal);
         order.setStatus("Pending");
-
-        // nếu Order có field discount/coupon thì set thêm
-        // order.setDiscountAmount(discount);
-        // order.setCouponCode(couponCode);
+        order.setCreatedAt(Timestamp.valueOf(LocalDateTime.now()));
+        order.setPayment_method(paymentMethodDb);
+        order.setPayment_status(paymentStatus);
 
         OrderDAO orderDAO = new OrderDAO();
         int orderId = orderDAO.saveOrder(order);
@@ -233,15 +294,29 @@ public class CheckoutServlet extends HttpServlet {
             session.removeAttribute("totalQuantity");
             session.removeAttribute("appliedCoupon");
             session.removeAttribute("couponMessage");
+            session.removeAttribute("checkoutNote");
 
-            session.setAttribute("toastMessage", "🎉 Đặt hàng thành công! Cảm ơn bạn đã ủng hộ.");
-            session.setAttribute("toastType", "success");
-
-            response.sendRedirect(request.getContextPath() + "/my-orders");
+            result.put("success", true);
+            result.put("message", "Đặt hàng thành công!");
+            write(response, result);
+            return;
         } else {
-            session.setAttribute("toastMessage", "❌ Đã có lỗi xảy ra. Vui lòng thử lại.");
-            session.setAttribute("toastType", "error");
-            response.sendRedirect(request.getContextPath() + "/cart");
+            result.put("success", false);
+            result.put("message", "Đã có lỗi xảy ra. Vui lòng thử lại.");
+            write(response, result);
+            return;
         }
+    }
+    private void write(HttpServletResponse res, Map<String, Object> data) throws IOException {
+        res.getWriter().write(new Gson().toJson(data));
+    }
+    private boolean callMomoApi(double amount) {
+        System.out.println("Mock MoMo: " + amount);
+        return true;
+    }
+
+    private boolean callBankApi(double amount) {
+        System.out.println("Mock Bank: " + amount);
+        return true;
     }
 }

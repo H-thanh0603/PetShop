@@ -6,7 +6,6 @@ public class OrderItem {
     private int productId;
     private int quantity;
     private double price;
-    private Product product; // For easy access to product info in JSP
 
     public OrderItem() {}
 
@@ -32,7 +31,4 @@ public class OrderItem {
 
     public double getPrice() { return price; }
     public void setPrice(double price) { this.price = price; }
-
-    public Product getProduct() { return product; }
-    public void setProduct(Product product) { this.product = product; }
 }
