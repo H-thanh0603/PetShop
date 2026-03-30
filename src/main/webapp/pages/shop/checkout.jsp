@@ -736,11 +736,12 @@
                 <hr>
 
                 <label>📦 Ghi chú</label>
-                <textarea class="form-control mb-3" rows="3" placeholder="Nhập ghi chú cho shop..."></textarea>
+                <textarea id="note" name="note" class="form-control mb-3" rows="3" placeholder="Nhập ghi chú cho shop...">${sessionScope.checkoutNote}</textarea>
 
                 <label>🎟 Mã giảm giá</label>
-                <form action="${pageContext.request.contextPath}/checkout" method="post">
+                <form action="${pageContext.request.contextPath}/checkout" method="post" id="couponForm">
                     <input type="hidden" name="action" value="applyCoupon">
+                    <input type="hidden" name="note" id="couponNoteHidden">
                     <div class="input-group mb-3">
                         <input name="couponCode" class="form-control" placeholder="Nhập mã coupon">
                         <button type="submit" class="btn btn-primary">Áp dụng</button>
@@ -751,23 +752,32 @@
                     <div class="alert alert-info">${couponMessage}</div>
                 </c:if>
 
-                <label class="mb-2">💳 Phương thức thanh toán</label>
+                <label class="mb-2 d-block">💳 Phương thức thanh toán</label>
 
                 <div class="payment-card mb-2">
-                    <input type="radio" name="payment"> Thanh toán khi nhận hàng (COD)
+                    <label>
+                        <input type="radio" name="payment" value="cod" checked>
+                        Thanh toán khi nhận hàng (COD)
+                    </label>
                 </div>
 
                 <div class="payment-card mb-2">
-                    <input type="radio" name="payment"> Ví điện tử
+                    <label>
+                        <input type="radio" name="payment" value="momo">
+                        Ví điện tử MoMo
+                    </label>
                 </div>
 
                 <div class="payment-card mb-3">
-                    <input type="radio" name="payment"> Chuyển khoản ngân hàng
+                    <label>
+                        <input type="radio" name="payment" value="bank_transfer">
+                        Chuyển khoản ngân hàng
+                    </label>
                 </div>
 
-                <button type="button" class="btn-checkout">
-                    Đặt hàng ngay
-                </button>
+                <button type="button" id="btnCheckout" class="btn-checkout">Đặt hàng</button>
+
+                <div id="paymentResult" class="mt-3"></div>
 
             </div>
         </div>
@@ -776,6 +786,55 @@
 </div>
 
 <script>
+
+<%--    payment js--%>
+        document.getElementById("btnCheckout").addEventListener("click", function () {
+        const selectedPayment = document.querySelector('input[name="payment"]:checked').value;
+        const note = document.getElementById("note")?.value || "";
+        const paymentResult = document.getElementById("paymentResult");
+
+        const fullname = "<c:out value='${user.fullname}'/>";
+        const phone = "<c:out value='${user.phone}'/>";
+
+        if (!fullname || fullname.trim() === "") {
+        paymentResult.innerHTML = `<div class="alert alert-danger">Vui lòng cập nhật họ tên.</div>`;
+        return;
+    }
+
+        if (!phone || phone.trim() === "") {
+        paymentResult.innerHTML = `<div class="alert alert-danger">Vui lòng cập nhật số điện thoại.</div>`;
+        return;
+    }
+
+        paymentResult.innerHTML = `<div class="alert alert-info">Đang xử lý đơn hàng...</div>`;
+
+        const bodyData =
+        "action=placeOrder" +
+        "&paymentMethod=" + encodeURIComponent(selectedPayment) +
+        "&note=" + encodeURIComponent(note);
+
+        fetch("<%= request.getContextPath() %>/checkout", {
+        method: "POST",
+        headers: {
+        "Content-Type": "application/x-www-form-urlencoded"
+    },
+        body: bodyData
+    })
+        .then(response => response.json())
+        .then(data => {
+        if (data.success) {
+        paymentResult.innerHTML = `<div class="alert alert-success">${data.message}</div>`;
+        setTimeout(() => {
+        window.location.href = "<%= request.getContextPath() %>/my-orders";
+    }, 1200);
+    } else {
+        paymentResult.innerHTML = `<div class="alert alert-danger">${data.message}</div>`;
+    }
+    })
+        .catch(error => {
+        paymentResult.innerHTML = `<div class="alert alert-danger">Có lỗi xảy ra: ${error}</div>`;
+    });
+    });
 
         const API_BASE = "https://provinces.open-api.vn/api/v1";
         let provincesLoaded = false;
@@ -1183,6 +1242,18 @@
         }
 
     }, 1000);
+<%--    đồng bộ note vào hidden--%>
+document.addEventListener("DOMContentLoaded", function () {
+    const couponForm = document.getElementById("couponForm");
+    const noteInput = document.getElementById("note");
+    const couponNoteHidden = document.getElementById("couponNoteHidden");
+
+    if (couponForm && noteInput && couponNoteHidden) {
+        couponForm.addEventListener("submit", function () {
+            couponNoteHidden.value = noteInput.value;
+        });
+    }
+});
 
 </script>
 <jsp:include page="/components/footer.jsp"/>

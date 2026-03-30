@@ -13,12 +13,13 @@ public class Order {
     private String note;
     private double totalAmount;
     private String status; // Pending, Confirmed, Shipping, Completed, Cancelled
+    private String payment_method;
+    private boolean payment_status;
     private Timestamp createdAt;
-    private List<OrderItem> items;
 
     public Order() {}
 
-    public Order(int id, int userId, String fullname, String phone, String address, String note, double totalAmount, String status, Timestamp createdAt) {
+    public Order(int id, int userId, String fullname, String phone, String address, String note, double totalAmount, String status, Timestamp createdAt,  String payment_method, boolean payment_status) {
         this.id = id;
         this.userId = userId;
         this.fullname = fullname;
@@ -28,6 +29,8 @@ public class Order {
         this.totalAmount = totalAmount;
         this.status = status;
         this.createdAt = createdAt;
+        this.payment_method = payment_method;
+        this.payment_status = payment_status;
     }
 
     public int getId() { return id; }
@@ -57,11 +60,24 @@ public class Order {
     public Timestamp getCreatedAt() { return createdAt; }
     public void setCreatedAt(Timestamp createdAt) { this.createdAt = createdAt; }
 
-    public List<OrderItem> getItems() { return items; }
-    public void setItems(List<OrderItem> items) { this.items = items; }
-
     public String getFormattedTotalAmount() {
         DecimalFormat formatter = new DecimalFormat("###,###");
         return formatter.format(totalAmount) + "đ";
+    }
+
+    public String getPayment_method() {
+        return payment_method;
+    }
+
+    public void setPayment_method(String payment_method) {
+        this.payment_method = payment_method;
+    }
+
+    public boolean getPayment_status() {
+        return payment_status;
+    }
+
+    public void setPayment_status(boolean payment_status) {
+        this.payment_status = payment_status;
     }
 }
