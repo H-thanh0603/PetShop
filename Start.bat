@@ -7,8 +7,8 @@ echo ========================================
 echo.
 
 :: 1. Cấu hình đường dẫn
-set "CATALINA_HOME=D:\apache-tomcat-10.1.49"
-set "PROJECT_ROOT=d:\PetShop2"
+set "CATALINA_HOME=E:\apache-tomcat-10.1.49-windows-x64\apache-tomcat-10.1.49"
+set "PROJECT_ROOT=d:\PetShop2\PetShop"
 set "WAR_FILE=%PROJECT_ROOT%\target\PetShop.war"
 
 :: 2. Kiểm tra đường dẫn Tomcat
