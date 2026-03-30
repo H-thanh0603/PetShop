@@ -171,6 +171,7 @@
         }
         #navbar .btn-nav-cart { color: #334155 !important; margin: 0 auto; }
     }
+    @keyframes spin { to { transform: rotate(360deg); } }
 </style>
 
 <nav class="navbar navbar-expand-lg" id="navbar">
@@ -197,6 +198,20 @@
                 </li>
             </ul>
         </div>
+
+        <!-- Search Bar -->
+        <form action="${pageContext.request.contextPath}/shop" method="get" class="d-none d-lg-flex ms-auto me-3" style="position: relative;">
+            <div class="home-search-bar" style="display:flex; align-items:center; background:rgba(255,255,255,0.15); border:1px solid rgba(255,255,255,0.3); border-radius:50px; padding:8px 16px; gap:8px; min-width:260px; transition:all 0.3s;">
+                <i class='bx bx-search' style="color:rgba(255,255,255,0.8); font-size:1.1rem;"></i>
+                <input type="text" name="search" id="homeSearchInput" placeholder="Tìm kiếm sản phẩm..."
+                       autocomplete="off" value="${param.search}"
+                       style="border:none; outline:none; background:transparent; font-size:0.9rem; color:white; width:100%; font-family:'Montserrat',sans-serif;"
+                       onfocus="this.parentElement.style.background='rgba(255,255,255,0.25)'; this.parentElement.style.borderColor='rgba(255,255,255,0.6)'"
+                       onblur="this.parentElement.style.background='rgba(255,255,255,0.15)'; this.parentElement.style.borderColor='rgba(255,255,255,0.3)'">
+            </div>
+            <!-- Autocomplete dropdown -->
+            <div id="homeAutocompleteDropdown" style="display:none; position:absolute; top:100%; left:0; right:0; background:#fff; border:1px solid #e8eaed; border-radius:12px; box-shadow:0 8px 30px rgba(0,0,0,0.15); margin-top:8px; max-height:400px; overflow-y:auto; z-index:999999;"></div>
+        </form>
 
         <div class="d-flex align-items-center gap-3">
             
@@ -289,5 +304,52 @@ document.addEventListener('DOMContentLoaded', function() {
             document.querySelectorAll('#navbar .dropdown-menu.show').forEach(m => m.classList.remove('show'));
         }
     });
+
+    // ========== SEARCH AUTOCOMPLETE ==========
+    var homeInput = document.getElementById('homeSearchInput');
+    var homeDropdown = document.getElementById('homeAutocompleteDropdown');
+    var homeTimeout = null;
+    var ctxPath = '${pageContext.request.contextPath}';
+
+    if (homeInput && homeDropdown) {
+        homeInput.addEventListener('input', function() {
+            var q = this.value.trim();
+            if (homeTimeout) clearTimeout(homeTimeout);
+            if (q.length < 1) { homeDropdown.style.display = 'none'; return; }
+
+            homeDropdown.innerHTML = '<div style="padding:12px;text-align:center;color:#999;"><i class="bx bx-loader-alt" style="animation:spin 0.8s linear infinite;"></i> Đang tìm...</div>';
+            homeDropdown.style.display = 'block';
+
+            homeTimeout = setTimeout(function() {
+                fetch(ctxPath + '/api/search-autocomplete?q=' + encodeURIComponent(q))
+                    .then(r => r.json())
+                    .then(function(products) {
+                        if (!products.length) {
+                            homeDropdown.innerHTML = '<div style="padding:15px;text-align:center;color:#999;font-size:0.9rem;">Không tìm thấy sản phẩm</div>';
+                        } else {
+                            var html = '';
+                            products.forEach(function(p) {
+                                var img = p.image ? (ctxPath + '/assets/images/shop_pic/' + p.image) : '';
+                                var price = new Intl.NumberFormat('vi-VN').format(p.price) + 'đ';
+                                html += '<a href="' + ctxPath + '/product-detail?id=' + p.id + '" style="display:flex;align-items:center;padding:10px 15px;text-decoration:none;color:#333;transition:background 0.15s;" onmouseover="this.style.background=\'#f5f7fa\'" onmouseout="this.style.background=\'\'">'; 
+                                if (img) html += '<img src="' + img + '" style="width:40px;height:40px;object-fit:cover;border-radius:8px;margin-right:12px;" onerror="this.style.display=\'none\'">';
+                                html += '<div><div style="font-size:0.9rem;font-weight:500;">' + p.name + '</div>';
+                                html += '<div style="font-size:0.85rem;color:#00bfa5;font-weight:600;">' + price + '</div></div></a>';
+                            });
+                            homeDropdown.innerHTML = html;
+                        }
+                    })
+                    .catch(function() { homeDropdown.style.display = 'none'; });
+            }, 300);
+        });
+
+        homeInput.addEventListener('blur', function() {
+            setTimeout(function() { homeDropdown.style.display = 'none'; }, 200);
+        });
+
+        document.addEventListener('click', function(e) {
+            if (!e.target.closest('form')) homeDropdown.style.display = 'none';
+        });
+    }
 });
 </script>
