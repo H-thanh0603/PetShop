@@ -18,6 +18,12 @@
         <a href="${pageContext.request.contextPath}/pages/admin/products" class="<%= "products".equals(currentPage) ? "active" : "" %>">
             <i class='bx bxs-shopping-bag'></i> Quản lý Sản phẩm
         </a>
+        <a href="${pageContext.request.contextPath}/pages/admin/pet-types" class="<%= "pet-types".equals(currentPage) ? "active" : "" %>">
+            <i class='bx bxs-dog'></i> Loại Thú Cưng
+        </a>
+        <a href="${pageContext.request.contextPath}/pages/admin/categories" class="<%= "categories".equals(currentPage) ? "active" : "" %>">
+            <i class='bx bx-category'></i> Danh Mục SP
+        </a>
         <a href="${pageContext.request.contextPath}/admin/orders" class="<%= "orders".equals(currentPage) ? "active" : "" %>">
             <i class='bx bxs-cart-alt'></i> Quản lý Đơn hàng
         </a>
