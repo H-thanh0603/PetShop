@@ -74,23 +74,6 @@ CREATE TABLE `order_items` (
   FOREIGN KEY (`product_id`) REFERENCES `products`(`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- Table structure for table `blogposts`
-DROP TABLE IF EXISTS `blogposts`;
-CREATE TABLE `blogposts` (
-  `id` int NOT NULL AUTO_INCREMENT,
-  `title` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
-  `image` varchar(255) DEFAULT NULL,
-  `category` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
-  `created_date` varchar(50) DEFAULT NULL,
-  `author` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
-  `summary` text CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci,
-  PRIMARY KEY (`id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
-INSERT INTO `blogposts` VALUES 
-(1,'5 Dấu hiệu nhận biết mèo đang bị stress','blog1.jpg','Tâm lý thú cưng','19/12/2025','Bs. Ngọc Thành','Mèo là loài động vật nhạy cảm...'),
-(2,'Lịch tiêm phòng đầy đủ cho cún con từ A-Z','blog2.jpg','Sức khỏe','18/12/2025','Bs. Huyền Trang','Tiêm vaccine là cách tốt nhất...');
-
 -- Table structure for table `features`
 DROP TABLE IF EXISTS `features`;
 CREATE TABLE `features` (
