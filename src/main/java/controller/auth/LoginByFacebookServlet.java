@@ -5,6 +5,7 @@ import DAO.UserDAO;
 import Model.CartItem;
 import Model.FbAccount.Account;
 import Model.User;
+import Util.AuthRedirectUtil;
 import controller.FaceBook.FaceBookLogin;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
@@ -62,7 +63,17 @@ public class LoginByFacebookServlet extends HttpServlet {
             totalQuantity += item.getQuantity();
         }
         session.setAttribute("totalQuantity", totalQuantity);
-        response.sendRedirect(request.getContextPath() + "/home");
+
+        // Dung chung redirectAfterLogin de social login khong bi tra ve trang chu sai mong muon.
+        String redirectUrl = AuthRedirectUtil.consumeRedirectAfterLogin(request);
+
+        if ("admin".equals(user.getRole())) {
+            response.sendRedirect(request.getContextPath() + "/pages/admin/dashboard");
+        } else if (redirectUrl != null && !redirectUrl.isEmpty()) {
+            response.sendRedirect(redirectUrl);
+        } else {
+            response.sendRedirect(request.getContextPath() + "/home");
+        }
     }
 
     @Override
