@@ -14,6 +14,7 @@ import DAO.CartDAO;
 import DAO.UserDAO;
 import Model.CartItem;
 import Model.User;
+import Util.AuthRedirectUtil;
 import Util.FormHelper;
 
 @WebServlet("/login")
@@ -26,16 +27,8 @@ public class LoginServlet extends HttpServlet {
         HttpSession session = request.getSession();
         
         // Lưu URL redirect (từ parameter hoặc referer)
-        String redirectUrl = request.getParameter("redirect");
-        if (redirectUrl == null || redirectUrl.isEmpty()) {
-            String referer = request.getHeader("Referer");
-            if (referer != null && !referer.contains("/login") && !referer.contains("/register")) {
-                redirectUrl = referer;
-            }
-        }
-        if (redirectUrl != null && !redirectUrl.isEmpty()) {
-            session.setAttribute("redirectAfterLogin", redirectUrl);
-        }
+        // Dùng helper chung để mọi cách vào trang login đều lưu đúng URL cần quay lại.
+        AuthRedirectUtil.storeRedirectAfterLogin(request);
         
         // Kiểm tra email từ đăng ký mới
         String registeredEmail = (String) session.getAttribute("registeredEmail");
@@ -133,8 +126,8 @@ public class LoginServlet extends HttpServlet {
             }
             
             // Redirect theo role hoặc về trang trước
-            String redirectUrl = (String) session.getAttribute("redirectAfterLogin");
-            session.removeAttribute("redirectAfterLogin"); // Xóa sau khi dùng
+            // Dung chung redirectAfterLogin de login thuong quay lai dung chuc nang truoc do.
+            String redirectUrl = AuthRedirectUtil.consumeRedirectAfterLogin(request);
             
             if ("admin".equals(user.getRole())) {
                 response.sendRedirect(request.getContextPath() + "/pages/admin/dashboard");
