@@ -32,9 +32,27 @@ public class AddToCartServlet extends HttpServlet {
         String action = request.getParameter("actionType");
         String redirectUrl = resolveRedirectUrl(request, action);
 
+        int productId;
         try {
-            int productId = Integer.parseInt(request.getParameter("id"));
-            int quantity = Integer.parseInt(request.getParameter("quantity"));
+            productId = Integer.parseInt(request.getParameter("id"));
+        } catch (NumberFormatException e) {
+            session.setAttribute("toastMessage", "S\u1ea3n ph\u1ea9m kh\u00f4ng t\u1ed3n t\u1ea1i!");
+            session.setAttribute("toastType", "error");
+            response.sendRedirect(redirectUrl);
+            return;
+        }
+
+        QuantityInputValidation quantityValidation = validateRequestedQuantity(request.getParameter("quantity"));
+        if (!quantityValidation.isValid()) {
+            session.setAttribute("toastMessage", quantityValidation.getMessage());
+            session.setAttribute("toastType", "warning");
+            response.sendRedirect(redirectUrl);
+            return;
+        }
+
+        int quantity = quantityValidation.getQuantity();
+
+        try {
 
             @SuppressWarnings("unchecked")
             Map<Integer, CartItem> cart = (Map<Integer, CartItem>) session.getAttribute("cart");
@@ -98,6 +116,43 @@ public class AddToCartServlet extends HttpServlet {
         session.setAttribute("totalQuantity", totalQuantity);
     }
 
+    private QuantityInputValidation validateRequestedQuantity(String rawQuantity) {
+        String normalizedQuantity = rawQuantity == null ? "" : rawQuantity.trim();
+
+        if (normalizedQuantity.isEmpty()) {
+            return QuantityInputValidation.invalid("S\u1ed1 l\u01b0\u1ee3ng kh\u00f4ng h\u1ee3p l\u1ec7.");
+        }
+
+        if (normalizedQuantity.startsWith("-")) {
+            return QuantityInputValidation.invalid("Kh\u00f4ng \u0111\u01b0\u1ee3c nh\u1eadp s\u1ed1 \u00e2m.");
+        }
+
+        if (normalizedQuantity.contains(".") || normalizedQuantity.contains(",")) {
+            return QuantityInputValidation.invalid("Kh\u00f4ng \u0111\u01b0\u1ee3c nh\u1eadp s\u1ed1 th\u1eadp ph\u00e2n.");
+        }
+
+        if (!normalizedQuantity.matches("\\d+")) {
+            return QuantityInputValidation.invalid("S\u1ed1 l\u01b0\u1ee3ng kh\u00f4ng h\u1ee3p l\u1ec7.");
+        }
+
+        long parsedQuantity;
+        try {
+            parsedQuantity = Long.parseLong(normalizedQuantity);
+        } catch (NumberFormatException e) {
+            return QuantityInputValidation.invalid("S\u1ed1 l\u01b0\u1ee3ng kh\u00f4ng h\u1ee3p l\u1ec7.");
+        }
+
+        if (parsedQuantity == 0) {
+            return QuantityInputValidation.invalid("S\u1ed1 l\u01b0\u1ee3ng ph\u1ea3i l\u1edbn h\u01a1n 0.");
+        }
+
+        if (parsedQuantity > Integer.MAX_VALUE) {
+            return QuantityInputValidation.invalid("S\u1ed1 l\u01b0\u1ee3ng kh\u00f4ng h\u1ee3p l\u1ec7.");
+        }
+
+        return QuantityInputValidation.valid((int) parsedQuantity);
+    }
+
     private String resolveRedirectUrl(HttpServletRequest request, String action) {
         if ("buy".equals(action)) {
             return request.getContextPath() + "/cart";
@@ -108,5 +163,37 @@ public class AddToCartServlet extends HttpServlet {
             return request.getContextPath() + "/shop";
         }
         return referer;
+    }
+
+    private static final class QuantityInputValidation {
+        private final boolean valid;
+        private final int quantity;
+        private final String message;
+
+        private QuantityInputValidation(boolean valid, int quantity, String message) {
+            this.valid = valid;
+            this.quantity = quantity;
+            this.message = message;
+        }
+
+        private static QuantityInputValidation valid(int quantity) {
+            return new QuantityInputValidation(true, quantity, null);
+        }
+
+        private static QuantityInputValidation invalid(String message) {
+            return new QuantityInputValidation(false, 0, message);
+        }
+
+        private boolean isValid() {
+            return valid;
+        }
+
+        private int getQuantity() {
+            return quantity;
+        }
+
+        private String getMessage() {
+            return message;
+        }
     }
 }
