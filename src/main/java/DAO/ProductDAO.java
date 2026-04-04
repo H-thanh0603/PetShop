@@ -14,10 +14,42 @@ public class ProductDAO {
     private Product mapProduct(ResultSet rs) throws Exception {
         String desc = rs.getString("description");
         if (desc == null) desc = "";
+
         String cat = "";
-        try { cat = rs.getString("category"); if (cat == null) cat = ""; } catch (Exception e) {}
-        return new Product(rs.getInt("id"), rs.getString("name"), rs.getString("image"),
-            rs.getDouble("price"), rs.getInt("discount"), desc, cat);
+        try {
+            cat = rs.getString("category");
+            if (cat == null) {
+                cat = "";
+            }
+        } catch (Exception e) {
+            cat = "";
+        }
+
+        Product product = new Product(
+                rs.getInt("id"),
+                rs.getString("name"),
+                rs.getString("image"),
+                rs.getDouble("price"),
+                rs.getInt("discount"),
+                desc,
+                cat
+        );
+
+        // Đồng bộ đầy đủ stock/weight/pet_type_id từ DB để mọi view và thao tác cart dùng đúng tồn kho hiện tại.
+        try {
+            product.setWeight(rs.getInt("weight"));
+        } catch (Exception ignored) {
+        }
+        try {
+            product.setStock(rs.getInt("stock"));
+        } catch (Exception ignored) {
+        }
+        try {
+            product.setPet_type_id(rs.getInt("pet_type_id"));
+        } catch (Exception ignored) {
+        }
+
+        return product;
     }
 
     public List<Product> getAllProducts() {
@@ -183,10 +215,22 @@ public class ProductDAO {
     }
 
     public Product getProductById(int id) {
+        try (Connection conn = DBContext.getConnection()) {
+            return getProductById(conn, id);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
+
+    public Product getProductById(Connection conn, int id) {
         String query = "SELECT * FROM products WHERE id = ?";
-        try (Connection conn = DBContext.getConnection(); PreparedStatement ps = conn.prepareStatement(query)) {
-            ps.setInt(1, id); ResultSet rs = ps.executeQuery();
-            if (rs.next()) { return mapProduct(rs); }
+        try (PreparedStatement ps = conn.prepareStatement(query)) {
+            ps.setInt(1, id);
+            ResultSet rs = ps.executeQuery();
+            if (rs.next()) {
+                return mapProduct(rs);
+            }
         } catch (Exception e) { e.printStackTrace(); }
         return null;
     }
@@ -274,18 +318,46 @@ public class ProductDAO {
 
     // ========== STOCK MANAGEMENT ==========
     public boolean decreaseStock(int productId, int quantity) {
-        String query = "UPDATE products SET stock = stock - ? WHERE id = ? AND stock >= ?";
-        try (Connection conn = DBContext.getConnection(); PreparedStatement ps = conn.prepareStatement(query)) {
-            ps.setInt(1, quantity); ps.setInt(2, productId); ps.setInt(3, quantity);
-            return ps.executeUpdate() > 0;
-        } catch (Exception e) { e.printStackTrace(); } return false;
+        try (Connection conn = DBContext.getConnection()) {
+            return decreaseStock(conn, productId, quantity);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return false;
     }
-    public boolean increaseStock(int productId, int quantity) {
-        String query = "UPDATE products SET stock = stock + ? WHERE id = ?";
-        try (Connection conn = DBContext.getConnection(); PreparedStatement ps = conn.prepareStatement(query)) {
-            ps.setInt(1, quantity); ps.setInt(2, productId);
+
+    public boolean decreaseStock(Connection conn, int productId, int quantity) {
+        String query = "UPDATE products SET stock = stock - ? WHERE id = ? AND stock >= ?";
+        try (PreparedStatement ps = conn.prepareStatement(query)) {
+            ps.setInt(1, quantity);
+            ps.setInt(2, productId);
+            ps.setInt(3, quantity);
             return ps.executeUpdate() > 0;
-        } catch (Exception e) { e.printStackTrace(); } return false;
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return false;
+    }
+
+    public boolean increaseStock(int productId, int quantity) {
+        try (Connection conn = DBContext.getConnection()) {
+            return increaseStock(conn, productId, quantity);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return false;
+    }
+
+    public boolean increaseStock(Connection conn, int productId, int quantity) {
+        String query = "UPDATE products SET stock = stock + ? WHERE id = ?";
+        try (PreparedStatement ps = conn.prepareStatement(query)) {
+            ps.setInt(1, quantity);
+            ps.setInt(2, productId);
+            return ps.executeUpdate() > 0;
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return false;
     }
     public int getStock(int productId) {
         String query = "SELECT stock FROM products WHERE id = ?";

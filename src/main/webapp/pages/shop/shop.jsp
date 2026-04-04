@@ -54,6 +54,11 @@
         .product-card .old-price { text-decoration: line-through; color: #aaa; font-size: 0.85rem; margin-left: 6px; }
         .product-card .btn-cart { width: 38px; height: 38px; border-radius: 50%; background: #00bfa5; color: #fff; border: none; display: flex; align-items: center; justify-content: center; font-size: 1.1rem; transition: all 0.2s; flex-shrink: 0; }
         .product-card .btn-cart:hover { background: #009688; transform: scale(1.1); }
+        .product-card .btn-cart:disabled { background: #cbd5e1; cursor: not-allowed; transform: none; }
+        .stock-pill { display: inline-flex; align-items: center; gap: 6px; margin-top: 8px; padding: 5px 10px; border-radius: 999px; font-size: 0.78rem; font-weight: 700; }
+        .stock-pill.stock-out { background: #fee2e2; color: #b91c1c; }
+        .stock-pill.stock-low { background: #fef3c7; color: #b45309; }
+        .stock-pill.stock-ok { background: #dcfce7; color: #15803d; }
 
         /* Category Card */
         .cat-card { background: #fff; border-radius: 16px; padding: 25px 20px; text-align: center; transition: all 0.3s; border: 1px solid #f0f0f0; height: 100%; }
@@ -94,6 +99,7 @@
 </head>
 <body>
     <jsp:include page="/components/navbar.jsp" />
+    <jsp:include page="/components/toast.jsp" />
 
     <!-- HERO BANNER -->
     <section class="shop-hero">
@@ -169,6 +175,17 @@
                             <h4 class="mt-2">${products[0].name}</h4>
                             <p class="text-muted small">${products[0].description}</p>
                             <div class="price mb-3">${products[0].formattedPrice}</div>
+                            <c:choose>
+                                <c:when test="${products[0].stock <= 0}">
+                                    <div class="stock-pill stock-out">Hết hàng</div>
+                                </c:when>
+                                <c:when test="${products[0].stock < 10}">
+                                    <div class="stock-pill stock-low">Sắp hết: ${products[0].stock}</div>
+                                </c:when>
+                                <c:otherwise>
+                                    <div class="stock-pill stock-ok">Còn hàng: ${products[0].stock}</div>
+                                </c:otherwise>
+                            </c:choose>
                         </div>
                         <div class="text-center">
                             <a href="${pageContext.request.contextPath}/product-detail?id=${products[0].id}">
@@ -196,11 +213,22 @@
                                         <div>
                                             <span class="price">${p.formattedPrice}</span>
                                             <c:if test="${p.discount > 0}"><span class="old-price">${p.formattedOldPrice}</span></c:if>
+                                            <c:choose>
+                                                <c:when test="${p.stock <= 0}">
+                                                    <div class="stock-pill stock-out">Hết hàng</div>
+                                                </c:when>
+                                                <c:when test="${p.stock < 10}">
+                                                    <div class="stock-pill stock-low">Sắp hết: ${p.stock}</div>
+                                                </c:when>
+                                                <c:otherwise>
+                                                    <div class="stock-pill stock-ok">Còn hàng: ${p.stock}</div>
+                                                </c:otherwise>
+                                            </c:choose>
                                         </div>
                                         <form action="${pageContext.request.contextPath}/add-to-cart" method="post">
                                             <input type="hidden" name="id" value="${p.id}">
                                             <input type="hidden" name="quantity" value="1">
-                                            <button type="submit" class="btn-cart"><i class='bx bx-cart-add'></i></button>
+                                            <button type="submit" class="btn-cart" <c:if test="${p.stock <= 0}">disabled="disabled"</c:if>><i class='bx bx-cart-add'></i></button>
                                         </form>
                                     </div>
                                 </div>
@@ -234,11 +262,22 @@
                                     <div>
                                         <span class="price">${p.formattedPrice}</span>
                                         <span class="old-price">${p.formattedOldPrice}</span>
+                                        <c:choose>
+                                            <c:when test="${p.stock <= 0}">
+                                                <div class="stock-pill stock-out">Hết hàng</div>
+                                            </c:when>
+                                            <c:when test="${p.stock < 10}">
+                                                <div class="stock-pill stock-low">Sắp hết: ${p.stock}</div>
+                                            </c:when>
+                                            <c:otherwise>
+                                                <div class="stock-pill stock-ok">Còn hàng: ${p.stock}</div>
+                                            </c:otherwise>
+                                        </c:choose>
                                     </div>
                                     <form action="${pageContext.request.contextPath}/add-to-cart" method="post">
                                         <input type="hidden" name="id" value="${p.id}">
                                         <input type="hidden" name="quantity" value="1">
-                                        <button type="submit" class="btn-cart"><i class='bx bx-cart-add'></i></button>
+                                        <button type="submit" class="btn-cart" <c:if test="${p.stock <= 0}">disabled="disabled"</c:if>><i class='bx bx-cart-add'></i></button>
                                     </form>
                                 </div>
                             </div>
@@ -280,11 +319,22 @@
                                     <div>
                                         <span class="price">${p.formattedPrice}</span>
                                         <c:if test="${p.discount > 0}"><span class="old-price">${p.formattedOldPrice}</span></c:if>
+                                        <c:choose>
+                                            <c:when test="${p.stock <= 0}">
+                                                <div class="stock-pill stock-out">Hết hàng</div>
+                                            </c:when>
+                                            <c:when test="${p.stock < 10}">
+                                                <div class="stock-pill stock-low">Sắp hết: ${p.stock}</div>
+                                            </c:when>
+                                            <c:otherwise>
+                                                <div class="stock-pill stock-ok">Còn hàng: ${p.stock}</div>
+                                            </c:otherwise>
+                                        </c:choose>
                                     </div>
                                     <form action="${pageContext.request.contextPath}/add-to-cart" method="post">
                                         <input type="hidden" name="id" value="${p.id}">
                                         <input type="hidden" name="quantity" value="1">
-                                        <button type="submit" class="btn-cart"><i class='bx bx-cart-add'></i></button>
+                                        <button type="submit" class="btn-cart" <c:if test="${p.stock <= 0}">disabled="disabled"</c:if>><i class='bx bx-cart-add'></i></button>
                                     </form>
                                 </div>
                             </div>

@@ -53,8 +53,13 @@ public class LoginByFacebookServlet extends HttpServlet {
         session.setAttribute("username", user.getUsername());
         session.setAttribute("role", user.getRole());
 
-        // load cart
         CartDAO cartDAO = new CartDAO();
+        @SuppressWarnings("unchecked")
+        Map<Integer, CartItem> sessionCart = (Map<Integer, CartItem>) session.getAttribute("cart");
+        if (sessionCart != null && !sessionCart.isEmpty()) {
+            cartDAO.syncCartFromSession(user.getId(), sessionCart);
+        }
+
         Map<Integer, CartItem> cart = cartDAO.getCartByUserId(user.getId());
         session.setAttribute("cart", cart);
         // Tính tổng số lượng

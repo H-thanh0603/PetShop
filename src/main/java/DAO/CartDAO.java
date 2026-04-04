@@ -31,10 +31,15 @@ public class CartDAO {
     
     // Cập nhật số lượng (cộng thêm)
     public void addToCart(int userId, int productId, int quantityToAdd) {
+        Product product = productDAO.getProductById(productId);
+        if (product == null || product.getStock() <= 0 || quantityToAdd <= 0) {
+            return;
+        }
+
         // Kiểm tra xem đã có trong giỏ chưa
         String checkQuery = "SELECT quantity FROM cart WHERE user_id = ? AND product_id = ?";
         String insertQuery = "INSERT INTO cart (user_id, product_id, quantity) VALUES (?, ?, ?)";
-        String updateQuery = "UPDATE cart SET quantity = quantity + ? WHERE user_id = ? AND product_id = ?";
+        String updateQuery = "UPDATE cart SET quantity = ? WHERE user_id = ? AND product_id = ?";
         
         try (Connection conn = new DBContext().getConnection()) {
             PreparedStatement checkPs = conn.prepareStatement(checkQuery);
@@ -43,18 +48,26 @@ public class CartDAO {
             ResultSet rs = checkPs.executeQuery();
             
             if (rs.next()) {
+                int currentQuantity = rs.getInt("quantity");
+                int newQuantity = Math.min(currentQuantity + quantityToAdd, product.getStock());
+
                 // Đã có, cập nhật số lượng
                 PreparedStatement updatePs = conn.prepareStatement(updateQuery);
-                updatePs.setInt(1, quantityToAdd);
+                updatePs.setInt(1, newQuantity);
                 updatePs.setInt(2, userId);
                 updatePs.setInt(3, productId);
                 updatePs.executeUpdate();
             } else {
+                int quantityToSave = Math.min(quantityToAdd, product.getStock());
+                if (quantityToSave <= 0) {
+                    return;
+                }
+
                 // Chưa có, thêm mới
                 PreparedStatement insertPs = conn.prepareStatement(insertQuery);
                 insertPs.setInt(1, userId);
                 insertPs.setInt(2, productId);
-                insertPs.setInt(3, quantityToAdd);
+                insertPs.setInt(3, quantityToSave);
                 insertPs.executeUpdate();
             }
         } catch (Exception e) {
@@ -82,9 +95,19 @@ public class CartDAO {
         try (Connection conn = new DBContext().getConnection();
              PreparedStatement ps = conn.prepareStatement(query)) {
 
+            Product product = productDAO.getProductById(productId);
+            if (product == null || product.getStock() <= 0) {
+                return false;
+            }
+
             // fix quantity < 1
             if (newQuantity < 1) {
                 newQuantity = 1;
+            }
+
+            // Backstop ở tầng DAO để quantity trong DB không vượt stock hiện tại.
+            if (newQuantity > product.getStock()) {
+                newQuantity = product.getStock();
             }
 
             ps.setInt(1, newQuantity);
@@ -102,33 +125,56 @@ public class CartDAO {
     
     // Xóa toàn bộ giỏ hàng của user
     public void clearCart(int userId) {
-        String query = "DELETE FROM cart WHERE user_id = ?";
-        try (Connection conn = new DBContext().getConnection();
-             PreparedStatement ps = conn.prepareStatement(query)) {
-            ps.setInt(1, userId);
-            ps.executeUpdate();
+        try (Connection conn = new DBContext().getConnection()) {
+            clearCart(conn, userId);
         } catch (Exception e) {
             e.printStackTrace();
+        }
+    }
+
+    public void clearCart(Connection conn, int userId) throws Exception {
+        String query = "DELETE FROM cart WHERE user_id = ?";
+        try (PreparedStatement ps = conn.prepareStatement(query)) {
+            ps.setInt(1, userId);
+            ps.executeUpdate();
         }
     }
     
     // Load giỏ hàng của user từ database
     public Map<Integer, CartItem> getCartByUserId(int userId) {
         Map<Integer, CartItem> cart = new HashMap<>();
-        String query = "SELECT product_id, quantity FROM cart WHERE user_id = ?";
+        String selectQuery = "SELECT product_id, quantity FROM cart WHERE user_id = ?";
+        String updateQuery = "UPDATE cart SET quantity = ? WHERE user_id = ? AND product_id = ?";
+        String deleteQuery = "DELETE FROM cart WHERE user_id = ? AND product_id = ?";
         
         try (Connection conn = new DBContext().getConnection();
-             PreparedStatement ps = conn.prepareStatement(query)) {
-            ps.setInt(1, userId);
-            ResultSet rs = ps.executeQuery();
-            
-            while (rs.next()) {
-                int productId = rs.getInt("product_id");
-                int quantity = rs.getInt("quantity");
-                
-                Product product = productDAO.getProductById(productId);
-                if (product != null) {
-                    cart.put(productId, new CartItem(product, quantity));
+             PreparedStatement selectPs = conn.prepareStatement(selectQuery);
+             PreparedStatement updatePs = conn.prepareStatement(updateQuery);
+             PreparedStatement deletePs = conn.prepareStatement(deleteQuery)) {
+            selectPs.setInt(1, userId);
+
+            try (ResultSet rs = selectPs.executeQuery()) {
+                while (rs.next()) {
+                    int productId = rs.getInt("product_id");
+                    int quantity = rs.getInt("quantity");
+
+                    Product product = productDAO.getProductById(conn, productId);
+                    if (product == null || product.getStock() <= 0) {
+                        deletePs.setInt(1, userId);
+                        deletePs.setInt(2, productId);
+                        deletePs.executeUpdate();
+                        continue;
+                    }
+
+                    int safeQuantity = Math.max(1, Math.min(quantity, product.getStock()));
+                    if (safeQuantity != quantity) {
+                        updatePs.setInt(1, safeQuantity);
+                        updatePs.setInt(2, userId);
+                        updatePs.setInt(3, productId);
+                        updatePs.executeUpdate();
+                    }
+
+                    cart.put(productId, new CartItem(product, safeQuantity));
                 }
             }
         } catch (Exception e) {
@@ -158,7 +204,16 @@ public class CartDAO {
         if (sessionCart == null || sessionCart.isEmpty()) return;
         
         for (Map.Entry<Integer, CartItem> entry : sessionCart.entrySet()) {
-            addToCart(userId, entry.getKey(), entry.getValue().getQuantity());
+            Product product = productDAO.getProductById(entry.getKey());
+            if (product == null || product.getStock() <= 0) {
+                continue;
+            }
+
+            // Khi sync từ session sau login, chỉ đẩy lên DB phần số lượng còn hợp lệ theo tồn kho hiện tại.
+            int quantityToSync = Math.min(entry.getValue().getQuantity(), product.getStock());
+            if (quantityToSync > 0) {
+                addToCart(userId, entry.getKey(), quantityToSync);
+            }
         }
     }
 }

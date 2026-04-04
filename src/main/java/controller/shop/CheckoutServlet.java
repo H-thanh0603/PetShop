@@ -3,9 +3,12 @@ package controller.shop;
 import java.io.IOException;
 
 import DAO.AddressDao;
+import DAO.CartDAO;
 import DAO.CouponDao;
-import DAO.UserDAO;
 import DAO.OrderDAO;
+import DAO.ProductDAO;
+import DAO.UserDAO;
+import Context.DBContext;
 
 import Model.*;
 
@@ -18,17 +21,23 @@ import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
 import services.ShippingService;
 
+import java.sql.Connection;
 import java.sql.Timestamp;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import services.InventoryService;
 
 @WebServlet("/checkout")
 public class CheckoutServlet extends HttpServlet {
     private AddressDao addressDAO = new AddressDao();
     private static final long serialVersionUID = 1L;
+    private final InventoryService inventoryService = new InventoryService();
+    private final CartDAO cartDAO = new CartDAO();
+    private final ProductDAO productDAO = new ProductDAO();
+    private final OrderDAO orderDAO = new OrderDAO();
 
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
@@ -39,6 +48,11 @@ public class CheckoutServlet extends HttpServlet {
 
         if (userSession == null) {
             response.sendRedirect(request.getContextPath() + "/login");
+            return;
+        }
+
+        if (useInventoryAwareCheckoutFlow()) {
+            renderCheckoutWithStockCheck(request, response, session, userSession);
             return;
         }
 
@@ -150,6 +164,11 @@ public class CheckoutServlet extends HttpServlet {
             }
 
             response.sendRedirect(request.getContextPath() + "/checkout");
+            return;
+        }
+
+        if (useInventoryAwareCheckoutFlow()) {
+            placeOrderWithStockCheck(request, response, session, userSession);
             return;
         }
 
@@ -307,7 +326,340 @@ public class CheckoutServlet extends HttpServlet {
             return;
         }
     }
+    private boolean useInventoryAwareCheckoutFlow() {
+        return true;
+    }
+
+    private void renderCheckoutWithStockCheck(HttpServletRequest request, HttpServletResponse response,
+                                              HttpSession session, User userSession)
+            throws ServletException, IOException {
+
+        UserDAO userdao = new UserDAO();
+        User user = userdao.getUserById(userSession.getId());
+        session.setAttribute("user", user);
+
+        Map<Integer, CartItem> cart = loadLatestCartForUser(session, user);
+        if (cart == null || cart.isEmpty()) {
+            response.sendRedirect(request.getContextPath() + "/shop");
+            return;
+        }
+
+        List<String> stockErrors = inventoryService.validateCartForCheckout(cart);
+        if (!stockErrors.isEmpty()) {
+            session.setAttribute("toastMessage", stockErrors.get(0));
+            session.setAttribute("toastType", "warning");
+            response.sendRedirect(request.getContextPath() + "/cart");
+            return;
+        }
+
+        List<Address> addressList = addressDAO.getAddressesByUserId(user.getId());
+        Address defaultAddress = addressDAO.getDefaultAddressByUserId(user.getId());
+        List<CartItem> cartItems = new ArrayList<>(cart.values());
+
+        double totalAmount = 0;
+        int totalWeight = 0;
+        for (CartItem item : cart.values()) {
+            totalAmount += item.getTotalPrice();
+            int productWeight = item.getProduct().getWeight();
+            if (productWeight <= 0) {
+                productWeight = 500;
+            }
+            totalWeight += item.getQuantity() * productWeight;
+        }
+
+        int shippingFee = 30000;
+        String shippingMessage = null;
+        if (defaultAddress != null) {
+            try {
+                ShippingService shippingService = new ShippingService();
+                shippingFee = shippingService.calculateShippingFee(
+                        defaultAddress.getProvince(),
+                        defaultAddress.getDistrict(),
+                        defaultAddress.getWard(),
+                        totalWeight,
+                        20,
+                        15,
+                        10
+                );
+            } catch (Exception e) {
+                e.printStackTrace();
+                shippingMessage = "Khong tinh duoc phi ship realtime, tam dung phi ship mac dinh.";
+            }
+        } else {
+            shippingMessage = "Chua co dia chi mac dinh.";
+        }
+
+        Coupon coupon = (Coupon) session.getAttribute("appliedCoupon");
+        double discount = 0;
+        if (coupon != null) {
+            discount = totalAmount * coupon.getDiscountPercent() / 100.0;
+        }
+
+        double finalTotal = totalAmount + shippingFee - discount;
+
+        session.removeAttribute("appliedCoupon");
+        request.setAttribute("addressList", addressList);
+        request.setAttribute("totalAmount", totalAmount);
+        request.setAttribute("cartItems", cartItems);
+        request.setAttribute("user", user);
+        request.setAttribute("discount", discount);
+        request.setAttribute("finalTotal", finalTotal);
+        request.setAttribute("shippingFee", shippingFee);
+        request.setAttribute("shippingMessage", shippingMessage);
+        request.setAttribute("defaultAddress", defaultAddress);
+
+        String couponMessage = (String) session.getAttribute("couponMessage");
+        if (couponMessage != null) {
+            request.setAttribute("couponMessage", couponMessage);
+            session.removeAttribute("couponMessage");
+        }
+
+        request.getRequestDispatcher("/pages/shop/checkout.jsp").forward(request, response);
+    }
+
+    private void placeOrderWithStockCheck(HttpServletRequest request, HttpServletResponse response,
+                                          HttpSession session, User userSession) throws IOException {
+
+        Map<String, Object> result = new HashMap<>();
+        UserDAO userdao = new UserDAO();
+        User user = userdao.getUserById(userSession.getId());
+        session.setAttribute("user", user);
+
+        Map<Integer, CartItem> cart = loadLatestCartForUser(session, user);
+        if (cart == null || cart.isEmpty()) {
+            result.put("success", false);
+            result.put("message", "Gio hang dang trong.");
+            write(response, result);
+            return;
+        }
+
+        List<String> stockErrors = inventoryService.validateCartForCheckout(cart);
+        if (!stockErrors.isEmpty()) {
+            result.put("success", false);
+            result.put("message", stockErrors.get(0));
+            write(response, result);
+            return;
+        }
+
+        Address defaultAddress = addressDAO.getDefaultAddressByUserId(user.getId());
+        double totalAmount = 0;
+        int totalWeight = 0;
+        for (CartItem item : cart.values()) {
+            totalAmount += item.getTotalPrice();
+
+            int productWeight = item.getProduct().getWeight();
+            if (productWeight <= 0) {
+                productWeight = 500;
+            }
+
+            totalWeight += item.getQuantity() * productWeight;
+        }
+
+        int shippingFee = 30000;
+        try {
+            if (defaultAddress != null) {
+                ShippingService shippingService = new ShippingService();
+                shippingFee = shippingService.calculateShippingFee(
+                        defaultAddress.getProvince(),
+                        defaultAddress.getDistrict(),
+                        defaultAddress.getWard(),
+                        totalWeight,
+                        20,
+                        15,
+                        10
+                );
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        Coupon coupon = (Coupon) session.getAttribute("appliedCoupon");
+        double discount = 0;
+        if (coupon != null) {
+            discount = totalAmount * coupon.getDiscountPercent() / 100.0;
+        }
+
+        double finalTotal = totalAmount + shippingFee - discount;
+
+        String fullname = user.getFullname();
+        String phone = user.getPhone();
+        String note = request.getParameter("note");
+        String paymentMethod = request.getParameter("paymentMethod");
+        if (fullname == null || phone == null) {
+            result.put("success", false);
+            result.put("message", "Thieu thong tin nguoi nhan.");
+            write(response, result);
+            return;
+        }
+        if (defaultAddress == null) {
+            result.put("success", false);
+            result.put("message", "Ban chua co dia chi mac dinh.");
+            write(response, result);
+            return;
+        }
+
+        String fullAddress = defaultAddress.getAddress() + ", " +
+                defaultAddress.getWard() + ", " +
+                defaultAddress.getDistrict() + ", " +
+                defaultAddress.getProvince();
+
+        String paymentMethodDb;
+        boolean paymentStatus;
+
+        switch (paymentMethod) {
+            case "cod":
+                paymentMethodDb = "COD";
+                paymentStatus = false;
+                break;
+
+            case "momo":
+                if (!callMomoApi(finalTotal)) {
+                    result.put("success", false);
+                    result.put("message", "Thanh toan MoMo that bai.");
+                    write(response, result);
+                    return;
+                }
+                paymentMethodDb = "MOMO";
+                paymentStatus = true;
+                break;
+
+            case "bank_transfer":
+                if (!callBankApi(finalTotal)) {
+                    result.put("success", false);
+                    result.put("message", "Thanh toan ngan hang that bai.");
+                    write(response, result);
+                    return;
+                }
+                paymentMethodDb = "BANK_TRANSFER";
+                paymentStatus = true;
+                break;
+
+            default:
+                result.put("success", false);
+                result.put("message", "Phuong thuc thanh toan khong hop le.");
+                write(response, result);
+                return;
+        }
+
+        Order order = new Order();
+        order.setUserId(user.getId());
+        order.setFullname(fullname);
+        order.setPhone(phone);
+        order.setAddress(fullAddress);
+        order.setNote(note);
+        order.setTotalAmount(finalTotal);
+        order.setStatus("Pending");
+        order.setCreatedAt(Timestamp.valueOf(LocalDateTime.now()));
+        order.setPayment_method(paymentMethodDb);
+        order.setPayment_status(paymentStatus);
+
+        try (Connection conn = DBContext.getConnection()) {
+            conn.setAutoCommit(false);
+
+            try {
+                // Lock inventory validation and stock deduction inside one transaction.
+                for (CartItem item : cart.values()) {
+                    Product latestProduct = productDAO.getProductById(conn, item.getProduct().getId());
+                    if (latestProduct == null) {
+                        conn.rollback();
+                        result.put("success", false);
+                        result.put("message", "Co san pham khong con ton tai.");
+                        write(response, result);
+                        return;
+                    }
+                    if (latestProduct.getStock() < item.getQuantity()) {
+                        conn.rollback();
+                        result.put("success", false);
+                        result.put("message", "San pham \"" + latestProduct.getName() + "\" chi con " + latestProduct.getStock() + " san pham.");
+                        write(response, result);
+                        return;
+                    }
+                    item.setProduct(latestProduct);
+                }
+
+                int orderId = orderDAO.saveOrder(conn, order);
+                if (orderId <= 0) {
+                    conn.rollback();
+                    result.put("success", false);
+                    result.put("message", "Khong tao duoc don hang.");
+                    write(response, result);
+                    return;
+                }
+
+                for (CartItem ci : cart.values()) {
+                    if (!productDAO.decreaseStock(conn, ci.getProduct().getId(), ci.getQuantity())) {
+                        conn.rollback();
+                        result.put("success", false);
+                        result.put("message", "San pham \"" + ci.getProduct().getName() + "\" da het hang trong luc thanh toan.");
+                        write(response, result);
+                        return;
+                    }
+
+                    OrderItem oi = new OrderItem();
+                    oi.setOrderId(orderId);
+                    oi.setProductId(ci.getProduct().getId());
+                    oi.setQuantity(ci.getQuantity());
+                    oi.setPrice(ci.getProduct().getPrice());
+                    if (!orderDAO.saveOrderItem(conn, oi)) {
+                        conn.rollback();
+                        result.put("success", false);
+                        result.put("message", "Khong luu duoc chi tiet don hang.");
+                        write(response, result);
+                        return;
+                    }
+                }
+
+                // Clear persisted cart in the same transaction after stock is reserved successfully.
+                cartDAO.clearCart(conn, user.getId());
+                conn.commit();
+            } catch (Exception e) {
+                conn.rollback();
+                throw e;
+            } finally {
+                conn.setAutoCommit(true);
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+            result.put("success", false);
+            result.put("message", "Da co loi xay ra. Vui long thu lai.");
+            write(response, result);
+            return;
+        }
+
+        session.removeAttribute("cart");
+        session.setAttribute("totalQuantity", 0);
+        session.removeAttribute("appliedCoupon");
+        session.removeAttribute("couponMessage");
+        session.removeAttribute("checkoutNote");
+
+        result.put("success", true);
+        result.put("message", "Dat hang thanh cong!");
+        write(response, result);
+    }
+
+    private Map<Integer, CartItem> loadLatestCartForUser(HttpSession session, User user) {
+        Map<Integer, CartItem> cart = cartDAO.getCartByUserId(user.getId());
+        if (cart == null) {
+            cart = new HashMap<>();
+        }
+        inventoryService.refreshCartProducts(cart);
+        session.setAttribute("cart", cart);
+        recalculateTotalQuantity(session, cart);
+        return cart;
+    }
+
+    private int recalculateTotalQuantity(HttpSession session, Map<Integer, CartItem> cart) {
+        int totalQuantity = 0;
+        for (CartItem item : cart.values()) {
+            totalQuantity += item.getQuantity();
+        }
+        session.setAttribute("totalQuantity", totalQuantity);
+        return totalQuantity;
+    }
+
     private void write(HttpServletResponse res, Map<String, Object> data) throws IOException {
+        res.setContentType("application/json;charset=UTF-8");
+        res.setCharacterEncoding("UTF-8");
         res.getWriter().write(new Gson().toJson(data));
     }
     private boolean callMomoApi(double amount) {
