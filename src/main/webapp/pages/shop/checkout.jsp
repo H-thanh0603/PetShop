@@ -465,7 +465,7 @@
                 </div>
 
                 <c:forEach var="item" items="${cartItems}">
-                    <div class="product-item">
+                    <div class="product-item" data-product-id="${item.product.id}" data-quantity="${item.quantity}">
                         <img class="product-img"
                              src="${pageContext.request.contextPath}/assets/images/shop_pic/${item.product.image}">
                         <div class="flex-grow-1">
@@ -1255,6 +1255,71 @@ document.addEventListener("DOMContentLoaded", function () {
     }
 });
 
+</script>
+<script>
+    function getRenderedCheckoutState() {
+        const items = Array.from(document.querySelectorAll('.product-item[data-product-id]')).map(item => ({
+            productId: Number.parseInt(item.dataset.productId, 10),
+            quantity: Number.parseInt(item.dataset.quantity, 10) || 0
+        })).sort((a, b) => a.productId - b.productId);
+
+        return {
+            items,
+            totalQuantity: items.reduce((sum, item) => sum + item.quantity, 0)
+        };
+    }
+
+    function hasCheckoutStateChanged(serverState) {
+        const currentState = getRenderedCheckoutState();
+        const serverItems = (serverState.items || []).map(item => ({
+            productId: Number.parseInt(item.productId, 10),
+            quantity: Number.parseInt(item.quantity, 10) || 0
+        })).sort((a, b) => a.productId - b.productId);
+
+        if (currentState.totalQuantity !== (serverState.totalQuantity || 0)) {
+            return true;
+        }
+
+        if (currentState.items.length !== serverItems.length) {
+            return true;
+        }
+
+        for (let i = 0; i < serverItems.length; i++) {
+            const currentItem = currentState.items[i];
+            const serverItem = serverItems[i];
+
+            if (!currentItem
+                || currentItem.productId !== serverItem.productId
+                || currentItem.quantity !== serverItem.quantity) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    function syncCheckoutStateIfNeeded() {
+        fetch('<%= request.getContextPath() %>/cart?action=state', {
+            cache: 'no-store'
+        })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success && hasCheckoutStateChanged(data)) {
+                    window.location.reload();
+                }
+            })
+            .catch(error => {
+                console.error('Khong dong bo duoc trang checkout:', error);
+            });
+    }
+
+    window.addEventListener('focus', syncCheckoutStateIfNeeded);
+    document.addEventListener('visibilitychange', () => {
+        if (!document.hidden) {
+            syncCheckoutStateIfNeeded();
+        }
+    });
+    setInterval(syncCheckoutStateIfNeeded, 10000);
 </script>
 <jsp:include page="/components/footer.jsp"/>
 <%--        modal cập nhật thông tin--%>

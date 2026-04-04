@@ -11,6 +11,8 @@ public class Product {
     private String description;
     private String category;
     private int weight;
+    private int stock;
+    private int pet_type_id;
     
     public Product() {}
 
@@ -69,5 +71,21 @@ public class Product {
     public String getFormattedOldPrice() {
         DecimalFormat formatter = new DecimalFormat("###,###");
         return formatter.format(getOldPrice()).replace(',', '.') + "đ";
+    }
+
+    public int getStock() {
+        return stock;
+    }
+
+    public void setStock(int stock) {
+        this.stock = stock;
+    }
+
+    public int getPet_type_id() {
+        return pet_type_id;
+    }
+
+    public void setPet_type_id(int pet_type_id) {
+        this.pet_type_id = pet_type_id;
     }
 }
