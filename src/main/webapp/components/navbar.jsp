@@ -502,7 +502,7 @@
 
         <div class="d-flex align-items-center gap-3 navbar-nav-buttons">
             
-            <a href="${pageContext.request.contextPath}/pages/shop/cart.jsp" class="btn-nav-cart">
+            <a href="${pageContext.request.contextPath}/cart" class="btn-nav-cart">
                 <i class='bx bx-cart'></i>
                 <%-- Chỉ hiển thị badge khi user đã đăng nhập VÀ có sản phẩm trong giỏ --%>
                 <c:if test="${not empty sessionScope.totalQuantity and sessionScope.totalQuantity > 0}">
@@ -534,7 +534,7 @@
                                     </a>
                                 </li>
                                 <li>
-                                    <a class="dropdown-item" href="${pageContext.request.contextPath}/pages/shop/cart.jsp">
+                                    <a class="dropdown-item" href="${pageContext.request.contextPath}/cart">
                                         <i class='bx bx-cart'></i> Giỏ hàng của tôi
                                     </a>
                                 </li>

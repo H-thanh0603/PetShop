@@ -438,7 +438,61 @@
 	<script>
 	
 	// --- nút bấm ---
+    const availableStock = ${detail.stock};
+
+    function syncStockUi() {
+        var stockStatus = document.querySelector('.mb-4.bg-light.p-3.rounded .mt-2');
+        var qtyInput = document.getElementById('qtyInput');
+        var addButton = document.querySelector("button[onclick=\"submitForm('add')\"]");
+        var buyButton = document.querySelector("button[onclick=\"submitForm('buy')\"]");
+
+        if (stockStatus) {
+            if (availableStock <= 0) {
+                stockStatus.className = 'mt-2 text-danger fw-semibold';
+                stockStatus.innerHTML = "<i class='bx bxs-error-circle'></i> Het hang";
+            } else if (availableStock < 10) {
+                stockStatus.className = 'mt-2 text-warning fw-semibold';
+                stockStatus.innerHTML = "<i class='bx bxs-package'></i> Chi con " + availableStock + " san pham";
+            } else {
+                stockStatus.className = 'mt-2 text-success';
+                stockStatus.innerHTML = "<i class='bx bxs-check-circle'></i> Con " + availableStock + " san pham - San sang giao ngay";
+            }
+        }
+
+        if (qtyInput) {
+            qtyInput.max = Math.max(availableStock, 1);
+            if (availableStock <= 0) {
+                qtyInput.value = 1;
+                qtyInput.disabled = true;
+            } else if (parseInt(qtyInput.value, 10) > availableStock) {
+                qtyInput.value = availableStock;
+            }
+        }
+
+        if (addButton) {
+            addButton.disabled = availableStock <= 0;
+        }
+
+        if (buyButton) {
+            buyButton.disabled = availableStock <= 0;
+        }
+    }
+
     function submitForm(type) {
+        if (availableStock <= 0) {
+            return;
+        }
+
+        var qtyInput = document.getElementById('qtyInput');
+        if (qtyInput) {
+            var value = parseInt(qtyInput.value, 10);
+            if (isNaN(value) || value < 1) {
+                qtyInput.value = 1;
+            } else if (value > availableStock) {
+                qtyInput.value = availableStock;
+            }
+        }
+
         document.getElementById('actionType').value = type;
 
         document.getElementById('addToCartForm').submit();
@@ -449,7 +503,7 @@
             var input = document.getElementById('qtyInput');
             var value = parseInt(input.value, 10);
             value = isNaN(value) ? 0 : value;
-            if(value < 99) input.value = value + 1;
+            if(value < availableStock) input.value = value + 1;
         }
 
         function decreaseQty() {
@@ -469,6 +523,8 @@
             thumbs.forEach(t => t.classList.remove('active'));
             element.classList.add('active');
         }
+
+        syncStockUi();
     </script>
 </body>
 </html>
