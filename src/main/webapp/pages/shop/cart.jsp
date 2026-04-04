@@ -106,6 +106,9 @@
                                                 <div>
                                                     <p class="fw-bold mb-0">${item.product.name}</p>
                                                     <small class="text-muted">ID: ${item.product.id}</small>
+                                                    <c:if test="${item.product.stock > 0 and item.product.stock < 10}">
+                                                        <div><small class="text-warning fw-semibold">Con lai: ${item.product.stock} san pham</small></div>
+                                                    </c:if>
                                                 </div>
                                             </div>
                                         </td>
@@ -113,7 +116,8 @@
                                             <fmt:formatNumber value="${item.product.price}" type="currency" currencySymbol="đ" maxFractionDigits="0"/>
                                         </td>
                                         <td class="text-center">
-                                            <input type="number" min="1" value="${item.quantity}" data-product-id="${item.product.id}"
+                                            <input type="number" min="1" max="${item.product.stock}" value="${item.quantity}" data-product-id="${item.product.id}"
+                                                   data-last-valid-quantity="${item.quantity}"
                                                    class="form-control qty-input d-inline-block"
                                                    oninput="updateCart(this)">
                                         </td>
@@ -188,6 +192,8 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 
     <script>
+        window.isCartUpdating = false;
+
         function openDeleteModal(productId, productName) {
             document.getElementById('deleteProductName').textContent = productName;
             document.getElementById('confirmDeleteBtn').href = '${pageContext.request.contextPath}/cart?action=remove&id=' + productId;
@@ -195,13 +201,42 @@
             deleteModal.show();
         }
 
+        function formatCurrency(amount) {
+            return new Intl.NumberFormat('vi-VN', {
+                style: 'currency',
+                currency: 'VND'
+            }).format(amount).replace('₫', 'đ');
+        }
+
+        function updateCartBadge(totalQuantity) {
+            let cartCount = document.getElementById('cart-count');
+            if (!cartCount) {
+                return;
+            }
+
+            if (totalQuantity > 0) {
+                cartCount.innerText = totalQuantity;
+                cartCount.style.display = '';
+            } else {
+                cartCount.innerText = '';
+                cartCount.style.display = 'none';
+            }
+        }
+
+        function updateRowTotal(row, quantity) {
+            let price = parseFloat(row.querySelector('[data-price]').getAttribute('data-price'));
+            row.querySelector('.row-total').innerText = formatCurrency(price * quantity);
+        }
+
         function updateCart(input) {
             const productId = input.dataset.productId;
-            const quantity = parseInt(input.value) || 1;
+            const quantity = Number.parseInt(input.value, 10);
+            const lastValidQuantity = Number.parseInt(input.dataset.lastValidQuantity || input.defaultValue || '1', 10) || 1;
+            const requestedQuantity = Number.isNaN(quantity) ? lastValidQuantity : quantity;
 
             let row = input.closest('tr');
             let price = parseFloat(row.querySelector('[data-price]').getAttribute('data-price'));
-            let newRowTotal = price * quantity;
+            let newRowTotal = price * requestedQuantity;
             let formattedRowTotal = new Intl.NumberFormat('vi-VN', {
                 style: 'currency',
                 currency: 'VND'
@@ -210,6 +245,7 @@
             row.querySelector('.row-total').innerText = formattedRowTotal.replace('₫', 'đ');
             recalculateGrandTotal();
 
+            window.isCartUpdating = true;
             fetch('<%= request.getContextPath() %>/cart', {
                 method: 'POST',
                 headers: {
@@ -217,22 +253,41 @@
                 },
                 body: 'action=update'
                     + '&id=' + encodeURIComponent(productId)
-                    + '&quantity=' + encodeURIComponent(quantity)
+                    + '&quantity=' + encodeURIComponent(requestedQuantity)
             })
                 .then(response => response.text())
                 .then(text => {
                     console.log("Server response:", text);
                     try {
                         const data = JSON.parse(text);
-                        if (data.success) {
-                            input.value = data.quantity;
-                            let cartCount = document.getElementById('cart-count');
-                            if(cartCount && data.totalQuantity !== undefined){
-                                cartCount.innerText = data.totalQuantity;
+                        if (data.removed) {
+                            row.remove();
+                            if (!document.querySelector('.cart-row')) {
+                                window.location.reload();
+                                return;
                             }
+                        } else if (data.quantity !== undefined) {
+                            input.value = data.quantity;
+                            input.dataset.lastValidQuantity = data.quantity;
+                            if (data.stock !== undefined && data.stock > 0) {
+                                input.max = data.stock;
+                            }
+                            updateRowTotal(row, data.quantity);
                         } else {
+                            input.value = lastValidQuantity;
+                            updateRowTotal(row, lastValidQuantity);
+                        }
+
+                        recalculateGrandTotal();
+
+                        if (data.totalQuantity !== undefined) {
+                            updateCartBadge(data.totalQuantity);
+                        }
+
+                        if (!data.success && data.message) {
                             alert(data.message);
                         }
+                        window.isCartUpdating = false;
                     } catch (e) {
                         console.error("Response không phải JSON:", text);
                     }
@@ -254,6 +309,76 @@
             document.getElementById('cart-subtotal').innerText = formattedGrandTotal;
             document.getElementById('cart-total').innerText = formattedGrandTotal;
         }
+    </script>
+    <script>
+        function getRenderedCartState() {
+            const items = Array.from(document.querySelectorAll('.qty-input')).map(input => ({
+                productId: Number.parseInt(input.dataset.productId, 10),
+                quantity: Number.parseInt(input.value, 10) || 0,
+                stock: Number.parseInt(input.max || '0', 10) || 0
+            })).sort((a, b) => a.productId - b.productId);
+
+            const totalQuantity = items.reduce((sum, item) => sum + item.quantity, 0);
+            return { items, totalQuantity };
+        }
+
+        function hasCartStateChanged(serverState) {
+            const currentState = getRenderedCartState();
+            const serverItems = (serverState.items || []).map(item => ({
+                productId: Number.parseInt(item.productId, 10),
+                quantity: Number.parseInt(item.quantity, 10) || 0,
+                stock: Number.parseInt(item.stock, 10) || 0
+            })).sort((a, b) => a.productId - b.productId);
+
+            if (currentState.totalQuantity !== (serverState.totalQuantity || 0)) {
+                return true;
+            }
+
+            if (currentState.items.length !== serverItems.length) {
+                return true;
+            }
+
+            for (let i = 0; i < serverItems.length; i++) {
+                const currentItem = currentState.items[i];
+                const serverItem = serverItems[i];
+
+                if (!currentItem
+                    || currentItem.productId !== serverItem.productId
+                    || currentItem.quantity !== serverItem.quantity
+                    || currentItem.stock !== serverItem.stock) {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        function syncCartStateIfNeeded() {
+            if (window.isCartUpdating) {
+                return;
+            }
+
+            fetch('<%= request.getContextPath() %>/cart?action=state', {
+                cache: 'no-store'
+            })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success && hasCartStateChanged(data)) {
+                        window.location.reload();
+                    }
+                })
+                .catch(error => {
+                    console.error('Khong dong bo duoc trang gio hang:', error);
+                });
+        }
+
+        window.addEventListener('focus', syncCartStateIfNeeded);
+        document.addEventListener('visibilitychange', () => {
+            if (!document.hidden) {
+                syncCartStateIfNeeded();
+            }
+        });
+        setInterval(syncCartStateIfNeeded, 10000);
     </script>
 </body>
 </html>

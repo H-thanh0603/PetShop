@@ -215,7 +215,7 @@
 
         <div class="d-flex align-items-center gap-3">
             
-            <a href="${pageContext.request.contextPath}/pages/shop/cart.jsp" class="btn-nav-cart text-decoration-none">
+            <a href="${pageContext.request.contextPath}/cart" class="btn-nav-cart text-decoration-none">
                 <i class='bx bx-cart'></i>
                 <c:if test="${not empty sessionScope.totalQuantity and sessionScope.totalQuantity > 0}">
                     <span class="cart-badge">${sessionScope.totalQuantity}</span>
@@ -244,7 +244,7 @@
                                     </a>
                                 </li>
                                 <li>
-                                    <a class="dropdown-item" href="${pageContext.request.contextPath}/pages/shop/cart.jsp">
+                                    <a class="dropdown-item" href="${pageContext.request.contextPath}/cart">
                                         <i class='bx bx-cart'></i> Giỏ hàng của tôi
                                     </a>
                                 </li>
