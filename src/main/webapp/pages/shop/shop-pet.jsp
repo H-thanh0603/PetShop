@@ -86,6 +86,7 @@
 </head>
 <body>
     <jsp:include page="/components/navbar.jsp" />
+    <jsp:include page="/components/toast.jsp" />
 
     <div class="container">
         <div class="breadcrumb-section">

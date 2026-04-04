@@ -113,7 +113,7 @@
 <body>
 
 	<jsp:include page="/components/navbar.jsp" />
-
+    <jsp:include page="/components/toast.jsp" />
 	<div class="bg-light py-3 mb-4">
 		<div class="container">
 			<nav aria-label="breadcrumb">
@@ -189,8 +189,12 @@
 							<label class="form-label fw-bold">Số lượng:</label>
 							<div class="input-group">
 								<input type="number" id="qtyInput" name="quantity"
-									class="form-control text-center" value="1" min="1" max="99">
+									class="form-control text-center" value="1"
+									inputmode="numeric" autocomplete="off"
+									aria-describedby="qtyError">
 							</div>
+							<div id="qtyError" class="text-danger small mt-2 d-none"
+								aria-live="polite"></div>
 						</div>
 
 						<div class="col-md-9 mb-3 d-flex gap-2">
@@ -439,12 +443,124 @@
 	
 	// --- nút bấm ---
     const availableStock = ${detail.stock};
+    const quantityMessages = {
+        negative: "Kh\u00f4ng \u0111\u01b0\u1ee3c nh\u1eadp s\u1ed1 \u00e2m.",
+        decimal: "Kh\u00f4ng \u0111\u01b0\u1ee3c nh\u1eadp s\u1ed1 th\u1eadp ph\u00e2n.",
+        zero: "S\u1ed1 l\u01b0\u1ee3ng ph\u1ea3i l\u1edbn h\u01a1n 0.",
+        invalid: "S\u1ed1 l\u01b0\u1ee3ng kh\u00f4ng h\u1ee3p l\u1ec7.",
+        exceed: "S\u1ed1 l\u01b0\u1ee3ng v\u01b0\u1ee3t qu\u00e1 t\u1ed3n kho hi\u1ec7n t\u1ea1i."
+    };
+
+    function getQtyInput() {
+        return document.getElementById('qtyInput');
+    }
+
+    function getQtyError() {
+        return document.getElementById('qtyError');
+    }
+
+    function getSubmitButtons() {
+        return [
+            document.querySelector("button[onclick=\"submitForm('add')\"]"),
+            document.querySelector("button[onclick=\"submitForm('buy')\"]")
+        ];
+    }
+
+    function setSubmitButtonsDisabled(disabled) {
+        getSubmitButtons().forEach(function(button) {
+            if (button) {
+                button.disabled = disabled;
+            }
+        });
+    }
+
+    function getNormalizedQuantity() {
+        var qtyInput = getQtyInput();
+        if (!qtyInput) {
+            return 0;
+        }
+
+        var rawValue = qtyInput.value.trim();
+        if (!/^\d+$/.test(rawValue)) {
+            return 0;
+        }
+
+        var quantity = Number(rawValue);
+        return Number.isInteger(quantity) ? quantity : 0;
+    }
+
+    function getQuantityValidationMessage() {
+        var qtyInput = getQtyInput();
+        if (!qtyInput) {
+            return "";
+        }
+
+        var rawValue = qtyInput.value.trim();
+        if (rawValue === "") {
+            return "";
+        }
+
+        if (rawValue.startsWith("-")) {
+            return quantityMessages.negative;
+        }
+
+        if (rawValue.includes(".") || rawValue.includes(",")) {
+            return quantityMessages.decimal;
+        }
+
+        if (!/^\d+$/.test(rawValue)) {
+            return quantityMessages.invalid;
+        }
+
+        var quantity = Number(rawValue);
+        if (!Number.isInteger(quantity)) {
+            return quantityMessages.decimal;
+        }
+
+        if (quantity === 0) {
+            return quantityMessages.zero;
+        }
+
+        if (quantity < 0) {
+            return quantityMessages.negative;
+        }
+
+        if (availableStock > 0 && quantity > availableStock) {
+            return quantityMessages.exceed;
+        }
+
+        return "";
+    }
+
+    function validateQuantityInput(forceMessage) {
+        var qtyInput = getQtyInput();
+        var qtyError = getQtyError();
+
+        if (!qtyInput) {
+            return false;
+        }
+
+        var message = getQuantityValidationMessage();
+        if (!message && forceMessage && qtyInput.value.trim() === "") {
+            message = quantityMessages.invalid;
+        }
+
+        var hasError = message !== "";
+        qtyInput.classList.toggle("is-invalid", hasError);
+        qtyInput.setCustomValidity(hasError ? message : "");
+
+        if (qtyError) {
+            qtyError.textContent = hasError ? message : "";
+            qtyError.classList.toggle("d-none", !hasError);
+        }
+
+        setSubmitButtonsDisabled(availableStock <= 0 || hasError);
+        return !hasError;
+    }
 
     function syncStockUi() {
         var stockStatus = document.querySelector('.mb-4.bg-light.p-3.rounded .mt-2');
-        var qtyInput = document.getElementById('qtyInput');
-        var addButton = document.querySelector("button[onclick=\"submitForm('add')\"]");
-        var buyButton = document.querySelector("button[onclick=\"submitForm('buy')\"]");
+        var qtyInput = getQtyInput();
 
         if (stockStatus) {
             if (availableStock <= 0) {
@@ -460,22 +576,21 @@
         }
 
         if (qtyInput) {
-            qtyInput.max = Math.max(availableStock, 1);
             if (availableStock <= 0) {
-                qtyInput.value = 1;
+                qtyInput.value = "1";
                 qtyInput.disabled = true;
-            } else if (parseInt(qtyInput.value, 10) > availableStock) {
-                qtyInput.value = availableStock;
+            } else {
+                qtyInput.disabled = false;
+                if (qtyInput.value.trim() === "") {
+                    qtyInput.value = "1";
+                }
+                if (getNormalizedQuantity() > availableStock) {
+                    qtyInput.value = String(availableStock);
+                }
             }
         }
 
-        if (addButton) {
-            addButton.disabled = availableStock <= 0;
-        }
-
-        if (buyButton) {
-            buyButton.disabled = availableStock <= 0;
-        }
+        validateQuantityInput(false);
     }
 
     function submitForm(type) {
@@ -483,16 +598,20 @@
             return;
         }
 
-        var qtyInput = document.getElementById('qtyInput');
-        if (qtyInput) {
-            var value = parseInt(qtyInput.value, 10);
-            if (isNaN(value) || value < 1) {
-                qtyInput.value = 1;
-            } else if (value > availableStock) {
-                qtyInput.value = availableStock;
+        if (!validateQuantityInput(true)) {
+            var qtyInput = getQtyInput();
+            if (qtyInput) {
+                qtyInput.focus();
             }
+            return;
         }
 
+        var quantity = getNormalizedQuantity();
+        if (quantity < 1) {
+            return;
+        }
+
+        document.getElementById('qtyInput').value = String(Math.min(quantity, availableStock));
         document.getElementById('actionType').value = type;
 
         document.getElementById('addToCartForm').submit();
@@ -500,17 +619,41 @@
 	
         // Tăng giảm số lượng
         function increaseQty() {
-            var input = document.getElementById('qtyInput');
-            var value = parseInt(input.value, 10);
-            value = isNaN(value) ? 0 : value;
-            if(value < availableStock) input.value = value + 1;
+            if (availableStock <= 0) {
+                return;
+            }
+
+            var input = getQtyInput();
+            if (!input) {
+                return;
+            }
+
+            var value = getNormalizedQuantity();
+            if (value < 1) {
+                value = 0;
+            }
+
+            if (value < availableStock) {
+                input.value = String(value + 1);
+            }
+
+            validateQuantityInput(false);
         }
 
         function decreaseQty() {
-            var input = document.getElementById('qtyInput');
-            var value = parseInt(input.value, 10);
-            value = isNaN(value) ? 0 : value;
-            if(value > 1) input.value = value - 1;
+            var input = getQtyInput();
+            if (!input) {
+                return;
+            }
+
+            var value = getNormalizedQuantity();
+            if (value <= 1) {
+                input.value = "1";
+            } else {
+                input.value = String(value - 1);
+            }
+
+            validateQuantityInput(false);
         }
         
         // Đổi ảnh khi click thumbnail
@@ -518,10 +661,27 @@
             var mainImg = document.getElementById('mainImage');
             mainImg.src = element.src;
             
-            // Active class styling
             var thumbs = document.querySelectorAll('.thumb-img');
-            thumbs.forEach(t => t.classList.remove('active'));
+            thumbs.forEach(function(thumb) {
+                thumb.classList.remove('active');
+            });
             element.classList.add('active');
+        }
+
+        var qtyInput = getQtyInput();
+        if (qtyInput) {
+            qtyInput.addEventListener('input', function() {
+                validateQuantityInput(false);
+            });
+        }
+
+        var addToCartForm = document.getElementById('addToCartForm');
+        if (addToCartForm) {
+            addToCartForm.addEventListener('submit', function(event) {
+                if (!validateQuantityInput(true)) {
+                    event.preventDefault();
+                }
+            });
         }
 
         syncStockUi();
