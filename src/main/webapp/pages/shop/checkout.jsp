@@ -492,7 +492,16 @@
 
                 <div class="info-row">
                     <span>Phí ship</span>
-                    <span>${shippingFee} ₫</span>
+                    <span>
+                        <c:choose>
+                            <c:when test="${shippingFee == 0}">
+                                Freeship
+                            </c:when>
+                            <c:otherwise>
+                                ${shippingFee} ₫
+                            </c:otherwise>
+                        </c:choose>
+                    </span>
                 </div>
 
                 <div class="info-row">
