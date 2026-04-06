@@ -33,8 +33,9 @@ import services.InventoryService;
 @WebServlet("/checkout")
 public class CheckoutServlet extends HttpServlet {
     private static final long serialVersionUID = 1L;
-    private static final int DEFAULT_PRODUCT_WEIGHT = 500;
+    private static final int DEFAULT_PRODUCT_WEIGHT = 200;
     private static final int DEFAULT_SHIPPING_FEE = 30000;
+    private static final int DEFAULT_PRICE = 500000;
 
     private final CouponDao couponDao = new CouponDao();
     private final AddressDao addressDAO = new AddressDao();
@@ -416,12 +417,12 @@ public class CheckoutServlet extends HttpServlet {
             }
             totalWeight += item.getQuantity() * productWeight;
         }
-
-        int shippingFee = DEFAULT_SHIPPING_FEE;
+        int shippingFee = (totalAmount >= DEFAULT_PRICE) ? 0 : DEFAULT_SHIPPING_FEE;
         String shippingMessage = null;
         if (defaultAddress != null) {
             try {
                 ShippingService shippingService = new ShippingService();
+                if(shippingFee != 0){
                 shippingFee = shippingService.calculateShippingFee(
                         defaultAddress.getProvince(),
                         defaultAddress.getDistrict(),
@@ -430,7 +431,7 @@ public class CheckoutServlet extends HttpServlet {
                         20,
                         15,
                         10
-                );
+                );}
             } catch (Exception e) {
                 e.printStackTrace();
                 shippingMessage = "Không tính được phí ship realtime, tạm dùng phí ship mặc định.";
