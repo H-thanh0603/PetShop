@@ -10,11 +10,12 @@ public class Coupon {
     private int quantity;
     private Timestamp startDate;
     private Timestamp endDate;
+    private int used;
 
     public Coupon() {
     }
 
-    public Coupon(int id, String code, int discountPercent, boolean active, int quantity, Timestamp startDate, Timestamp endDate) {
+    public Coupon(int id, String code, int discountPercent, boolean active, int quantity, Timestamp startDate, Timestamp endDate, int used) {
         this.id = id;
         this.code = code;
         this.discountPercent = discountPercent;
@@ -22,6 +23,7 @@ public class Coupon {
         this.quantity = quantity;
         this.startDate = startDate;
         this.endDate = endDate;
+        this.used = used;
     }
 
     public int getId() {
@@ -78,5 +80,13 @@ public class Coupon {
 
     public void setEndDate(Timestamp endDate) {
         this.endDate = endDate;
+    }
+
+    public int getUsed() {
+        return used;
+    }
+
+    public void setUsed(int used) {
+        this.used = used;
     }
 }

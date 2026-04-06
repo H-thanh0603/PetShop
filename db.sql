@@ -13,6 +13,7 @@ CREATE TABLE `users` (
   `status` varchar(20) DEFAULT 'active',
   `phone` varchar(20) DEFAULT NULL,
   `address` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `has_used_discount` tinyint(1) NOT NULL DEFAULT 0,
   `reset_token` varchar(255) DEFAULT NULL,
   `reset_token_expiry` timestamp NULL DEFAULT NULL,
   `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
@@ -183,7 +184,7 @@ CREATE TABLE `coupons` (
   `min_order` decimal(18,0) DEFAULT 0,
   `max_discount` decimal(18,0) DEFAULT NULL,
   `usage_limit` int DEFAULT NULL,
-  `used_count` int DEFAULT 0,
+  `used` int DEFAULT 0,
   `quantity` int DEFAULT 0,
   `start_date` timestamp NULL,
   `end_date` timestamp NULL,
@@ -192,9 +193,9 @@ CREATE TABLE `coupons` (
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
-INSERT INTO `coupons` (`code`, `discount_type`, `discount_value`, `discount_percent`, `min_order`, `max_discount`, `usage_limit`, `is_active`) VALUES
-('WELCOME10', 'percent', 10, 10, 100000, 50000, 100, 1),
-('SAVE50K', 'fixed', 50000, 0, 500000, NULL, 50, 1);
+INSERT INTO `coupons` (`code`, `discount_type`, `discount_value`, `discount_percent`, `min_order`, `max_discount`, `usage_limit`, `used`, `quantity`, `is_active`) VALUES
+('WELCOME10', 'percent', 10, 10, 100000, 50000, 100, 0, 100, 1),
+('SAVE50K', 'fixed', 50000, 0, 500000, NULL, 50, 0, 50, 1);
 
 -- =====================================================
 -- Bảng notifications - Thông báo đẩy
