@@ -10,7 +10,7 @@ public class UserDAO {
     
     // Helper: map ResultSet to User (dùng constructor 8 tham số)
     private User mapUser(ResultSet rs) throws SQLException {
-        return new User(
+        User user = new User(
             rs.getInt("id"),
             rs.getString("username"),
             rs.getString("password"),
@@ -20,6 +20,10 @@ public class UserDAO {
             rs.getString("phone"),
             rs.getString("address")
         );
+        try { user.setCreatedAt(rs.getTimestamp("created_at")); } catch (Exception e) {}
+        try { user.setStatus(rs.getBoolean("status")); } catch (Exception e) { user.setStatus(true); }
+        try { user.setDiscountUsed(rs.getBoolean("has_used_discount")); } catch (Exception e) { user.setDiscountUsed(false); }
+        return user;
     }
     
     // Kiểm tra đăng nhập bằng username (hỗ trợ BCrypt)
@@ -122,6 +126,14 @@ public class UserDAO {
             }
         } catch (Exception e) { e.printStackTrace(); }
         return null;
+    }
+
+    public boolean markDiscountAsUsed(Connection conn, int userId) throws SQLException {
+        String query = "UPDATE users SET has_used_discount = 1 WHERE id = ? AND has_used_discount = 0";
+        try (PreparedStatement ps = conn.prepareStatement(query)) {
+            ps.setInt(1, userId);
+            return ps.executeUpdate() > 0;
+        }
     }
     
     public String getEmailByUserId(int userId) {
@@ -334,6 +346,7 @@ public class UserDAO {
                     try { user.setCreatedAt(rs.getTimestamp("created_at")); } catch (Exception e) {}
                     try { user.setPhone(rs.getString("phone")); } catch (Exception e) {}
                     try { user.setStatus(rs.getBoolean("status")); } catch (Exception e) { user.setStatus(true); }
+                    try { user.setDiscountUsed(rs.getBoolean("has_used_discount")); } catch (Exception e) { user.setDiscountUsed(false); }
                     try { user.setOrderCount(rs.getInt("order_count")); } catch (Exception e) {}
                     try { user.setTotalSpent(rs.getDouble("total_spent")); } catch (Exception e) {}
                     list.add(user);

@@ -9,6 +9,19 @@ import java.sql.ResultSet;
 
 public class CouponDao {
     public Coupon getValidCouponByCode(String code) {
+        if (code == null || code.trim().isEmpty()) {
+            return null;
+        }
+
+        try (Connection conn = DBContext.getConnection()) {
+            return getValidCouponByCode(conn, code.trim());
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
+
+    public Coupon getValidCouponByCode(Connection conn, String code) throws Exception {
         String sql = """
             SELECT * 
             FROM coupons
@@ -19,8 +32,7 @@ public class CouponDao {
               AND (end_date IS NULL OR end_date >= NOW())
         """;
 
-        try (Connection conn = DBContext.getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql)) {
+        try (PreparedStatement ps = conn.prepareStatement(sql)) {
 
             ps.setString(1, code);
 
@@ -34,12 +46,24 @@ public class CouponDao {
                     c.setQuantity(rs.getInt("quantity"));
                     c.setStartDate(rs.getTimestamp("start_date"));
                     c.setEndDate(rs.getTimestamp("end_date"));
+                    c.setUsed(rs.getInt("used"));
                     return c;
                 }
             }
-        } catch (Exception e) {
-            e.printStackTrace();
         }
         return null;
+    }
+
+    public boolean increaseUsedIfAvailable(Connection conn, int couponId) throws Exception {
+        String sql = """
+        UPDATE coupons
+        SET used = used + 1
+        WHERE id = ? AND used < quantity
+    """;
+
+        try (PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setInt(1, couponId);
+            return ps.executeUpdate() > 0;
+        }
     }
 }

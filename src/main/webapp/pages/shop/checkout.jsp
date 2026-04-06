@@ -743,7 +743,7 @@
                     <input type="hidden" name="action" value="applyCoupon">
                     <input type="hidden" name="note" id="couponNoteHidden">
                     <div class="input-group mb-3">
-                        <input name="couponCode" class="form-control" placeholder="Nhập mã coupon">
+                        <input name="couponCode" class="form-control" placeholder="Nhập mã coupon" value="${appliedCouponCode}">
                         <button type="submit" class="btn btn-primary">Áp dụng</button>
                     </div>
                 </form>
