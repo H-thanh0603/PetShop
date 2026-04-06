@@ -20,6 +20,9 @@ CREATE TABLE `cart` (
 ALTER TABLE `products` ADD COLUMN `stock` int DEFAULT 100;
 UPDATE `products` SET `stock` = 100 WHERE `stock` IS NULL;
 
+-- 2.1. Thêm cột đánh dấu user đã dùng mã giảm giá hay chưa
+ALTER TABLE `users` ADD COLUMN IF NOT EXISTS `has_used_discount` tinyint(1) NOT NULL DEFAULT 0;
+
 -- 3. Thêm bảng wishlist
 DROP TABLE IF EXISTS `wishlist`;
 CREATE TABLE `wishlist` (
@@ -40,10 +43,12 @@ CREATE TABLE `coupons` (
   `code` varchar(50) NOT NULL UNIQUE,
   `discount_type` enum('percent', 'fixed') DEFAULT 'percent',
   `discount_value` decimal(18,0) NOT NULL,
+  `discount_percent` int DEFAULT 0,
   `min_order` decimal(18,0) DEFAULT 0,
   `max_discount` decimal(18,0) DEFAULT NULL,
   `usage_limit` int DEFAULT NULL,
-  `used_count` int DEFAULT 0,
+  `used` int DEFAULT 0,
+  `quantity` int DEFAULT 0,
   `start_date` timestamp NULL,
   `end_date` timestamp NULL,
   `is_active` tinyint(1) DEFAULT 1,
@@ -52,9 +57,9 @@ CREATE TABLE `coupons` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- Insert sample coupons
-INSERT INTO `coupons` (`code`, `discount_type`, `discount_value`, `min_order`, `max_discount`, `usage_limit`, `is_active`) VALUES
-('WELCOME10', 'percent', 10, 100000, 50000, 100, 1),
-('SAVE50K', 'fixed', 50000, 500000, NULL, 50, 1);
+INSERT INTO `coupons` (`code`, `discount_type`, `discount_value`, `discount_percent`, `min_order`, `max_discount`, `usage_limit`, `used`, `quantity`, `is_active`) VALUES
+('WELCOME10', 'percent', 10, 10, 100000, 50000, 100, 0, 100, 1),
+('SAVE50K', 'fixed', 50000, 0, 500000, NULL, 50, 0, 50, 1);
 
 -- 5. Thêm bảng notifications
 DROP TABLE IF EXISTS `notifications`;
