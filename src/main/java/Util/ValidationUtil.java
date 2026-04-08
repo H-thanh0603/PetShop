@@ -19,6 +19,17 @@ public class ValidationUtil {
     private static final Pattern USERNAME_PATTERN = Pattern.compile(
         "^[a-zA-Z0-9_]{3,20}$"
     );
+    private static final Pattern ADDRESS_DETAIL_PATTERN = Pattern.compile(
+            "^[\\p{L}0-9\\s,./-]+$"
+    );
+
+    private static final Pattern ADDRESS_HAS_MEANING_PATTERN = Pattern.compile(
+            ".*[\\p{L}].*"
+    );
+
+    private static final Pattern ADDRESS_REPEATED_SPECIAL_PATTERN = Pattern.compile(
+            ".*[,./-]{2,}.*"
+    );
     
     // Booking date limits
     private static final int MAX_BOOKING_DAYS_AHEAD = 60;
@@ -220,5 +231,49 @@ public class ValidationUtil {
     public static String stripHtml(String str) {
         if (str == null) return "";
         return str.replaceAll("<[^>]*>", "").trim();
+    }
+
+    public static String normalizeAddressDetail(String addressDetail) {
+        if (addressDetail == null) return "";
+        return sanitizeInput(addressDetail).replaceAll("\\s+", " ");
+    }
+    public static String validateAddressDetail(String addressDetail) {
+        if (isEmpty(addressDetail)) {
+            return "Chi tiết địa chỉ không được để trống";
+        }
+
+        String input = normalizeAddressDetail(addressDetail);
+
+        if (!isValidLength(input, 5, 255)) {
+            return "Chi tiết địa chỉ phải từ 5 đến 255 ký tự";
+        }
+
+        if (!ADDRESS_DETAIL_PATTERN.matcher(input).matches()) {
+            return "Chi tiết địa chỉ chỉ được chứa chữ, số, khoảng trắng và các ký tự , . / -";
+        }
+
+        if (!ADDRESS_HAS_MEANING_PATTERN.matcher(input).matches()) {
+            return "Chi tiết địa chỉ phải có ít nhất một chữ cái";
+        }
+
+        if (ADDRESS_REPEATED_SPECIAL_PATTERN.matcher(input).matches()) {
+            return "Chi tiết địa chỉ không được chứa nhiều ký tự đặc biệt liên tiếp";
+        }
+
+        if (input.startsWith(",") || input.startsWith(".") || input.startsWith("/")
+                || input.startsWith("-") || input.endsWith(",") || input.endsWith(".")
+                || input.endsWith("/") || input.endsWith("-")) {
+            return "Chi tiết địa chỉ không được bắt đầu hoặc kết thúc bằng dấu câu";
+        }
+
+        if (input.matches("^[0-9\\s,./-]+$")) {
+            return "Chi tiết địa chỉ không được chỉ gồm số và ký tự đặc biệt";
+        }
+
+        if (input.matches("^([\\p{L}0-9])\\1{4,}$")) {
+            return "Chi tiết địa chỉ không hợp lệ";
+        }
+
+        return null;
     }
 }

@@ -450,6 +450,7 @@
 </head>
 <body>
 <jsp:include page="/components/navbar.jsp"/>
+<jsp:include page="/components/toast.jsp"/>
 <div class="checkout-container">
     <div class="row g-4">
 
@@ -506,7 +507,7 @@
 
                 <div class="info-row">
                     <span>Giảm giá</span>
-                    <span class="text-success">- ${discount} ₫</span>
+                    <span class="text-success">${discount} ₫</span>
                 </div>
 
                 <hr>
@@ -614,14 +615,19 @@
                                             </select>
                                             <div class="text-danger small mt-1" id="editWardError"></div>
                                         </div>
-
                                         <div class="mb-3">
                                             <label for="editAddressDetail" class="form-label">Chi tiết:</label>
-                                            <input type="text" id="editAddressDetail" name="addressDetail"
-                                                   class="form-control" maxlength="255" required>
+                                            <input type="text"
+                                                   id="editAddressDetail"
+                                                   name="addressDetail"
+                                                   class="form-control"
+                                                   maxlength="255"
+                                                   placeholder="Số nhà, tên đường..."
+                                                   autocomplete="address-line1"
+                                                   required
+                                                   title="Địa chỉ chỉ được chứa chữ, số, khoảng trắng, dấu phẩy, chấm, gạch ngang, gạch chéo và phải có ý nghĩa.">
                                             <div class="text-danger small mt-1" id="editAddressDetailError"></div>
                                         </div>
-
                                         <div class="form-check mb-3">
                                             <input type="checkbox" id="editIsDefault" name="isDefault" value="true" class="form-check-input">
                                             <label for="editIsDefault" class="form-check-label">Đặt làm mặc định</label>
@@ -723,7 +729,9 @@
                                    class="form-control"
                                    maxlength="255"
                                    placeholder="Số nhà, tên đường..."
-                                   required>
+                                   autocomplete="address-line1"
+                                   required
+                                   title="Địa chỉ chỉ được chứa chữ, số, khoảng trắng, dấu phẩy, chấm, gạch ngang, gạch chéo và phải có ý nghĩa.">
                             <div class="text-danger small mt-1" id="addressDetailError"></div>
                         </div>
 
@@ -795,6 +803,159 @@
 </div>
 
 <script>
+<%--validate address--%>
+
+    document.addEventListener("DOMContentLoaded", function () {
+    const addressInput = document.getElementById("addressDetail");
+    const errorEl = document.getElementById("addressDetailError");
+
+    function validateAddressDetail(value) {
+    const input = value.trim();
+
+    if (input.length === 0) {
+    return "Vui lòng nhập chi tiết địa chỉ.";
+}
+
+    if (input.length < 5) {
+    return "Chi tiết địa chỉ phải có ít nhất 5 ký tự.";
+}
+
+    if (input.length > 255) {
+    return "Chi tiết địa chỉ không được vượt quá 255 ký tự.";
+}
+
+    // Chỉ cho phép chữ, số, khoảng trắng và một số dấu câu phổ biến trong địa chỉ
+    const allowedRegex = /^[\p{L}0-9\s,./-]+$/u;
+    if (!allowedRegex.test(input)) {
+    return "Địa chỉ chứa ký tự không hợp lệ.";
+}
+
+    // Phải có ít nhất 1 chữ hoặc số
+    const meaningfulRegex = /[\p{L}0-9]/u;
+    if (!meaningfulRegex.test(input)) {
+    return "Địa chỉ không hợp lệ.";
+}
+
+    // Không cho toàn số hoặc toàn dấu câu kiểu 11111 / -----
+    const hasLetterOrDigit = /[\p{L}0-9]/u.test(input);
+    if (!hasLetterOrDigit) {
+    return "Địa chỉ phải có nội dung rõ ràng.";
+}
+
+    // Không cho 2+ dấu đặc biệt liên tiếp
+    const repeatedSpecialRegex = /[,.\/-]{2,}/;
+    if (repeatedSpecialRegex.test(input)) {
+    return "Địa chỉ không được chứa quá nhiều dấu đặc biệt liên tiếp.";
+}
+
+    // Không cho nhiều khoảng trắng liên tiếp
+    const multiSpaceRegex = /\s{2,}/;
+    if (multiSpaceRegex.test(input)) {
+    return "Địa chỉ không được chứa nhiều khoảng trắng liên tiếp.";
+}
+
+    // Không cho dạng quá vô nghĩa, ví dụ: aaaaa, 11111, ----abc
+    const onlyOneTypeCharRegex = /^([a-zA-Z])\1+$/;
+    if (onlyOneTypeCharRegex.test(input)) {
+    return "Địa chỉ không có ý nghĩa.";
+}
+
+    return "";
+}
+
+    addressInput.addEventListener("input", function () {
+    const error = validateAddressDetail(addressInput.value);
+    errorEl.textContent = error;
+    addressInput.classList.toggle("is-invalid", !!error);
+});
+
+    addressInput.form.addEventListener("submit", function (e) {
+    const error = validateAddressDetail(addressInput.value);
+    if (error) {
+    e.preventDefault();
+    errorEl.textContent = error;
+    addressInput.classList.add("is-invalid");
+    addressInput.focus();
+}
+});
+});
+<%-- shared address detail helpers --%>
+    function sanitizeAddressDetailValue(value) {
+        return value
+            .replace(/[^\p{L}0-9\s,./-]/gu, "")
+            .replace(/\s+/g, " ");
+    }
+
+    function validateAddressDetailInput(value) {
+        const input = value.trim().replace(/\s+/g, " ");
+
+        if (!input) {
+            return "Vui lòng nhập chi tiết địa chỉ.";
+        }
+
+        if (input.length < 5) {
+            return "Chi tiết địa chỉ phải có ít nhất 5 ký tự.";
+        }
+
+        if (input.length > 255) {
+            return "Chi tiết địa chỉ không được vượt quá 255 ký tự.";
+        }
+
+        if (!/^[\p{L}0-9\s,./-]+$/u.test(input)) {
+            return "Chi tiết địa chỉ chỉ được chứa chữ, số và các ký tự , . / -.";
+        }
+
+        if (!/[\p{L}]/u.test(input)) {
+            return "Chi tiết địa chỉ phải có ít nhất một chữ cái.";
+        }
+
+        if (/[,.\/-]{2,}/.test(input)) {
+            return "Chi tiết địa chỉ không được chứa nhiều ký tự đặc biệt liên tiếp.";
+        }
+
+        if (/^[,./-]|[,./-]$/.test(input)) {
+            return "Chi tiết địa chỉ không được bắt đầu hoặc kết thúc bằng dấu câu.";
+        }
+
+        if (/^[0-9\s,./-]+$/u.test(input)) {
+            return "Chi tiết địa chỉ không được chỉ gồm số và ký tự đặc biệt.";
+        }
+
+        if (/^([\p{L}0-9])\1{4,}$/u.test(input)) {
+            return "Chi tiết địa chỉ không hợp lệ.";
+        }
+
+        return "";
+    }
+
+    function syncAddressDetailValidation(input, errorEl) {
+        const error = validateAddressDetailInput(input.value);
+        errorEl.textContent = error;
+        input.classList.toggle("is-invalid", Boolean(error));
+        return error;
+    }
+
+    function bindAddressDetailValidation(inputId, errorId) {
+        const input = document.getElementById(inputId);
+        const errorEl = document.getElementById(errorId);
+
+        if (!input || !errorEl || !input.form) {
+            return;
+        }
+
+        input.addEventListener("input", function () {
+            const sanitized = sanitizeAddressDetailValue(input.value);
+            if (sanitized !== input.value) {
+                input.value = sanitized;
+            }
+            syncAddressDetailValidation(input, errorEl);
+        });
+
+        input.addEventListener("blur", function () {
+            input.value = input.value.trim().replace(/\s+/g, " ");
+            syncAddressDetailValidation(input, errorEl);
+        });
+    }
 
 <%--    payment js--%>
         document.getElementById("btnCheckout").addEventListener("click", function () {
@@ -848,7 +1009,16 @@
         const API_BASE = "https://provinces.open-api.vn/api/v1";
         let provincesLoaded = false;
         function clearAddressErrors() {
-            const ids = ["provinceError", "districtError", "wardError", "addressDetailError"];
+            const ids = [
+                "provinceError",
+                "districtError",
+                "wardError",
+                "addressDetailError",
+                "editProvinceError",
+                "editDistrictError",
+                "editWardError",
+                "editAddressDetailError"
+            ];
             ids.forEach(id => {
                 const el = document.getElementById(id);
                 if (el) el.textContent = "";
@@ -1059,8 +1229,9 @@
 
         async function openEditAddress(id, province, district, ward, address, isDefault) {
             document.getElementById("editAddressId").value = id;
-            document.getElementById("editAddressDetail").value = address;
+            document.getElementById("editAddressDetail").value = sanitizeAddressDetailValue(address);
             document.getElementById("editIsDefault").checked = (isDefault === "true");
+            document.getElementById("editAddressDetailError").textContent = "";
 
             toggleEditForm(true);
 
@@ -1084,7 +1255,9 @@
             const province = document.getElementById("province").value.trim();
             const district = document.getElementById("district").value.trim();
             const ward = document.getElementById("ward").value.trim();
-            const addressDetail = document.getElementById("addressDetail").value.trim();
+            const addressInput = document.getElementById("addressDetail");
+            addressInput.value = addressInput.value.trim().replace(/\s+/g, " ");
+            const addressDetail = addressInput.value;
 
             let isValid = true;
 
@@ -1103,12 +1276,23 @@
                 isValid = false;
             }
 
+            const addressDetailError = validateAddressDetailInput(addressDetail);
+            if (addressDetailError && addressDetail.length >= 5) {
+                document.getElementById("addressDetailError").textContent = addressDetailError;
+                addressInput.classList.add("is-invalid");
+                return false;
+            }
+
             if (!addressDetail) {
                 document.getElementById("addressDetailError").textContent = "Vui lòng nhập địa chỉ chi tiết.";
                 isValid = false;
             } else if (addressDetail.length < 5) {
                 document.getElementById("addressDetailError").textContent = "Địa chỉ chi tiết phải có ít nhất 5 ký tự.";
                 isValid = false;
+            }
+
+            if (isValid) {
+                addressInput.classList.remove("is-invalid");
             }
 
             return isValid;
@@ -1118,6 +1302,9 @@
             const districtSelect = document.getElementById("district");
             const editProvince = document.getElementById("editProvince");
             const editDistrict = document.getElementById("editDistrict");
+
+            bindAddressDetailValidation("addressDetail", "addressDetailError");
+            bindAddressDetailValidation("editAddressDetail", "editAddressDetailError");
 
             if (provinceSelect) {
                 provinceSelect.addEventListener("change", async function () {
@@ -1164,7 +1351,9 @@
         const province = document.getElementById("editProvince").value.trim();
         const district = document.getElementById("editDistrict").value.trim();
         const ward = document.getElementById("editWard").value.trim();
-        const detail = document.getElementById("editAddressDetail").value.trim();
+        const detailInput = document.getElementById("editAddressDetail");
+        detailInput.value = detailInput.value.trim().replace(/\s+/g, " ");
+        const detail = detailInput.value;
 
         if (!province) {
         document.getElementById("editProvinceError").textContent = "Vui lòng chọn tỉnh/thành.";
@@ -1178,12 +1367,21 @@
         document.getElementById("editWardError").textContent = "Vui lòng chọn phường/xã.";
         ok = false;
     }
+        const editDetailError = validateAddressDetailInput(detail);
+        if (editDetailError && detail.length >= 5) {
+        document.getElementById("editAddressDetailError").textContent = editDetailError;
+        detailInput.classList.add("is-invalid");
+        return false;
+    }
         if (!detail) {
         document.getElementById("editAddressDetailError").textContent = "Vui lòng nhập địa chỉ chi tiết.";
         ok = false;
     } else if (detail.length < 5) {
         document.getElementById("editAddressDetailError").textContent = "Địa chỉ chi tiết phải có ít nhất 5 ký tự.";
         ok = false;
+    }
+        if (ok) {
+        detailInput.classList.remove("is-invalid");
     }
 
         return ok;

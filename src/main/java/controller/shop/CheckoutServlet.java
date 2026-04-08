@@ -12,6 +12,7 @@ import Context.DBContext;
 
 import Model.*;
 
+import Util.ValidationUtil;
 import com.google.gson.Gson;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
@@ -202,7 +203,14 @@ public class CheckoutServlet extends HttpServlet {
             write(response, result);
             return;
         }
+        String addressDetailError = ValidationUtil.validateAddressDetail(defaultAddress.getAddress());
 
+        if (addressDetailError != null) {
+            result.put("success", false);
+            result.put("message", "Địa chỉ giao hàng hiện tại không hợp lệ. Vui lòng cập nhật lại.");
+            write(response, result);
+            return;
+        }
         Coupon appliedCoupon = (Coupon) session.getAttribute("appliedCoupon");
         CouponValidationResult couponState = appliedCoupon == null
                 ? CouponValidationResult.empty()
