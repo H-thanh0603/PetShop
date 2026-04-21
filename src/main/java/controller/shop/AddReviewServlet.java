@@ -63,6 +63,12 @@ public class AddReviewServlet extends HttpServlet {
                 return;
             }
 
+            if (!dao.hasUserPurchasedProduct(user.getId(), productId)) {
+                session.setAttribute("reviewError", "Chỉ khách hàng đã mua và nhận sản phẩm mới có thể đánh giá.");
+                response.sendRedirect(request.getContextPath() + "/product-detail?id=" + productId);
+                return;
+            }
+
             if (dao.hasUserReviewedProduct(user.getId(), productId)) {
                 session.setAttribute("error", "Bạn đã đánh giá sản phẩm này rồi.");
                 response.sendRedirect(request.getContextPath() + "/product-detail?id=" + productId);

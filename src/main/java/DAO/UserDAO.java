@@ -275,6 +275,16 @@ public class UserDAO {
         } catch (Exception e) { e.printStackTrace(); }
         return false;
     }
+
+    public boolean deactivateUser(int userId) {
+        String query = "UPDATE users SET status = 0 WHERE id = ?";
+        try (Connection conn = DBContext.getConnection();
+             PreparedStatement ps = conn.prepareStatement(query)) {
+            ps.setInt(1, userId);
+            return ps.executeUpdate() > 0;
+        } catch (Exception e) { e.printStackTrace(); }
+        return false;
+    }
     
     public int countUsersByRole(String role) {
         String query = "SELECT COUNT(*) FROM users WHERE role = ?";

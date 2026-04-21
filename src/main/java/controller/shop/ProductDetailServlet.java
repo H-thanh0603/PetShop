@@ -44,6 +44,7 @@ public class ProductDetailServlet extends HttpServlet {
 
             User user = (User) request.getSession().getAttribute("user");
             boolean hasReviewed = user != null && rDao.hasUserReviewedProduct(user.getId(), id);
+            boolean hasPurchased = user != null && new ReviewDAO().hasUserPurchasedProduct(user.getId(), id);
             Set<Integer> wishlistIds = java.util.Collections.emptySet();
             if (user != null) {
                 WishlistDAO wishlistDAO = new WishlistDAO();
@@ -54,6 +55,7 @@ public class ProductDetailServlet extends HttpServlet {
             request.setAttribute("detail", p);
             request.setAttribute("listReviews", listReviews);
             request.setAttribute("hasReviewed", hasReviewed);
+            request.setAttribute("hasPurchased", hasPurchased);
             request.setAttribute("wishlistProductIds", wishlistIds);
             
             List<Product> listRelated = pDao.getRelatedProducts(id); 

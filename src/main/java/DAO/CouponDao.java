@@ -67,16 +67,25 @@ public class CouponDao {
         }
     }
 
-    public boolean decreaseUsed(Connection conn, int couponId) throws Exception {
-        String sql = """
-        UPDATE coupons
-        SET used = CASE WHEN used > 0 THEN used - 1 ELSE 0 END
-        WHERE id = ?
-    """;
-
+    public Coupon getCouponByIdForUpdate(Connection conn, int couponId) throws Exception {
+        String sql = "SELECT * FROM coupons WHERE id = ? FOR UPDATE";
         try (PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setInt(1, couponId);
-            return ps.executeUpdate() > 0;
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    Coupon c = new Coupon();
+                    c.setId(rs.getInt("id"));
+                    c.setCode(rs.getString("code"));
+                    c.setDiscountPercent(rs.getInt("discount_percent"));
+                    c.setActive(rs.getBoolean("is_active"));
+                    c.setQuantity(rs.getInt("quantity"));
+                    c.setStartDate(rs.getTimestamp("start_date"));
+                    c.setEndDate(rs.getTimestamp("end_date"));
+                    c.setUsed(rs.getInt("used"));
+                    return c;
+                }
+            }
         }
+        return null;
     }
 }
