@@ -23,18 +23,17 @@ public class SecretConfig {
     }
 
     public static String get(String key) {
-        if (key == null || key.trim().isEmpty()) {
-            return null;
+        String systemValue = System.getProperty(key);
+        if (systemValue != null && !systemValue.trim().isEmpty()) {
+            return systemValue.trim();
         }
 
-        String normalizedKey = key.trim();
-        String fromProperties = trimToNull(prop.getProperty(normalizedKey));
-        if (fromProperties != null) {
-            return fromProperties;
+        String envValue = System.getenv(key);
+        if (envValue != null && !envValue.trim().isEmpty()) {
+            return envValue.trim();
         }
 
-        String envKey = normalizedKey.toUpperCase().replace('.', '_');
-        return trimToNull(System.getenv(envKey));
+        return prop.getProperty(key);
     }
 
     public static boolean hasValue(String key) {
