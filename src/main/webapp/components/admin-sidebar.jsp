@@ -27,6 +27,9 @@
         <a href="${pageContext.request.contextPath}/admin/orders" class="<%= "orders".equals(currentPage) ? "active" : "" %>">
             <i class='bx bxs-cart-alt'></i> Quản lý Đơn hàng
         </a>
+        <a href="${pageContext.request.contextPath}/pages/admin/reviews" class="<%= "reviews".equals(currentPage) ? "active" : "" %>">
+            <i class='bx bxs-star-half'></i> Quản lý Review
+        </a>
         
         <div class="sidebar-section-title">Hệ thống</div>
         <a href="${pageContext.request.contextPath}/admin/users" class="<%= "users".equals(currentPage) ? "active" : "" %>">
