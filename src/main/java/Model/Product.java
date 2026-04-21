@@ -17,6 +17,7 @@ public class Product {
     private double averageRating;
     private int reviewCount;
     private boolean wishlisted;
+    private boolean isActive = true;
     
     public Product() {}
 
@@ -128,5 +129,13 @@ public class Product {
 
     public void setWishlisted(boolean wishlisted) {
         this.wishlisted = wishlisted;
+    }
+
+    public boolean isActive() {
+        return isActive;
+    }
+
+    public void setActive(boolean isActive) {
+        this.isActive = isActive;
     }
 }

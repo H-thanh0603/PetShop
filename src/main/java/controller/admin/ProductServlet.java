@@ -223,8 +223,8 @@ public class ProductServlet extends HttpServlet {
             if (id == null) {
                 message = "ID sản phẩm không hợp lệ!";
                 messageType = "error";
-            } else if (dao.deleteProduct(id)) {
-                message = "Xóa sản phẩm thành công!";
+            } else if (dao.softDeleteProduct(id)) {
+                message = "Ẩn sản phẩm thành công!";
             } else {
                 message = "Có lỗi xảy ra khi xóa!";
                 messageType = "error";

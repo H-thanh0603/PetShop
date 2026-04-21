@@ -126,6 +126,15 @@ public class LoginServlet extends HttpServlet {
             // Reset failed attempts on successful login
             dao.resetFailedAttempts(email);
             
+            // Check if user account is deactivated
+            if (!user.getStatus()) {
+                form.addGeneralError("Tài khoản của bạn đã bị vô hiệu hóa. Vui lòng liên hệ quản trị viên.");
+                form.applyToRequest();
+                populateLoginViewData(request);
+                request.getRequestDispatcher("/pages/auth/login.jsp").forward(request, response);
+                return;
+            }
+            
             // Save cart data from old session before invalidation
             HttpSession oldSession = request.getSession(false);
             Map<Integer, CartItem> savedCart = null;

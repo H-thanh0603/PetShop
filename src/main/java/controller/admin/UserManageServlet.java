@@ -210,8 +210,8 @@ public class UserManageServlet extends HttpServlet {
                 case "delete":
                     int deleteId = Integer.parseInt(request.getParameter("userId"));
                     
-                    if (userDAO.deleteUser(deleteId)) {
-                        message = "Đã xóa người dùng thành công!";
+                    if (userDAO.deactivateUser(deleteId)) {
+                        message = "Đã vô hiệu hóa tài khoản thành công!";
                     } else {
                         message = "Có lỗi xảy ra khi xóa!";
                         messageType = "error";

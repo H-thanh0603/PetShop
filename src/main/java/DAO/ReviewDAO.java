@@ -114,7 +114,23 @@ public class ReviewDAO {
         return false;
     }
 
-    // 5. Thêm đánh giá mới
+    // 5. Kiểm tra user đã mua sản phẩm (đơn hàng Completed)
+    public boolean hasUserPurchasedProduct(int userId, int productId) {
+        String query = "SELECT 1 FROM order_items oi JOIN orders o ON oi.order_id = o.id WHERE o.user_id = ? AND oi.product_id = ? AND o.status = 'Completed'";
+        try (Connection conn = DBContext.getConnection();
+             PreparedStatement ps = conn.prepareStatement(query)) {
+            ps.setInt(1, userId);
+            ps.setInt(2, productId);
+            try (ResultSet rs = ps.executeQuery()) {
+                return rs.next();
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return false;
+    }
+
+    // 6. Thêm đánh giá mới
     public boolean addReview(Review review) {
         String query = "INSERT INTO reviews (product_id, user_id, rating, comment) VALUES (?, ?, ?, ?)";
         try (Connection conn = DBContext.getConnection();

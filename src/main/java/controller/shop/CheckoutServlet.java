@@ -245,7 +245,7 @@ public class CheckoutServlet extends HttpServlet {
 
             try {
                 for (CartItem item : cart.values()) {
-                    Product latestProduct = productDAO.getProductById(conn, item.getProduct().getId());
+                    Product latestProduct = productDAO.getProductByIdForUpdate(conn, item.getProduct().getId());
                     if (latestProduct == null) {
                         conn.rollback();
                         result.put("success", false);
@@ -282,6 +282,14 @@ public class CheckoutServlet extends HttpServlet {
                         conn.rollback();
                         result.put("success", false);
                         result.put("message", "Mã giảm giá không hợp lệ hoặc đã hết hạn.");
+                        write(response, result);
+                        return;
+                    }
+                    Coupon lockedCoupon = couponDao.getCouponByIdForUpdate(conn, latestCoupon.getId());
+                    if (lockedCoupon == null || lockedCoupon.getUsed() >= lockedCoupon.getQuantity()) {
+                        conn.rollback();
+                        result.put("success", false);
+                        result.put("message", "Mã giảm giá đã hết lượt sử dụng.");
                         write(response, result);
                         return;
                     }
