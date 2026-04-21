@@ -1,6 +1,7 @@
 package Model;
 
 import java.text.DecimalFormat;
+import java.util.Locale;
 
 public class Product {
     private int id;
@@ -13,6 +14,9 @@ public class Product {
     private int weight;
     private int stock;
     private int pet_type_id;
+    private double averageRating;
+    private int reviewCount;
+    private boolean wishlisted;
     
     public Product() {}
 
@@ -73,6 +77,15 @@ public class Product {
         return formatter.format(getOldPrice()).replace(',', '.') + "đ";
     }
 
+    public double getDiscountAmount() {
+        return Math.max(0, getOldPrice() - price);
+    }
+
+    public String getFormattedDiscountAmount() {
+        DecimalFormat formatter = new DecimalFormat("###,###");
+        return formatter.format(getDiscountAmount()).replace(',', '.') + "đ";
+    }
+
     public int getStock() {
         return stock;
     }
@@ -87,5 +100,33 @@ public class Product {
 
     public void setPet_type_id(int pet_type_id) {
         this.pet_type_id = pet_type_id;
+    }
+
+    public double getAverageRating() {
+        return averageRating;
+    }
+
+    public void setAverageRating(double averageRating) {
+        this.averageRating = averageRating;
+    }
+
+    public int getReviewCount() {
+        return reviewCount;
+    }
+
+    public void setReviewCount(int reviewCount) {
+        this.reviewCount = reviewCount;
+    }
+
+    public String getFormattedAverageRating() {
+        return String.format(Locale.US, "%.1f", Math.max(0, averageRating));
+    }
+
+    public boolean isWishlisted() {
+        return wishlisted;
+    }
+
+    public void setWishlisted(boolean wishlisted) {
+        this.wishlisted = wishlisted;
     }
 }

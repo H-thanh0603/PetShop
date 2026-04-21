@@ -13,55 +13,62 @@ public class ReviewDAO {
     // 1. Lấy danh sách đánh giá theo sản phẩm
     public List<Review> getReviewsByProductId(int productId) {
         List<Review> list = new ArrayList<>();
-        
-        // Cần JOIN với bảng Users để lấy tên người dùng (giả sử cột tên là 'fullname')
-        // Nếu bảng Users của bạn cột tên là 'username' thì sửa 'u.fullname' thành 'u.username'
+
         String query = "SELECT r.*, u.fullname FROM reviews r " +
                        "JOIN users u ON r.user_id = u.id " +
                        "WHERE r.product_id = ? ORDER BY r.created_at DESC";
-                       
-        try {
-            Connection conn = new DBContext().getConnection();
-            PreparedStatement ps = conn.prepareStatement(query);
+
+        try (Connection conn = DBContext.getConnection();
+             PreparedStatement ps = conn.prepareStatement(query)) {
             ps.setInt(1, productId);
-            ResultSet rs = ps.executeQuery();
-            
-            while (rs.next()) {
-                // Tạo đối tượng Review khớp với Constructor của bạn
-                Review r = new Review();
-                r.setId(rs.getInt("id"));
-                r.setProductId(rs.getInt("product_id"));
-                r.setUserId(rs.getInt("user_id"));
-                r.setUserName(rs.getString("fullname")); 
-                r.setRating(rs.getInt("rating"));
-                r.setComment(rs.getString("comment"));
-                r.setCreatedAt(rs.getDate("created_at")); 
-                
-                list.add(r);
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    Review r = new Review();
+                    r.setId(rs.getInt("id"));
+                    r.setProductId(rs.getInt("product_id"));
+                    r.setUserId(rs.getInt("user_id"));
+                    r.setUserName(rs.getString("fullname"));
+                    r.setRating(rs.getInt("rating"));
+                    r.setComment(rs.getString("comment"));
+                    r.setCreatedAt(rs.getDate("created_at"));
+                    list.add(r);
+                }
             }
-            conn.close();
         } catch (Exception e) {
             e.printStackTrace();
         }
         return list;
     }
 
+    public boolean hasUserReviewedProduct(int userId, int productId) {
+        String query = "SELECT 1 FROM reviews WHERE user_id = ? AND product_id = ?";
+        try (Connection conn = DBContext.getConnection();
+             PreparedStatement ps = conn.prepareStatement(query)) {
+            ps.setInt(1, userId);
+            ps.setInt(2, productId);
+            try (ResultSet rs = ps.executeQuery()) {
+                return rs.next();
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return false;
+    }
+
     // 2. Thêm đánh giá mới
-    public void addReview(Review review) {
-        // Chỉ insert các trường cần thiết, id tự tăng, created_at tự động
+    public boolean addReview(Review review) {
         String query = "INSERT INTO reviews (product_id, user_id, rating, comment) VALUES (?, ?, ?, ?)";
-        try {
-            Connection conn = new DBContext().getConnection();
-            PreparedStatement ps = conn.prepareStatement(query);
+        try (Connection conn = DBContext.getConnection();
+             PreparedStatement ps = conn.prepareStatement(query)) {
             ps.setInt(1, review.getProductId());
             ps.setInt(2, review.getUserId());
             ps.setInt(3, review.getRating());
             ps.setString(4, review.getComment());
             
-            ps.executeUpdate();
-            conn.close();
+            return ps.executeUpdate() > 0;
         } catch (Exception e) {
             e.printStackTrace();
         }
+        return false;
     }
 }
