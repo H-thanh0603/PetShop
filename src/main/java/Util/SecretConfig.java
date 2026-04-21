@@ -10,8 +10,10 @@ public class SecretConfig {
     private static final Properties prop = new Properties();
 
     static {
-        try (InputStream input =
-                     SecretConfig.class.getClassLoader().getResourceAsStream("secrets.properties")) {
+        try {
+            InputStream input =
+                    SecretConfig.class.getClassLoader()
+                            .getResourceAsStream("secrets.properties");
             if (input != null) {
                 prop.load(input);
             }
@@ -35,25 +37,8 @@ public class SecretConfig {
         return trimToNull(System.getenv(envKey));
     }
 
-    public static List<String> getMissingKeys(String... keys) {
-        List<String> missing = new ArrayList<>();
-        if (keys == null) {
-            return missing;
-        }
-
-        for (String key : keys) {
-            if (get(key) == null) {
-                missing.add(key);
-            }
-        }
-        return missing;
-    }
-
-    private static String trimToNull(String value) {
-        if (value == null) {
-            return null;
-        }
-        String trimmed = value.trim();
-        return trimmed.isEmpty() ? null : trimmed;
+    public static boolean hasValue(String key) {
+        String value = get(key);
+        return value != null && !value.trim().isEmpty();
     }
 }

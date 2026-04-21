@@ -23,6 +23,13 @@ public class LoginServlet extends HttpServlet {
     private static final long serialVersionUID = 1L;
     private static final int REMEMBER_ME_DAYS = 7;
 
+    private void populateLoginViewData(HttpServletRequest request) {
+        request.setAttribute("googleAuthUrl", SocialAuthUtil.buildGoogleAuthUrl(request));
+        request.setAttribute("facebookAuthUrl", SocialAuthUtil.buildFacebookAuthUrl(request));
+        request.setAttribute("googleLoginEnabled", SocialAuthUtil.isGoogleConfigured());
+        request.setAttribute("facebookLoginEnabled", SocialAuthUtil.isFacebookConfigured());
+    }
+
     protected void doGet(HttpServletRequest request, HttpServletResponse response) 
             throws ServletException, IOException {
         HttpSession session = request.getSession();
@@ -48,8 +55,7 @@ public class LoginServlet extends HttpServlet {
                 }
             }
         }
-        request.setAttribute("googleAuthUrl", SocialAuthUtil.buildGoogleAuthUrl(request));
-        request.setAttribute("facebookAuthUrl", SocialAuthUtil.buildFacebookAuthUrl(request));
+        populateLoginViewData(request);
         
         request.getRequestDispatcher("/pages/auth/login.jsp").forward(request, response);
     }
@@ -66,7 +72,7 @@ public class LoginServlet extends HttpServlet {
         
         // === VALIDATION ===
         boolean valid = true;
-        if(password.equals("null")) valid = false;
+        if ("null".equals(password)) valid = false;
         if (!form.validateRequired("email", "Email")) {
             valid = false;
         } else if (!form.validateEmail("email")) {
@@ -80,6 +86,7 @@ public class LoginServlet extends HttpServlet {
         
         if (!valid) {
             form.applyToRequest();
+            populateLoginViewData(request);
             request.getRequestDispatcher("/pages/auth/login.jsp").forward(request, response);
             return;
         }
@@ -142,6 +149,7 @@ public class LoginServlet extends HttpServlet {
         } else {
             form.addGeneralError("Email hoặc mật khẩu không đúng!");
             form.applyToRequest();
+            populateLoginViewData(request);
             request.getRequestDispatcher("/pages/auth/login.jsp").forward(request, response);
         }
     }

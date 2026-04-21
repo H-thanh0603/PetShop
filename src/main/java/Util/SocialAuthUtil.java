@@ -19,6 +19,9 @@ public final class SocialAuthUtil {
     }
 
     public static String buildGoogleAuthUrl(HttpServletRequest request) {
+        if (!isGoogleConfigured()) {
+            return "";
+        }
         String redirectUri = urlEncode(buildGoogleRedirectUri(request));
         return "https://accounts.google.com/o/oauth2/auth?scope=email%20profile%20openid"
                 + "&redirect_uri=" + redirectUri
@@ -28,11 +31,22 @@ public final class SocialAuthUtil {
     }
 
     public static String buildFacebookAuthUrl(HttpServletRequest request) {
+        if (!isFacebookConfigured()) {
+            return "";
+        }
         String redirectUri = urlEncode(buildFacebookRedirectUri(request));
         return "https://www.facebook.com/v19.0/dialog/oauth?client_id="
                 + urlEncode(SecretConfig.get("facebook_client_id"))
                 + "&redirect_uri=" + redirectUri
                 + "&scope=email,public_profile";
+    }
+
+    public static boolean isGoogleConfigured() {
+        return SecretConfig.hasValue("GOOGLE_CLIENT_ID");
+    }
+
+    public static boolean isFacebookConfigured() {
+        return SecretConfig.hasValue("facebook_client_id");
     }
 
     private static String buildAppUrl(HttpServletRequest request, String path) {
@@ -46,6 +60,9 @@ public final class SocialAuthUtil {
     }
 
     private static String urlEncode(String value) {
+        if (value == null) {
+            return "";
+        }
         return URLEncoder.encode(value, StandardCharsets.UTF_8);
     }
 }
