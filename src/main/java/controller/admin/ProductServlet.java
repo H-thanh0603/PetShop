@@ -15,7 +15,9 @@ import jakarta.servlet.http.HttpSession;
 import jakarta.servlet.http.Part;
 
 import DAO.ProductDAO;
+import DAO.PetTypeDAO;
 import Model.Product;
+import Model.PetType;
 import Util.ValidationUtil;
 
 @WebServlet("/pages/admin/products")
@@ -39,6 +41,9 @@ public class ProductServlet extends HttpServlet {
         request.setAttribute("products", products);
         request.setAttribute("totalProducts", totalProducts);
         request.setAttribute("discountedProducts", discountedProducts);
+        
+        List<PetType> petTypes = new PetTypeDAO().getAllPetTypes();
+        request.setAttribute("petTypes", petTypes);
         
         request.getRequestDispatcher("/pages/admin/products.jsp").forward(request, response);
     }
@@ -107,6 +112,60 @@ public class ProductServlet extends HttpServlet {
                 return;
             }
             
+            // === VALIDATE STOCK ===
+            String stockStr = request.getParameter("stock");
+            int stock = 0;
+            if (stockStr != null && !stockStr.trim().isEmpty()) {
+                try {
+                    stock = Integer.parseInt(stockStr.trim());
+                    if (stock < 0) {
+                        session.setAttribute("message", "Tồn kho phải là số nguyên không âm.");
+                        session.setAttribute("messageType", "error");
+                        response.sendRedirect(request.getContextPath() + "/pages/admin/products");
+                        return;
+                    }
+                } catch (NumberFormatException e) {
+                    session.setAttribute("message", "Tồn kho phải là số nguyên không âm.");
+                    session.setAttribute("messageType", "error");
+                    response.sendRedirect(request.getContextPath() + "/pages/admin/products");
+                    return;
+                }
+            }
+            
+            // === VALIDATE WEIGHT ===
+            String weightStr = request.getParameter("weight");
+            int weight = 0;
+            if (weightStr != null && !weightStr.trim().isEmpty()) {
+                try {
+                    weight = Integer.parseInt(weightStr.trim());
+                    if (weight < 0) {
+                        session.setAttribute("message", "Trọng lượng phải là số nguyên không âm (gram).");
+                        session.setAttribute("messageType", "error");
+                        response.sendRedirect(request.getContextPath() + "/pages/admin/products");
+                        return;
+                    }
+                } catch (NumberFormatException e) {
+                    session.setAttribute("message", "Trọng lượng phải là số nguyên không âm (gram).");
+                    session.setAttribute("messageType", "error");
+                    response.sendRedirect(request.getContextPath() + "/pages/admin/products");
+                    return;
+                }
+            }
+            
+            // === PARSE CATEGORY & PET TYPE ===
+            String category = request.getParameter("category");
+            if (category == null) category = "";
+            
+            String petTypeIdStr = request.getParameter("petTypeId");
+            int petTypeId = 0;
+            if (petTypeIdStr != null && !petTypeIdStr.trim().isEmpty()) {
+                try {
+                    petTypeId = Integer.parseInt(petTypeIdStr.trim());
+                } catch (NumberFormatException e) {
+                    petTypeId = 0;
+                }
+            }
+            
             // === HANDLE FILE UPLOAD (Servlet 3.0) ===
             String imageName = existingImage; // Giữ ảnh cũ nếu không upload mới
             
@@ -141,7 +200,7 @@ public class ProductServlet extends HttpServlet {
             
             // === BUSINESS LOGIC ===
             if ("add".equals(action)) {
-                if (dao.addProduct(name, imageName, price, discount, description)) {
+                if (dao.addProduct(name, imageName, price, discount, description, stock, weight, category, petTypeId)) {
                     message = "Thêm sản phẩm thành công!";
                 } else {
                     message = "Có lỗi xảy ra khi thêm sản phẩm!";
@@ -154,7 +213,7 @@ public class ProductServlet extends HttpServlet {
                 if (id == null) {
                     message = "ID sản phẩm không hợp lệ!";
                     messageType = "error";
-                } else if (dao.updateProduct(id, name, imageName, price, discount, description)) {
+                } else if (dao.updateProduct(id, name, imageName, price, discount, description, stock, weight, category, petTypeId)) {
                     message = "Cập nhật sản phẩm thành công!";
                 } else {
                     message = "Có lỗi xảy ra khi cập nhật!";
