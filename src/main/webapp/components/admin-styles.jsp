@@ -1,7 +1,7 @@
 <%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
 <%-- 
     ADMIN STYLES COMPONENT
-    CSS chung cho tất cả trang admin (dashboard, appointments, products, blogs)
+    CSS chung cho tất cả trang admin (dashboard, orders, products, blogs, reviews)
     Include: <jsp:include page="/components/admin-styles.jsp" />
 --%>
 <style>
