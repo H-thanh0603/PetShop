@@ -12,7 +12,9 @@ public class SecretConfig {
             InputStream input =
                     SecretConfig.class.getClassLoader()
                             .getResourceAsStream("secrets.properties");
-            prop.load(input);
+            if (input != null) {
+                prop.load(input);
+            }
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -20,5 +22,10 @@ public class SecretConfig {
 
     public static String get(String key) {
         return prop.getProperty(key);
+    }
+
+    public static boolean hasValue(String key) {
+        String value = get(key);
+        return value != null && !value.trim().isEmpty();
     }
 }

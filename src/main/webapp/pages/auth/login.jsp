@@ -125,6 +125,26 @@
             color: white;
             transform: translateY(-5px);
         }
+        .social-item.disabled{
+            opacity: .45;
+            cursor: not-allowed;
+            pointer-events: none;
+        }
+        .social-item a{
+            color: inherit;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            text-decoration: none;
+            width: 100%;
+            height: 100%;
+        }
+        .social-help {
+            margin-top: 8px;
+            text-align: center;
+            font-size: .85rem;
+            color: #6c757d;
+        }
     </style>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
 </head>
@@ -184,17 +204,24 @@
             </button>
 <%--            login by gg and fb--%>
             <div class="social-login">
-                <div class="social-item google" title="Login by google">
+                <div class="social-item google ${not googleLoginEnabled ? 'disabled' : ''}"
+                     title="${googleLoginEnabled ? 'Login by google' : 'Google login chưa cấu hình'}">
                     <a href="${googleAuthUrl}">
                         <i class="bi bi-google"></i>
                     </a>
                 </div>
-                <div class="social-item facebook" title="Login by facebook">
+                <div class="social-item facebook ${not facebookLoginEnabled ? 'disabled' : ''}"
+                     title="${facebookLoginEnabled ? 'Login by facebook' : 'Facebook login chưa cấu hình'}">
                     <a href="${facebookAuthUrl}">
                         <i class="bi bi-facebook"></i>
                     </a>
                 </div>
             </div>
+            <c:if test="${not googleLoginEnabled or not facebookLoginEnabled}">
+                <div class="social-help">
+                    Một số đăng nhập mạng xã hội chưa được cấu hình trên máy này.
+                </div>
+            </c:if>
 
             <div class="text-center">
                 <p class="mb-2">Chưa có tài khoản? <a href="${pageContext.request.contextPath}/register" class="text-decoration-none">Đăng ký ngay</a></p>
