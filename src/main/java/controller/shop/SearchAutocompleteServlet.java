@@ -36,6 +36,7 @@ public class SearchAutocompleteServlet extends HttpServlet {
         }
         
         keyword = keyword.trim();
+        keyword = keyword.substring(0, Math.min(keyword.length(), 100));
         
         // Giới hạn 8 kết quả cho autocomplete
         List<Product> products = productDAO.searchProductsLimit(keyword, 8);

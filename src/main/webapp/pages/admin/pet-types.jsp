@@ -67,6 +67,7 @@
                                 <div class="table-actions">
                                     <button class="action-btn edit" onclick="openEditModal(this.closest('tr'))" title="Sửa"><i class='bx bx-edit-alt'></i></button>
                                     <form method="post" style="display:inline;">
+                                        <input type="hidden" name="csrfToken" value="${csrfToken}" />
                                         <input type="hidden" name="action" value="toggle">
                                         <input type="hidden" name="id" value="${pt.id}">
                                         <input type="hidden" name="isActive" value="${!pt.active}">
@@ -91,6 +92,7 @@
                 <button class="modal-close" onclick="document.getElementById('addModal').classList.remove('show')"><i class='bx bx-x'></i></button>
             </div>
             <form method="post">
+                <input type="hidden" name="csrfToken" value="${csrfToken}" />
                 <input type="hidden" name="action" value="add">
                 <div class="modal-body">
                     <div class="form-group">
@@ -135,6 +137,7 @@
                 <button class="modal-close" onclick="document.getElementById('editModal').classList.remove('show')"><i class='bx bx-x'></i></button>
             </div>
             <form method="post">
+                <input type="hidden" name="csrfToken" value="${csrfToken}" />
                 <input type="hidden" name="action" value="edit">
                 <input type="hidden" name="id" id="editId">
                 <div class="modal-body">

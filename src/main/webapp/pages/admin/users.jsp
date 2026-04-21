@@ -442,6 +442,7 @@
                     <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
                 <form method="POST" action="${pageContext.request.contextPath}/admin/users">
+                    <input type="hidden" name="csrfToken" value="${csrfToken}" />
                     <input type="hidden" name="action" value="add">
                     <div class="modal-body">
                         <div class="row">
@@ -494,6 +495,7 @@
                     <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
                 <form method="POST" action="${pageContext.request.contextPath}/admin/users">
+                    <input type="hidden" name="csrfToken" value="${csrfToken}" />
                     <input type="hidden" name="action" value="update">
                     <input type="hidden" name="userId" id="editUserId">
                     <div class="modal-body">
@@ -560,6 +562,7 @@
                     <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
                 <form method="POST" action="${pageContext.request.contextPath}/admin/users">
+                    <input type="hidden" name="csrfToken" value="${csrfToken}" />
                     <input type="hidden" name="action" value="resetPassword">
                     <input type="hidden" name="userId" id="resetPasswordUserId">
                     <div class="modal-body">
@@ -586,6 +589,7 @@
                     <h5 class="mt-3">Thay đổi vai trò?</h5>
                     <p class="text-muted">Bạn có chắc muốn thay đổi vai trò của <strong id="roleUsername"></strong>?</p>
                     <form method="POST" action="${pageContext.request.contextPath}/admin/users">
+                        <input type="hidden" name="csrfToken" value="${csrfToken}" />
                         <input type="hidden" name="action" value="updateRole">
                         <input type="hidden" name="userId" id="roleUserId">
                         <input type="hidden" name="role" id="newRole">
@@ -609,6 +613,7 @@
                     <p class="text-muted">Bạn có chắc muốn xóa người dùng <strong id="deleteName"></strong>?<br>
                     <small class="text-danger">Hành động này không thể hoàn tác!</small></p>
                     <form method="POST" action="${pageContext.request.contextPath}/admin/users">
+                        <input type="hidden" name="csrfToken" value="${csrfToken}" />
                         <input type="hidden" name="action" value="delete">
                         <input type="hidden" name="userId" id="deleteId">
                         <div class="d-flex gap-2 justify-content-center">
@@ -825,7 +830,8 @@
             var form = document.createElement('form');
             form.method = 'POST';
             form.action = '${pageContext.request.contextPath}/admin/users';
-            form.innerHTML = '<input type="hidden" name="action" value="toggleStatus">' +
+            form.innerHTML = '<input type="hidden" name="csrfToken" value="${csrfToken}">' +
+                '<input type="hidden" name="action" value="toggleStatus">' +
                 '<input type="hidden" name="userId" value="' + currentUser.id + '">' +
                 '<input type="hidden" name="status" value="' + newStatus + '">';
             document.body.appendChild(form);

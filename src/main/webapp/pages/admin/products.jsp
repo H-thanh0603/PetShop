@@ -358,6 +358,7 @@
             </div>
             
             <form id="productForm" method="post" enctype="multipart/form-data">
+                <input type="hidden" name="csrfToken" value="${csrfToken}" />
                 <input type="hidden" name="action" id="formAction" value="add">
                 <input type="hidden" name="id" id="formId">
                 <input type="hidden" name="existingImage" id="formExistingImage">
@@ -480,6 +481,7 @@
                     <i class='bx bx-x'></i> Hủy bỏ
                 </button>
                 <form method="post" style="display: inline;">
+                    <input type="hidden" name="csrfToken" value="${csrfToken}" />
                     <input type="hidden" name="action" value="delete">
                     <input type="hidden" name="id" id="deleteId">
                     <button type="submit" class="btn btn-danger">

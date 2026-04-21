@@ -15,6 +15,10 @@ public class User {
     private boolean discountUsed;
     private Timestamp createdAt;
     
+    // Brute-force protection
+    private int failedLoginAttempts;
+    private java.sql.Timestamp lockedUntil;
+    
     // Thống kê
     private int orderCount;
     private double totalSpent;
@@ -89,4 +93,10 @@ public class User {
     
     public double getTotalSpent() { return totalSpent; }
     public void setTotalSpent(double totalSpent) { this.totalSpent = totalSpent; }
+    
+    public int getFailedLoginAttempts() { return failedLoginAttempts; }
+    public void setFailedLoginAttempts(int failedLoginAttempts) { this.failedLoginAttempts = failedLoginAttempts; }
+    
+    public java.sql.Timestamp getLockedUntil() { return lockedUntil; }
+    public void setLockedUntil(java.sql.Timestamp lockedUntil) { this.lockedUntil = lockedUntil; }
 }

@@ -1,6 +1,7 @@
 package controller.auth;
 
 import java.io.IOException;
+import java.sql.Timestamp;
 import java.util.Map;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
@@ -103,15 +104,52 @@ public class LoginServlet extends HttpServlet {
             return;
         }
         
-        // === ĐĂNG NHẬP ===
+        // === BRUTE-FORCE CHECK ===
         UserDAO dao = new UserDAO();
+        
+        // Check if account is locked before password verification
+        if (dao.isAccountLocked(email)) {
+            Timestamp lockedUntil = dao.getLockedUntil(email);
+            long remainingMs = lockedUntil.getTime() - System.currentTimeMillis();
+            long remainingMinutes = (remainingMs / 60000) + 1; // Round up
+            form.addGeneralError("Tài khoản đã bị khóa tạm thời. Vui lòng thử lại sau " + remainingMinutes + " phút.");
+            form.applyToRequest();
+            populateLoginViewData(request);
+            request.getRequestDispatcher("/pages/auth/login.jsp").forward(request, response);
+            return;
+        }
+        
+        // === ĐĂNG NHẬP ===
         User user = dao.loginByEmail(email, password);
         
         if (user != null) {
-            HttpSession session = request.getSession();
+            // Reset failed attempts on successful login
+            dao.resetFailedAttempts(email);
+            
+            // Save cart data from old session before invalidation
+            HttpSession oldSession = request.getSession(false);
+            Map<Integer, CartItem> savedCart = null;
+            Integer savedTotalQuantity = null;
+            if (oldSession != null) {
+                savedCart = (Map<Integer, CartItem>) oldSession.getAttribute("cart");
+                savedTotalQuantity = (Integer) oldSession.getAttribute("totalQuantity");
+                oldSession.invalidate();
+            }
+            
+            // Create new session (session regeneration)
+            HttpSession session = request.getSession(true);
+            
             session.setAttribute("user", user);
             session.setAttribute("username", user.getUsername());
             session.setAttribute("role", user.getRole());
+            
+            // Restore cart data to new session
+            if (savedCart != null) {
+                session.setAttribute("cart", savedCart);
+            }
+            if (savedTotalQuantity != null) {
+                session.setAttribute("totalQuantity", savedTotalQuantity);
+            }
             
             // Load giỏ hàng từ database
             CartDAO cartDAO = new CartDAO();
@@ -148,7 +186,6 @@ public class LoginServlet extends HttpServlet {
             }
             
             // Redirect theo role hoặc về trang trước
-            // Dung chung redirectAfterLogin de login thuong quay lai dung chuc nang truoc do.
             String redirectUrl = AuthRedirectUtil.consumeRedirectAfterLogin(request);
             
             if ("admin".equals(user.getRole())) {
@@ -159,7 +196,18 @@ public class LoginServlet extends HttpServlet {
                 response.sendRedirect(request.getContextPath() + "/home");
             }
         } else {
-            form.addGeneralError("Email hoặc mật khẩu không đúng!");
+            // Increment failed attempts on failed login
+            dao.incrementFailedAttempts(email);
+            int failedAttempts = dao.getFailedLoginAttempts(email);
+            
+            if (failedAttempts >= 5) {
+                dao.lockAccount(email, 15);
+                form.addGeneralError("Tài khoản đã bị khóa tạm thời. Vui lòng thử lại sau 15 phút.");
+            } else {
+                int remaining = 5 - failedAttempts;
+                form.addGeneralError("Email hoặc mật khẩu không đúng! Bạn còn " + remaining + " lần thử.");
+            }
+            
             form.applyToRequest();
             populateLoginViewData(request);
             request.getRequestDispatcher("/pages/auth/login.jsp").forward(request, response);

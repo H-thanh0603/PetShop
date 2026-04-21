@@ -24,6 +24,8 @@ public class UserDAO {
         try { user.setCreatedAt(rs.getTimestamp("created_at")); } catch (Exception e) {}
         try { user.setStatus(rs.getBoolean("status")); } catch (Exception e) { user.setStatus(true); }
         try { user.setDiscountUsed(rs.getBoolean("has_used_discount")); } catch (Exception e) { user.setDiscountUsed(false); }
+        try { user.setFailedLoginAttempts(rs.getInt("failed_login_attempts")); } catch (Exception e) {}
+        try { user.setLockedUntil(rs.getTimestamp("locked_until")); } catch (Exception e) {}
         return user;
     }
     
@@ -534,5 +536,51 @@ public class UserDAO {
                 }
             }
         } catch (Exception e) { e.printStackTrace(); }
+    }
+    
+    // ========== BRUTE-FORCE PROTECTION ==========
+    
+    public int getFailedLoginAttempts(String emailOrUsername) {
+        String query = "SELECT failed_login_attempts FROM users WHERE email = ? OR username = ?";
+        try (Connection conn = DBContext.getConnection(); PreparedStatement ps = conn.prepareStatement(query)) {
+            ps.setString(1, emailOrUsername); ps.setString(2, emailOrUsername);
+            try (ResultSet rs = ps.executeQuery()) { if (rs.next()) return rs.getInt(1); }
+        } catch (Exception e) { e.printStackTrace(); }
+        return 0;
+    }
+
+    public Timestamp getLockedUntil(String emailOrUsername) {
+        String query = "SELECT locked_until FROM users WHERE email = ? OR username = ?";
+        try (Connection conn = DBContext.getConnection(); PreparedStatement ps = conn.prepareStatement(query)) {
+            ps.setString(1, emailOrUsername); ps.setString(2, emailOrUsername);
+            try (ResultSet rs = ps.executeQuery()) { if (rs.next()) return rs.getTimestamp(1); }
+        } catch (Exception e) { e.printStackTrace(); }
+        return null;
+    }
+
+    public void incrementFailedAttempts(String emailOrUsername) {
+        String query = "UPDATE users SET failed_login_attempts = failed_login_attempts + 1 WHERE email = ? OR username = ?";
+        try (Connection conn = DBContext.getConnection(); PreparedStatement ps = conn.prepareStatement(query)) {
+            ps.setString(1, emailOrUsername); ps.setString(2, emailOrUsername); ps.executeUpdate();
+        } catch (Exception e) { e.printStackTrace(); }
+    }
+
+    public void lockAccount(String emailOrUsername, int lockoutMinutes) {
+        String query = "UPDATE users SET locked_until = DATE_ADD(NOW(), INTERVAL ? MINUTE) WHERE email = ? OR username = ?";
+        try (Connection conn = DBContext.getConnection(); PreparedStatement ps = conn.prepareStatement(query)) {
+            ps.setInt(1, lockoutMinutes); ps.setString(2, emailOrUsername); ps.setString(3, emailOrUsername); ps.executeUpdate();
+        } catch (Exception e) { e.printStackTrace(); }
+    }
+
+    public void resetFailedAttempts(String emailOrUsername) {
+        String query = "UPDATE users SET failed_login_attempts = 0, locked_until = NULL WHERE email = ? OR username = ?";
+        try (Connection conn = DBContext.getConnection(); PreparedStatement ps = conn.prepareStatement(query)) {
+            ps.setString(1, emailOrUsername); ps.setString(2, emailOrUsername); ps.executeUpdate();
+        } catch (Exception e) { e.printStackTrace(); }
+    }
+
+    public boolean isAccountLocked(String emailOrUsername) {
+        Timestamp lockedUntil = getLockedUntil(emailOrUsername);
+        return lockedUntil != null && lockedUntil.after(new Timestamp(System.currentTimeMillis()));
     }
 }

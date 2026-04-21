@@ -226,6 +226,15 @@ public class CheckoutServlet extends HttpServlet {
 
         CheckoutSummary baseSummary = buildCheckoutSummary(cart, defaultAddress, null);
         String note = trimToEmpty(request.getParameter("note"));
+        
+        // Validate note max length
+        if (!ValidationUtil.validateMaxLength(note, 500)) {
+            result.put("success", false);
+            result.put("message", "Ghi chú không được vượt quá 500 ký tự.");
+            write(response, result);
+            return;
+        }
+        
         String fullAddress = defaultAddress.getAddress() + ", "
                 + defaultAddress.getWard() + ", "
                 + defaultAddress.getDistrict() + ", "

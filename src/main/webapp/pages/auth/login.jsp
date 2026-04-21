@@ -155,6 +155,7 @@
         <jsp:include page="/components/alerts.jsp" />
         
         <form method="post" action="${pageContext.request.contextPath}/login">
+            <input type="hidden" name="csrfToken" value="${csrfToken}" />
             <div class="mb-3">
                 <label class="form-label fw-bold">Email</label>
                 <div class="input-group">

@@ -200,6 +200,23 @@ public class ValidationUtil {
     // ==================== SANITIZATION ====================
     
     /**
+     * Strip all HTML tags from input string and trim whitespace.
+     * Returns empty string for null input.
+     */
+    public static String stripHtmlTags(String input) {
+        if (input == null) return "";
+        return input.replaceAll("<[^>]*>", "").trim();
+    }
+    
+    /**
+     * Validate that input does not exceed the specified maximum length.
+     * Returns false if input is null or exceeds maxLength.
+     */
+    public static boolean validateMaxLength(String input, int maxLength) {
+        return input != null && input.length() <= maxLength;
+    }
+    
+    /**
      * Basic sanitize for plain text fields (username, fullname, title, author)
      * Escapes HTML special characters to prevent XSS
      * NOTE: This is for fields that should NOT contain HTML

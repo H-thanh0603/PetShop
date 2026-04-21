@@ -108,6 +108,7 @@
         </c:if>
         
         <form method="post" action="${pageContext.request.contextPath}/reset-password" id="resetForm">
+            <input type="hidden" name="csrfToken" value="${csrfToken}" />
             <div class="mb-3">
                 <label class="form-label fw-bold">Mật khẩu mới</label>
                 <div class="input-group">
