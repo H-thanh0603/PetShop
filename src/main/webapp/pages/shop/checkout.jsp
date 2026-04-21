@@ -817,14 +817,14 @@
                 <div class="payment-card mb-2">
                     <label>
                         <input type="radio" name="payment" value="momo">
-                        Ví điện tử MoMo
+                        Ví điện tử MoMo <span style="font-size: 0.75rem; color: #94a3b8; font-style: italic;">(Demo)</span>
                     </label>
                 </div>
 
                 <div class="payment-card mb-3">
                     <label>
                         <input type="radio" name="payment" value="bank_transfer">
-                        Chuyển khoản ngân hàng
+                        Chuyển khoản ngân hàng <span style="font-size: 0.75rem; color: #94a3b8; font-style: italic;">(Demo)</span>
                     </label>
                 </div>
 
