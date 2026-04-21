@@ -9,12 +9,15 @@
     <jsp:include page="/components/head.jsp" />
     <jsp:include page="/components/admin-styles.jsp" />
     <style>
-        .order-info-card { background: white; border-radius: 12px; padding: 25px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); margin-bottom: 25px; }
+        .order-info-card { background: white; border-radius: 16px; padding: 25px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); margin-bottom: 25px; }
         .info-label { color: #64748b; font-size: 0.85rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; }
         .info-value { color: #1e293b; font-size: 1rem; font-weight: 500; margin-bottom: 15px; }
-        .status-badge { padding: 6px 15px; border-radius: 20px; font-weight: 700; font-size: 0.85rem; }
         .product-img { width: 60px; height: 60px; object-fit: cover; border-radius: 8px; border: 1px solid #e2e8f0; }
         .total-row { font-size: 1.25rem; font-weight: 800; color: #10314d; }
+        .timeline-step { display: flex; gap: 12px; margin-bottom: 18px; }
+        .timeline-dot { width: 40px; height: 40px; border-radius: 50%; display: grid; place-items: center; background: #e2e8f0; color: #64748b; flex-shrink: 0; }
+        .timeline-step.active .timeline-dot { background: #dbeafe; color: #2563eb; }
+        .timeline-step.done .timeline-dot { background: #dcfce7; color: #16a34a; }
     </style>
 </head>
 <body>
@@ -38,31 +41,46 @@
                     <h5 class="mb-4 fw-bold">Thông tin khách hàng</h5>
                     <div class="info-label">Người nhận</div>
                     <div class="info-value text-primary fw-bold">${order.fullname}</div>
-                    
+
                     <div class="info-label">Số điện thoại</div>
                     <div class="info-value">${order.phone}</div>
-                    
+
                     <div class="info-label">Địa chỉ</div>
                     <div class="info-value">${order.address}</div>
-                    
+
                     <div class="info-label">Ngày đặt</div>
                     <div class="info-value"><fmt:formatDate value="${order.createdAt}" pattern="dd/MM/yyyy HH:mm:ss"/></div>
-                    
+
+                    <div class="info-label">Thanh toán</div>
+                    <div class="info-value">${order.paymentMethodLabel} · ${order.paymentStatusLabel}</div>
+
                     <div class="info-label">Trạng thái hiện tại</div>
                     <div class="info-value">
-                        <c:choose>
-                            <c:when test="${order.status == 'Pending'}"><span class="badge bg-warning text-dark">Chờ xử lý</span></c:when>
-                            <c:when test="${order.status == 'Confirmed'}"><span class="badge bg-info text-white">Đã xác nhận</span></c:when>
-                            <c:when test="${order.status == 'Shipping'}"><span class="badge bg-primary text-white">Đang giao</span></c:when>
-                            <c:when test="${order.status == 'Completed'}"><span class="badge bg-success text-white">Hoàn thành</span></c:when>
-                            <c:when test="${order.status == 'Cancelled'}"><span class="badge bg-danger text-white">Đã hủy</span></c:when>
-                        </c:choose>
+                        <span class="badge ${order.statusCssClass}">${order.statusLabel}</span>
                     </div>
 
-                    <c:if test="${not empty order.note}">
-                        <div class="info-label">Ghi chú</div>
-                        <div class="info-value text-danger italic">${order.note}</div>
-                    </c:if>
+                    <div class="info-label">Ghi chú</div>
+                    <div class="info-value">${empty order.note ? 'Không có ghi chú.' : order.note}</div>
+                </div>
+
+                <div class="order-info-card">
+                    <h5 class="mb-4 fw-bold">Tiến trình đơn hàng</h5>
+                    <div class="timeline-step done">
+                        <div class="timeline-dot"><i class='bx bx-receipt'></i></div>
+                        <div><strong>Đặt hàng</strong><div class="text-muted small">Khách đã tạo đơn thành công.</div></div>
+                    </div>
+                    <div class="timeline-step ${order.status == 'Pending' ? 'active' : (order.status == 'Confirmed' || order.status == 'Shipping' || order.status == 'Completed' ? 'done' : '')}">
+                        <div class="timeline-dot"><i class='bx bx-check-shield'></i></div>
+                        <div><strong>Xác nhận</strong><div class="text-muted small">Admin xác nhận và chuẩn bị đơn.</div></div>
+                    </div>
+                    <div class="timeline-step ${order.status == 'Shipping' || order.status == 'Completed' ? 'done' : ''}">
+                        <div class="timeline-dot"><i class='bx bx-car'></i></div>
+                        <div><strong>Vận chuyển</strong><div class="text-muted small">Đơn hàng đang trên đường giao.</div></div>
+                    </div>
+                    <div class="timeline-step ${order.status == 'Completed' ? 'done' : ''}">
+                        <div class="timeline-dot"><i class='bx bx-home-heart'></i></div>
+                        <div><strong>Hoàn tất</strong><div class="text-muted small">Khách đã nhận hàng thành công.</div></div>
+                    </div>
                 </div>
             </div>
 
@@ -84,17 +102,17 @@
                                 <c:forEach var="item" items="${order.items}">
                                     <tr>
                                         <td>
-                                            <img src="${pageContext.request.contextPath}/assets/images/shop_pic/${item.product.image}" 
+                                            <img src="${pageContext.request.contextPath}/assets/images/shop_pic/${item.product.image}"
                                                  class="product-img"
                                                  onerror="this.src='https://placehold.co/300x300/e2e8f0/1e293b?text=PetShop'">
                                         </td>
                                         <td class="align-middle fw-bold">${item.product.name}</td>
                                         <td class="align-middle text-center">${item.quantity}</td>
                                         <td class="align-middle text-end">
-                                            <fmt:formatNumber value="${item.price}" type="currency" currencySymbol="đ" maxFractionDigits="0"/>
+                                            <fmt:formatNumber value="${item.price}" type="currency" currencySymbol="₫" maxFractionDigits="0"/>
                                         </td>
                                         <td class="align-middle text-end">
-                                            <fmt:formatNumber value="${item.price * item.quantity}" type="currency" currencySymbol="đ" maxFractionDigits="0"/>
+                                            <fmt:formatNumber value="${item.subtotal}" type="currency" currencySymbol="₫" maxFractionDigits="0"/>
                                         </td>
                                     </tr>
                                 </c:forEach>
@@ -103,7 +121,7 @@
                                 <tr>
                                     <td colspan="4" class="text-end fw-bold py-3">TỔNG CỘNG:</td>
                                     <td class="text-end total-row py-3">
-                                        <fmt:formatNumber value="${order.totalAmount}" type="currency" currencySymbol="đ" maxFractionDigits="0"/>
+                                        <fmt:formatNumber value="${order.totalAmount}" type="currency" currencySymbol="₫" maxFractionDigits="0"/>
                                     </td>
                                 </tr>
                             </tfoot>

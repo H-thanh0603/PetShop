@@ -13,6 +13,22 @@ import Model.Product;
 
 public class OrderDAO {
 
+    private Order mapOrder(ResultSet rs) throws Exception {
+        return new Order(
+                rs.getInt("id"),
+                rs.getInt("user_id"),
+                rs.getString("fullname"),
+                rs.getString("phone"),
+                rs.getString("address"),
+                rs.getString("note"),
+                rs.getDouble("total_amount"),
+                rs.getString("status"),
+                rs.getTimestamp("createdAt"),
+                rs.getString("payment_method"),
+                rs.getBoolean("payment_status")
+        );
+    }
+
     public int saveOrder(Order order) {
         try (Connection conn = DBContext.getConnection()) {
             return saveOrder(conn, order);
@@ -73,19 +89,9 @@ public class OrderDAO {
              PreparedStatement ps = conn.prepareStatement(query);
              ResultSet rs = ps.executeQuery()) {
             while (rs.next()) {
-                list.add(new Order(
-                    rs.getInt("id"),
-                    rs.getInt("user_id"),
-                    rs.getString("fullname"),
-                    rs.getString("phone"),
-                    rs.getString("address"),
-                    rs.getString("note"),
-                    rs.getDouble("total_amount"),
-                    rs.getString("status"),
-                    rs.getTimestamp("createdAt"),
-                        rs.getString("payment_method"),
-                        rs.getBoolean("payment_status")
-                ));
+                Order order = mapOrder(rs);
+                order.setItems(getOrderItems(conn, order.getId()));
+                list.add(order);
             }
         } catch (Exception e) {
             e.printStackTrace();
@@ -100,19 +106,8 @@ public class OrderDAO {
             ps.setInt(1, orderId);
             try (ResultSet rs = ps.executeQuery()) {
                 if (rs.next()) {
-                    Order order = new Order(
-                        rs.getInt("id"),
-                        rs.getInt("user_id"),
-                        rs.getString("fullname"),
-                        rs.getString("phone"),
-                        rs.getString("address"),
-                        rs.getString("note"),
-                        rs.getDouble("total_amount"),
-                        rs.getString("status"),
-                        rs.getTimestamp("createdAt"),
-                            rs.getString("payment_method"),
-                            rs.getBoolean("payment_status")
-                    );
+                    Order order = mapOrder(rs);
+                    order.setItems(getOrderItems(conn, orderId));
                     return order;
                 }
             }
@@ -151,6 +146,7 @@ public class OrderDAO {
                     p.setId(rs.getInt("product_id"));
                     p.setName(rs.getString("product_name"));
                     p.setImage(rs.getString("product_image"));
+                    item.setProduct(p);
 
                     list.add(item);
                 }
@@ -249,25 +245,37 @@ public class OrderDAO {
             ps.setInt(1, userId);
             try (ResultSet rs = ps.executeQuery()) {
                 while (rs.next()) {
-                    list.add(new Order(
-                        rs.getInt("id"),
-                        rs.getInt("user_id"),
-                        rs.getString("fullname"),
-                        rs.getString("phone"),
-                        rs.getString("address"),
-                        rs.getString("note"),
-                        rs.getDouble("total_amount"),
-                        rs.getString("status"),
-                        rs.getTimestamp("createdAt"),
-                            rs.getString("payment_method"),
-                            rs.getBoolean("payment_status")
-                    ));
+                    Order order = mapOrder(rs);
+                    order.setItems(getOrderItems(conn, order.getId()));
+                    list.add(order);
                 }
             }
         } catch (Exception e) {
             e.printStackTrace();
         }
         return list;
+    }
+
+    public boolean cancelOrderByUser(int orderId, int userId) {
+        String query = "SELECT status FROM orders WHERE id = ? AND user_id = ?";
+        try (Connection conn = DBContext.getConnection();
+             PreparedStatement ps = conn.prepareStatement(query)) {
+            ps.setInt(1, orderId);
+            ps.setInt(2, userId);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (!rs.next()) {
+                    return false;
+                }
+                String status = rs.getString("status");
+                if (!"Pending".equalsIgnoreCase(status) && !"Confirmed".equalsIgnoreCase(status)) {
+                    return false;
+                }
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+            return false;
+        }
+        return updateStatus(orderId, "Cancelled");
     }
 
     public double getTodayRevenue() {

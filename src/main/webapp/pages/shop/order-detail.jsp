@@ -10,60 +10,74 @@
     <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
     <style>
         body { background-color: #f8fafc; font-family: 'Segoe UI', sans-serif; }
-        .detail-container { max-width: 900px; margin: 40px auto; padding: 20px; }
-        .card { border: none; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); overflow: hidden; }
+        .detail-container { max-width: 1100px; margin: 40px auto; padding: 20px; }
+        .card { border: none; border-radius: 18px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); overflow: hidden; }
         .card-header { background: #1e293b; color: white; padding: 20px; border: none; }
         .product-item { border-bottom: 1px solid #f1f5f9; padding: 15px 0; }
         .product-item:last-child { border-bottom: none; }
-        .product-img { width: 70px; height: 70px; object-fit: cover; border-radius: 8px; border: 1px solid #e2e8f0; }
-        .info-section { background: #fff; padding: 25px; border-radius: 12px; margin-bottom: 25px; }
+        .product-img { width: 70px; height: 70px; object-fit: cover; border-radius: 12px; border: 1px solid #e2e8f0; }
+        .info-section { background: #fff; padding: 25px; border-radius: 18px; margin-bottom: 25px; }
         .label { color: #64748b; font-size: 0.8rem; font-weight: 700; text-transform: uppercase; margin-bottom: 5px; }
         .value { color: #1e293b; font-weight: 500; margin-bottom: 15px; }
         .status-badge { font-weight: 700; font-size: 0.85rem; padding: 5px 12px; border-radius: 20px; }
+        .timeline-step { display: flex; gap: 12px; margin-bottom: 18px; }
+        .timeline-dot { width: 40px; height: 40px; border-radius: 50%; display: grid; place-items: center; background: #e2e8f0; color: #64748b; flex-shrink: 0; }
+        .timeline-step.active .timeline-dot { background: #dbeafe; color: #2563eb; }
+        .timeline-step.done .timeline-dot { background: #dcfce7; color: #16a34a; }
     </style>
 </head>
 <body>
     <jsp:include page="/components/navbar.jsp" />
+    <jsp:include page="/components/toast.jsp" />
 
     <div class="container detail-container">
-        <div class="d-flex justify-content-between align-items-center mb-4">
-            <h3 class="mb-0 fw-bold">Chi tiết đơn hàng #${order.id}</h3>
-            <a href="${pageContext.request.contextPath}/my-orders" class="btn btn-outline-secondary btn-sm">
-                <i class='bx bx-arrow-back'></i> Quay lại
-            </a>
+        <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-3">
+            <div>
+                <h3 class="mb-1 fw-bold">Chi tiết đơn hàng #${order.id}</h3>
+                <div class="text-muted">
+                    <fmt:formatDate value="${order.createdAt}" pattern="dd/MM/yyyy HH:mm:ss"/> · ${order.statusLabel}
+                </div>
+            </div>
+            <div class="d-flex gap-2 flex-wrap">
+                <c:if test="${order.cancelableByUser}">
+                    <form action="${pageContext.request.contextPath}/my-orders" method="post" onsubmit="return confirm('Bạn chắc chắn muốn hủy đơn hàng này?');">
+                        <input type="hidden" name="action" value="cancel">
+                        <input type="hidden" name="orderId" value="${order.id}">
+                        <button type="submit" class="btn btn-outline-danger">
+                            <i class='bx bx-x-circle'></i> Hủy đơn
+                        </button>
+                    </form>
+                </c:if>
+                <a href="${pageContext.request.contextPath}/my-orders" class="btn btn-outline-secondary">
+                    <i class='bx bx-arrow-back'></i> Quay lại
+                </a>
+            </div>
         </div>
 
-        <div class="row">
+        <div class="row g-4">
             <div class="col-lg-8">
                 <div class="card mb-4">
-                    <div class="card-header d-flex justify-content-between">
-                        <span>Sản phẩm</span>
-                        <span class="status-badge 
-                            ${order.status == 'Pending' ? 'bg-warning text-dark' : ''}
-                            ${order.status == 'Confirmed' ? 'bg-info text-white' : ''}
-                            ${order.status == 'Shipping' ? 'bg-primary text-white' : ''}
-                            ${order.status == 'Completed' ? 'bg-success text-white' : ''}
-                            ${order.status == 'Cancelled' ? 'bg-danger text-white' : ''}">
-                            ${order.status}
-                        </span>
+                    <div class="card-header d-flex justify-content-between align-items-center flex-wrap gap-2">
+                        <span>Sản phẩm trong đơn</span>
+                        <span class="status-badge ${order.statusCssClass}">${order.statusLabel}</span>
                     </div>
                     <div class="card-body">
                         <c:forEach var="item" items="${order.items}">
-                            <div class="product-item d-flex align-items-center">
-                                <img src="${pageContext.request.contextPath}/assets/images/shop_pic/${item.product.image}" 
-                                     class="product-img me-3" 
+                            <div class="product-item d-flex align-items-center gap-3">
+                                <img src="${pageContext.request.contextPath}/assets/images/shop_pic/${item.product.image}"
+                                     class="product-img"
                                      onerror="this.src='https://placehold.co/300x300/e2e8f0/1e293b?text=PetShop'">
                                 <div class="flex-grow-1">
                                     <h6 class="mb-0 fw-bold">${item.product.name}</h6>
                                     <small class="text-muted">Số lượng: ${item.quantity}</small>
                                 </div>
                                 <div class="text-end">
-                                    <p class="mb-0 fw-bold"><fmt:formatNumber value="${item.price * item.quantity}" type="currency" currencySymbol="đ" maxFractionDigits="0"/></p>
-                                    <small class="text-muted"><fmt:formatNumber value="${item.price}" type="currency" currencySymbol="đ" maxFractionDigits="0"/></small>
+                                    <p class="mb-0 fw-bold"><fmt:formatNumber value="${item.subtotal}" type="currency" currencySymbol="₫" maxFractionDigits="0"/></p>
+                                    <small class="text-muted"><fmt:formatNumber value="${item.price}" type="currency" currencySymbol="₫" maxFractionDigits="0"/> / sản phẩm</small>
                                 </div>
                             </div>
                         </c:forEach>
-                        
+
                         <div class="mt-4 pt-3 border-top">
                             <div class="d-flex justify-content-between align-items-center">
                                 <h5 class="mb-0 fw-bold">Tổng thanh toán</h5>
@@ -76,22 +90,42 @@
 
             <div class="col-lg-4">
                 <div class="info-section shadow-sm">
+                    <h5 class="fw-bold mb-4">Thông tin giao hàng</h5>
                     <div class="label">Người nhận</div>
                     <div class="value">${order.fullname}</div>
-                    
+
                     <div class="label">Số điện thoại</div>
                     <div class="value">${order.phone}</div>
-                    
+
                     <div class="label">Địa chỉ giao hàng</div>
                     <div class="value">${order.address}</div>
-                    
-                    <div class="label">Ngày đặt hàng</div>
-                    <div class="value"><fmt:formatDate value="${order.createdAt}" pattern="dd/MM/yyyy HH:mm:ss"/></div>
-                    
-                    <c:if test="${not empty order.note}">
-                        <div class="label">Ghi chú từ khách</div>
-                        <div class="value text-muted small">${order.note}</div>
-                    </c:if>
+
+                    <div class="label">Thanh toán</div>
+                    <div class="value">${order.paymentMethodLabel} · ${order.paymentStatusLabel}</div>
+
+                    <div class="label">Ghi chú từ khách</div>
+                    <div class="value">${empty order.note ? 'Không có ghi chú.' : order.note}</div>
+                </div>
+
+                <div class="info-section shadow-sm">
+                    <h5 class="fw-bold mb-4">Tiến trình đơn hàng</h5>
+
+                    <div class="timeline-step done">
+                        <div class="timeline-dot"><i class='bx bx-receipt'></i></div>
+                        <div><div class="fw-bold">Đặt hàng</div><div class="text-muted small">Đơn hàng đã được ghi nhận.</div></div>
+                    </div>
+                    <div class="timeline-step ${order.status == 'Pending' ? 'active' : (order.status == 'Confirmed' || order.status == 'Shipping' || order.status == 'Completed' ? 'done' : '')}">
+                        <div class="timeline-dot"><i class='bx bx-check-shield'></i></div>
+                        <div><div class="fw-bold">Xác nhận</div><div class="text-muted small">Cửa hàng kiểm tra và chuẩn bị sản phẩm.</div></div>
+                    </div>
+                    <div class="timeline-step ${order.status == 'Shipping' || order.status == 'Completed' ? 'done' : ''}">
+                        <div class="timeline-dot"><i class='bx bx-car'></i></div>
+                        <div><div class="fw-bold">Vận chuyển</div><div class="text-muted small">Đơn hàng đang trên đường giao tới bạn.</div></div>
+                    </div>
+                    <div class="timeline-step ${order.status == 'Completed' ? 'done' : ''}">
+                        <div class="timeline-dot"><i class='bx bx-home-heart'></i></div>
+                        <div><div class="fw-bold">Hoàn tất</div><div class="text-muted small">Bạn đã nhận hàng thành công.</div></div>
+                    </div>
                 </div>
             </div>
         </div>
