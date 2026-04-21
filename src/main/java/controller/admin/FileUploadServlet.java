@@ -20,7 +20,7 @@ import Util.FileUploadUtil;
  * Cách sử dụng:
  * - Form phải có enctype="multipart/form-data"
  * - Input file có name="file"
- * - Parameter "type" để chọn thư mục: product, blog, hoặc mặc định uploads
+ * - Parameter "type" để chọn thư mục: product hoặc mặc định uploads
  * - Gửi POST request đến /admin/upload?type=product
  * 
  * Response JSON:
@@ -38,7 +38,6 @@ public class FileUploadServlet extends HttpServlet {
     
     // Thư mục lưu ảnh theo loại
     private static final String UPLOAD_FOLDER_PRODUCT = "assets/images/shop_pic";
-    private static final String UPLOAD_FOLDER_BLOG = "assets/images/community_pic";
     private static final String UPLOAD_FOLDER_DEFAULT = "assets/images/uploads";
     
     @Override
@@ -76,8 +75,6 @@ public class FileUploadServlet extends HttpServlet {
             String uploadFolder;
             if ("product".equals(type)) {
                 uploadFolder = UPLOAD_FOLDER_PRODUCT;
-            } else if ("blog".equals(type)) {
-                uploadFolder = UPLOAD_FOLDER_BLOG;
             } else {
                 uploadFolder = UPLOAD_FOLDER_DEFAULT;
             }
@@ -111,7 +108,7 @@ public class FileUploadServlet extends HttpServlet {
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response) 
             throws ServletException, IOException {
-        // Redirect đến trang upload demo
-        response.sendRedirect(request.getContextPath() + "/pages/admin/upload-demo.jsp");
+        // Project ecommerce chỉ hỗ trợ upload ảnh phục vụ quản lý sản phẩm.
+        response.sendRedirect(request.getContextPath() + "/pages/admin/products");
     }
 }

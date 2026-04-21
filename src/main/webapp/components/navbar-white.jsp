@@ -57,7 +57,7 @@
     <div class="container-fluid px-5"> 
         
         <a class="navbar-brand" href="${pageContext.request.contextPath}/home">
-            <i class='bx bxs-plus-medical'></i> Animal Doctors
+            <i class='bx bxs-dog'></i> PetShop
         </a>
 
         <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarContent">
@@ -67,20 +67,21 @@
         <div class="collapse navbar-collapse justify-content-center" id="navbarContent">
             <ul class="navbar-nav mb-2 mb-lg-0">
                 <li class="nav-item">
+                    <a class="nav-link" href="${pageContext.request.contextPath}/home">Trang chủ</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="${pageContext.request.contextPath}/shop">Sản phẩm</a>
+                </li>
+                <li class="nav-item">
                     <a class="nav-link" href="${pageContext.request.contextPath}/about">Về Chúng Tôi</a>
                 </li>
-                
-                <li class="nav-item">
-                    <a class="nav-link" href="${pageContext.request.contextPath}/services">Các dịch vụ</a>
-                </li>
-                
-                <li class="nav-item"><a class="nav-link" href="${pageContext.request.contextPath}/community">Cộng đồng</a></li>
-                <li class="nav-item"><a class="nav-link" href="${pageContext.request.contextPath}/schedule">Đặt Hẹn</a></li>
             </ul>
         </div>
 
         <div class="d-flex align-items-center">
-            <a href="${pageContext.request.contextPath}/booking" class="btn btn-booking text-decoration-none">Đặt Hẹn</a>
+            <a href="${pageContext.request.contextPath}/cart" class="btn btn-booking text-decoration-none">
+                <i class='bx bx-cart'></i> Giỏ hàng
+            </a>
             
             <%-- Hiển thị nút đăng nhập/đăng xuất --%>
             <c:choose>
@@ -95,8 +96,11 @@
                                     <i class='bx bxs-dashboard'></i> Admin Panel
                                 </a></li>
                             </c:if>
-                            <li><a class="dropdown-item" href="${pageContext.request.contextPath}/schedule">
-                                <i class='bx bxs-calendar'></i> Lịch hẹn của tôi
+                            <li><a class="dropdown-item" href="${pageContext.request.contextPath}/my-orders">
+                                <i class='bx bx-package'></i> Đơn hàng của tôi
+                            </a></li>
+                            <li><a class="dropdown-item" href="${pageContext.request.contextPath}/cart">
+                                <i class='bx bx-cart'></i> Giỏ hàng của tôi
                             </a></li>
                             <li><hr class="dropdown-divider"></li>
                             <li><a class="dropdown-item" href="${pageContext.request.contextPath}/logout">
