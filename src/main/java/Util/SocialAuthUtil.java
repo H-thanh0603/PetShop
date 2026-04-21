@@ -42,11 +42,13 @@ public final class SocialAuthUtil {
     }
 
     public static boolean isGoogleConfigured() {
-        return SecretConfig.hasValue("GOOGLE_CLIENT_ID");
+        return SecretConfig.hasValue("GOOGLE_CLIENT_ID")
+                && SecretConfig.hasValue("GOOGLE_CLIENT_SECRET");
     }
 
     public static boolean isFacebookConfigured() {
-        return SecretConfig.hasValue("facebook_client_id");
+        return SecretConfig.hasValue("facebook_client_id")
+                && SecretConfig.hasValue("facebook_client_secret");
     }
 
     private static String buildAppUrl(HttpServletRequest request, String path) {

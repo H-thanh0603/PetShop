@@ -12,8 +12,8 @@
     "address": "<c:out value='${user.address}'/>",
     "role": "${user.role}",
     "status": "${user.status != null ? user.status : 'active'}",
-    "petCount": ${user.petCount},
-    "appointmentCount": ${user.appointmentCount},
+    "orderCount": ${user.orderCount},
+    "totalSpent": "${user.totalSpent}",
     "createdAt": "<fmt:formatDate value='${user.createdAt}' pattern='dd/MM/yyyy HH:mm'/>"
   }<c:if test="${!status.last}">,</c:if>
 </c:forEach>

@@ -38,6 +38,10 @@ public class LoginServlet extends HttpServlet {
         // Dùng helper chung để mọi cách vào trang login đều lưu đúng URL cần quay lại.
         AuthRedirectUtil.storeRedirectAfterLogin(request);
         
+        moveFlashMessage(session, request, "success");
+        moveFlashMessage(session, request, "error");
+        moveFlashMessage(session, request, "warning");
+
         // Kiểm tra email từ đăng ký mới
         String registeredEmail = (String) session.getAttribute("registeredEmail");
         if (registeredEmail != null) {
@@ -58,6 +62,14 @@ public class LoginServlet extends HttpServlet {
         populateLoginViewData(request);
         
         request.getRequestDispatcher("/pages/auth/login.jsp").forward(request, response);
+    }
+
+    private void moveFlashMessage(HttpSession session, HttpServletRequest request, String key) {
+        Object value = session.getAttribute(key);
+        if (value != null) {
+            request.setAttribute(key, value);
+            session.removeAttribute(key);
+        }
     }
 
     protected void doPost(HttpServletRequest request, HttpServletResponse response) 

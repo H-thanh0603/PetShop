@@ -23,57 +23,82 @@ public class LoginByGoogleServlet extends HttpServlet {
     private UserDAO userDao = new UserDAO();
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
-        String code = request.getParameter("code");
-        String error = request.getParameter("error");
+        HttpSession session = request.getSession();
 
-        // Người dùng bấm HỦY login Facebook
-        if (error != null || code == null || code.isEmpty()) {
-
+        if (!SocialAuthUtil.isGoogleConfigured()) {
+            session.setAttribute("warning", "Google login chưa được cấu hình trên máy này.");
             response.sendRedirect(request.getContextPath() + "/login");
             return;
         }
-        GoogleLogin gg = new GoogleLogin();
-        String accessToken = gg.getToken(code, SocialAuthUtil.buildGoogleRedirectUri(request));
-        GoogleAccount acc = gg.getUserInfo(accessToken);
-        boolean isEmailAvailable  = userDao.HaveEmail(acc.getEmail());
-        User user;
-        if(!isEmailAvailable){
-            user = userDao.getUserByEmail(acc.getEmail());
-        }else{
-            userDao.insertUser(acc.getName(), acc.getEmail());
-            user = userDao.getUserByEmail(acc.getEmail());
-        }
-        HttpSession session = request.getSession();
 
-        session.setAttribute("user", user);
-        session.setAttribute("username", user.getUsername());
-        session.setAttribute("role", user.getRole());
+        String code = request.getParameter("code");
+        String error = request.getParameter("error");
 
-        CartDAO cartDAO = new CartDAO();
-        @SuppressWarnings("unchecked")
-        Map<Integer, CartItem> sessionCart = (Map<Integer, CartItem>) session.getAttribute("cart");
-        if (sessionCart != null && !sessionCart.isEmpty()) {
-            cartDAO.syncCartFromSession(user.getId(), sessionCart);
+        // Người dùng bấm hủy hoặc provider trả lỗi
+        if (error != null || code == null || code.isEmpty()) {
+            session.setAttribute("warning", "Đăng nhập Google đã bị hủy hoặc không thành công.");
+            response.sendRedirect(request.getContextPath() + "/login");
+            return;
         }
 
-        Map<Integer, CartItem> cart = cartDAO.getCartByUserId(user.getId());
-        session.setAttribute("cart", cart);
-// Tính tổng số lượng
-        int totalQuantity = 0;
-        for (CartItem item : cart.values()) {
-            totalQuantity += item.getQuantity();
-        }
-        session.setAttribute("totalQuantity", totalQuantity);
+        try {
+            GoogleLogin gg = new GoogleLogin();
+            String accessToken = gg.getToken(code, SocialAuthUtil.buildGoogleRedirectUri(request));
+            GoogleAccount acc = gg.getUserInfo(accessToken);
 
-        // Dung chung redirectAfterLogin de social login khong bi tra ve trang chu sai mong muon.
-        String redirectUrl = AuthRedirectUtil.consumeRedirectAfterLogin(request);
+            if (acc == null || acc.getEmail() == null || acc.getEmail().isBlank()) {
+                session.setAttribute("error", "Google không trả về email. Không thể đăng nhập.");
+                response.sendRedirect(request.getContextPath() + "/login");
+                return;
+            }
 
-        if ("admin".equals(user.getRole())) {
-            response.sendRedirect(request.getContextPath() + "/pages/admin/dashboard");
-        } else if (redirectUrl != null && !redirectUrl.isEmpty()) {
-            response.sendRedirect(redirectUrl);
-        } else {
-            response.sendRedirect(request.getContextPath() + "/home");
+            boolean isEmailAvailable  = userDao.HaveEmail(acc.getEmail());
+            User user;
+            if(!isEmailAvailable){
+                user = userDao.getUserByEmail(acc.getEmail());
+            }else{
+                userDao.insertUser(acc.getName(), acc.getEmail());
+                user = userDao.getUserByEmail(acc.getEmail());
+            }
+
+            if (user == null) {
+                session.setAttribute("error", "Không thể tạo hoặc tải tài khoản Google.");
+                response.sendRedirect(request.getContextPath() + "/login");
+                return;
+            }
+
+            session.setAttribute("user", user);
+            session.setAttribute("username", user.getUsername());
+            session.setAttribute("role", user.getRole());
+
+            CartDAO cartDAO = new CartDAO();
+            @SuppressWarnings("unchecked")
+            Map<Integer, CartItem> sessionCart = (Map<Integer, CartItem>) session.getAttribute("cart");
+            if (sessionCart != null && !sessionCart.isEmpty()) {
+                cartDAO.syncCartFromSession(user.getId(), sessionCart);
+            }
+
+            Map<Integer, CartItem> cart = cartDAO.getCartByUserId(user.getId());
+            session.setAttribute("cart", cart);
+            int totalQuantity = 0;
+            for (CartItem item : cart.values()) {
+                totalQuantity += item.getQuantity();
+            }
+            session.setAttribute("totalQuantity", totalQuantity);
+
+            String redirectUrl = AuthRedirectUtil.consumeRedirectAfterLogin(request);
+
+            if ("admin".equals(user.getRole())) {
+                response.sendRedirect(request.getContextPath() + "/pages/admin/dashboard");
+            } else if (redirectUrl != null && !redirectUrl.isEmpty()) {
+                response.sendRedirect(redirectUrl);
+            } else {
+                response.sendRedirect(request.getContextPath() + "/home");
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+            session.setAttribute("error", "Đăng nhập Google thất bại. Kiểm tra lại cấu hình OAuth.");
+            response.sendRedirect(request.getContextPath() + "/login");
         }
     }
 }

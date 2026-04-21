@@ -42,7 +42,7 @@
                     <c:if test="${empty petTypes}">
                         <tr><td colspan="7"><div class="empty-state"><i class='bx bxs-dog'></i><p>Chưa có loại thú cưng nào</p></div></td></tr>
                     </c:if>
-                    <c:forEach items="${petTypes}" var=""="s">
+                    <c:forEach items="${petTypes}" var="pt" varStatus="s">
                         <tr data-id="${pt.id}" data-name="${pt.name}" data-icon="${pt.icon}"
                             data-order="${pt.displayOrder}" data-active="${pt.active}">
                             <td><strong>${s.index + 1}</strong></td>
@@ -184,4 +184,3 @@
     </script>
 </body>
 </html>
-span>

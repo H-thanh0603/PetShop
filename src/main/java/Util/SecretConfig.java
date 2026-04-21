@@ -21,6 +21,16 @@ public class SecretConfig {
     }
 
     public static String get(String key) {
+        String systemValue = System.getProperty(key);
+        if (systemValue != null && !systemValue.trim().isEmpty()) {
+            return systemValue.trim();
+        }
+
+        String envValue = System.getenv(key);
+        if (envValue != null && !envValue.trim().isEmpty()) {
+            return envValue.trim();
+        }
+
         return prop.getProperty(key);
     }
 

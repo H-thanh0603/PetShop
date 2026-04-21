@@ -1,6 +1,7 @@
 package DAO;
 
 import java.sql.*;
+import java.util.UUID;
 
 import Context.DBContext;
 import Model.User;
@@ -467,12 +468,41 @@ public class UserDAO {
     }
     
     public void insertUser(String name, String email) {
-        String query = "INSERT INTO users (username, email, role, status, password) VALUES (?, ?, 'user', 1, 'null')";
+        String query = "INSERT INTO users (username, email, fullname, role, status, password) VALUES (?, ?, ?, 'user', 1, ?)";
         try (Connection conn = DBContext.getConnection();
              PreparedStatement ps = conn.prepareStatement(query)) {
-            ps.setString(1, name); ps.setString(2, email);
+            ps.setString(1, buildUniqueUsername(conn, name, email));
+            ps.setString(2, email);
+            ps.setString(3, name);
+            ps.setString(4, PasswordUtil.hashPassword(UUID.randomUUID().toString()));
             ps.executeUpdate();
         } catch (SQLException e) { throw new RuntimeException(e); }
+    }
+
+    private String buildUniqueUsername(Connection conn, String name, String email) throws SQLException {
+        String base = null;
+        if (email != null && email.contains("@")) {
+            base = email.substring(0, email.indexOf('@'));
+        }
+        if (base == null || base.isBlank()) {
+            base = name != null ? name : "user";
+        }
+
+        base = base.toLowerCase()
+                .replaceAll("[^a-z0-9_]+", "_")
+                .replaceAll("_+", "_")
+                .replaceAll("^_|_$", "");
+
+        if (base.isBlank()) {
+            base = "user";
+        }
+
+        String candidate = base;
+        int suffix = 1;
+        while (checkUsernameExists(candidate)) {
+            candidate = base + suffix++;
+        }
+        return candidate;
     }
 
     public void updateProfile(int id, String fullname, String phone) {
