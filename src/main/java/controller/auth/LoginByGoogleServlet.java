@@ -6,6 +6,7 @@ import Model.CartItem;
 import Model.GgAccount.GoogleAccount;
 import Model.User;
 import Util.AuthRedirectUtil;
+import Util.SocialAuthUtil;
 import controller.Google.GoogleLogin;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
@@ -32,10 +33,8 @@ public class LoginByGoogleServlet extends HttpServlet {
             return;
         }
         GoogleLogin gg = new GoogleLogin();
-        String accessToken = gg.getToken(code);
-        System.out.println("accessToken: " + accessToken);
+        String accessToken = gg.getToken(code, SocialAuthUtil.buildGoogleRedirectUri(request));
         GoogleAccount acc = gg.getUserInfo(accessToken);
-        System.out.println("acc: " + acc);
         boolean isEmailAvailable  = userDao.HaveEmail(acc.getEmail());
         User user;
         if(!isEmailAvailable){

@@ -99,6 +99,9 @@
                             <li><a class="dropdown-item" href="${pageContext.request.contextPath}/my-orders">
                                 <i class='bx bx-package'></i> Đơn hàng của tôi
                             </a></li>
+                            <li><a class="dropdown-item" href="${pageContext.request.contextPath}/my-account">
+                                <i class='bx bx-user-circle'></i> Tài khoản của tôi
+                            </a></li>
                             <li><a class="dropdown-item" href="${pageContext.request.contextPath}/wishlist">
                                 <i class='bx bx-heart'></i> Yêu thích
                             </a></li>

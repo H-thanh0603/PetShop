@@ -11,6 +11,7 @@ import jakarta.servlet.http.HttpSession;
 import DAO.UserDAO;
 import Model.User;
 import Util.OTPUtil;
+import Util.PasswordUtil;
 
 @WebServlet(urlPatterns = {"/forgot-password", "/verify-otp", "/reset-password"})
 public class ForgotPasswordServlet extends HttpServlet {
@@ -141,8 +142,8 @@ public class ForgotPasswordServlet extends HttpServlet {
         String confirmPassword = request.getParameter("confirmPassword");
         
         // Validate
-        if (password == null || password.length() < 6) {
-            request.setAttribute("error", "Mật khẩu phải có ít nhất 6 ký tự");
+        if (password == null || !PasswordUtil.isStrongPassword(password)) {
+            request.setAttribute("error", "Mật khẩu phải có ít nhất 8 ký tự, gồm chữ hoa, chữ thường, số và ký tự đặc biệt");
             request.getRequestDispatcher("/pages/auth/reset-password.jsp").forward(request, response);
             return;
         }
