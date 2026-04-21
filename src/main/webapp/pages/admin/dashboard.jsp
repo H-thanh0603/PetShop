@@ -7,261 +7,208 @@
     <jsp:include page="/components/meta.jsp" />
     <title>Admin Dashboard - PetShop</title>
     <jsp:include page="/components/head.jsp" />
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <jsp:include page="/components/admin-styles.jsp" />
     <style>
-        /* Stats Grid */
-        .stats-grid {
-            display: grid;
-            grid-template-columns: repeat(4, 1fr);
-            gap: 20px;
-            margin-bottom: 24px;
+        .stats-grid, .content-grid { display:grid; gap:20px; }
+        .stats-grid { grid-template-columns: repeat(4, 1fr); margin-bottom: 24px; }
+        .content-grid { grid-template-columns: repeat(2, 1fr); }
+        .stat-card, .panel { background:#fff; border:1px solid #e2e8f0; border-radius:16px; box-shadow:0 4px 12px rgba(15,23,42,.04); }
+        .stat-card { padding:22px; color:#fff; text-decoration:none; display:block; }
+        .stat-card:hover { color:#fff; transform:translateY(-2px); }
+        .stat-card.blue { background:linear-gradient(135deg, #0b1a33 0%, #1a3a5c 100%); }
+        .stat-card.green { background:linear-gradient(135deg, #059669 0%, #10b981 100%); }
+        .stat-card.orange { background:linear-gradient(135deg, #ea580c 0%, #fb923c 100%); }
+        .stat-card.purple { background:linear-gradient(135deg, #7c3aed 0%, #a78bfa 100%); }
+        .stat-card h3 { margin:0 0 6px; font-size:1.9rem; font-weight:800; display:flex; gap:10px; align-items:center; }
+        .stat-card p, .stat-card small { margin:0; opacity:.92; }
+        .panel-header { padding:16px 20px; border-bottom:1px solid #e2e8f0; display:flex; justify-content:space-between; align-items:center; }
+        .panel-header h5 { margin:0; font-weight:700; display:flex; gap:8px; align-items:center; }
+        .panel-body { padding:18px 20px; }
+        .simple-table { width:100%; border-collapse:collapse; }
+        .simple-table th, .simple-table td { padding:12px 10px; border-bottom:1px solid #f1f5f9; font-size:.92rem; vertical-align:top; }
+        .simple-table th { color:#64748b; text-transform:uppercase; font-size:.76rem; }
+        .badge-soft { display:inline-flex; padding:4px 10px; border-radius:999px; font-size:.76rem; font-weight:700; }
+        .badge-soft.warning { background:#fef3c7; color:#b45309; }
+        .badge-soft.success { background:#dcfce7; color:#15803d; }
+        .badge-soft.danger { background:#fee2e2; color:#dc2626; }
+        .badge-soft.info { background:#dbeafe; color:#1d4ed8; }
+        .muted { color:#64748b; font-size:.88rem; }
+        .rating-low { color:#dc2626; font-weight:700; }
+        .stock-low { color:#b45309; font-weight:700; }
+        .empty-state { text-align:center; color:#94a3b8; padding:28px 16px; }
+        @media (max-width: 1100px) {
+            .stats-grid, .content-grid { grid-template-columns: 1fr 1fr; }
         }
-        .stat-card {
-            border-radius: 14px;
-            padding: 22px;
-            color: white;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
-            transition: transform 0.2s, box-shadow 0.2s;
-            text-decoration: none;
-            display: block;
+        @media (max-width: 768px) {
+            .stats-grid, .content-grid { grid-template-columns: 1fr; }
         }
-        .stat-card:hover {
-            transform: translateY(-4px);
-            box-shadow: 0 8px 25px rgba(0,0,0,0.15);
-            color: white;
-        }
-        .stat-card h3 {
-            font-size: 2rem;
-            margin: 0 0 6px 0;
-            font-weight: 700;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-        .stat-card p { margin: 0; opacity: 0.9; font-size: 0.9rem; }
-        .stat-card.blue { background: linear-gradient(135deg, #0b1a33 0%, #1a3a5c 100%); }
-        .stat-card.green { background: linear-gradient(135deg, #059669 0%, #10b981 100%); }
-        .stat-card.orange { background: linear-gradient(135deg, #ea580c 0%, #f97316 100%); }
-        .stat-card.purple { background: linear-gradient(135deg, #7c3aed 0%, #a78bfa 100%); }
-        
-        /* Quick Actions */
-        .quick-actions {
-            display: grid;
-            grid-template-columns: repeat(4, 1fr);
-            gap: 12px;
-            margin-bottom: 24px;
-        }
-        .quick-action-btn {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            padding: 14px 18px;
-            background: white;
-            border: 1px solid #e2e8f0;
-            border-radius: 10px;
-            text-decoration: none;
-            color: #334155;
-            font-weight: 600;
-            font-size: 0.9rem;
-            transition: all 0.2s;
-        }
-        .quick-action-btn:hover {
-            background: #f8fafc;
-            border-color: #0d9488;
-            color: #0d9488;
-            transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
-        }
-        .quick-action-btn i { font-size: 1.3rem; }
-        
-        /* Card */
-        .card {
-            background: white;
-            border: 1px solid #e2e8f0;
-            border-radius: 14px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.04);
-            overflow: hidden;
-            margin-bottom: 24px;
-        }
-        .card-header {
-            padding: 16px 20px;
-            border-bottom: 1px solid #e2e8f0;
-            background: #f8fafc;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-        .card-header h5 {
-            margin: 0;
-            font-size: 1rem;
-            font-weight: 600;
-            color: #0f172a;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-        .card-header h5 i { color: #64748b; }
-        .card-body { padding: 0; }
-        
-        /* Table */
-        .table {
-            width: 100%;
-            border-collapse: collapse;
-            margin: 0;
-        }
-        .table th {
-            text-align: left;
-            padding: 12px 16px;
-            font-size: 0.75rem;
-            font-weight: 600;
-            color: #64748b;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-            background: #f8fafc;
-            border-bottom: 1px solid #e2e8f0;
-        }
-        .table td {
-            padding: 14px 16px;
-            border-bottom: 1px solid #f1f5f9;
-            font-size: 0.875rem;
-            color: #334155;
-        }
-        .table tr:hover { background: #f8fafc; }
-        
-        /* Badge */
-        .badge {
-            display: inline-flex;
-            align-items: center;
-            gap: 4px;
-            padding: 4px 10px;
-            border-radius: 6px;
-            font-size: 0.75rem;
-            font-weight: 600;
-        }
-        .badge.success { background: #dcfce7; color: #15803d; }
-        .badge.warning { background: #fef3c7; color: #b45309; }
-        .badge.info { background: #dbeafe; color: #1d4ed8; }
-        .badge.danger { background: #fee2e2; color: #dc2626; }
-        
-        .dashboard-grid {
-            display: grid;
-            grid-template-columns: 1fr;
-            gap: 24px;
-        }
-        
-        .empty-state {
-            text-align: center;
-            padding: 40px 20px;
-            color: #94a3b8;
-        }
-        .empty-state i { font-size: 3rem; margin-bottom: 12px; opacity: 0.5; }
     </style>
 </head>
 <body class="admin-page">
-    <jsp:include page="/components/admin-sidebar.jsp">
-        <jsp:param name="currentPage" value="dashboard"/>
-    </jsp:include>
+<jsp:include page="/components/admin-sidebar.jsp">
+    <jsp:param name="currentPage" value="dashboard"/>
+</jsp:include>
 
-    <main class="admin-main">
-        <div class="page-header-admin">
-            <div>
-                <h1 class="page-title"><i class='bx bxs-dashboard'></i> Dashboard</h1>
-                <p class="page-subtitle">Quản lý cửa hàng PetShop</p>
-            </div>
-            <jsp:include page="/components/admin-header-dropdown.jsp" />
+<main class="admin-main">
+    <div class="page-header-admin">
+        <div>
+            <h1 class="page-title"><i class='bx bxs-dashboard'></i> Dashboard</h1>
+            <p class="page-subtitle">Tổng quan vận hành cửa hàng PetShop</p>
         </div>
-        
-        <jsp:include page="/components/alerts.jsp" />
-        
-        <!-- Main Stats -->
-        <div class="stats-grid">
-            <a href="${pageContext.request.contextPath}/admin/users" class="stat-card blue">
-                <h3><i class='bx bxs-user'></i> ${totalUsers != null ? totalUsers : 0}</h3>
-                <p>Khách hàng</p>
-            </a>
-            <a href="${pageContext.request.contextPath}/admin/orders" class="stat-card orange">
-                <h3><i class='bx bxs-cart-alt'></i> ${pendingOrders != null ? pendingOrders : 0}</h3>
-                <p>Đơn hàng mới</p>
-            </a>
-            <a href="${pageContext.request.contextPath}/pages/admin/products" class="stat-card green">
-                <h3><i class='bx bxs-shopping-bag'></i> ${totalProducts != null ? totalProducts : 0}</h3>
-                <p>Tổng sản phẩm</p>
-            </a>
-            <div class="stat-card purple">
-                <h3><i class='bx bxs-bar-chart-alt-2'></i> 
-                <fmt:formatNumber value="${todayRevenue != null ? todayRevenue : 0}" type="number" maxFractionDigits="0"/>đ
-                </h3>
-                <p>Doanh thu hôm nay</p>
-            </div>
-        </div>
-        
-        <!-- Quick Actions -->
-        <div class="quick-actions">
-            <a href="${pageContext.request.contextPath}/pages/admin/products?action=add" class="quick-action-btn">
-                <i class='bx bx-plus-circle' style="color:#7c3aed;"></i> Thêm sản phẩm mới
-            </a>
-            <a href="${pageContext.request.contextPath}/admin/orders" class="quick-action-btn">
-                <i class='bx bx-list-check' style="color:#0d9488;"></i> Xem đơn hàng
-            </a>
-            <a href="${pageContext.request.contextPath}/admin/users" class="quick-action-btn">
-                <i class='bx bx-user-plus' style="color:#db2777;"></i> Quản lý User
-            </a>
-            <a href="${pageContext.request.contextPath}/admin/statistics" class="quick-action-btn">
-                <i class='bx bx-line-chart' style="color:#ea580c;"></i> Báo cáo doanh thu
-            </a>
-        </div>
-        
-        <!-- Two Column Content -->
-        <div class="dashboard-grid">
-            <!-- Recent Orders -->
-            <div class="card">
-                <div class="card-header">
-                    <h5><i class='bx bx-cart'></i> Đơn hàng gần đây</h5>
-                    <a href="${pageContext.request.contextPath}/admin/orders" class="btn btn-sm btn-outline-primary">Xem tất cả</a>
-                </div>
-                <div class="card-body">
-                    <c:choose>
-                        <c:when test="${empty recentOrders}">
-                            <div class="empty-state">
-                                <i class='bx bx-shopping-bag'></i>
-                                <p>Chưa có đơn hàng nào</p>
-                            </div>
-                        </c:when>
-                        <c:otherwise>
-                            <table class="table">
-                                <thead>
-                                    <tr>
-                                        <th>Mã đơn</th>
-                                        <th>Khách hàng</th>
-                                        <th>Tổng tiền</th>
-                                        <th>Trạng thái</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    <c:forEach var="order" items="${recentOrders}">
-                                        <tr>
-                                            <td><strong>#${order.id}</strong></td>
-                                            <td>${order.fullname}</td>
-                                            <td>${order.formattedTotalAmount}</td>
-                                            <td>
-                                                <span class="badge ${order.status == 'Pending' ? 'warning' : 'success'}">
-                                                    ${order.status}
-                                                </span>
-                                            </td>
-                                        </tr>
-                                    </c:forEach>
-                                </tbody>
-                            </table>
-                        </c:otherwise>
-                    </c:choose>
-                </div>
-            </div>
-            
+        <jsp:include page="/components/admin-header-dropdown.jsp" />
+    </div>
 
-        </div>
-    </main>
-    
-    <jsp:include page="/components/scripts.jsp" />
+    <div class="stats-grid">
+        <a href="${pageContext.request.contextPath}/admin/users" class="stat-card blue">
+            <h3><i class='bx bxs-user'></i> ${overview.totalUsers}</h3>
+            <p>Khách hàng</p>
+            <small>Tổng user mua hàng</small>
+        </a>
+        <a href="${pageContext.request.contextPath}/admin/orders" class="stat-card orange">
+            <h3><i class='bx bxs-cart-alt'></i> ${overview.pendingOrders}</h3>
+            <p>Đơn chờ xử lý</p>
+            <small>${completedOrders} đơn đã hoàn tất</small>
+        </a>
+        <a href="${pageContext.request.contextPath}/pages/admin/products" class="stat-card green">
+            <h3><i class='bx bxs-shopping-bag'></i> ${overview.totalProducts}</h3>
+            <p>Sản phẩm đang bán</p>
+            <small>${overview.lowStockProducts} sản phẩm sắp hết</small>
+        </a>
+        <a href="${pageContext.request.contextPath}/admin/reports" class="stat-card purple">
+            <h3><i class='bx bxs-wallet'></i> <fmt:formatNumber value="${currentMonthRevenue}" type="number" maxFractionDigits="0"/>đ</h3>
+            <p>Doanh thu tháng này</p>
+            <small>Tổng doanh thu: <fmt:formatNumber value="${totalRevenue}" type="number" maxFractionDigits="0"/>đ</small>
+        </a>
+    </div>
+
+    <div class="content-grid">
+        <section class="panel">
+            <div class="panel-header">
+                <h5><i class='bx bx-cart'></i> Đơn hàng mới</h5>
+                <a href="${pageContext.request.contextPath}/admin/orders" class="btn btn-sm btn-outline-primary">Xem tất cả</a>
+            </div>
+            <div class="panel-body">
+                <c:choose>
+                    <c:when test="${empty recentOrders}">
+                        <div class="empty-state">Chưa có đơn hàng.</div>
+                    </c:when>
+                    <c:otherwise>
+                        <table class="simple-table">
+                            <thead>
+                            <tr><th>Mã đơn</th><th>Khách hàng</th><th>Tổng tiền</th><th>Trạng thái</th></tr>
+                            </thead>
+                            <tbody>
+                            <c:forEach var="order" items="${recentOrders}">
+                                <tr>
+                                    <td><strong>#${order.id}</strong></td>
+                                    <td>${order.fullname}<div class="muted">${order.phone}</div></td>
+                                    <td>${order.formattedTotalAmount}</td>
+                                    <td>
+                                        <span class="badge-soft ${order.status == 'Pending' ? 'warning' : (order.status == 'Completed' ? 'success' : 'info')}">${order.statusLabel}</span>
+                                    </td>
+                                </tr>
+                            </c:forEach>
+                            </tbody>
+                        </table>
+                    </c:otherwise>
+                </c:choose>
+            </div>
+        </section>
+
+        <section class="panel">
+            <div class="panel-header">
+                <h5><i class='bx bx-error-circle'></i> Sản phẩm sắp hết hàng</h5>
+                <a href="${pageContext.request.contextPath}/admin/notifications" class="btn btn-sm btn-outline-warning">Cảnh báo</a>
+            </div>
+            <div class="panel-body">
+                <c:choose>
+                    <c:when test="${empty lowStockProducts}">
+                        <div class="empty-state">Không có sản phẩm nào dưới ngưỡng tồn kho.</div>
+                    </c:when>
+                    <c:otherwise>
+                        <table class="simple-table">
+                            <thead>
+                            <tr><th>Sản phẩm</th><th>Danh mục</th><th>Tồn kho</th><th>Đánh giá</th></tr>
+                            </thead>
+                            <tbody>
+                            <c:forEach var="product" items="${lowStockProducts}">
+                                <tr>
+                                    <td>${product.name}</td>
+                                    <td>${empty product.category ? 'Chưa phân loại' : product.category}</td>
+                                    <td><span class="stock-low">${product.stock}</span></td>
+                                    <td>${product.formattedAverageRating} ★ / ${product.reviewCount}</td>
+                                </tr>
+                            </c:forEach>
+                            </tbody>
+                        </table>
+                    </c:otherwise>
+                </c:choose>
+            </div>
+        </section>
+
+        <section class="panel">
+            <div class="panel-header">
+                <h5><i class='bx bx-star'></i> Review mới nhất</h5>
+                <a href="${pageContext.request.contextPath}/admin/reports" class="btn btn-sm btn-outline-secondary">Xem báo cáo</a>
+            </div>
+            <div class="panel-body">
+                <c:choose>
+                    <c:when test="${empty recentReviews}">
+                        <div class="empty-state">Chưa có đánh giá sản phẩm.</div>
+                    </c:when>
+                    <c:otherwise>
+                        <table class="simple-table">
+                            <thead>
+                            <tr><th>Khách hàng</th><th>Sản phẩm</th><th>Điểm</th><th>Nội dung</th></tr>
+                            </thead>
+                            <tbody>
+                            <c:forEach var="review" items="${recentReviews}">
+                                <tr>
+                                    <td>${review.userName}</td>
+                                    <td>${review.productName}</td>
+                                    <td><span class="${review.rating <= 2 ? 'rating-low' : ''}">${review.rating}/5</span></td>
+                                    <td>${review.comment}</td>
+                                </tr>
+                            </c:forEach>
+                            </tbody>
+                        </table>
+                    </c:otherwise>
+                </c:choose>
+            </div>
+        </section>
+
+        <section class="panel">
+            <div class="panel-header">
+                <h5><i class='bx bx-trophy'></i> Top sản phẩm bán chạy</h5>
+                <a href="${pageContext.request.contextPath}/admin/reports" class="btn btn-sm btn-outline-success">Báo cáo bán hàng</a>
+            </div>
+            <div class="panel-body">
+                <c:choose>
+                    <c:when test="${empty topProducts}">
+                        <div class="empty-state">Chưa có dữ liệu bán hàng.</div>
+                    </c:when>
+                    <c:otherwise>
+                        <table class="simple-table">
+                            <thead>
+                            <tr><th>Sản phẩm</th><th>Đã bán</th><th>Doanh thu</th></tr>
+                            </thead>
+                            <tbody>
+                            <c:forEach var="product" items="${topProducts}">
+                                <tr>
+                                    <td>${product.product}</td>
+                                    <td>${product.count}</td>
+                                    <td><fmt:formatNumber value="${product.revenue}" type="number" maxFractionDigits="0"/>đ</td>
+                                </tr>
+                            </c:forEach>
+                            </tbody>
+                        </table>
+                    </c:otherwise>
+                </c:choose>
+            </div>
+        </section>
+    </div>
+</main>
+
+<jsp:include page="/components/scripts.jsp" />
 </body>
 </html>

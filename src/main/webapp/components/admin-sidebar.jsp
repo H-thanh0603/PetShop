@@ -35,6 +35,12 @@
         <a href="${pageContext.request.contextPath}/admin/statistics" class="<%= "statistics".equals(currentPage) ? "active" : "" %>">
             <i class='bx bxs-bar-chart-alt-2'></i> Thống kê doanh thu
         </a>
+        <a href="${pageContext.request.contextPath}/admin/reports" class="<%= "reports".equals(currentPage) ? "active" : "" %>">
+            <i class='bx bx-spreadsheet'></i> Báo cáo vận hành
+        </a>
+        <a href="${pageContext.request.contextPath}/admin/notifications" class="<%= "notifications".equals(currentPage) ? "active" : "" %>">
+            <i class='bx bxs-bell-ring'></i> Trung tâm cảnh báo
+        </a>
         
         <div class="sidebar-divider"></div>
         <a href="${pageContext.request.contextPath}/home">
