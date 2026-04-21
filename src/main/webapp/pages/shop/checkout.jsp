@@ -1,9 +1,9 @@
 <%@ page contentType="text/html;charset=UTF-8" %>
-<%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
+<%@ taglib uri="jakarta.tags.core" prefix="c" %>
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Checkout</title>
+    <title>Thanh toán | PetShop</title>
 
     <!-- FONT -->
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap"
@@ -22,6 +22,32 @@
             max-width: 1400px;
             margin: auto;
             padding: 30px;
+        }
+        .checkout-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 16px;
+            margin-bottom: 24px;
+            flex-wrap: wrap;
+        }
+        .checkout-header h1 {
+            font-size: 2rem;
+            font-weight: 700;
+            margin: 0 0 6px;
+            color: #1f2937;
+        }
+        .checkout-header p {
+            margin: 0;
+            color: #6b7280;
+        }
+        .checkout-back-link {
+            text-decoration: none;
+            font-weight: 600;
+            color: #4a6cf7;
+        }
+        .checkout-back-link:hover {
+            color: #3557df;
         }
 
         .card-modern {
@@ -452,6 +478,15 @@
 <jsp:include page="/components/navbar.jsp"/>
 <jsp:include page="/components/toast.jsp"/>
 <div class="checkout-container">
+    <div class="checkout-header">
+        <div>
+            <h1>Thanh toán đơn hàng</h1>
+            <p>Kiểm tra địa chỉ, mã giảm giá và phương thức thanh toán trước khi xác nhận.</p>
+        </div>
+        <a class="checkout-back-link" href="${pageContext.request.contextPath}/cart">
+            ← Quay lại giỏ hàng
+        </a>
+    </div>
     <div class="row g-4">
 
         <!-- LEFT PRODUCT LIST -->
@@ -575,90 +610,91 @@
                     <span><strong>Danh sách địa chỉ</strong></span>
                 </div>
 
+                <div class="right">
+                    <form id="editAddressForm"
+                          class="address-form"
+                          method="post"
+                          action="${pageContext.request.contextPath}/addresses"
+                          style="display:none;"
+                          onsubmit="return validateEditAddressForm();">
+
+                        <input type="hidden" name="_method" value="put">
+                        <input type="hidden" id="editAddressId" name="id">
+                        <span>
+                            <strong>Sửa Thông Tin</strong>
+                        </span>
+                        <div class="mb-3">
+                            <label for="editProvince" class="form-label">Tỉnh/Thành:</label>
+                            <select id="editProvince" name="province" class="form-select" required>
+                                <option value="">-- Chọn tỉnh/thành --</option>
+                            </select>
+                            <div class="text-danger small mt-1" id="editProvinceError"></div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="editDistrict" class="form-label">Quận/Huyện:</label>
+                            <select id="editDistrict" name="district" class="form-select" required disabled>
+                                <option value="">-- Chọn quận/huyện --</option>
+                            </select>
+                            <div class="text-danger small mt-1" id="editDistrictError"></div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="editWard" class="form-label">Phường/Xã:</label>
+                            <select id="editWard" name="ward" class="form-select" required disabled>
+                                <option value="">-- Chọn phường/xã --</option>
+                            </select>
+                            <div class="text-danger small mt-1" id="editWardError"></div>
+                        </div>
+                        <div class="mb-3">
+                            <label for="editAddressDetail" class="form-label">Chi tiết:</label>
+                            <input type="text"
+                                   id="editAddressDetail"
+                                   name="addressDetail"
+                                   class="form-control"
+                                   maxlength="255"
+                                   placeholder="Số nhà, tên đường..."
+                                   autocomplete="address-line1"
+                                   required
+                                   title="Địa chỉ chỉ được chứa chữ, số, khoảng trắng, dấu phẩy, chấm, gạch ngang, gạch chéo và phải có ý nghĩa.">
+                            <div class="text-danger small mt-1" id="editAddressDetailError"></div>
+                        </div>
+                        <div class="form-check mb-3">
+                            <input type="checkbox" id="editIsDefault" name="isDefault" value="true" class="form-check-input">
+                            <label for="editIsDefault" class="form-check-label">Đặt làm mặc định</label>
+                        </div>
+
+                        <div class="d-flex gap-2">
+                            <button type="submit" class="btn btn-primary">Cập nhật</button>
+                            <button type="button" class="btn btn-danger" onclick="confirmDeleteAddress()">Xóa</button>
+                            <button type="button" class="btn btn-secondary" onclick="toggleEditForm(false)">Đóng</button>
+                        </div>
+                    </form>
+
+                    <form id="deleteAddressForm"
+                          method="post"
+                          action="${pageContext.request.contextPath}/addresses"
+                          style="display:none;">
+                        <input type="hidden" name="_method" value="delete">
+                        <input type="hidden" id="deleteAddressId" name="id">
+                    </form>
+
+                    <div id="deleteConfirmModal" class="delete-modal" style="display:none;">
+                        <div class="delete-modal-content">
+                            <h4>Xác nhận xóa</h4>
+                            <p>Bạn đã chắc chắn muốn xóa địa chỉ này chưa?</p>
+                            <div class="delete-modal-actions">
+                                <button type="button" class="btn btn-danger" onclick="deleteAddressNow()">Rồi</button>
+                                <button type="button" class="btn btn-secondary" onclick="closeDeleteConfirm()">Chưa</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
                 <div id="addressList" class="address-list">
                     <c:choose>
                         <c:when test="${not empty addressList}">
                             <c:forEach var="addr" items="${addressList}">
-                                <div class="right">
-                                    <form id="editAddressForm"
-                                          class="address-form"
-                                          method="post"
-                                          action="${pageContext.request.contextPath}/addresses"
-                                          style="display:none;"
-                                          onsubmit="return validateEditAddressForm();">
-
-                                        <input type="hidden" name="_method" value="put">
-                                        <input type="hidden" id="editAddressId" name="id">
-                                        <span>
-                                            <strong>Sửa Thông Tin</strong>
-                                        </span>
-                                        <div class="mb-3">
-                                            <label for="editProvince" class="form-label">Tỉnh/Thành:</label>
-                                            <select id="editProvince" name="province" class="form-select" required>
-                                                <option value="">-- Chọn tỉnh/thành --</option>
-                                            </select>
-                                            <div class="text-danger small mt-1" id="editProvinceError"></div>
-                                        </div>
-
-                                        <div class="mb-3">
-                                            <label for="editDistrict" class="form-label">Quận/Huyện:</label>
-                                            <select id="editDistrict" name="district" class="form-select" required disabled>
-                                                <option value="">-- Chọn quận/huyện --</option>
-                                            </select>
-                                            <div class="text-danger small mt-1" id="editDistrictError"></div>
-                                        </div>
-
-                                        <div class="mb-3">
-                                            <label for="editWard" class="form-label">Phường/Xã:</label>
-                                            <select id="editWard" name="ward" class="form-select" required disabled>
-                                                <option value="">-- Chọn phường/xã --</option>
-                                            </select>
-                                            <div class="text-danger small mt-1" id="editWardError"></div>
-                                        </div>
-                                        <div class="mb-3">
-                                            <label for="editAddressDetail" class="form-label">Chi tiết:</label>
-                                            <input type="text"
-                                                   id="editAddressDetail"
-                                                   name="addressDetail"
-                                                   class="form-control"
-                                                   maxlength="255"
-                                                   placeholder="Số nhà, tên đường..."
-                                                   autocomplete="address-line1"
-                                                   required
-                                                   title="Địa chỉ chỉ được chứa chữ, số, khoảng trắng, dấu phẩy, chấm, gạch ngang, gạch chéo và phải có ý nghĩa.">
-                                            <div class="text-danger small mt-1" id="editAddressDetailError"></div>
-                                        </div>
-                                        <div class="form-check mb-3">
-                                            <input type="checkbox" id="editIsDefault" name="isDefault" value="true" class="form-check-input">
-                                            <label for="editIsDefault" class="form-check-label">Đặt làm mặc định</label>
-                                        </div>
-
-                                        <div class="d-flex gap-2">
-                                            <button type="submit" class="btn btn-primary">Cập nhật</button>
-                                            <button type="button" class="btn btn-danger" onclick="confirmDeleteAddress()">Xóa</button>
-                                            <button type="button" class="btn btn-secondary" onclick="toggleEditForm(false)">Đóng</button>
-                                        </div>
-                                    </form>
-
-                                    <form id="deleteAddressForm"
-                                          method="post"
-                                          action="${pageContext.request.contextPath}/addresses"
-                                          style="display:none;">
-                                        <input type="hidden" name="_method" value="delete">
-                                        <input type="hidden" id="deleteAddressId" name="id">
-                                    </form>
-
-                                    <div id="deleteConfirmModal" class="delete-modal" style="display:none;">
-                                        <div class="delete-modal-content">
-                                            <h4>Xác nhận xóa</h4>
-                                            <p>Bạn đã chắc chắn muốn xóa địa chỉ này chưa?</p>
-                                            <div class="delete-modal-actions">
-                                                <button type="button" class="btn btn-danger" onclick="deleteAddressNow()">Rồi</button>
-                                                <button type="button" class="btn btn-secondary" onclick="closeDeleteConfirm()">Chưa</button>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
                                 <div class="address-item">
                                     <c:if test="${addr.defaultt}">
                                         <strong>Mặc định</strong>

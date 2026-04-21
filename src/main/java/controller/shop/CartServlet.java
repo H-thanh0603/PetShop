@@ -243,7 +243,7 @@ public class CartServlet extends HttpServlet {
         String quantityStr = request.getParameter("quantity");
 
         if (idStr == null || quantityStr == null) {
-            writeJson(response, false, "Thieu id hoac quantity");
+            writeJson(response, false, "Thiếu id hoặc số lượng");
             return;
         }
 
@@ -256,7 +256,7 @@ public class CartServlet extends HttpServlet {
             Map<Integer, CartItem> cart = (Map<Integer, CartItem>) session.getAttribute("cart");
 
             if (cart == null || !cart.containsKey(productId)) {
-                writeJson(response, false, "Khong tim thay san pham trong gio hang");
+                writeJson(response, false, "Không tìm thấy sản phẩm trong giỏ hàng");
                 return;
             }
 
@@ -271,7 +271,7 @@ public class CartServlet extends HttpServlet {
                 }
                 cart = reloadCart(session, user, cart);
                 recalculateTotalQuantity(session, cart);
-                writeJson(response, false, "San pham khong con ton tai");
+                writeJson(response, false, "Sản phẩm không còn tồn tại");
                 return;
             }
 

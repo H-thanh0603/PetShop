@@ -19,6 +19,13 @@
     <jsp:include page="/components/toast.jsp" />
 
     <div class="container py-5">
+        <nav aria-label="breadcrumb" class="mb-3">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a href="${pageContext.request.contextPath}/home">Trang chủ</a></li>
+                <li class="breadcrumb-item"><a href="${pageContext.request.contextPath}/shop">Cửa hàng</a></li>
+                <li class="breadcrumb-item active" aria-current="page">Yêu thích</li>
+            </ol>
+        </nav>
         <div class="d-flex justify-content-between align-items-center mb-4">
             <div>
                 <h2 class="fw-bold mb-1"><i class='bx bx-heart text-danger'></i> Danh sách yêu thích</h2>

@@ -21,6 +21,9 @@
     
     <style>
         body { background-color: #f8f9fa; font-family: 'Segoe UI', sans-serif; }
+        .cart-hero { background: linear-gradient(135deg, #0b1a33, #1d4f7a); color: #fff; border-radius: 20px; padding: 26px 28px; margin-bottom: 24px; box-shadow: 0 16px 30px rgba(11,26,51,.14); }
+        .cart-hero p { margin: 8px 0 0; opacity: .82; }
+        .cart-tip { background: #eef6ff; border: 1px solid #cfe2ff; border-radius: 14px; padding: 14px 16px; color: #1e3a5f; font-size: .95rem; margin-bottom: 18px; }
         .cart-title { color: #10314d; font-weight: 700; text-transform: uppercase; font-size: 1.8rem; margin-bottom: 30px; border-bottom: 2px solid #e0e0e0; padding-bottom: 15px; }
         .table-cart { background: white; border-radius: 10px; box-shadow: 0 5px 20px rgba(0,0,0,0.05); overflow: hidden; width: 100%; border-collapse: separate; border-spacing: 0; }
         .table-cart thead { background-color: #10314d; color: white; }
@@ -56,7 +59,20 @@
     <jsp:include page="/components/toast.jsp" />
 
     <div class="container mt-5 mb-5" style="min-height: 600px;">
-        <h2 class="cart-title"><i class='bx bx-cart-alt'></i> Giỏ Hàng Của Bạn</h2>
+        <div class="cart-hero">
+            <div class="d-flex justify-content-between align-items-center flex-wrap gap-3">
+                <div>
+                    <h2 class="mb-1"><i class='bx bx-cart-alt'></i> Giỏ hàng của bạn</h2>
+                    <p>Kiểm tra lại số lượng, tồn kho và tổng tiền trước khi chuyển sang bước thanh toán.</p>
+                </div>
+                <a href="${pageContext.request.contextPath}/shop" class="btn btn-light fw-semibold">
+                    <i class='bx bx-store'></i> Tiếp tục mua sắm
+                </a>
+            </div>
+        </div>
+        <div class="cart-tip">
+            <i class='bx bx-info-circle'></i> Giá và tồn kho được đồng bộ theo dữ liệu mới nhất để tránh đặt vượt số lượng còn lại.
+        </div>
 
         <%-- Hiển thị thông báo nếu chưa đăng nhập --%>
         <c:if test="${empty sessionScope.user}">
@@ -107,7 +123,7 @@
                                                     <p class="fw-bold mb-0">${item.product.name}</p>
                                                     <small class="text-muted">ID: ${item.product.id}</small>
                                                     <c:if test="${item.product.stock > 0 and item.product.stock < 10}">
-                                                        <div><small class="text-warning fw-semibold">Con lai: ${item.product.stock} san pham</small></div>
+                                                        <div><small class="text-warning fw-semibold">Còn lại: ${item.product.stock} sản phẩm</small></div>
                                                     </c:if>
                                                 </div>
                                             </div>
@@ -368,7 +384,7 @@
                     }
                 })
                 .catch(error => {
-                    console.error('Khong dong bo duoc trang gio hang:', error);
+                    console.error('Không đồng bộ được trạng thái giỏ hàng:', error);
                 });
         }
 
