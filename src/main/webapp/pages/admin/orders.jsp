@@ -9,21 +9,24 @@
     <jsp:include page="/components/head.jsp" />
     <jsp:include page="/components/admin-styles.jsp" />
     <style>
-        .status-badge {
-            padding: 6px 12px;
-            border-radius: 20px;
-            font-size: 0.85rem;
-            font-weight: 600;
-        }
+        .status-badge { padding: 6px 12px; border-radius: 20px; font-size: 0.85rem; font-weight: 600; }
         .status-pending { background: #fef3c7; color: #92400e; }
         .status-confirmed { background: #e0f2fe; color: #075985; }
         .status-shipping { background: #f3e8ff; color: #6b21a8; }
         .status-completed { background: #dcfce7; color: #166534; }
         .status-cancelled { background: #fee2e2; color: #991b1b; }
-        
         .order-id { font-family: monospace; font-weight: bold; color: #3b82f6; }
         .customer-info p { margin-bottom: 2px; font-size: 0.9rem; }
         .total-amount { font-weight: 700; color: #1e293b; }
+        .toolbar-wrap { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; margin-bottom: 20px; }
+        .filter-chip {
+            display: inline-flex; align-items: center; gap: 6px; padding: 8px 14px; border-radius: 999px;
+            border: 1px solid #dbe3ef; background: #fff; color: #475569; text-decoration: none; font-weight: 600;
+        }
+        .filter-chip.active { background: #eff6ff; color: #2563eb; border-color: #bfdbfe; }
+        .search-form { display: flex; gap: 10px; flex-wrap: wrap; }
+        .search-form input { min-width: 280px; }
+        .table-subtitle { color: #64748b; font-size: 0.9rem; }
     </style>
 </head>
 <body>
@@ -39,8 +42,29 @@
         </div>
 
         <div class="table-section mt-4">
-            <div class="table-header">
-                <span class="table-title">Danh sách đơn hàng mới nhất</span>
+            <div class="table-header d-block">
+                <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
+                    <div>
+                        <span class="table-title">Danh sách đơn hàng</span>
+                        <div class="table-subtitle">Hiển thị ${orders.size()} / ${totalOrders} đơn hàng</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="toolbar-wrap px-4 pt-3">
+                <div class="d-flex flex-wrap gap-2">
+                    <a class="filter-chip ${empty selectedStatus || selectedStatus == 'all' ? 'active' : ''}" href="${pageContext.request.contextPath}/admin/orders?status=all&keyword=${keyword}">Tất cả</a>
+                    <a class="filter-chip ${selectedStatus == 'Pending' ? 'active' : ''}" href="${pageContext.request.contextPath}/admin/orders?status=Pending&keyword=${keyword}">Chờ xử lý</a>
+                    <a class="filter-chip ${selectedStatus == 'Confirmed' ? 'active' : ''}" href="${pageContext.request.contextPath}/admin/orders?status=Confirmed&keyword=${keyword}">Đã xác nhận</a>
+                    <a class="filter-chip ${selectedStatus == 'Shipping' ? 'active' : ''}" href="${pageContext.request.contextPath}/admin/orders?status=Shipping&keyword=${keyword}">Đang giao</a>
+                    <a class="filter-chip ${selectedStatus == 'Completed' ? 'active' : ''}" href="${pageContext.request.contextPath}/admin/orders?status=Completed&keyword=${keyword}">Hoàn thành</a>
+                    <a class="filter-chip ${selectedStatus == 'Cancelled' ? 'active' : ''}" href="${pageContext.request.contextPath}/admin/orders?status=Cancelled&keyword=${keyword}">Đã hủy</a>
+                </div>
+                <form action="${pageContext.request.contextPath}/admin/orders" method="get" class="search-form">
+                    <input type="hidden" name="status" value="${empty selectedStatus ? 'all' : selectedStatus}">
+                    <input type="text" class="form-control" name="keyword" value="${keyword}" placeholder="Tìm theo mã đơn, tên khách, số điện thoại...">
+                    <button class="btn btn-primary" type="submit"><i class='bx bx-search'></i> Tìm</button>
+                </form>
             </div>
 
             <table class="data-table">
@@ -48,7 +72,8 @@
                     <tr>
                         <th style="width: 80px;">Mã ĐH</th>
                         <th>Khách hàng</th>
-                        <th>Địa chỉ giao hàng</th>
+                        <th style="width: 110px;">Sản phẩm</th>
+                        <th>Thanh toán</th>
                         <th style="width: 130px;">Tổng tiền</th>
                         <th style="width: 150px;">Ngày đặt</th>
                         <th style="width: 140px;">Trạng thái</th>
@@ -58,7 +83,7 @@
                 <tbody>
                     <c:if test="${empty orders}">
                         <tr>
-                            <td colspan="7" class="text-center py-5">Chưa có đơn hàng nào.</td>
+                            <td colspan="8" class="text-center py-5">Không có đơn hàng phù hợp.</td>
                         </tr>
                     </c:if>
                     <c:forEach items="${orders}" var="o">
@@ -67,23 +92,17 @@
                             <td class="customer-info">
                                 <p><strong>${o.fullname}</strong></p>
                                 <p class="text-muted"><i class='bx bx-phone'></i> ${o.phone}</p>
+                                <p class="text-muted small">${o.address}</p>
                             </td>
+                            <td><span class="badge bg-light text-dark">${o.itemCount} SP</span></td>
                             <td>
-                                <p class="small mb-0">${o.address}</p>
-                                <c:if test="${not empty o.note}">
-                                    <small class="text-danger italic">Ghi chú: ${o.note}</small>
-                                </c:if>
+                                <div>${o.paymentMethodLabel}</div>
+                                <small class="text-muted">${o.paymentStatusLabel}</small>
                             </td>
                             <td><span class="total-amount">${o.formattedTotalAmount}</span></td>
                             <td><fmt:formatDate value="${o.createdAt}" pattern="dd/MM/yyyy HH:mm"/></td>
                             <td>
-                                <c:choose>
-                                    <c:when test="${o.status == 'Pending'}"><span class="status-badge status-pending">Chờ xử lý</span></c:when>
-                                    <c:when test="${o.status == 'Confirmed'}"><span class="status-badge status-confirmed">Đã xác nhận</span></c:when>
-                                    <c:when test="${o.status == 'Shipping'}"><span class="status-badge status-shipping">Đang giao</span></c:when>
-                                    <c:when test="${o.status == 'Completed'}"><span class="status-badge status-completed">Hoàn thành</span></c:when>
-                                    <c:when test="${o.status == 'Cancelled'}"><span class="status-badge status-cancelled">Đã hủy</span></c:when>
-                                </c:choose>
+                                <span class="status-badge ${o.statusCssClass}">${o.statusLabel}</span>
                             </td>
                             <td>
                                 <div class="table-actions">
@@ -102,7 +121,6 @@
         </div>
     </main>
 
-    <!-- Update Status Modal -->
     <div class="modal-overlay" id="updateStatusModal">
         <div class="modal-box" style="max-width: 400px;">
             <div class="modal-header">

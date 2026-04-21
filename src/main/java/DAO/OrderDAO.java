@@ -13,19 +13,20 @@ import Model.Product;
 
 public class OrderDAO {
 
-    private void populatePaymentFields(Order order, ResultSet rs) {
-        try {
-            order.setPaymentToken(rs.getString("payment_token"));
-        } catch (Exception ignored) {
-        }
-        try {
-            order.setPaymentProviderTransactionId(rs.getString("payment_provider_transaction_id"));
-        } catch (Exception ignored) {
-        }
-        try {
-            order.setPaymentMessage(rs.getString("payment_message"));
-        } catch (Exception ignored) {
-        }
+    private Order mapOrder(ResultSet rs) throws Exception {
+        return new Order(
+                rs.getInt("id"),
+                rs.getInt("user_id"),
+                rs.getString("fullname"),
+                rs.getString("phone"),
+                rs.getString("address"),
+                rs.getString("note"),
+                rs.getDouble("total_amount"),
+                rs.getString("status"),
+                rs.getTimestamp("createdAt"),
+                rs.getString("payment_method"),
+                rs.getBoolean("payment_status")
+        );
     }
 
     public int saveOrder(Order order) {
@@ -91,20 +92,9 @@ public class OrderDAO {
              PreparedStatement ps = conn.prepareStatement(query);
              ResultSet rs = ps.executeQuery()) {
             while (rs.next()) {
-                list.add(new Order(
-                    rs.getInt("id"),
-                    rs.getInt("user_id"),
-                    rs.getString("fullname"),
-                    rs.getString("phone"),
-                    rs.getString("address"),
-                    rs.getString("note"),
-                    rs.getDouble("total_amount"),
-                    rs.getString("status"),
-                    rs.getTimestamp("createdAt"),
-                        rs.getString("payment_method"),
-                        rs.getBoolean("payment_status")
-                ));
-                populatePaymentFields(list.get(list.size() - 1), rs);
+                Order order = mapOrder(rs);
+                order.setItems(getOrderItems(conn, order.getId()));
+                list.add(order);
             }
         } catch (Exception e) {
             e.printStackTrace();
@@ -127,20 +117,8 @@ public class OrderDAO {
             ps.setInt(1, orderId);
             try (ResultSet rs = ps.executeQuery()) {
                 if (rs.next()) {
-                    Order order = new Order(
-                        rs.getInt("id"),
-                        rs.getInt("user_id"),
-                        rs.getString("fullname"),
-                        rs.getString("phone"),
-                        rs.getString("address"),
-                        rs.getString("note"),
-                        rs.getDouble("total_amount"),
-                        rs.getString("status"),
-                        rs.getTimestamp("createdAt"),
-                            rs.getString("payment_method"),
-                            rs.getBoolean("payment_status")
-                    );
-                    populatePaymentFields(order, rs);
+                    Order order = mapOrder(rs);
+                    order.setItems(getOrderItems(conn, orderId));
                     return order;
                 }
             }
@@ -343,20 +321,8 @@ public class OrderDAO {
             ps.setInt(1, userId);
             try (ResultSet rs = ps.executeQuery()) {
                 while (rs.next()) {
-                    Order order = new Order(
-                        rs.getInt("id"),
-                        rs.getInt("user_id"),
-                        rs.getString("fullname"),
-                        rs.getString("phone"),
-                        rs.getString("address"),
-                        rs.getString("note"),
-                        rs.getDouble("total_amount"),
-                        rs.getString("status"),
-                        rs.getTimestamp("createdAt"),
-                        rs.getString("payment_method"),
-                        rs.getBoolean("payment_status")
-                    );
-                    populatePaymentFields(order, rs);
+                    Order order = mapOrder(rs);
+                    order.setItems(getOrderItems(conn, order.getId()));
                     list.add(order);
                 }
             }
@@ -364,6 +330,28 @@ public class OrderDAO {
             e.printStackTrace();
         }
         return list;
+    }
+
+    public boolean cancelOrderByUser(int orderId, int userId) {
+        String query = "SELECT status FROM orders WHERE id = ? AND user_id = ?";
+        try (Connection conn = DBContext.getConnection();
+             PreparedStatement ps = conn.prepareStatement(query)) {
+            ps.setInt(1, orderId);
+            ps.setInt(2, userId);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (!rs.next()) {
+                    return false;
+                }
+                String status = rs.getString("status");
+                if (!"Pending".equalsIgnoreCase(status) && !"Confirmed".equalsIgnoreCase(status)) {
+                    return false;
+                }
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+            return false;
+        }
+        return updateStatus(orderId, "Cancelled");
     }
 
     public double getTodayRevenue() {

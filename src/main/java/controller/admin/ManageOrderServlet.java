@@ -1,6 +1,7 @@
 package controller.admin;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
@@ -18,6 +19,8 @@ public class ManageOrderServlet extends HttpServlet {
     protected void doGet(HttpServletRequest request, HttpServletResponse response) 
             throws ServletException, IOException {
         String action = request.getParameter("action");
+        String status = request.getParameter("status");
+        String keyword = request.getParameter("keyword");
         OrderDAO dao = new OrderDAO();
         
         if ("view".equals(action)) {
@@ -28,8 +31,12 @@ public class ManageOrderServlet extends HttpServlet {
             return;
         }
 
-        List<Order> list = dao.getAllOrders();
+        List<Order> allOrders = dao.getAllOrders();
+        List<Order> list = filterOrders(allOrders, status, keyword);
         request.setAttribute("orders", list);
+        request.setAttribute("totalOrders", allOrders.size());
+        request.setAttribute("selectedStatus", status);
+        request.setAttribute("keyword", keyword);
         request.getRequestDispatcher("/pages/admin/orders.jsp").forward(request, response);
     }
 
@@ -51,5 +58,25 @@ public class ManageOrderServlet extends HttpServlet {
             }
         }
         response.sendRedirect(request.getContextPath() + "/admin/orders");
+    }
+
+    private List<Order> filterOrders(List<Order> orders, String statusFilter, String keyword) {
+        List<Order> filtered = new ArrayList<>();
+        String normalizedStatus = statusFilter == null ? "" : statusFilter.trim();
+        String normalizedKeyword = keyword == null ? "" : keyword.trim().toLowerCase();
+
+        for (Order order : orders) {
+            boolean matchesStatus = normalizedStatus.isEmpty() || "all".equalsIgnoreCase(normalizedStatus)
+                    || order.getStatus().equalsIgnoreCase(normalizedStatus);
+            boolean matchesKeyword = normalizedKeyword.isEmpty()
+                    || String.valueOf(order.getId()).contains(normalizedKeyword)
+                    || (order.getFullname() != null && order.getFullname().toLowerCase().contains(normalizedKeyword))
+                    || (order.getPhone() != null && order.getPhone().toLowerCase().contains(normalizedKeyword))
+                    || (order.getAddress() != null && order.getAddress().toLowerCase().contains(normalizedKeyword));
+            if (matchesStatus && matchesKeyword) {
+                filtered.add(order);
+            }
+        }
+        return filtered;
     }
 }

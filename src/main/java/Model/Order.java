@@ -85,35 +85,107 @@ public class Order {
         this.payment_status = payment_status;
     }
 
-    public String getPaymentToken() {
-        return paymentToken;
-    }
-
-    public void setPaymentToken(String paymentToken) {
-        this.paymentToken = paymentToken;
-    }
-
-    public String getPaymentProviderTransactionId() {
-        return paymentProviderTransactionId;
-    }
-
-    public void setPaymentProviderTransactionId(String paymentProviderTransactionId) {
-        this.paymentProviderTransactionId = paymentProviderTransactionId;
-    }
-
-    public String getPaymentMessage() {
-        return paymentMessage;
-    }
-
-    public void setPaymentMessage(String paymentMessage) {
-        this.paymentMessage = paymentMessage;
-    }
-
     public List<OrderItem> getItems() {
         return items;
     }
 
     public void setItems(List<OrderItem> items) {
         this.items = items;
+    }
+
+    public String getStatusLabel() {
+        if (status == null) {
+            return "Không xác định";
+        }
+        switch (status) {
+            case "Pending":
+                return "Chờ xử lý";
+            case "Confirmed":
+                return "Đã xác nhận";
+            case "Shipping":
+                return "Đang giao";
+            case "Completed":
+                return "Hoàn thành";
+            case "Cancelled":
+                return "Đã hủy";
+            default:
+                return status;
+        }
+    }
+
+    public String getStatusDescription() {
+        if (status == null) {
+            return "Đơn hàng chưa có trạng thái.";
+        }
+        switch (status) {
+            case "Pending":
+                return "Đơn hàng đang chờ cửa hàng xác nhận.";
+            case "Confirmed":
+                return "Đơn hàng đã được xác nhận và đang chuẩn bị.";
+            case "Shipping":
+                return "Đơn hàng đang trên đường giao đến bạn.";
+            case "Completed":
+                return "Đơn hàng đã được giao thành công.";
+            case "Cancelled":
+                return "Đơn hàng đã bị hủy.";
+            default:
+                return status;
+        }
+    }
+
+    public String getStatusCssClass() {
+        if (status == null) {
+            return "status-pending";
+        }
+        switch (status) {
+            case "Pending":
+                return "status-pending";
+            case "Confirmed":
+                return "status-confirmed";
+            case "Shipping":
+                return "status-shipping";
+            case "Completed":
+                return "status-completed";
+            case "Cancelled":
+                return "status-cancelled";
+            default:
+                return "status-pending";
+        }
+    }
+
+    public boolean isCancelableByUser() {
+        return "Pending".equalsIgnoreCase(status) || "Confirmed".equalsIgnoreCase(status);
+    }
+
+    public int getItemCount() {
+        if (items == null) {
+            return 0;
+        }
+        int count = 0;
+        for (OrderItem item : items) {
+            count += item.getQuantity();
+        }
+        return count;
+    }
+
+    public String getPaymentMethodLabel() {
+        if (payment_method == null || payment_method.isBlank()) {
+            return "Chưa xác định";
+        }
+        switch (payment_method.toLowerCase()) {
+            case "cod":
+                return "Thanh toán khi nhận hàng";
+            case "momo":
+                return "Ví MoMo";
+            case "bank":
+            case "bank_transfer":
+                return "Chuyển khoản ngân hàng";
+            default:
+                return payment_method;
+        }
+    }
+
+    public String getPaymentStatusLabel() {
+        return payment_status ? "Đã thanh toán" : "Chưa thanh toán";
     }
 }

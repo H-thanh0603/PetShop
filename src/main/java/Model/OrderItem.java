@@ -33,6 +33,15 @@ public class OrderItem {
     public double getPrice() { return price; }
     public void setPrice(double price) { this.price = price; }
 
-    public Product getProduct() { return product; }
-    public void setProduct(Product product) { this.product = product; }
+    public Product getProduct() {
+        return product;
+    }
+
+    public void setProduct(Product product) {
+        this.product = product;
+    }
+
+    public double getSubtotal() {
+        return price * quantity;
+    }
 }
