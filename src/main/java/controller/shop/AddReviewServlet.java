@@ -10,7 +10,8 @@ import jakarta.servlet.http.HttpSession;
 
 import DAO.ReviewDAO;
 import Model.Review;
-import Model.User; // Import Model User của bạn
+import Model.User;
+import Util.ValidationUtil;
 
 @WebServlet("/add-review")
 public class AddReviewServlet extends HttpServlet {
@@ -36,6 +37,16 @@ public class AddReviewServlet extends HttpServlet {
             String comment = request.getParameter("comment");
             if (comment != null) {
                 comment = comment.trim();
+            }
+            
+            // Sanitize: strip HTML tags
+            comment = ValidationUtil.stripHtmlTags(comment);
+            
+            // Validate max length
+            if (!ValidationUtil.validateMaxLength(comment, 1000)) {
+                session.setAttribute("error", "Nội dung đánh giá không được vượt quá 1000 ký tự.");
+                response.sendRedirect(request.getContextPath() + "/product-detail?id=" + productId);
+                return;
             }
 
             ReviewDAO dao = new ReviewDAO();

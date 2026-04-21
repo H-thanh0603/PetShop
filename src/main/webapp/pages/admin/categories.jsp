@@ -71,6 +71,7 @@
                 <button class="modal-close" onclick="document.getElementById('renameModal').classList.remove('show')"><i class='bx bx-x'></i></button>
             </div>
             <form method="post">
+                <input type="hidden" name="csrfToken" value="${csrfToken}" />
                 <input type="hidden" name="action" value="rename">
                 <input type="hidden" name="oldName" id="renameOldName">
                 <div class="modal-body">
@@ -100,6 +101,7 @@
                 <button class="modal-close" onclick="document.getElementById('assignModal').classList.remove('show')"><i class='bx bx-x'></i></button>
             </div>
             <form method="post">
+                <input type="hidden" name="csrfToken" value="${csrfToken}" />
                 <input type="hidden" name="action" value="assign-pet-type">
                 <input type="hidden" name="category" id="assignCategory">
                 <div class="modal-body">

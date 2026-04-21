@@ -11,6 +11,7 @@ import jakarta.servlet.http.HttpSession;
 import DAO.UserDAO;
 import Util.FormHelper;
 import Util.OTPUtil;
+import Util.ValidationUtil;
 
 @WebServlet("/register")
 public class RegisterServlet extends HttpServlet {
@@ -122,7 +123,10 @@ public class RegisterServlet extends HttpServlet {
             valid = false;
         } else {
             fullname = fullname.trim();
-            if (!fullname.matches("^[\\p{L}\\s]+$") || fullname.replaceAll("\\s", "").isEmpty()) {
+            if (!ValidationUtil.validateMaxLength(fullname, 200)) {
+                form.addError("fullName", "Họ tên không được vượt quá 200 ký tự");
+                valid = false;
+            } else if (!fullname.matches("^[\\p{L}\\s]+$") || fullname.replaceAll("\\s", "").isEmpty()) {
                 form.addError("fullName", "Họ tên chỉ được chứa chữ cái và khoảng trắng");
                 valid = false;
             } else if (fullname.length() < 2) {

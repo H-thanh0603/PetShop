@@ -3,7 +3,6 @@ package controller.admin;
 import java.io.File;
 import java.io.IOException;
 import java.util.List;
-import java.util.UUID;
 
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.MultipartConfig;
@@ -19,6 +18,7 @@ import DAO.PetTypeDAO;
 import Model.Product;
 import Model.PetType;
 import Util.ValidationUtil;
+import Util.FileUploadValidator;
 
 @WebServlet("/pages/admin/products")
 @MultipartConfig(
@@ -171,31 +171,27 @@ public class ProductServlet extends HttpServlet {
             
             Part filePart = request.getPart("imageFile");
             if (filePart != null && filePart.getSize() > 0) {
-                String fileName = getSubmittedFileName(filePart);
-                if (fileName != null && !fileName.isEmpty()) {
-                    // Validate file type
-                    String contentType = filePart.getContentType();
-                    if (!isValidImageType(contentType)) {
-                        message = "Chỉ chấp nhận file ảnh (JPG, PNG, GIF, WebP)!";
-                        messageType = "error";
-                        session.setAttribute("message", message);
-                        session.setAttribute("messageType", messageType);
-                        response.sendRedirect(request.getContextPath() + "/pages/admin/products");
-                        return;
-                    }
-                    
-                    // Generate unique filename
-                    String extension = getFileExtension(fileName);
-                    imageName = "product_" + UUID.randomUUID().toString().substring(0, 8) + "_" + System.currentTimeMillis() + extension;
-                    
-                    // Lưu ảnh vào webapp/assets/images/shop_pic (cùng nơi với FileUploadServlet)
-                    String uploadPath = getServletContext().getRealPath("") + File.separator + "assets" + File.separator + "images" + File.separator + "shop_pic";
-                    File uploadDir = new File(uploadPath);
-                    if (!uploadDir.exists()) uploadDir.mkdirs();
-                    
-                    String filePath = uploadPath + File.separator + imageName;
-                    filePart.write(filePath);
+                // Validate file using FileUploadValidator
+                FileUploadValidator.ValidationResult validationResult = FileUploadValidator.validate(filePart);
+                if (!validationResult.isValid()) {
+                    message = validationResult.getErrorMessage();
+                    messageType = "error";
+                    session.setAttribute("message", message);
+                    session.setAttribute("messageType", messageType);
+                    response.sendRedirect(request.getContextPath() + "/pages/admin/products");
+                    return;
                 }
+                
+                // Use secure filename from validator
+                imageName = validationResult.getSecureFileName();
+                
+                // Lưu ảnh vào webapp/assets/images/shop_pic
+                String uploadPath = getServletContext().getRealPath("") + File.separator + "assets" + File.separator + "images" + File.separator + "shop_pic";
+                File uploadDir = new File(uploadPath);
+                if (!uploadDir.exists()) uploadDir.mkdirs();
+                
+                String filePath = uploadPath + File.separator + imageName;
+                filePart.write(filePath);
             }
             
             // === BUSINESS LOGIC ===
@@ -260,24 +256,5 @@ public class ProductServlet extends HttpServlet {
             }
         }
         return null;
-    }
-    
-    // Kiểm tra loại file ảnh hợp lệ
-    private boolean isValidImageType(String contentType) {
-        return contentType != null && (
-            contentType.equals("image/jpeg") ||
-            contentType.equals("image/png") ||
-            contentType.equals("image/gif") ||
-            contentType.equals("image/webp")
-        );
-    }
-    
-    // Lấy extension của file
-    private String getFileExtension(String fileName) {
-        int lastDot = fileName.lastIndexOf('.');
-        if (lastDot > 0) {
-            return fileName.substring(lastDot).toLowerCase();
-        }
-        return ".jpg";
     }
 }

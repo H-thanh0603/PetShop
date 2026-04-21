@@ -200,6 +200,7 @@
                     <i class='bx bx-x'></i> Hủy bỏ
                 </button>
                 <form method="post" style="display: inline;">
+                    <input type="hidden" name="csrfToken" value="${csrfToken}" />
                     <input type="hidden" name="action" value="delete">
                     <input type="hidden" name="reviewId" id="deleteReviewId">
                     <button type="submit" class="btn btn-danger">

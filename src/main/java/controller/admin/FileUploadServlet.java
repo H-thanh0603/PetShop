@@ -13,6 +13,7 @@ import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.Part;
 
 import Util.FileUploadUtil;
+import Util.FileUploadValidator;
 
 /**
  * Servlet upload file sử dụng Servlet 3.0 API (@MultipartConfig)
@@ -52,15 +53,10 @@ public class FileUploadServlet extends HttpServlet {
             // Lấy file từ request
             Part filePart = request.getPart("file");
             
-            // Kiểm tra file có tồn tại không
-            if (filePart == null || filePart.getSize() == 0) {
-                out.print("{\"success\": false, \"message\": \"Vui lòng chọn file để upload\"}");
-                return;
-            }
-            
-            // Kiểm tra định dạng file
-            if (!FileUploadUtil.isValidImage(filePart)) {
-                out.print("{\"success\": false, \"message\": \"Chỉ chấp nhận file ảnh (JPG, PNG, GIF, WebP)\"}");
+            // Validate file using FileUploadValidator
+            FileUploadValidator.ValidationResult validationResult = FileUploadValidator.validate(filePart);
+            if (!validationResult.isValid()) {
+                out.print("{\"success\": false, \"message\": \"" + validationResult.getErrorMessage() + "\"}");
                 return;
             }
             
@@ -82,8 +78,15 @@ public class FileUploadServlet extends HttpServlet {
             // Lấy đường dẫn thư mục upload (absolute path)
             String uploadDir = getServletContext().getRealPath("") + File.separator + uploadFolder;
             
-            // Lưu file
-            String fileName = FileUploadUtil.saveFile(filePart, uploadDir, null);
+            // Use secure filename from validator
+            String fileName = validationResult.getSecureFileName();
+            
+            // Ensure upload directory exists
+            File dir = new File(uploadDir);
+            if (!dir.exists()) dir.mkdirs();
+            
+            // Write file
+            filePart.write(uploadDir + File.separator + fileName);
             
             if (fileName != null) {
                 // Trả về JSON thành công

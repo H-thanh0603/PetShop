@@ -34,6 +34,9 @@ public class ShopServlet extends HttpServlet {
         // Lấy params
         String category = request.getParameter("category");
         String search = request.getParameter("search");
+        if (search != null) {
+            search = search.substring(0, Math.min(search.length(), 100));
+        }
         String sort = request.getParameter("sort");
         String priceRange = request.getParameter("priceRange");
         String discountOnly = request.getParameter("discountOnly");

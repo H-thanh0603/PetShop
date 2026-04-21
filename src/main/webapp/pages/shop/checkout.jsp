@@ -615,6 +615,7 @@
                           style="display:none;"
                           onsubmit="return validateEditAddressForm();">
 
+                        <input type="hidden" name="csrfToken" value="${csrfToken}" />
                         <input type="hidden" name="_method" value="put">
                         <input type="hidden" id="editAddressId" name="id">
                         <span>
@@ -672,6 +673,7 @@
                           method="post"
                           action="${pageContext.request.contextPath}/addresses"
                           style="display:none;">
+                        <input type="hidden" name="csrfToken" value="${csrfToken}" />
                         <input type="hidden" name="_method" value="delete">
                         <input type="hidden" id="deleteAddressId" name="id">
                     </form>
@@ -727,6 +729,7 @@
                           action="${pageContext.request.contextPath}/addresses"
                           style="display:none;"
                           onsubmit="return validateAddressForm();">
+                        <input type="hidden" name="csrfToken" value="${csrfToken}" />
                         <span>
                         <strong>Thêm Địa Chỉ</strong>
                         </span>
@@ -790,6 +793,7 @@
 
                 <label>🎟 Mã giảm giá</label>
                 <form action="${pageContext.request.contextPath}/checkout" method="post" id="couponForm">
+                    <input type="hidden" name="csrfToken" value="${csrfToken}" />
                     <input type="hidden" name="action" value="applyCoupon">
                     <input type="hidden" name="note" id="couponNoteHidden">
                     <input type="hidden" name="paymentMethod" id="couponPaymentMethodHidden" value="${checkoutPaymentMethod}">
@@ -1012,10 +1016,11 @@
 
         paymentResult.innerHTML = `<div class="alert alert-info">Đang xử lý đơn hàng...</div>`;
 
-            const formData = new URLSearchParams();
-            formData.append("action", "placeOrder");
-            formData.append("paymentMethod", selectedPayment);
-            formData.append("note", note);
+        const bodyData =
+        "action=placeOrder" +
+        "&csrfToken=" + encodeURIComponent("${csrfToken}") +
+        "&paymentMethod=" + encodeURIComponent(selectedPayment) +
+        "&note=" + encodeURIComponent(note);
 
             try {
                 const response = await fetch("<%= request.getContextPath() %>/checkout", {
@@ -1567,6 +1572,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
             <form action="${pageContext.request.contextPath}/update-profile-checkout" method="post"
                   onsubmit="return validateForm()">
+                <input type="hidden" name="csrfToken" value="${csrfToken}" />
 
                 <div class="modal-header">
                     <h5>Cập nhật thông tin nhận hàng</h5>

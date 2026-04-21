@@ -86,6 +86,7 @@
         </c:if>
         
         <form method="post" action="${pageContext.request.contextPath}/forgot-password">
+            <input type="hidden" name="csrfToken" value="${csrfToken}" />
             <div class="mb-4">
                 <label class="form-label fw-bold">Email</label>
                 <div class="input-group">

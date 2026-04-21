@@ -143,6 +143,7 @@
         <jsp:include page="/components/alerts.jsp" />
         
         <form method="post" action="${pageContext.request.contextPath}/register" id="registerForm" novalidate>
+            <input type="hidden" name="csrfToken" value="${csrfToken}" />
             <!-- A. Họ và tên -->
             <div class="mb-3">
                 <label class="form-label fw-bold">Họ và tên <span class="text-danger">*</span></label>
