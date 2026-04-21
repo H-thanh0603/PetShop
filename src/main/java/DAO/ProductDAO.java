@@ -280,11 +280,46 @@ public class ProductDAO {
         return false;
     }
 
+    public boolean addProduct(String name, String image, double price, int discount, String description, int stock, int weight, String category, int petTypeId) {
+        String query = "INSERT INTO products (name, image, price, discount, description, stock, weight, category, pet_type_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
+        try (Connection conn = DBContext.getConnection(); PreparedStatement ps = conn.prepareStatement(query)) {
+            ps.setString(1, name);
+            ps.setString(2, image);
+            ps.setDouble(3, price);
+            ps.setInt(4, discount);
+            ps.setString(5, description);
+            ps.setInt(6, stock);
+            ps.setInt(7, weight);
+            ps.setString(8, category);
+            ps.setInt(9, petTypeId);
+            return ps.executeUpdate() > 0;
+        } catch (Exception e) { e.printStackTrace(); }
+        return false;
+    }
+
     public boolean updateProduct(int id, String name, String image, double price, int discount, String description) {
         String query = "UPDATE products SET name = ?, image = ?, price = ?, discount = ?, description = ? WHERE id = ?";
         try (Connection conn = DBContext.getConnection(); PreparedStatement ps = conn.prepareStatement(query)) {
             ps.setString(1, name); ps.setString(2, image); ps.setDouble(3, price);
             ps.setInt(4, discount); ps.setString(5, description); ps.setInt(6, id);
+            return ps.executeUpdate() > 0;
+        } catch (Exception e) { e.printStackTrace(); }
+        return false;
+    }
+
+    public boolean updateProduct(int id, String name, String image, double price, int discount, String description, int stock, int weight, String category, int petTypeId) {
+        String query = "UPDATE products SET name=?, image=?, price=?, discount=?, description=?, stock=?, weight=?, category=?, pet_type_id=? WHERE id=?";
+        try (Connection conn = DBContext.getConnection(); PreparedStatement ps = conn.prepareStatement(query)) {
+            ps.setString(1, name);
+            ps.setString(2, image);
+            ps.setDouble(3, price);
+            ps.setInt(4, discount);
+            ps.setString(5, description);
+            ps.setInt(6, stock);
+            ps.setInt(7, weight);
+            ps.setString(8, category);
+            ps.setInt(9, petTypeId);
+            ps.setInt(10, id);
             return ps.executeUpdate() > 0;
         } catch (Exception e) { e.printStackTrace(); }
         return false;

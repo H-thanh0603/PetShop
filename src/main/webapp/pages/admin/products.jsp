@@ -262,13 +262,15 @@
                         <th style="width: 200px;">Mô tả</th>
                         <th style="width: 130px;">Giá bán</th>
                         <th style="width: 90px;">Giảm giá</th>
+                        <th style="width: 90px;">Tồn kho</th>
+                        <th style="width: 120px;">Danh mục</th>
                         <th style="width: 110px;">Thao tác</th>
                     </tr>
                 </thead>
                 <tbody id="productsBody">
                     <c:if test="${empty products}">
                         <tr>
-                            <td colspan="8">
+                            <td colspan="9">
                                 <div class="empty-state">
                                     <i class='bx bx-package'></i>
                                     <p>Chưa có sản phẩm nào</p>
@@ -278,7 +280,8 @@
                     </c:if>
                     <c:forEach items="${products}" var="p" varStatus="loop">
                         <tr data-id="${p.id}" data-name="${p.name}" data-image="${p.image}" 
-                            data-price="${p.price}" data-discount="${p.discount}" data-description="${p.description}">
+                            data-price="${p.price}" data-discount="${p.discount}" data-description="${p.description}"
+                            data-stock="${p.stock}" data-weight="${p.weight}" data-category="${p.category}" data-pet-type-id="${p.pet_type_id}">
                             <td><strong>${loop.index + 1}</strong></td>
                             <td>
                                 <img src="${pageContext.request.contextPath}/assets/images/shop_pic/${p.image}" 
@@ -306,6 +309,26 @@
                                     </c:when>
                                     <c:otherwise>
                                         <span class="no-discount">-</span>
+                                    </c:otherwise>
+                                </c:choose>
+                            </td>
+                            <td>
+                                <c:choose>
+                                    <c:when test="${p.stock == 0}">
+                                        <span style="display:inline-block;padding:4px 10px;background:#fee2e2;color:#dc2626;border-radius:12px;font-size:0.8rem;font-weight:600;">Hết hàng</span>
+                                    </c:when>
+                                    <c:otherwise>
+                                        ${p.stock}
+                                    </c:otherwise>
+                                </c:choose>
+                            </td>
+                            <td>
+                                <c:choose>
+                                    <c:when test="${not empty p.category}">
+                                        ${p.category}
+                                    </c:when>
+                                    <c:otherwise>
+                                        <span style="color: #94a3b8;">—</span>
                                     </c:otherwise>
                                 </c:choose>
                             </td>
@@ -394,6 +417,36 @@
                         <label class="form-label">Mô tả sản phẩm</label>
                         <textarea class="form-input" name="description" id="formDescription" rows="4"
                                   placeholder="Nhập mô tả chi tiết về sản phẩm..." style="resize: vertical;"></textarea>
+                    </div>
+                    
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label">Tồn kho</label>
+                            <input type="number" class="form-input" name="stock" id="formStock" 
+                                   placeholder="VD: 100" min="0" value="0" step="1">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Trọng lượng (gram)</label>
+                            <input type="number" class="form-input" name="weight" id="formWeight" 
+                                   placeholder="VD: 500" min="0" value="0" step="1">
+                        </div>
+                    </div>
+                    
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label">Danh mục</label>
+                            <input type="text" class="form-input" name="category" id="formCategory" 
+                                   placeholder="VD: Thức ăn, Phụ kiện...">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Loại thú cưng</label>
+                            <select class="form-input" name="petTypeId" id="formPetTypeId">
+                                <option value="0">-- Chọn loại thú cưng --</option>
+                                <c:forEach items="${petTypes}" var="pt">
+                                    <option value="${pt.id}">${pt.name}</option>
+                                </c:forEach>
+                            </select>
+                        </div>
                     </div>
                 </div>
                 
@@ -531,6 +584,10 @@
             document.getElementById('formPrice').value = '';
             document.getElementById('formDiscount').value = '0';
             document.getElementById('formDescription').value = '';
+            document.getElementById('formStock').value = '0';
+            document.getElementById('formWeight').value = '0';
+            document.getElementById('formCategory').value = '';
+            document.getElementById('formPetTypeId').value = '0';
             document.getElementById('pricePreview').textContent = '';
             resetImagePreview();
             document.getElementById('productModal').classList.add('show');
@@ -552,6 +609,12 @@
             document.getElementById('pricePreview').textContent = price > 0 ? '= ' + formatVND(price) + ' đ' : '';
             
             document.getElementById('formDiscount').value = row.dataset.discount || '0';
+            
+            // Populate new fields
+            document.getElementById('formStock').value = row.dataset.stock || '0';
+            document.getElementById('formWeight').value = row.dataset.weight || '0';
+            document.getElementById('formCategory').value = row.dataset.category || '';
+            document.getElementById('formPetTypeId').value = row.dataset.petTypeId || '0';
             
             // Show existing image
             var existingImage = row.dataset.image;
