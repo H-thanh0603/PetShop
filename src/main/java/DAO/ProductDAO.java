@@ -12,6 +12,10 @@ import Model.Product;
 
 public class ProductDAO {
 
+    private static final String PRODUCT_SELECT_WITH_REVIEWS =
+            "SELECT p.*, COALESCE(AVG(r.rating), 0) AS average_rating, COUNT(r.id) AS review_count " +
+            "FROM products p LEFT JOIN reviews r ON r.product_id = p.id ";
+
     private Product mapProduct(ResultSet rs) throws Exception {
         String desc = rs.getString("description");
         if (desc == null) desc = "";
@@ -50,8 +54,14 @@ public class ProductDAO {
         } catch (Exception ignored) {
         }
         try {
-            product.setBrand(rs.getString("brand"));
+            product.setAverageRating(rs.getDouble("average_rating"));
         } catch (Exception ignored) {
+            product.setAverageRating(0);
+        }
+        try {
+            product.setReviewCount(rs.getInt("review_count"));
+        } catch (Exception ignored) {
+            product.setReviewCount(0);
         }
 
         return product;
@@ -59,7 +69,7 @@ public class ProductDAO {
 
     public List<Product> getAllProducts() {
         List<Product> list = new ArrayList<>();
-        String query = "SELECT * FROM products";
+        String query = PRODUCT_SELECT_WITH_REVIEWS + "GROUP BY p.id ORDER BY p.id DESC";
         try (Connection conn = DBContext.getConnection();
              PreparedStatement ps = conn.prepareStatement(query);
              ResultSet rs = ps.executeQuery()) {
@@ -70,7 +80,11 @@ public class ProductDAO {
 
     public List<Product> getProductsByPetType(String petTypeCode) {
         List<Product> list = new ArrayList<>();
-        String query = "SELECT p.* FROM products p INNER JOIN pet_types pt ON p.pet_type_id = pt.id WHERE pt.code = ? AND pt.is_active = 1";
+        String query = "SELECT p.*, COALESCE(AVG(r.rating), 0) AS average_rating, COUNT(r.id) AS review_count " +
+                "FROM products p " +
+                "INNER JOIN pet_types pt ON p.pet_type_id = pt.id " +
+                "LEFT JOIN reviews r ON r.product_id = p.id " +
+                "WHERE pt.code = ? AND pt.is_active = 1 GROUP BY p.id ORDER BY p.id DESC";
         try (Connection conn = DBContext.getConnection(); PreparedStatement ps = conn.prepareStatement(query)) {
             ps.setString(1, petTypeCode); ResultSet rs = ps.executeQuery();
             while (rs.next()) { list.add(mapProduct(rs)); }
@@ -80,7 +94,7 @@ public class ProductDAO {
 
     public List<Product> getProductsByPetTypeFallback(String petTypeName) {
         List<Product> list = new ArrayList<>();
-        String query = "SELECT * FROM products WHERE category LIKE ?";
+        String query = PRODUCT_SELECT_WITH_REVIEWS + "WHERE p.category LIKE ? GROUP BY p.id ORDER BY p.id DESC";
         try (Connection conn = DBContext.getConnection(); PreparedStatement ps = conn.prepareStatement(query)) {
             ps.setString(1, "%" + petTypeName + "%"); ResultSet rs = ps.executeQuery();
             while (rs.next()) { list.add(mapProduct(rs)); }
@@ -119,7 +133,7 @@ public class ProductDAO {
 
     public List<Product> getProductsByCategory(String category) {
         List<Product> list = new ArrayList<>();
-        String query = "SELECT * FROM products WHERE category = ?";
+        String query = PRODUCT_SELECT_WITH_REVIEWS + "WHERE p.category = ? GROUP BY p.id ORDER BY p.id DESC";
         try (Connection conn = DBContext.getConnection(); PreparedStatement ps = conn.prepareStatement(query)) {
             ps.setString(1, category); ResultSet rs = ps.executeQuery();
             while (rs.next()) { list.add(mapProduct(rs)); }
@@ -129,7 +143,8 @@ public class ProductDAO {
 
     public List<Product> searchProducts(String keyword) {
         List<Product> list = new ArrayList<>();
-        String query = "SELECT * FROM products WHERE name LIKE ? OR description LIKE ?";
+        String query = PRODUCT_SELECT_WITH_REVIEWS +
+                "WHERE p.name LIKE ? OR p.description LIKE ? GROUP BY p.id ORDER BY p.name ASC";
         try (Connection conn = DBContext.getConnection(); PreparedStatement ps = conn.prepareStatement(query)) {
             String p = "%" + keyword + "%"; ps.setString(1, p); ps.setString(2, p);
             ResultSet rs = ps.executeQuery();
@@ -141,8 +156,10 @@ public class ProductDAO {
     public List<Product> searchProductsLimit(String keyword, int limit) {
         List<Product> list = new ArrayList<>();
         // ORDER BY: tên bắt đầu bằng keyword lên trước, sau đó mới đến chứa keyword ở giữa
-        String query = "SELECT * FROM products WHERE name LIKE ? OR description LIKE ? " +
-                       "ORDER BY CASE WHEN name LIKE ? THEN 0 ELSE 1 END, name ASC LIMIT ?";
+        String query = PRODUCT_SELECT_WITH_REVIEWS +
+                       "WHERE p.name LIKE ? OR p.description LIKE ? " +
+                       "GROUP BY p.id " +
+                       "ORDER BY CASE WHEN p.name LIKE ? THEN 0 ELSE 1 END, p.name ASC LIMIT ?";
         try (Connection conn = DBContext.getConnection(); PreparedStatement ps = conn.prepareStatement(query)) {
             String contains = "%" + keyword + "%";
             String startsWith = keyword + "%";
@@ -158,7 +175,7 @@ public class ProductDAO {
 
     public List<Product> getDiscountedProductsList() {
         List<Product> list = new ArrayList<>();
-        String query = "SELECT * FROM products WHERE discount > 0 ORDER BY discount DESC";
+        String query = PRODUCT_SELECT_WITH_REVIEWS + "WHERE p.discount > 0 GROUP BY p.id ORDER BY p.discount DESC, p.id DESC";
         try (Connection conn = DBContext.getConnection(); PreparedStatement ps = conn.prepareStatement(query); ResultSet rs = ps.executeQuery()) {
             while (rs.next()) { list.add(mapProduct(rs)); }
         } catch (Exception e) { e.printStackTrace(); }
@@ -167,7 +184,7 @@ public class ProductDAO {
 
     public List<Product> getDiscountedProductsPage(int page, int size) {
         List<Product> list = new ArrayList<>();
-        String query = "SELECT * FROM products WHERE discount > 0 ORDER BY discount DESC, id DESC LIMIT ? OFFSET ?";
+        String query = PRODUCT_SELECT_WITH_REVIEWS + "WHERE p.discount > 0 GROUP BY p.id ORDER BY p.discount DESC, p.id DESC LIMIT ? OFFSET ?";
         try (Connection conn = DBContext.getConnection(); PreparedStatement ps = conn.prepareStatement(query)) {
             ps.setInt(1, size); ps.setInt(2, Math.max(0, (page - 1) * size));
             ResultSet rs = ps.executeQuery(); while (rs.next()) { list.add(mapProduct(rs)); }
@@ -185,7 +202,7 @@ public class ProductDAO {
 
     public List<Product> getAllProductsPage(int page, int size) {
         List<Product> list = new ArrayList<>();
-        String query = "SELECT * FROM products ORDER BY id DESC LIMIT ? OFFSET ?";
+        String query = PRODUCT_SELECT_WITH_REVIEWS + "GROUP BY p.id ORDER BY p.id DESC LIMIT ? OFFSET ?";
         try (Connection conn = DBContext.getConnection(); PreparedStatement ps = conn.prepareStatement(query)) {
             ps.setInt(1, size); ps.setInt(2, Math.max(0, (page - 1) * size));
             ResultSet rs = ps.executeQuery(); while (rs.next()) { list.add(mapProduct(rs)); }
@@ -203,7 +220,21 @@ public class ProductDAO {
 
     public List<Product> getPopularProductsPage(int page, int size) {
         List<Product> list = new ArrayList<>();
-        String query = "SELECT p.*, COALESCE(SUM(oi.quantity), 0) AS total_sold FROM products p LEFT JOIN order_items oi ON oi.product_id = p.id LEFT JOIN orders o ON o.id = oi.order_id AND o.status != 'Cancelled' GROUP BY p.id ORDER BY total_sold DESC, p.discount DESC, p.id DESC LIMIT ? OFFSET ?";
+        String query = "SELECT p.*, COALESCE(s.total_sold, 0) AS total_sold, " +
+                "COALESCE(rv.average_rating, 0) AS average_rating, COALESCE(rv.review_count, 0) AS review_count " +
+                "FROM products p " +
+                "LEFT JOIN (" +
+                "  SELECT oi.product_id, SUM(oi.quantity) AS total_sold " +
+                "  FROM order_items oi " +
+                "  JOIN orders o ON o.id = oi.order_id " +
+                "  WHERE o.status != 'Cancelled' " +
+                "  GROUP BY oi.product_id " +
+                ") s ON s.product_id = p.id " +
+                "LEFT JOIN (" +
+                "  SELECT product_id, AVG(rating) AS average_rating, COUNT(id) AS review_count " +
+                "  FROM reviews GROUP BY product_id " +
+                ") rv ON rv.product_id = p.id " +
+                "ORDER BY total_sold DESC, p.discount DESC, p.id DESC LIMIT ? OFFSET ?";
         try (Connection conn = DBContext.getConnection(); PreparedStatement ps = conn.prepareStatement(query)) {
             ps.setInt(1, size); ps.setInt(2, Math.max(0, (page - 1) * size));
             ResultSet rs = ps.executeQuery(); while (rs.next()) { list.add(mapProduct(rs)); }
@@ -229,7 +260,7 @@ public class ProductDAO {
     }
 
     public Product getProductById(Connection conn, int id) {
-        String query = "SELECT * FROM products WHERE id = ?";
+        String query = PRODUCT_SELECT_WITH_REVIEWS + "WHERE p.id = ? GROUP BY p.id";
         try (PreparedStatement ps = conn.prepareStatement(query)) {
             ps.setInt(1, id);
             ResultSet rs = ps.executeQuery();
@@ -293,7 +324,7 @@ public class ProductDAO {
             if (rs.next()) { category = rs.getString("category"); }
         } catch (Exception e) { e.printStackTrace(); }
         if (category != null && !category.isEmpty()) {
-            String query = "SELECT * FROM products WHERE id != ? AND category = ? ORDER BY RAND() LIMIT 4";
+            String query = PRODUCT_SELECT_WITH_REVIEWS + "WHERE p.id != ? AND p.category = ? GROUP BY p.id ORDER BY RAND() LIMIT 4";
             try (Connection conn = DBContext.getConnection(); PreparedStatement ps = conn.prepareStatement(query)) {
                 ps.setInt(1, excludeId); ps.setString(2, category);
                 ResultSet rs = ps.executeQuery(); while (rs.next()) { list.add(mapProduct(rs)); }
@@ -302,7 +333,7 @@ public class ProductDAO {
         if (list.size() < 4) {
             StringBuilder ids = new StringBuilder(String.valueOf(excludeId));
             for (Product p : list) { ids.append(",").append(p.getId()); }
-            String query = "SELECT * FROM products WHERE id NOT IN (" + ids + ") ORDER BY RAND() LIMIT ?";
+            String query = PRODUCT_SELECT_WITH_REVIEWS + "WHERE p.id NOT IN (" + ids + ") GROUP BY p.id ORDER BY RAND() LIMIT ?";
             try (Connection conn = DBContext.getConnection(); PreparedStatement ps = conn.prepareStatement(query)) {
                 ps.setInt(1, 4 - list.size()); ResultSet rs = ps.executeQuery();
                 while (rs.next()) { list.add(mapProduct(rs)); }
@@ -313,7 +344,7 @@ public class ProductDAO {
 
     public List<Product> getProductsByPage(int index, int size) {
         List<Product> list = new ArrayList<>();
-        String query = "SELECT * FROM products LIMIT ? OFFSET ?";
+        String query = PRODUCT_SELECT_WITH_REVIEWS + "GROUP BY p.id ORDER BY p.id DESC LIMIT ? OFFSET ?";
         try (Connection conn = DBContext.getConnection(); PreparedStatement ps = conn.prepareStatement(query)) {
             ps.setInt(1, size); ps.setInt(2, (index - 1) * size);
             ResultSet rs = ps.executeQuery(); while (rs.next()) { list.add(mapProduct(rs)); }
@@ -380,7 +411,7 @@ public class ProductDAO {
     }
     public List<Product> getLowStockProducts(int threshold) {
         List<Product> list = new ArrayList<>();
-        String query = "SELECT * FROM products WHERE stock < ? AND stock > 0 ORDER BY stock ASC";
+        String query = PRODUCT_SELECT_WITH_REVIEWS + "WHERE p.stock < ? AND p.stock > 0 GROUP BY p.id ORDER BY p.stock ASC";
         try (Connection conn = DBContext.getConnection(); PreparedStatement ps = conn.prepareStatement(query)) {
             ps.setInt(1, threshold); ResultSet rs = ps.executeQuery();
             while (rs.next()) { list.add(mapProduct(rs)); }
@@ -388,7 +419,7 @@ public class ProductDAO {
     }
     public List<Product> getOutOfStockProducts() {
         List<Product> list = new ArrayList<>();
-        String query = "SELECT * FROM products WHERE stock <= 0";
+        String query = PRODUCT_SELECT_WITH_REVIEWS + "WHERE p.stock <= 0 GROUP BY p.id ORDER BY p.id DESC";
         try (Connection conn = DBContext.getConnection(); PreparedStatement ps = conn.prepareStatement(query); ResultSet rs = ps.executeQuery()) {
             while (rs.next()) { list.add(mapProduct(rs)); }
         } catch (Exception e) { e.printStackTrace(); } return list;

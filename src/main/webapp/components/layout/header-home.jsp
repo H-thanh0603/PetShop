@@ -244,6 +244,11 @@
                                     </a>
                                 </li>
                                 <li>
+                                    <a class="dropdown-item" href="${pageContext.request.contextPath}/wishlist">
+                                        <i class='bx bx-heart'></i> Yêu thích
+                                    </a>
+                                </li>
+                                <li>
                                     <a class="dropdown-item" href="${pageContext.request.contextPath}/cart">
                                         <i class='bx bx-cart'></i> Giỏ hàng của tôi
                                     </a>

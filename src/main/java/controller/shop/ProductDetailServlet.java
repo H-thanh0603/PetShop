@@ -2,11 +2,14 @@ package controller.shop;
 
 import DAO.ProductDAO;
 import DAO.ReviewDAO;
+import DAO.WishlistDAO;
 import Model.Product;
 import Model.Review;
+import Model.User;
 
 import java.io.IOException;
 import java.util.List;
+import java.util.Set;
 
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
@@ -38,13 +41,27 @@ public class ProductDetailServlet extends HttpServlet {
 
             ReviewDAO rDao = new ReviewDAO();
             List<Review> listReviews = rDao.getReviewsByProductId(id);
-            int lengthReviews = listReviews.size();
+
+            User user = (User) request.getSession().getAttribute("user");
+            boolean hasReviewed = user != null && rDao.hasUserReviewedProduct(user.getId(), id);
+            Set<Integer> wishlistIds = java.util.Collections.emptySet();
+            if (user != null) {
+                WishlistDAO wishlistDAO = new WishlistDAO();
+                wishlistIds = wishlistDAO.getWishlistProductIdsByUserId(user.getId());
+                p.setWishlisted(wishlistIds.contains(p.getId()));
+            }
             
             request.setAttribute("detail", p);
             request.setAttribute("listReviews", listReviews);
-            request.setAttribute("lengthReviews", lengthReviews);
+            request.setAttribute("hasReviewed", hasReviewed);
+            request.setAttribute("wishlistProductIds", wishlistIds);
             
             List<Product> listRelated = pDao.getRelatedProducts(id); 
+            if (!wishlistIds.isEmpty()) {
+                for (Product related : listRelated) {
+                    related.setWishlisted(wishlistIds.contains(related.getId()));
+                }
+            }
             request.setAttribute("relatedProducts", listRelated);
             
             request.getRequestDispatcher("/pages/shop/product.jsp").forward(request, response);

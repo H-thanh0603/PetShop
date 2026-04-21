@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Set;
 
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
@@ -13,8 +14,10 @@ import jakarta.servlet.http.HttpServletResponse;
 
 import DAO.ProductDAO;
 import DAO.PetTypeDAO;
+import DAO.WishlistDAO;
 import Model.Product;
 import Model.PetType;
+import Model.User;
 
 @WebServlet("/shop")
 public class ShopServlet extends HttpServlet {
@@ -42,6 +45,14 @@ public class ShopServlet extends HttpServlet {
         // Lấy danh sách loại thú cưng active
         List<PetType> activePetTypes = petTypeDao.getActivePetTypes();
         request.setAttribute("petTypes", activePetTypes);
+        
+        User currentUser = (User) request.getSession().getAttribute("user");
+        Set<Integer> wishlistProductIds = java.util.Collections.emptySet();
+        if (currentUser != null) {
+            WishlistDAO wishlistDAO = new WishlistDAO();
+            wishlistProductIds = wishlistDAO.getWishlistProductIdsByUserId(currentUser.getId());
+        }
+        request.setAttribute("wishlistProductIds", wishlistProductIds);
 
         // Lấy thông tin loại thú cưng đang chọn
         PetType selectedPetType = null;
@@ -123,6 +134,10 @@ public class ShopServlet extends HttpServlet {
             List<Product> popularProducts = productDao.getPopularProductsPage(1, BEST_SELLER_SIZE);
             List<Product> discountProducts = productDao.getDiscountedProductsPage(salePage, PAGE_SIZE);
             List<Product> catalogProducts = productDao.getAllProductsPage(catalogPage, PAGE_SIZE);
+            markWishlisted(products, wishlistProductIds);
+            markWishlisted(popularProducts, wishlistProductIds);
+            markWishlisted(discountProducts, wishlistProductIds);
+            markWishlisted(catalogProducts, wishlistProductIds);
 
             int discountTotal = productDao.getTotalDiscountedProductsCount();
             int catalogTotal = productDao.getTotalProductsCount();
@@ -149,13 +164,15 @@ public class ShopServlet extends HttpServlet {
             List<Product> pagedProducts = (fromIndex < totalFiltered) 
                 ? products.subList(fromIndex, toIndex) 
                 : List.of();
-            List<String> brand = productDao.getAllBrands();
-            request.setAttribute("brand", brand);
+            markWishlisted(pagedProducts, wishlistProductIds);
+
             request.setAttribute("products", pagedProducts);
             request.setAttribute("currentPage", page);
             request.setAttribute("totalPages", totalPages);
             request.setAttribute("totalProducts", totalFiltered);
-            request.setAttribute("discountProducts", productDao.getDiscountedProductsList());
+            List<Product> discountProducts = productDao.getDiscountedProductsList();
+            markWishlisted(discountProducts, wishlistProductIds);
+            request.setAttribute("discountProducts", discountProducts);
             request.getRequestDispatcher("/pages/shop/shop-pet.jsp").forward(request, response);
         }
     }
@@ -178,36 +195,13 @@ public class ShopServlet extends HttpServlet {
         if (totalItems <= 0) return 1;
         return (int) Math.ceil((double) totalItems / pageSize);
     }
-    private String buildBaseQuery(HttpServletRequest request) {
-        StringBuilder sb = new StringBuilder();
-        String[] keepParams = {"pet", "category", "search", "priceRange", "discountOnly", "sort"};
-        for (String param : keepParams) {
-            String val = request.getParameter(param);
-            if (val != null && !val.trim().isEmpty()) {
-                if (sb.length() > 0) sb.append("&");
-                try {
-                    sb.append(param).append("=")
-                            .append(java.net.URLEncoder.encode(val, "UTF-8"));
-                } catch (Exception e) {
-                    sb.append(param).append("=").append(val);
-                }
-            }
-        }
-        String[] selectedBrands = request.getParameterValues("brand");
-        if (selectedBrands != null) {
-            for (String brand : selectedBrands) {
-                if (brand != null && !brand.trim().isEmpty()) {
-                    if (sb.length() > 0) sb.append("&");
-                    try {
-                        sb.append("brand=")
-                                .append(java.net.URLEncoder.encode(brand, "UTF-8"));
-                    } catch (Exception e) {
-                        sb.append("brand=").append(brand);
-                    }
-                }
-            }
-        }
 
-        return sb.toString();
+    private void markWishlisted(List<Product> products, Set<Integer> wishlistProductIds) {
+        if (products == null || wishlistProductIds == null || wishlistProductIds.isEmpty()) {
+            return;
+        }
+        for (Product product : products) {
+            product.setWishlisted(wishlistProductIds.contains(product.getId()));
+        }
     }
 }

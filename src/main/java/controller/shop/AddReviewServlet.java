@@ -34,6 +34,29 @@ public class AddReviewServlet extends HttpServlet {
             int productId = Integer.parseInt(request.getParameter("productId"));
             int rating = Integer.parseInt(request.getParameter("rating"));
             String comment = request.getParameter("comment");
+            if (comment != null) {
+                comment = comment.trim();
+            }
+
+            ReviewDAO dao = new ReviewDAO();
+
+            if (rating < 1 || rating > 5) {
+                session.setAttribute("error", "Số sao đánh giá phải từ 1 đến 5.");
+                response.sendRedirect(request.getContextPath() + "/product-detail?id=" + productId);
+                return;
+            }
+
+            if (comment == null || comment.isBlank()) {
+                session.setAttribute("error", "Vui lòng nhập nội dung đánh giá.");
+                response.sendRedirect(request.getContextPath() + "/product-detail?id=" + productId);
+                return;
+            }
+
+            if (dao.hasUserReviewedProduct(user.getId(), productId)) {
+                session.setAttribute("error", "Bạn đã đánh giá sản phẩm này rồi.");
+                response.sendRedirect(request.getContextPath() + "/product-detail?id=" + productId);
+                return;
+            }
 
             // 3. Tạo đối tượng Review (Dùng Constructor rỗng rồi set để tránh lỗi)
             Review review = new Review();
@@ -43,14 +66,18 @@ public class AddReviewServlet extends HttpServlet {
             review.setComment(comment);
             
             // 4. Lưu vào DB
-            ReviewDAO dao = new ReviewDAO();
-            dao.addReview(review);
+            if (dao.addReview(review)) {
+                session.setAttribute("success", "Đánh giá của bạn đã được gửi thành công.");
+            } else {
+                session.setAttribute("error", "Không thể gửi đánh giá. Vui lòng thử lại.");
+            }
 
             // 5. Quay lại trang chi tiết
             response.sendRedirect(request.getContextPath() + "/product-detail?id=" + productId);
             
         } catch (Exception e) {
             e.printStackTrace();
+            request.getSession().setAttribute("error", "Không thể gửi đánh giá.");
             response.sendRedirect(request.getContextPath() + "/home");
         }
     }

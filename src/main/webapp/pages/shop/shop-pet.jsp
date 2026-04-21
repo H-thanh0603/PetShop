@@ -20,29 +20,24 @@
     <style>
         * { font-family: 'Montserrat', sans-serif; }
         body { background: #fafafa; }
-
         .breadcrumb-section { padding: 20px 0 0; }
         .breadcrumb-section a { color: #999; text-decoration: none; font-size: 0.85rem; }
         .breadcrumb-section a:hover { color: #00bfa5; }
         .breadcrumb-section span { color: #333; font-size: 0.85rem; font-weight: 600; }
-
         .page-header { padding: 30px 0 20px; }
         .page-header h1 { font-size: 2.2rem; font-weight: 800; color: #1a1a1a; }
         .page-header h1 span { color: #00bfa5; }
         .page-header p { color: #666; max-width: 600px; }
         .header-img { max-height: 200px; object-fit: contain; border-radius: 20px; }
-
         .pet-nav { border-bottom: 2px solid #eee; margin-bottom: 30px; }
         .pet-nav a { display: inline-block; padding: 12px 24px; font-weight: 600; font-size: 0.95rem; color: #999; text-decoration: none; border-bottom: 3px solid transparent; margin-bottom: -2px; transition: all 0.2s; }
         .pet-nav a:hover { color: #333; }
         .pet-nav a.active { color: #00bfa5; border-bottom-color: #00bfa5; }
-
         .sidebar-title { font-weight: 700; font-size: 0.85rem; text-transform: uppercase; color: #1a1a1a; letter-spacing: 0.5px; margin-bottom: 15px; }
         .sidebar-section { margin-bottom: 30px; }
         .filter-link { display: block; padding: 8px 0; color: #555; text-decoration: none; font-size: 0.9rem; transition: all 0.2s; border-left: 3px solid transparent; padding-left: 12px; }
         .filter-link:hover { color: #00bfa5; border-left-color: #00bfa5; padding-left: 16px; }
         .filter-link.active { color: #00bfa5; font-weight: 600; border-left-color: #00bfa5; }
-
         .product-card { background: #fff; border-radius: 16px; overflow: hidden; transition: all 0.3s; height: 100%; border: 1px solid #f0f0f0; }
         .product-card:hover { transform: translateY(-4px); box-shadow: 0 12px 30px rgba(0,0,0,0.08); }
         .product-card .img-wrap { height: 220px; display: flex; align-items: center; justify-content: center; background: #f9f9f9; padding: 20px; position: relative; }
@@ -53,30 +48,32 @@
         .product-card .name { font-size: 0.9rem; font-weight: 600; color: #1a1a1a; margin: 6px 0 8px; height: 40px; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; line-clamp: 2; -webkit-box-orient: vertical; }
         .product-card .name a { color: #1a1a1a; text-decoration: none; }
         .product-card .name a:hover { color: #00bfa5; }
-        .product-card .rating { font-size: 0.8rem; color: #f5a623; margin-bottom: 8px; }
+        .product-card .rating { font-size: 0.8rem; color: #f59e0b; margin-bottom: 8px; display: flex; align-items: center; gap: 6px; }
+        .product-card .rating .muted { color: #94a3b8; }
         .product-card .price { font-weight: 700; color: #1a1a1a; font-size: 1.05rem; }
         .product-card .old-price { text-decoration: line-through; color: #aaa; font-size: 0.85rem; margin-left: 6px; }
-        .product-card .btn-cart { width: 38px; height: 38px; border-radius: 50%; background: #00bfa5; color: #fff; border: none; display: flex; align-items: center; justify-content: center; font-size: 1.1rem; transition: all 0.2s; flex-shrink: 0; }
+        .product-actions { display: flex; align-items: center; gap: 8px; }
+        .product-card .btn-cart, .product-card .btn-wishlist { width: 38px; height: 38px; border-radius: 50%; border: none; display: flex; align-items: center; justify-content: center; font-size: 1.1rem; transition: all 0.2s; flex-shrink: 0; }
+        .product-card .btn-cart { background: #00bfa5; color: #fff; }
         .product-card .btn-cart:hover { background: #009688; transform: scale(1.1); }
         .product-card .btn-cart:disabled { background: #cbd5e1; cursor: not-allowed; transform: none; }
+        .product-card .btn-wishlist { background: #fee2e2; color: #dc2626; border: 1px solid #fecaca; }
+        .product-card .btn-wishlist.active { background: #dc2626; color: #fff; border-color: #dc2626; }
+        .product-card .btn-wishlist:hover { transform: scale(1.08); }
         .stock-pill { display: inline-flex; align-items: center; gap: 6px; margin-top: 8px; padding: 5px 10px; border-radius: 999px; font-size: 0.78rem; font-weight: 700; }
         .stock-pill.stock-out { background: #fee2e2; color: #b91c1c; }
         .stock-pill.stock-low { background: #fef3c7; color: #b45309; }
         .stock-pill.stock-ok { background: #dcfce7; color: #15803d; }
-
         .toolbar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 10px; }
         .toolbar .count { color: #999; font-size: 0.9rem; }
         .toolbar .count strong { color: #1a1a1a; }
         .toolbar select { border: 1px solid #ddd; border-radius: 8px; padding: 8px 16px; font-size: 0.9rem; font-family: 'Montserrat', sans-serif; outline: none; }
         .toolbar select:focus { border-color: #00bfa5; }
-
         .member-banner { background: linear-gradient(135deg, #00bfa5, #26c6da); border-radius: 16px; padding: 25px; color: #fff; }
         .member-banner h5 { font-weight: 700; }
         .member-banner p { font-size: 0.85rem; opacity: 0.9; }
         .btn-member { background: #fff; color: #00bfa5; padding: 8px 20px; border-radius: 50px; font-weight: 700; font-size: 0.85rem; border: none; transition: all 0.3s; text-decoration: none; }
         .btn-member:hover { background: #0b1a33; color: #fff; }
-
-        /* Pagination */
         .shop-pagination { display: flex; justify-content: center; align-items: center; gap: 6px; margin-top: 30px; flex-wrap: wrap; }
         .shop-pagination a, .shop-pagination span { display: inline-flex; align-items: center; justify-content: center; min-width: 40px; height: 40px; padding: 0 12px; border-radius: 10px; font-weight: 600; font-size: 0.9rem; text-decoration: none; transition: all 0.2s; border: 1px solid #e0e0e0; color: #555; background: #fff; }
         .shop-pagination a:hover { border-color: #00bfa5; color: #00bfa5; background: #e0f7f5; }
@@ -137,6 +134,7 @@
 <body>
     <jsp:include page="/components/navbar.jsp" />
     <jsp:include page="/components/toast.jsp" />
+    <c:set var="currentPageUrl" value="${pageContext.request.requestURI}${empty pageContext.request.queryString ? '' : '?'}${pageContext.request.queryString}" />
 
     <div class="container">
         <div class="breadcrumb-section">
@@ -176,7 +174,6 @@
         </div>
 
         <div class="row">
-            <!-- SIDEBAR -->
             <div class="col-lg-3 mb-4">
                 <div class="sidebar-section"><div class="sidebar-title"><i class='bx bx-filter-alt'></i> Bộ lọc tìm kiếm</div></div>
                 <div class="sidebar-section">
@@ -237,7 +234,6 @@
                 </div>
             </div>
 
-            <!-- MAIN CONTENT -->
             <div class="col-lg-9">
                 <div class="toolbar">
                     <div class="count">Hiển thị <strong>${products.size()}</strong> / <strong>${totalProducts}</strong> sản phẩm</div>
@@ -267,9 +263,8 @@
                                 <div class="info">
                                     <div class="cat-label">${p.category}</div>
                                     <div class="name"><a href="${pageContext.request.contextPath}/product-detail?id=${p.id}">${p.name}</a></div>
-                                    <div class="rating"><i class='bx bxs-star'></i><i class='bx bxs-star'></i><i class='bx bxs-star'></i><i class='bx bxs-star'></i><i class='bx bxs-star-half'></i></div>
-                                    <span>Thương hiệu: ${p.brand}</span>
-                                    <div class="d-flex justify-content-between align-items-center">
+                                    <div class="rating"><i class='bx bxs-star'></i> ${p.formattedAverageRating} <span class="muted">(${p.reviewCount} đánh giá)</span></div>
+                                    <div class="d-flex justify-content-between align-items-start">
                                         <div>
                                             <span class="price">${p.formattedPrice}</span>
                                             <c:if test="${p.discount > 0}"><span class="old-price">${p.formattedOldPrice}</span></c:if>
@@ -285,11 +280,20 @@
                                                 </c:otherwise>
                                             </c:choose>
                                         </div>
-                                        <form action="${pageContext.request.contextPath}/add-to-cart" method="post">
-                                            <input type="hidden" name="id" value="${p.id}">
-                                            <input type="hidden" name="quantity" value="1">
-                                            <button type="submit" class="btn-cart" <c:if test="${p.stock <= 0}">disabled="disabled"</c:if>><i class='bx bx-cart-add'></i></button>
-                                        </form>
+                                        <div class="product-actions">
+                                            <form action="${pageContext.request.contextPath}/toggle-wishlist" method="post">
+                                                <input type="hidden" name="productId" value="${p.id}">
+                                                <input type="hidden" name="redirect" value="${currentPageUrl}">
+                                                <button type="submit" class="btn-wishlist ${p.wishlisted ? 'active' : ''}" title="Yêu thích">
+                                                    <i class='bx ${p.wishlisted ? 'bxs-heart' : 'bx-heart'}'></i>
+                                                </button>
+                                            </form>
+                                            <form action="${pageContext.request.contextPath}/add-to-cart" method="post">
+                                                <input type="hidden" name="id" value="${p.id}">
+                                                <input type="hidden" name="quantity" value="1">
+                                                <button type="submit" class="btn-cart" <c:if test="${p.stock <= 0}">disabled="disabled"</c:if>><i class='bx bx-cart-add'></i></button>
+                                            </form>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
@@ -304,7 +308,6 @@
                     </c:if>
                 </div>
 
-                <!-- PHÂN TRANG -->
                 <c:if test="${totalPages > 1}">
                     <div class="shop-pagination">
                         <c:set var="baseUrl" value="${pageContext.request.contextPath}/shop?" />
