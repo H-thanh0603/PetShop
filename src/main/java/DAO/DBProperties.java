@@ -33,7 +33,17 @@ public class DBProperties {
     }
 
     public static String password() {
-        return prop.getProperty("db.password");
+        String override = System.getProperty("petshop.db.password");
+        if (override == null || override.isBlank()) {
+            override = System.getenv("PETSHOP_DB_PASSWORD");
+        }
+        if (override == null || override.isBlank()) {
+            override = System.getenv("MYSQL_PASSWORD");
+        }
+        if (override != null && !override.isBlank()) {
+            return override;
+        }
+        return prop.getProperty("db.password", "");
     }
 
     public static String dbname() {

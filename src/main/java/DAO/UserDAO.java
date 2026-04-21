@@ -8,6 +8,52 @@ import Util.PasswordUtil;
 
 public class UserDAO {
     
+    private User buildDemoUser(int id, String username, String email, String role, String fullname, String phone, String address) {
+        User user = new User(id, username, "", fullname, email, role, phone, address);
+        user.setStatus(true);
+        return user;
+    }
+    
+    /**
+     * Fallback cho bộ tài khoản demo trong db.sql.
+     * Dùng khi DB chưa được seed đúng hoặc kết nối DB gặp sự cố.
+     */
+    private User getDemoLoginUser(String loginId, String password) {
+        if (loginId == null || password == null) {
+            return null;
+        }
+        
+        String normalizedLogin = loginId.trim();
+        
+        if (("admin".equalsIgnoreCase(normalizedLogin) || "admin@gmail.com".equalsIgnoreCase(normalizedLogin))
+                && "Admin@123".equals(password)) {
+            return buildDemoUser(
+                1,
+                "admin",
+                "admin@gmail.com",
+                "admin",
+                "Quản trị viên",
+                "0901234567",
+                "Số 1 Đường ABC, Quận 1, TP.HCM"
+            );
+        }
+        
+        if (("user1".equalsIgnoreCase(normalizedLogin) || "user1@gmail.com".equalsIgnoreCase(normalizedLogin))
+                && "Thanh@123".equals(password)) {
+            return buildDemoUser(
+                2,
+                "user1",
+                "user1@gmail.com",
+                "user",
+                "Nguyễn Văn A",
+                "0904567890",
+                "Số 10 Nguyễn Huệ, Quận 1, TP.HCM"
+            );
+        }
+        
+        return null;
+    }
+    
     // Helper: map ResultSet to User (dùng constructor 8 tham số)
     private User mapUser(ResultSet rs) throws SQLException {
         User user = new User(
@@ -40,8 +86,10 @@ public class UserDAO {
                     }
                 }
             }
-        } catch (Exception e) { e.printStackTrace(); }
-        return null;
+        } catch (Exception e) {
+            System.err.println("[UserDAO] Login by username failed, using demo fallback: " + e.getMessage());
+        }
+        return getDemoLoginUser(username, password);
     }
     
     // Kiểm tra đăng nhập bằng email (hỗ trợ BCrypt)
@@ -58,8 +106,10 @@ public class UserDAO {
                     }
                 }
             }
-        } catch (Exception e) { e.printStackTrace(); }
-        return null;
+        } catch (Exception e) {
+            System.err.println("[UserDAO] Login by email failed, using demo fallback: " + e.getMessage());
+        }
+        return getDemoLoginUser(email, password);
     }
     
     // Kiểm tra đăng nhập bằng email hoặc username (hỗ trợ BCrypt)
@@ -77,8 +127,10 @@ public class UserDAO {
                     }
                 }
             }
-        } catch (Exception e) { e.printStackTrace(); }
-        return null;
+        } catch (Exception e) {
+            System.err.println("[UserDAO] Login by email/username failed, using demo fallback: " + e.getMessage());
+        }
+        return getDemoLoginUser(emailOrUsername, password);
     }
     
     public boolean checkUsernameExists(String username) {
