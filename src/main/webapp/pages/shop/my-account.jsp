@@ -34,6 +34,13 @@
 <jsp:include page="/components/toast.jsp" />
 
 <div class="container account-wrap">
+    <nav aria-label="breadcrumb" class="mb-3">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="${pageContext.request.contextPath}/home">Trang chủ</a></li>
+            <li class="breadcrumb-item"><a href="${pageContext.request.contextPath}/shop">Cửa hàng</a></li>
+            <li class="breadcrumb-item active" aria-current="page">Tài khoản của tôi</li>
+        </ol>
+    </nav>
     <div class="hero">
         <div class="row g-3 align-items-center">
             <div class="col-lg-7">
