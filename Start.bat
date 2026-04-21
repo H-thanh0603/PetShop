@@ -6,31 +6,18 @@ echo   PetShop - Starting Tomcat 10 Server
 echo ========================================
 echo.
 
-if defined PETSHOP_TOMCAT_HOME (
-    set "CATALINA_HOME=%PETSHOP_TOMCAT_HOME%"
+if defined PETSHOP_DB_PASSWORD (
+    echo [INFO] Using PETSHOP_DB_PASSWORD from environment.
 ) else (
-    set "CATALINA_HOME=E:\apache-tomcat-10.1.49-windows-x64\apache-tomcat-10.1.49"
+    echo [INFO] Enter MySQL password for the PetShop app:
+    set /p PETSHOP_DB_PASSWORD=
 )
+set "PETSHOP_DB_PASSWORD=%PETSHOP_DB_PASSWORD%"
 
-set "PROJECT_ROOT=%~dp0"
-if "%PROJECT_ROOT:~-1%"=="\" set "PROJECT_ROOT=%PROJECT_ROOT:~0,-1%"
-set "WAR_FILE=%PROJECT_ROOT%\build\libs\PetShop.war"
-
-if defined PETSHOP_CONTEXT_PATH (
-    set "PETSHOP_CONTEXT_PATH_VALUE=%PETSHOP_CONTEXT_PATH%"
-) else (
-    set "PETSHOP_CONTEXT_PATH_VALUE=/PetShop"
-)
-
-if defined PETSHOP_BASE_URL (
-    set "PETSHOP_URL=%PETSHOP_BASE_URL%"
-) else (
-    set "PETSHOP_URL=http://localhost:8080%PETSHOP_CONTEXT_PATH_VALUE%/home"
-)
-
-if not defined PETSHOP_OPEN_BROWSER (
-    set "PETSHOP_OPEN_BROWSER=true"
-)
+:: 1. Cấu hình đường dẫn
+set "CATALINA_HOME=E:\apache-tomcat-10.1.49-windows-x64\apache-tomcat-10.1.49"
+set "PROJECT_ROOT=d:\PetShop2\PetShop"
+set "WAR_FILE=%PROJECT_ROOT%\target\PetShop.war"
 
 if not exist "%CATALINA_HOME%\bin\startup.bat" (
     echo [ERROR] Khong tim thay Tomcat tai: %CATALINA_HOME%
