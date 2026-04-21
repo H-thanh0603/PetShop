@@ -6,6 +6,14 @@ echo   PetShop - Starting Tomcat 10 Server
 echo ========================================
 echo.
 
+if defined PETSHOP_DB_PASSWORD (
+    echo [INFO] Using PETSHOP_DB_PASSWORD from environment.
+) else (
+    echo [INFO] Enter MySQL password for the PetShop app:
+    set /p PETSHOP_DB_PASSWORD=
+)
+set "PETSHOP_DB_PASSWORD=%PETSHOP_DB_PASSWORD%"
+
 :: 1. Cấu hình đường dẫn
 set "CATALINA_HOME=E:\apache-tomcat-10.1.49-windows-x64\apache-tomcat-10.1.49"
 set "PROJECT_ROOT=d:\PetShop2\PetShop"
