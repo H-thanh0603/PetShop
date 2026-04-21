@@ -175,7 +175,7 @@ public class AddressServlet extends HttpServlet {
 
     private void redirectToCheckout(HttpServletRequest request, HttpServletResponse response)
             throws IOException {
-        response.sendRedirect(request.getContextPath() + "/checkout");
+        response.sendRedirect(resolveRedirectTarget(request));
     }
 
     private void redirectToCheckoutWithToast(HttpServletRequest request, HttpServletResponse response,
@@ -184,5 +184,13 @@ public class AddressServlet extends HttpServlet {
         session.setAttribute("toastMessage", message);
         session.setAttribute("toastType", "warning");
         redirectToCheckout(request, response);
+    }
+
+    private String resolveRedirectTarget(HttpServletRequest request) {
+        String redirect = request.getParameter("redirect");
+        if ("account".equalsIgnoreCase(redirect)) {
+            return request.getContextPath() + "/my-account";
+        }
+        return request.getContextPath() + "/checkout";
     }
 }

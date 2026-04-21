@@ -17,11 +17,11 @@ import java.net.URL;
 public class FaceBookLogin {
     static String CLIENT_ID = SecretConfig.get("facebook_client_id");
     static String CLIENT_SECRET = SecretConfig.get("facebook_client_secret");
-    public static String getToken(String code) throws ClientProtocolException, IOException {
+    public static String getToken(String code, String redirectUri) throws ClientProtocolException, IOException {
         String link = "https://graph.facebook.com/v19.0/oauth/access_token?"
                 + "client_id=" + CLIENT_ID
                 + "&client_secret=" + CLIENT_SECRET
-                + "&redirect_uri=" + IConstant.facebook_redirect_uri
+                + "&redirect_uri=" + redirectUri
                 + "&code=" + code;
 
         URL url = new URL(link);

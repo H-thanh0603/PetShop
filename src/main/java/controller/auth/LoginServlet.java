@@ -16,6 +16,7 @@ import Model.CartItem;
 import Model.User;
 import Util.AuthRedirectUtil;
 import Util.FormHelper;
+import Util.SocialAuthUtil;
 
 @WebServlet("/login")
 public class LoginServlet extends HttpServlet {
@@ -47,6 +48,8 @@ public class LoginServlet extends HttpServlet {
                 }
             }
         }
+        request.setAttribute("googleAuthUrl", SocialAuthUtil.buildGoogleAuthUrl(request));
+        request.setAttribute("facebookAuthUrl", SocialAuthUtil.buildFacebookAuthUrl(request));
         
         request.getRequestDispatcher("/pages/auth/login.jsp").forward(request, response);
     }

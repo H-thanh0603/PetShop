@@ -6,6 +6,7 @@ import Model.CartItem;
 import Model.FbAccount.Account;
 import Model.User;
 import Util.AuthRedirectUtil;
+import Util.SocialAuthUtil;
 import controller.FaceBook.FaceBookLogin;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
@@ -32,12 +33,9 @@ public class LoginByFacebookServlet extends HttpServlet {
             return;
         }
 
-//        System.out.println(code);
         FaceBookLogin fb = new FaceBookLogin();
-        String accessToken = fb.getToken(code);
-//        System.out.println(accessToken);
+        String accessToken = fb.getToken(code, SocialAuthUtil.buildFacebookRedirectUri(request));
         Account acc = fb.getUserInfo(accessToken);
-//        System.out.println(acc);
 // mail lay tu fb = mail lay tu db
         boolean isEmailAvailable  = userDao.HaveEmail(acc.getEmail());
         User user;

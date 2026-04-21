@@ -14,7 +14,7 @@ import java.io.IOException;
 public class GoogleLogin {
     static String CLIENT_ID = SecretConfig.get("GOOGLE_CLIENT_ID");
     static String CLIENT_SECRET = SecretConfig.get("GOOGLE_CLIENT_SECRET");
-    public static String getToken(String code) throws ClientProtocolException, IOException {
+    public static String getToken(String code, String redirectUri) throws ClientProtocolException, IOException {
 
         String response = Request.Post(IConstant.GOOGLE_LINK_GET_TOKEN)
 
@@ -26,7 +26,7 @@ public class GoogleLogin {
 
                                 .add("client_secret", CLIENT_SECRET)
 
-                                .add("redirect_uri", IConstant.GOOGLE_REDIRECT_URI)
+                                .add("redirect_uri", redirectUri)
 
                                 .add("code", code)
 

@@ -483,6 +483,54 @@ public class UserDAO {
             ps.executeUpdate();
         } catch (Exception e) { e.printStackTrace(); }
     }
+
+    public boolean updateProfileAndEmail(int id, String fullname, String phone, String email) {
+        String sql = "UPDATE users SET fullname=?, phone=?, email=? WHERE id=?";
+        try (Connection con = DBContext.getConnection();
+             PreparedStatement ps = con.prepareStatement(sql)) {
+            ps.setString(1, fullname);
+            ps.setString(2, phone);
+            ps.setString(3, email);
+            ps.setInt(4, id);
+            return ps.executeUpdate() > 0;
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return false;
+    }
+
+    public boolean isEmailTakenByAnotherUser(String email, int userId) {
+        String sql = "SELECT 1 FROM users WHERE email = ? AND id <> ?";
+        try (Connection con = DBContext.getConnection();
+             PreparedStatement ps = con.prepareStatement(sql)) {
+            ps.setString(1, email);
+            ps.setInt(2, userId);
+            try (ResultSet rs = ps.executeQuery()) {
+                return rs.next();
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return false;
+    }
+
+    public boolean isPhoneTakenByAnotherUser(String phone, int userId) {
+        if (phone == null || phone.isBlank()) {
+            return false;
+        }
+        String sql = "SELECT 1 FROM users WHERE phone = ? AND id <> ?";
+        try (Connection con = DBContext.getConnection();
+             PreparedStatement ps = con.prepareStatement(sql)) {
+            ps.setString(1, phone);
+            ps.setInt(2, userId);
+            try (ResultSet rs = ps.executeQuery()) {
+                return rs.next();
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return false;
+    }
     
     // Migrate mật khẩu cũ sang BCrypt (chạy một lần)
     public void migratePasswordsToBCrypt() {

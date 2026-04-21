@@ -113,13 +113,13 @@
                 <div class="input-group">
                     <span class="input-group-text"><i class='bx bx-lock-alt'></i></span>
                     <input type="password" class="form-control" name="password" id="password"
-                           placeholder="Nhập mật khẩu mới" required minlength="6">
+                           placeholder="Nhập mật khẩu mới" required minlength="8">
                     <span class="password-toggle" onclick="togglePassword('password', this)">
                         <i class='bx bx-hide'></i>
                     </span>
                 </div>
                 <div class="password-strength" id="strengthBar"></div>
-                <small class="text-muted">Mật khẩu phải có ít nhất 6 ký tự</small>
+                <small class="text-muted">Ít nhất 8 ký tự, gồm chữ hoa, chữ thường, số và ký tự đặc biệt</small>
             </div>
             
             <div class="mb-4">
@@ -172,9 +172,9 @@
             
             if (val.length === 0) {
                 bar.style.width = '0';
-            } else if (val.length < 6) {
+            } else if (val.length < 8) {
                 bar.classList.add('strength-weak');
-            } else if (val.length < 10 || !/[A-Z]/.test(val) || !/[0-9]/.test(val)) {
+            } else if (val.length < 10 || !/[A-Z]/.test(val) || !/[a-z]/.test(val) || !/[0-9]/.test(val) || !/[^a-zA-Z0-9\s]/.test(val)) {
                 bar.classList.add('strength-medium');
             } else {
                 bar.classList.add('strength-strong');
@@ -205,6 +205,13 @@
             const pass = document.getElementById('password').value;
             const confirm = document.getElementById('confirmPassword').value;
             
+            const strongRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z0-9\s]).{8,}$/;
+            if (!strongRegex.test(pass)) {
+                e.preventDefault();
+                alert('Mật khẩu mới chưa đủ mạnh!');
+                return;
+            }
+
             if (pass !== confirm) {
                 e.preventDefault();
                 alert('Mật khẩu xác nhận không khớp!');

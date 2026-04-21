@@ -185,12 +185,12 @@
 <%--            login by gg and fb--%>
             <div class="social-login">
                 <div class="social-item google" title="Login by google">
-                    <a href="https://accounts.google.com/o/oauth2/auth?scope=email profile openid&redirect_uri=http://localhost:8080/PetShop_war/LoginByGoogleServlet&response_type=code&client_id=875562698779-ahopbc7kehsmb02gvpi4r9rhb2o8309q.apps.googleusercontent.com&approval_prompt=force">
+                    <a href="${googleAuthUrl}">
                         <i class="bi bi-google"></i>
                     </a>
                 </div>
                 <div class="social-item facebook" title="Login by facebook">
-                    <a href="https://www.facebook.com/v19.0/dialog/oauth?client_id=1485991816200631&redirect_uri=http://localhost:8080/PetShop_war/LoginByFacebookServlet&scope=email,public_profile">
+                    <a href="${facebookAuthUrl}">
                         <i class="bi bi-facebook"></i>
                     </a>
                 </div>
