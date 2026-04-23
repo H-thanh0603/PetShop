@@ -970,5 +970,27 @@ public class OrderDAO {
             return false;
         }
     }
+    public boolean hasUserPurchasedProduct(int userId, int productId) {
+        // Truy vấn tìm xem có đơn hàng nào của user chứa sản phẩm này ở trạng thái 'Delivered' không
+        String sql = "SELECT 1 FROM orders o " +
+                "JOIN order_items oi ON o.id = oi.order_id " +
+                "WHERE o.user_id = ? AND oi.product_id = ? AND o.status = 'Delivered' " +
+                "LIMIT 1";
+
+        try (java.sql.Connection conn = Context.DBContext.getConnection();
+             java.sql.PreparedStatement ps = conn.prepareStatement(sql)) {
+
+            ps.setInt(1, userId);
+            ps.setInt(2, productId);
+
+            try (java.sql.ResultSet rs = ps.executeQuery()) {
+                return rs.next(); // Nếu tìm thấy bản ghi, nghĩa là user đã mua sản phẩm này
+            }
+        } catch (Exception e) {
+            // Thay thế bằng logger của dự án bạn nếu có (ví dụ: logger.error(...) )
+            e.printStackTrace();
+        }
+        return false;
+    }
 }
 
