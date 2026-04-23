@@ -62,6 +62,9 @@ public class ManageOrderServlet extends HttpServlet {
         try { size = Math.max(1, Integer.parseInt(request.getParameter("size"))); } catch (Exception ignored) {}
 
         List<Order> list = orderDAO.getOrdersPage(page, size, status, keyword);
+        if (list != null) {
+            list.sort((o1, o2) -> o2.getCreatedAt().compareTo(o1.getCreatedAt()));
+        }
         int totalOrders = orderDAO.countOrders(status, keyword);
         int totalPages = (int) Math.ceil((double) totalOrders / size);
 
