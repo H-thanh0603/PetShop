@@ -93,6 +93,14 @@ public class AddReviewServlet extends HttpServlet {
                 return;
             }
 
+            DAO.OrderDAO orderDAO = new DAO.OrderDAO();
+            boolean hasPurchased = orderDAO.hasUserPurchasedProduct(user.getId(), productId);
+            if (!hasPurchased) {
+                session.setAttribute("error", "Bạn chỉ có thể đánh giá sản phẩm này sau khi đã mua và nhận hàng thành công.");
+                response.sendRedirect(request.getContextPath() + "/product-detail?id=" + productId);
+                return;
+            }
+
             Review review = new Review();
             review.setProductId(productId);
             review.setUserId(user.getId()); // Giả sử User model có hàm getId()
