@@ -146,4 +146,36 @@ public class ReviewDAO {
         }
         return false;
     }
+
+    // 7. Rate limit: count reviews by user in last 60 minutes
+    public int countReviewsByUserInLastHour(int userId) {
+        String query = "SELECT COUNT(*) FROM reviews WHERE user_id = ? AND created_at >= DATE_SUB(NOW(), INTERVAL 60 MINUTE)";
+        try (Connection conn = DBContext.getConnection();
+             PreparedStatement ps = conn.prepareStatement(query)) {
+            ps.setInt(1, userId);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) return rs.getInt(1);
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+            return Integer.MAX_VALUE; // fail-safe: reject on DB error
+        }
+        return 0;
+    }
+
+    // 8. Duplicate detection: check if user submitted same comment in last 24 hours
+    public boolean hasDuplicateRecentComment(int userId, String comment) {
+        String query = "SELECT 1 FROM reviews WHERE user_id = ? AND comment = ? AND created_at >= DATE_SUB(NOW(), INTERVAL 24 HOUR)";
+        try (Connection conn = DBContext.getConnection();
+             PreparedStatement ps = conn.prepareStatement(query)) {
+            ps.setInt(1, userId);
+            ps.setString(2, comment);
+            try (ResultSet rs = ps.executeQuery()) {
+                return rs.next();
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+            return true; // fail-safe: reject on DB error
+        }
+    }
 }

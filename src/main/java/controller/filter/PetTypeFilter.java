@@ -14,10 +14,11 @@ import jakarta.servlet.http.HttpServletRequest;
 
 import DAO.PetTypeDAO;
 import Model.PetType;
+import services.PetTypeCache;
 
 /**
- * Filter để load danh sách loại thú cưng cho tất cả các trang
- * Giúp navbar hiển thị động các loại thú cưng
+ * Filter để load danh sách loại thú cưng cho tất cả các trang.
+ * Dùng PetTypeCache với TTL 1 giờ để tránh query DB mỗi request.
  */
 @WebFilter("/*")
 public class PetTypeFilter implements Filter {
@@ -34,17 +35,20 @@ public class PetTypeFilter implements Filter {
             throws IOException, ServletException {
         HttpServletRequest httpRequest = (HttpServletRequest) request;
         
-        // Chỉ load cho các request HTML (không phải static resources)
         String uri = httpRequest.getRequestURI();
         if (!isStaticResource(uri)) {
-            // Kiểm tra nếu chưa có petTypes trong request
             if (httpRequest.getAttribute("petTypes") == null) {
-                try {
-                    List<PetType> petTypes = petTypeDao.getActivePetTypes();
-                    httpRequest.setAttribute("petTypes", petTypes);
-                } catch (Exception e) {
-                    // Ignore - navbar sẽ dùng fallback
+                PetTypeCache cache = PetTypeCache.getInstance();
+                if (cache.isStale()) {
+                    try {
+                        List<PetType> petTypes = petTypeDao.getActivePetTypes();
+                        cache.update(petTypes);
+                    } catch (Exception e) {
+                        // Retain previously cached data on DB failure
+                        System.err.println("[PetTypeFilter] DB reload failed, using cached data: " + e.getMessage());
+                    }
                 }
+                httpRequest.setAttribute("petTypes", cache.get());
             }
         }
         
@@ -59,7 +63,5 @@ public class PetTypeFilter implements Filter {
     }
 
     @Override
-    public void destroy() {
-        // Cleanup if needed
-    }
+    public void destroy() {}
 }

@@ -21,6 +21,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
 import services.ShippingService;
+import services.OrderEmailService;
 
 import java.sql.Connection;
 import java.sql.Timestamp;
@@ -45,6 +46,7 @@ public class CheckoutServlet extends HttpServlet {
     private final ProductDAO productDAO = new ProductDAO();
     private final OrderDAO orderDAO = new OrderDAO();
     private final UserDAO userDAO = new UserDAO();
+    private final OrderEmailService orderEmailService = new OrderEmailService();
 
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
@@ -366,6 +368,25 @@ public class CheckoutServlet extends HttpServlet {
 
                 cartDAO.clearCart(conn, user.getId());
                 conn.commit();
+
+                // Send order confirmation email asynchronously (after commit)
+                final int confirmedOrderId = orderId;
+                final List<OrderItem> confirmedItems = new ArrayList<>(cart.values().stream()
+                    .map(ci -> {
+                        OrderItem oi = new OrderItem();
+                        oi.setOrderId(confirmedOrderId);
+                        oi.setProductId(ci.getProduct().getId());
+                        oi.setQuantity(ci.getQuantity());
+                        oi.setPrice(ci.getProduct().getPrice());
+                        oi.setProduct(ci.getProduct());
+                        return oi;
+                    }).collect(java.util.stream.Collectors.toList()));
+                final Order confirmedOrder = order;
+                confirmedOrder.setId(confirmedOrderId);
+                final String userEmail = user.getEmail();
+                if (userEmail != null && !userEmail.isEmpty()) {
+                    orderEmailService.sendOrderConfirmationAsync(userEmail, confirmedOrder, confirmedItems);
+                }
             } catch (Exception e) {
                 conn.rollback();
                 throw e;
@@ -509,9 +530,14 @@ public class CheckoutServlet extends HttpServlet {
         if (cart == null) {
             cart = new HashMap<>();
         }
-        inventoryService.refreshCartProducts(cart);
+        List<String> removedNames = inventoryService.refreshCartProductsWithNotification(cart);
         session.setAttribute("cart", cart);
         recalculateTotalQuantity(session, cart);
+
+        if (!removedNames.isEmpty()) {
+            session.setAttribute("toastMessage", "Các sản phẩm sau đã bị xóa khỏi giỏ hàng vì không còn hàng: " + String.join(", ", removedNames));
+            session.setAttribute("toastType", "warning");
+        }
         return cart;
     }
 

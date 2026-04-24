@@ -15,8 +15,10 @@ import jakarta.servlet.http.Part;
 
 import DAO.ProductDAO;
 import DAO.PetTypeDAO;
+import DAO.AdminActionLogDAO;
 import Model.Product;
 import Model.PetType;
+import Model.User;
 import Util.ValidationUtil;
 import Util.FileUploadValidator;
 
@@ -31,6 +33,7 @@ public class ProductServlet extends HttpServlet {
     
     // Đường dẫn upload ảnh - phải khớp với đường dẫn hiển thị trong JSP
     private static final String UPLOAD_DIR = "assets/images/shop_pic";
+    private final AdminActionLogDAO actionLog = new AdminActionLogDAO();
 
     protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
         ProductDAO dao = new ProductDAO();
@@ -219,11 +222,15 @@ public class ProductServlet extends HttpServlet {
         } else if ("delete".equals(action)) {
             String idStr = request.getParameter("id");
             Integer id = ValidationUtil.parseIntOrNull(idStr);
+            HttpSession session2 = request.getSession();
+            User admin = (User) session2.getAttribute("user");
+            int adminId = admin != null ? admin.getId() : 1;
             
             if (id == null) {
                 message = "ID sản phẩm không hợp lệ!";
                 messageType = "error";
             } else if (dao.softDeleteProduct(id)) {
+                actionLog.log(adminId, "DELETE_PRODUCT", "product", id, null);
                 message = "Ẩn sản phẩm thành công!";
             } else {
                 message = "Có lỗi xảy ra khi xóa!";

@@ -75,7 +75,21 @@ public class AddReviewServlet extends HttpServlet {
                 return;
             }
 
-            // 3. Tạo đối tượng Review (Dùng Constructor rỗng rồi set để tránh lỗi)
+            // Rate limit: max 5 reviews per 60 minutes
+            int reviewsInLastHour = dao.countReviewsByUserInLastHour(user.getId());
+            if (reviewsInLastHour >= 5) {
+                session.setAttribute("error", "Bạn đã gửi quá nhiều đánh giá. Vui lòng thử lại sau.");
+                response.sendRedirect(request.getContextPath() + "/product-detail?id=" + productId);
+                return;
+            }
+
+            // Duplicate detection: same comment in last 24 hours
+            if (dao.hasDuplicateRecentComment(user.getId(), comment)) {
+                session.setAttribute("error", "Nội dung đánh giá trùng lặp. Vui lòng viết đánh giá khác.");
+                response.sendRedirect(request.getContextPath() + "/product-detail?id=" + productId);
+                return;
+            }
+
             Review review = new Review();
             review.setProductId(productId);
             review.setUserId(user.getId()); // Giả sử User model có hàm getId()

@@ -11,6 +11,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import DAO.UserDAO;
 import DAO.OrderDAO;
+import DAO.AdminActionLogDAO;
 import Model.User;
 import Model.Order;
 
@@ -18,6 +19,7 @@ import Model.Order;
 public class UserManageServlet extends HttpServlet {
     private static final long serialVersionUID = 1L;
     private UserDAO userDAO = new UserDAO();
+    private AdminActionLogDAO actionLog = new AdminActionLogDAO();
 
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response) 
@@ -134,6 +136,8 @@ public class UserManageServlet extends HttpServlet {
         String action = request.getParameter("action");
         String message = "";
         String messageType = "success";
+        User admin = (User) request.getSession().getAttribute("user");
+        int adminId = admin != null ? admin.getId() : 1;
 
         try {
             switch (action) {
@@ -211,6 +215,7 @@ public class UserManageServlet extends HttpServlet {
                     int deleteId = Integer.parseInt(request.getParameter("userId"));
                     
                     if (userDAO.deactivateUser(deleteId)) {
+                        actionLog.log(adminId, "DELETE_USER", "user", deleteId, null);
                         message = "Đã vô hiệu hóa tài khoản thành công!";
                     } else {
                         message = "Có lỗi xảy ra khi xóa!";
