@@ -1,192 +1,70 @@
 plugins {
-    id 'java-library'
-    id 'maven-publish'
+    id 'java'
     id 'war'
-    id 'org.hidetake.ssh' version '2.11.2'
 }
 
-group = 'com.petshop'
+group   = 'com.petshop'
 version = '1.0.0'
 
 java {
-    sourceCompatibility = JavaVersion.VERSION_21
-    targetCompatibility = JavaVersion.VERSION_21
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(21)
+    }
 }
 
+compileJava.options.encoding   = 'UTF-8'
+compileTestJava.options.encoding = 'UTF-8'
+
 repositories {
-    mavenLocal()
     mavenCentral()
-    maven {
-        url = uri('https://oss.sonatype.org/content/repositories/snapshots')
-    }
 }
 
 dependencies {
+    // Servlet API (provided by Tomcat at runtime)
     providedCompile 'jakarta.servlet:jakarta.servlet-api:6.0.0'
 
+    // JSTL
     implementation 'jakarta.servlet.jsp.jstl:jakarta.servlet.jsp.jstl-api:3.0.0'
     implementation 'org.glassfish.web:jakarta.servlet.jsp.jstl:3.0.1'
+
+    // MySQL
     implementation 'com.mysql:mysql-connector-j:8.0.33'
+
+    // Jakarta Mail
     implementation 'jakarta.mail:jakarta.mail-api:2.1.2'
     implementation 'org.eclipse.angus:jakarta.mail:2.0.2'
+
+    // Apache Commons FileUpload / IO
     implementation 'commons-fileupload:commons-fileupload:1.5'
     implementation 'commons-io:commons-io:2.15.1'
+
+    // Apache HttpClient
     implementation 'org.apache.httpcomponents:fluent-hc:4.5.14'
     implementation 'org.apache.httpcomponents:httpclient:4.5.14'
+
+    // Gson
     implementation 'com.google.code.gson:gson:2.10.1'
+
+    // BCrypt
     implementation 'org.mindrot:jbcrypt:0.4'
-    implementation 'io.github.momo-wallet:momopayment:1.0'
+
+    // HikariCP connection pool
+    implementation 'com.zaxxer:HikariCP:5.1.0'
+
+    // SLF4J + Logback
+    implementation 'org.slf4j:slf4j-api:2.0.13'
+    implementation 'ch.qos.logback:logback-classic:1.5.6'
+
+    // JUnit 5
+    testImplementation 'org.junit.jupiter:junit-jupiter:5.10.2'
+    testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
 }
 
-tasks.withType(JavaCompile).configureEach {
-    options.encoding = 'UTF-8'
+war {
+    archiveFileName = 'PetShop.war'
+    // webapp sources are in src/main/webapp (standard layout — Gradle picks this up automatically)
 }
 
-def prop = { String name, String fallback = null ->
-    findProperty(name)?.toString() ?: System.getenv(name.replaceAll(/([a-z])([A-Z])/, '$1_$2').toUpperCase()) ?: fallback
-}
-
-def deployHost = prop('deployHost', '192.168.1.40')
-def deployUser = prop('deployUser', 'root')
-def deployPort = prop('deployPort', '22') as Integer
-def deployPassword = prop('deployPassword')
-def deployIdentity = prop('deployIdentity')
-def deployDir = prop('deployDir', '/usr/deploy')
-def appContext = prop('appContext', 'ROOT')
-def httpPort = prop('httpPort', '80')
-def dockerNetwork = prop('dockerNetwork', 'petshop-net')
-def tomcatContainer = prop('tomcatContainer', 'tomcat10')
-def tomcatImage = prop('tomcatImage', 'tomcat:10.1')
-def mysqlContainer = prop('mysqlContainer', 'mysql')
-def mysqlImage = prop('mysqlImage', 'mysql:8.0')
-def mysqlRootPassword = prop('mysqlRootPassword', '12345')
-def mysqlDatabase = prop('mysqlDatabase', 'petvaccine')
-def dbHost = prop('dbHost', mysqlContainer)
-def dbPort = prop('dbPort', '3306')
-def dbName = prop('dbName', mysqlDatabase)
-def dbUser = prop('dbUser', 'root')
-def dbPassword = prop('dbPassword', mysqlRootPassword)
-def dbOption = prop('dbOption', 'useUnicode=true&characterEncoding=utf-8&useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true')
-
-tasks.named('war') {
-    archiveFileName = "${appContext}.war"
-}
-
-remotes {
-    webServer {
-        host = deployHost
-        user = deployUser
-        port = deployPort
-        if (deployPassword) {
-            password = deployPassword
-        }
-        if (deployIdentity) {
-            identity = file(deployIdentity)
-        }
-    }
-}
-
-ssh.settings {
-    knownHosts = allowAnyHosts
-}
-
-tasks.register('docker_mysql_start') {
-    group = 'deployment'
-    description = 'Start MySQL in Docker on the remote server.'
-
-    doLast {
-        println 'begin docker_mysql_start'
-        ssh.run {
-            session(remotes.webServer) {
-                execute "docker network create ${dockerNetwork}", ignoreError: true
-                execute "docker stop ${mysqlContainer}", ignoreError: true
-                execute "docker rm ${mysqlContainer}", ignoreError: true
-                execute "docker run -d --name ${mysqlContainer} " +
-                        "--network ${dockerNetwork} " +
-                        "-p 3306:3306 " +
-                        "-e MYSQL_ROOT_PASSWORD='${mysqlRootPassword}' " +
-                        "-e MYSQL_DATABASE='${mysqlDatabase}' " +
-                        "${mysqlImage}"
-            }
-        }
-    }
-}
-
-tasks.register('docker_import_db') {
-    group = 'deployment'
-    description = 'Upload db.sql and import it into the remote MySQL container.'
-
-    doLast {
-        println 'begin docker_import_db'
-        ssh.run {
-            session(remotes.webServer) {
-                execute "mkdir -p ${deployDir}"
-                put from: "${project.projectDir}/db.sql", into: "${deployDir}/db.sql"
-                execute "docker exec -i ${mysqlContainer} mysql -u${dbUser} -p'${mysqlRootPassword}' ${mysqlDatabase} < ${deployDir}/db.sql"
-            }
-        }
-    }
-}
-
-tasks.register('docker_upload_file_to_server') {
-    group = 'deployment'
-    description = 'Build and upload the WAR file to the remote server.'
-    dependsOn tasks.named('war')
-
-    doLast {
-        println 'begin docker_upload_file_to_server'
-        def warFile = tasks.named('war').get().archiveFile.get().asFile
-
-        ssh.run {
-            session(remotes.webServer) {
-                execute "mkdir -p ${deployDir}"
-                execute "rm -rf ${deployDir}/${appContext}.war ${deployDir}/${appContext}"
-                put from: warFile, into: "${deployDir}/${appContext}.war"
-            }
-        }
-    }
-}
-
-tasks.register('docker_app_start') {
-    group = 'deployment'
-    description = 'Restart Tomcat in Docker on the remote server.'
-
-    doLast {
-        println 'begin docker_app_start'
-        ssh.run {
-            session(remotes.webServer) {
-                execute "docker network create ${dockerNetwork}", ignoreError: true
-                execute "docker stop ${tomcatContainer}", ignoreError: true
-                execute "docker rm ${tomcatContainer}", ignoreError: true
-                execute "docker run --rm -d --name ${tomcatContainer} " +
-                        "--network ${dockerNetwork} " +
-                        "-v ${deployDir}:/usr/local/tomcat/webapps " +
-                        "-p ${httpPort}:8080 " +
-                        "-e DB_HOST='${dbHost}' " +
-                        "-e DB_PORT='${dbPort}' " +
-                        "-e DB_NAME='${dbName}' " +
-                        "-e DB_USER='${dbUser}' " +
-                        "-e DB_PASSWORD='${dbPassword}' " +
-                        "-e DB_OPTION='${dbOption}' " +
-                        "${tomcatImage}"
-            }
-        }
-    }
-}
-
-tasks.register('docker_deploy') {
-    group = 'deployment'
-    description = 'Build the WAR, upload it, and restart the remote Tomcat container.'
-
-    dependsOn tasks.named('build')
-    dependsOn tasks.named('docker_upload_file_to_server')
-    dependsOn tasks.named('docker_app_start')
-}
-
-tasks.named('docker_upload_file_to_server') {
-    mustRunAfter tasks.named('build')
-}
-
-tasks.named('docker_app_start') {
-    mustRunAfter tasks.named('docker_upload_file_to_server')
+test {
+    useJUnitPlatform()
 }
