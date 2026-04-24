@@ -86,12 +86,41 @@
 
             <div class="panel">
                 <div class="panel-title"><i class='bx bx-lock-alt'></i> Bảo mật tài khoản</div>
+
+                <%-- Change password form --%>
+                <c:if test="${not empty pwError}">
+                    <div class="alert alert-danger mb-3" style="border-radius:10px;">${pwError}</div>
+                </c:if>
+                <c:if test="${not empty pwSuccess}">
+                    <div class="alert alert-success mb-3" style="border-radius:10px;">${pwSuccess}</div>
+                </c:if>
+
+                <form action="${pageContext.request.contextPath}/my-account" method="post" class="row g-3">
+                    <input type="hidden" name="action" value="changePassword">
+                    <div class="col-12">
+                        <label class="form-label fw-semibold">Mật khẩu hiện tại</label>
+                        <input class="form-control" type="password" name="currentPassword" required placeholder="Nhập mật khẩu hiện tại">
+                    </div>
+                    <div class="col-12">
+                        <label class="form-label fw-semibold">Mật khẩu mới</label>
+                        <input class="form-control" type="password" name="newPassword" required placeholder="Tối thiểu 8 ký tự, hoa/thường/số/đặc biệt">
+                    </div>
+                    <div class="col-12">
+                        <label class="form-label fw-semibold">Xác nhận mật khẩu mới</label>
+                        <input class="form-control" type="password" name="confirmPassword" required placeholder="Nhập lại mật khẩu mới">
+                    </div>
+                    <div class="col-12 d-grid">
+                        <button class="btn btn-outline-primary" type="submit"><i class='bx bx-lock-open-alt'></i> Đổi mật khẩu</button>
+                    </div>
+                </form>
+
+                <hr class="my-3">
                 <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
                     <div>
-                        <div class="fw-semibold">Đặt lại mật khẩu</div>
-                        <div class="text-muted small">Đổi mật khẩu qua OTP email để an toàn hơn.</div>
+                        <div class="fw-semibold">Đặt lại qua email</div>
+                        <div class="text-muted small">Đổi mật khẩu qua OTP email nếu quên mật khẩu hiện tại.</div>
                     </div>
-                    <a href="${pageContext.request.contextPath}/forgot-password" class="btn btn-outline-primary">Đặt lại mật khẩu</a>
+                    <a href="${pageContext.request.contextPath}/forgot-password" class="btn btn-outline-secondary btn-sm">Quên mật khẩu?</a>
                 </div>
             </div>
         </div>

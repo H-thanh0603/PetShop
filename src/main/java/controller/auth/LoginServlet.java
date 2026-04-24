@@ -203,6 +203,16 @@ public class LoginServlet extends HttpServlet {
                 request.getRequestDispatcher("/pages/auth/login.jsp").forward(request, response);
                 return;
             }
+
+            // Check email verification
+            if (!dao.isEmailVerified(email)) {
+                form.addGeneralError("Email chưa được xác thực. Vui lòng kiểm tra hộp thư và nhấn link xác thực.");
+                request.setAttribute("unverifiedEmail", email);
+                form.applyToRequest();
+                populateLoginViewData(request);
+                request.getRequestDispatcher("/pages/auth/login.jsp").forward(request, response);
+                return;
+            }
             
             // Save cart data from old session before invalidation
             HttpSession oldSession = request.getSession(false);

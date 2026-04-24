@@ -36,3 +36,9 @@ CREATE TABLE IF NOT EXISTS remember_tokens (
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     CONSTRAINT fk_rt_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 );
+
+-- 4. Email verification columns on users table
+ALTER TABLE users
+    ADD COLUMN IF NOT EXISTS email_verified BOOLEAN NOT NULL DEFAULT FALSE,
+    ADD COLUMN IF NOT EXISTS verification_token VARCHAR(255) NULL,
+    ADD COLUMN IF NOT EXISTS verification_token_expiry TIMESTAMP NULL;

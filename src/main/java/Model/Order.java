@@ -154,7 +154,15 @@ public class Order {
     }
 
     public boolean isCancelableByUser() {
-        return "Pending".equalsIgnoreCase(status) || "Confirmed".equalsIgnoreCase(status);
+        if (!"Pending".equalsIgnoreCase(status) && !"Confirmed".equalsIgnoreCase(status)) {
+            return false;
+        }
+        // Enforce 1-hour cancellation window
+        if (createdAt != null) {
+            long elapsedSeconds = (System.currentTimeMillis() - createdAt.getTime()) / 1000;
+            return elapsedSeconds <= 3600;
+        }
+        return true; // if no timestamp, allow cancel
     }
 
     public int getItemCount() {

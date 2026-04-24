@@ -154,6 +154,19 @@
         
         <jsp:include page="/components/alerts.jsp" />
         
+        <c:if test="${not empty unverifiedEmail}">
+            <div class="alert alert-warning d-flex align-items-center gap-2 mb-3" style="border-radius:10px;">
+                <i class='bx bx-envelope' style="font-size:1.3rem;"></i>
+                <div>
+                    Email chưa được xác thực.
+                    <form action="${pageContext.request.contextPath}/verify-email" method="post" class="d-inline">
+                        <input type="hidden" name="email" value="${unverifiedEmail}">
+                        <button type="submit" class="btn btn-sm btn-warning ms-2 fw-bold">Gửi lại email xác thực</button>
+                    </form>
+                </div>
+            </div>
+        </c:if>
+        
         <form method="post" action="${pageContext.request.contextPath}/login">
             <input type="hidden" name="csrfToken" value="${csrfToken}" />
             <div class="mb-3">

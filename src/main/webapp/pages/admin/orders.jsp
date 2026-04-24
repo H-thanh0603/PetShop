@@ -46,7 +46,7 @@
                 <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
                     <div>
                         <span class="table-title">Danh sách đơn hàng</span>
-                        <div class="table-subtitle">Hiển thị ${orders.size()} / ${totalOrders} đơn hàng</div>
+                        <div class="table-subtitle">Trang ${currentPage}/${totalPages} · Tổng ${totalOrders} đơn hàng</div>
                     </div>
                 </div>
             </div>
@@ -149,6 +149,31 @@
             </form>
         </div>
     </div>
+
+    <%-- Pagination controls --%>
+    <c:if test="${totalPages > 1}">
+    <div class="d-flex justify-content-center align-items-center gap-2 py-4">
+        <c:if test="${currentPage > 1}">
+            <a href="${pageContext.request.contextPath}/admin/orders?page=${currentPage-1}&size=${pageSize}&status=${selectedStatus}&keyword=${keyword}"
+               class="btn btn-sm btn-outline-secondary"><i class='bx bx-chevron-left'></i> Trước</a>
+        </c:if>
+        <c:forEach begin="1" end="${totalPages}" var="p">
+            <c:choose>
+                <c:when test="${p == currentPage}">
+                    <span class="btn btn-sm btn-primary">${p}</span>
+                </c:when>
+                <c:otherwise>
+                    <a href="${pageContext.request.contextPath}/admin/orders?page=${p}&size=${pageSize}&status=${selectedStatus}&keyword=${keyword}"
+                       class="btn btn-sm btn-outline-secondary">${p}</a>
+                </c:otherwise>
+            </c:choose>
+        </c:forEach>
+        <c:if test="${currentPage < totalPages}">
+            <a href="${pageContext.request.contextPath}/admin/orders?page=${currentPage+1}&size=${pageSize}&status=${selectedStatus}&keyword=${keyword}"
+               class="btn btn-sm btn-outline-secondary">Sau <i class='bx bx-chevron-right'></i></a>
+        </c:if>
+    </div>
+    </c:if>
 
     <jsp:include page="/components/scripts.jsp" />
     <jsp:include page="/components/admin-toast.jsp" />
