@@ -11,6 +11,7 @@ import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
 
 import DAO.ReviewDAO;
+import DAO.AdminActionLogDAO;
 import Model.Review;
 import Model.User;
 import Util.ValidationUtil;
@@ -89,6 +90,7 @@ public class ReviewModerationServlet extends HttpServlet {
             } else {
                 ReviewDAO dao = new ReviewDAO();
                 if (dao.deleteReview(reviewId)) {
+                    new AdminActionLogDAO().log(user.getId(), "DELETE_REVIEW", "review", reviewId, null);
                     message = "Xóa review thành công!";
                 } else {
                     message = "Review không tồn tại hoặc đã bị xóa.";

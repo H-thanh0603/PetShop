@@ -1,93 +1,164 @@
--- =====================================================
+-- ============================================================
 -- Migration: Concurrency & Data Integrity
--- =====================================================
-USE `petvaccine`;
+-- Run this script once against the PetShop database
+-- ============================================================
 
--- 1. Add is_active column to products
-ALTER TABLE `products` ADD COLUMN IF NOT EXISTS `is_active` TINYINT(1) NOT NULL DEFAULT 1;
+-- 1. Add is_active column to products (soft delete support)
+ALTER TABLE products ADD COLUMN IF NOT EXISTS is_active TINYINT(1) NOT NULL DEFAULT 1;
 
--- 2. Drop and re-create FK on order_items.product_id with ON DELETE RESTRICT
--- Drop existing FK (try common names)
-SET @fk_name = (SELECT CONSTRAINT_NAME FROM information_schema.KEY_COLUMN_USAGE
-    WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'order_items'
-    AND COLUMN_NAME = 'product_id' AND REFERENCED_TABLE_NAME = 'products' LIMIT 1);
-SET @sql = IF(@fk_name IS NOT NULL, CONCAT('ALTER TABLE `order_items` DROP FOREIGN KEY `', @fk_name, '`'), 'SELECT 1');
-PREPARE stmt FROM @sql;
-EXECUTE stmt;
-DEALLOCATE PREPARE stmt;
-ALTER TABLE `order_items` ADD CONSTRAINT `fk_order_items_product` FOREIGN KEY (`product_id`) REFERENCES `products`(`id`) ON DELETE RESTRICT;
+-- 2. Performance indexes (safe to run multiple times via IF NOT EXISTS check)
+SET @db = DATABASE();
 
--- 3. Drop and re-create FK on reviews.product_id with ON DELETE RESTRICT
-SET @fk_name = (SELECT CONSTRAINT_NAME FROM information_schema.KEY_COLUMN_USAGE
-    WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'reviews'
-    AND COLUMN_NAME = 'product_id' AND REFERENCED_TABLE_NAME = 'products' LIMIT 1);
-SET @sql = IF(@fk_name IS NOT NULL, CONCAT('ALTER TABLE `reviews` DROP FOREIGN KEY `', @fk_name, '`'), 'SELECT 1');
-PREPARE stmt FROM @sql;
-EXECUTE stmt;
-DEALLOCATE PREPARE stmt;
-ALTER TABLE `reviews` ADD CONSTRAINT `fk_reviews_product` FOREIGN KEY (`product_id`) REFERENCES `products`(`id`) ON DELETE RESTRICT;
+-- orders indexes
+SELECT COUNT(*) INTO @idx_exists FROM information_schema.statistics
+  WHERE table_schema = @db AND table_name = 'orders' AND index_name = 'idx_orders_user_id';
+SET @sql = IF(@idx_exists = 0, 'CREATE INDEX idx_orders_user_id ON orders(user_id)', 'SELECT 1');
+PREPARE stmt FROM @sql; EXECUTE stmt; DEALLOCATE PREPARE stmt;
 
--- 4. Drop and re-create FK on orders.user_id with ON DELETE RESTRICT
-SET @fk_name = (SELECT CONSTRAINT_NAME FROM information_schema.KEY_COLUMN_USAGE
-    WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'orders'
-    AND COLUMN_NAME = 'user_id' AND REFERENCED_TABLE_NAME = 'users' LIMIT 1);
-SET @sql = IF(@fk_name IS NOT NULL, CONCAT('ALTER TABLE `orders` DROP FOREIGN KEY `', @fk_name, '`'), 'SELECT 1');
-PREPARE stmt FROM @sql;
-EXECUTE stmt;
-DEALLOCATE PREPARE stmt;
-ALTER TABLE `orders` ADD CONSTRAINT `fk_orders_user` FOREIGN KEY (`user_id`) REFERENCES `users`(`id`) ON DELETE RESTRICT;
+SELECT COUNT(*) INTO @idx_exists FROM information_schema.statistics
+  WHERE table_schema = @db AND table_name = 'orders' AND index_name = 'idx_orders_created_at';
+SET @sql = IF(@idx_exists = 0, 'CREATE INDEX idx_orders_created_at ON orders(createdAt)', 'SELECT 1');
+PREPARE stmt FROM @sql; EXECUTE stmt; DEALLOCATE PREPARE stmt;
 
--- 5. Drop and re-create FK on cart.user_id with ON DELETE RESTRICT
-SET @fk_name = (SELECT CONSTRAINT_NAME FROM information_schema.KEY_COLUMN_USAGE
-    WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'cart'
-    AND COLUMN_NAME = 'user_id' AND REFERENCED_TABLE_NAME = 'users' LIMIT 1);
-SET @sql = IF(@fk_name IS NOT NULL, CONCAT('ALTER TABLE `cart` DROP FOREIGN KEY `', @fk_name, '`'), 'SELECT 1');
-PREPARE stmt FROM @sql;
-EXECUTE stmt;
-DEALLOCATE PREPARE stmt;
-ALTER TABLE `cart` ADD CONSTRAINT `fk_cart_user` FOREIGN KEY (`user_id`) REFERENCES `users`(`id`) ON DELETE RESTRICT;
+SELECT COUNT(*) INTO @idx_exists FROM information_schema.statistics
+  WHERE table_schema = @db AND table_name = 'orders' AND index_name = 'idx_orders_status';
+SET @sql = IF(@idx_exists = 0, 'CREATE INDEX idx_orders_status ON orders(status)', 'SELECT 1');
+PREPARE stmt FROM @sql; EXECUTE stmt; DEALLOCATE PREPARE stmt;
 
--- 6. Drop and re-create FK on reviews.user_id with ON DELETE RESTRICT
-SET @fk_name = (SELECT CONSTRAINT_NAME FROM information_schema.KEY_COLUMN_USAGE
-    WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'reviews'
-    AND COLUMN_NAME = 'user_id' AND REFERENCED_TABLE_NAME = 'users' LIMIT 1);
-SET @sql = IF(@fk_name IS NOT NULL, CONCAT('ALTER TABLE `reviews` DROP FOREIGN KEY `', @fk_name, '`'), 'SELECT 1');
-PREPARE stmt FROM @sql;
-EXECUTE stmt;
-DEALLOCATE PREPARE stmt;
-ALTER TABLE `reviews` ADD CONSTRAINT `fk_reviews_user` FOREIGN KEY (`user_id`) REFERENCES `users`(`id`) ON DELETE RESTRICT;
+-- order_items indexes
+SELECT COUNT(*) INTO @idx_exists FROM information_schema.statistics
+  WHERE table_schema = @db AND table_name = 'order_items' AND index_name = 'idx_order_items_order_id';
+SET @sql = IF(@idx_exists = 0, 'CREATE INDEX idx_order_items_order_id ON order_items(order_id)', 'SELECT 1');
+PREPARE stmt FROM @sql; EXECUTE stmt; DEALLOCATE PREPARE stmt;
 
--- 7. Create indexes (using stored procedure to handle IF NOT EXISTS)
+SELECT COUNT(*) INTO @idx_exists FROM information_schema.statistics
+  WHERE table_schema = @db AND table_name = 'order_items' AND index_name = 'idx_order_items_product_id';
+SET @sql = IF(@idx_exists = 0, 'CREATE INDEX idx_order_items_product_id ON order_items(product_id)', 'SELECT 1');
+PREPARE stmt FROM @sql; EXECUTE stmt; DEALLOCATE PREPARE stmt;
 
-DROP PROCEDURE IF EXISTS create_index_if_not_exists;
-DELIMITER //
-CREATE PROCEDURE create_index_if_not_exists(
-    IN p_table VARCHAR(64),
-    IN p_index VARCHAR(64),
-    IN p_columns VARCHAR(255)
-)
-BEGIN
-    IF NOT EXISTS (
-        SELECT 1 FROM information_schema.STATISTICS
-        WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = p_table AND INDEX_NAME = p_index
-    ) THEN
-        SET @ddl = CONCAT('CREATE INDEX `', p_index, '` ON `', p_table, '`(', p_columns, ')');
-        PREPARE stmt FROM @ddl;
-        EXECUTE stmt;
-        DEALLOCATE PREPARE stmt;
-    END IF;
-END //
-DELIMITER ;
+-- reviews indexes
+SELECT COUNT(*) INTO @idx_exists FROM information_schema.statistics
+  WHERE table_schema = @db AND table_name = 'reviews' AND index_name = 'idx_reviews_product_id';
+SET @sql = IF(@idx_exists = 0, 'CREATE INDEX idx_reviews_product_id ON reviews(product_id)', 'SELECT 1');
+PREPARE stmt FROM @sql; EXECUTE stmt; DEALLOCATE PREPARE stmt;
 
-CALL create_index_if_not_exists('orders', 'idx_orders_user_id', '`user_id`');
-CALL create_index_if_not_exists('orders', 'idx_orders_created_at', '`created_at`');
-CALL create_index_if_not_exists('orders', 'idx_orders_status', '`status`');
-CALL create_index_if_not_exists('order_items', 'idx_order_items_order_id', '`order_id`');
-CALL create_index_if_not_exists('order_items', 'idx_order_items_product_id', '`product_id`');
-CALL create_index_if_not_exists('reviews', 'idx_reviews_product_id', '`product_id`');
-CALL create_index_if_not_exists('reviews', 'idx_reviews_user_id', '`user_id`');
-CALL create_index_if_not_exists('products', 'idx_products_pet_type_id', '`pet_type_id`');
-CALL create_index_if_not_exists('products', 'idx_products_category', '`category`');
-CALL create_index_if_not_exists('cart', 'idx_cart_user_id', '`user_id`');
+SELECT COUNT(*) INTO @idx_exists FROM information_schema.statistics
+  WHERE table_schema = @db AND table_name = 'reviews' AND index_name = 'idx_reviews_user_id';
+SET @sql = IF(@idx_exists = 0, 'CREATE INDEX idx_reviews_user_id ON reviews(user_id)', 'SELECT 1');
+PREPARE stmt FROM @sql; EXECUTE stmt; DEALLOCATE PREPARE stmt;
 
-DROP PROCEDURE IF EXISTS create_index_if_not_exists;
+-- products indexes
+SELECT COUNT(*) INTO @idx_exists FROM information_schema.statistics
+  WHERE table_schema = @db AND table_name = 'products' AND index_name = 'idx_products_pet_type_id';
+SET @sql = IF(@idx_exists = 0, 'CREATE INDEX idx_products_pet_type_id ON products(pet_type_id)', 'SELECT 1');
+PREPARE stmt FROM @sql; EXECUTE stmt; DEALLOCATE PREPARE stmt;
+
+SELECT COUNT(*) INTO @idx_exists FROM information_schema.statistics
+  WHERE table_schema = @db AND table_name = 'products' AND index_name = 'idx_products_category';
+SET @sql = IF(@idx_exists = 0, 'CREATE INDEX idx_products_category ON products(category)', 'SELECT 1');
+PREPARE stmt FROM @sql; EXECUTE stmt; DEALLOCATE PREPARE stmt;
+
+-- cart index
+SELECT COUNT(*) INTO @idx_exists FROM information_schema.statistics
+  WHERE table_schema = @db AND table_name = 'cart' AND index_name = 'idx_cart_user_id';
+SET @sql = IF(@idx_exists = 0, 'CREATE INDEX idx_cart_user_id ON cart(user_id)', 'SELECT 1');
+PREPARE stmt FROM @sql; EXECUTE stmt; DEALLOCATE PREPARE stmt;
+
+-- 3. Foreign key constraint changes: CASCADE -> RESTRICT
+--    (Drop existing FKs and re-add with RESTRICT)
+--    Note: FK names may vary by installation; use information_schema to find them.
+
+-- order_items.product_id
+SET @fk_name = NULL;
+SELECT CONSTRAINT_NAME INTO @fk_name
+  FROM information_schema.KEY_COLUMN_USAGE
+  WHERE TABLE_SCHEMA = @db AND TABLE_NAME = 'order_items' AND COLUMN_NAME = 'product_id'
+    AND REFERENCED_TABLE_NAME = 'products'
+  LIMIT 1;
+SET @sql = IF(@fk_name IS NOT NULL,
+  CONCAT('ALTER TABLE order_items DROP FOREIGN KEY ', @fk_name),
+  'SELECT 1');
+PREPARE stmt FROM @sql; EXECUTE stmt; DEALLOCATE PREPARE stmt;
+
+SELECT COUNT(*) INTO @idx_exists FROM information_schema.statistics
+  WHERE table_schema = @db AND table_name = 'order_items' AND index_name = 'fk_oi_product_id';
+SET @sql = IF(@idx_exists = 0,
+  'ALTER TABLE order_items ADD CONSTRAINT fk_oi_product_id FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE RESTRICT',
+  'SELECT 1');
+PREPARE stmt FROM @sql; EXECUTE stmt; DEALLOCATE PREPARE stmt;
+
+-- reviews.product_id
+SET @fk_name = NULL;
+SELECT CONSTRAINT_NAME INTO @fk_name
+  FROM information_schema.KEY_COLUMN_USAGE
+  WHERE TABLE_SCHEMA = @db AND TABLE_NAME = 'reviews' AND COLUMN_NAME = 'product_id'
+    AND REFERENCED_TABLE_NAME = 'products'
+  LIMIT 1;
+SET @sql = IF(@fk_name IS NOT NULL,
+  CONCAT('ALTER TABLE reviews DROP FOREIGN KEY ', @fk_name),
+  'SELECT 1');
+PREPARE stmt FROM @sql; EXECUTE stmt; DEALLOCATE PREPARE stmt;
+
+SELECT COUNT(*) INTO @idx_exists FROM information_schema.statistics
+  WHERE table_schema = @db AND table_name = 'reviews' AND index_name = 'fk_reviews_product_id';
+SET @sql = IF(@idx_exists = 0,
+  'ALTER TABLE reviews ADD CONSTRAINT fk_reviews_product_id FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE RESTRICT',
+  'SELECT 1');
+PREPARE stmt FROM @sql; EXECUTE stmt; DEALLOCATE PREPARE stmt;
+
+-- orders.user_id
+SET @fk_name = NULL;
+SELECT CONSTRAINT_NAME INTO @fk_name
+  FROM information_schema.KEY_COLUMN_USAGE
+  WHERE TABLE_SCHEMA = @db AND TABLE_NAME = 'orders' AND COLUMN_NAME = 'user_id'
+    AND REFERENCED_TABLE_NAME = 'users'
+  LIMIT 1;
+SET @sql = IF(@fk_name IS NOT NULL,
+  CONCAT('ALTER TABLE orders DROP FOREIGN KEY ', @fk_name),
+  'SELECT 1');
+PREPARE stmt FROM @sql; EXECUTE stmt; DEALLOCATE PREPARE stmt;
+
+SELECT COUNT(*) INTO @idx_exists FROM information_schema.statistics
+  WHERE table_schema = @db AND table_name = 'orders' AND index_name = 'fk_orders_user_id';
+SET @sql = IF(@idx_exists = 0,
+  'ALTER TABLE orders ADD CONSTRAINT fk_orders_user_id FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE RESTRICT',
+  'SELECT 1');
+PREPARE stmt FROM @sql; EXECUTE stmt; DEALLOCATE PREPARE stmt;
+
+-- cart.user_id
+SET @fk_name = NULL;
+SELECT CONSTRAINT_NAME INTO @fk_name
+  FROM information_schema.KEY_COLUMN_USAGE
+  WHERE TABLE_SCHEMA = @db AND TABLE_NAME = 'cart' AND COLUMN_NAME = 'user_id'
+    AND REFERENCED_TABLE_NAME = 'users'
+  LIMIT 1;
+SET @sql = IF(@fk_name IS NOT NULL,
+  CONCAT('ALTER TABLE cart DROP FOREIGN KEY ', @fk_name),
+  'SELECT 1');
+PREPARE stmt FROM @sql; EXECUTE stmt; DEALLOCATE PREPARE stmt;
+
+SELECT COUNT(*) INTO @idx_exists FROM information_schema.statistics
+  WHERE table_schema = @db AND table_name = 'cart' AND index_name = 'fk_cart_user_id';
+SET @sql = IF(@idx_exists = 0,
+  'ALTER TABLE cart ADD CONSTRAINT fk_cart_user_id FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE RESTRICT',
+  'SELECT 1');
+PREPARE stmt FROM @sql; EXECUTE stmt; DEALLOCATE PREPARE stmt;
+
+-- reviews.user_id
+SET @fk_name = NULL;
+SELECT CONSTRAINT_NAME INTO @fk_name
+  FROM information_schema.KEY_COLUMN_USAGE
+  WHERE TABLE_SCHEMA = @db AND TABLE_NAME = 'reviews' AND COLUMN_NAME = 'user_id'
+    AND REFERENCED_TABLE_NAME = 'users'
+  LIMIT 1;
+SET @sql = IF(@fk_name IS NOT NULL,
+  CONCAT('ALTER TABLE reviews DROP FOREIGN KEY ', @fk_name),
+  'SELECT 1');
+PREPARE stmt FROM @sql; EXECUTE stmt; DEALLOCATE PREPARE stmt;
+
+SELECT COUNT(*) INTO @idx_exists FROM information_schema.statistics
+  WHERE table_schema = @db AND table_name = 'reviews' AND index_name = 'fk_reviews_user_id';
+SET @sql = IF(@idx_exists = 0,
+  'ALTER TABLE reviews ADD CONSTRAINT fk_reviews_user_id FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE RESTRICT',
+  'SELECT 1');
+PREPARE stmt FROM @sql; EXECUTE stmt; DEALLOCATE PREPARE stmt;

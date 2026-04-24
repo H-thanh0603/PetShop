@@ -46,22 +46,8 @@ Thumbs.db
 
 # ===== Logs =====
 *.log
-logs/
+secrets.properties
 
-# ===== Temp / Artifacts =====
-*.class
-test-report*.csv
-test-report*.xlsx
+# MemPalace per-project files (issue #185)
 mempalace.yaml
 entities.json
-RunDemoSQL.java
-RunDemoSQL.class
-
-# ===== User Excludes =====
-.kiro/
-.omx/
-.logs/
-.doc/
-*.kiro
-*.omx
-*.doc

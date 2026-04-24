@@ -1,0 +1,64 @@
+{
+  "pid": 11716,
+  "parent_pid": 14152,
+  "started_at": "2026-04-21T08:06:53.733Z",
+  "cwd": "D:\\Petshop2\\PetShop",
+  "notify_script": "C:\\Users\\user\\AppData\\Roaming\\npm\\node_modules\\oh-my-codex\\dist\\scripts\\notify-hook.js",
+  "poll_ms": 250,
+  "pid_file": null,
+  "max_lifetime_ms": 0,
+  "tracked_files": 0,
+  "seen_turns": 0,
+  "dispatch_drain": {
+    "enabled": true,
+    "max_per_tick": 5,
+    "run_count": 1,
+    "leader_only": true,
+    "last_tick_at": "2026-04-21T08:06:53.738Z",
+    "last_result": {
+      "processed": 0,
+      "skipped": 0,
+      "failed": 0
+    },
+    "last_error": null
+  },
+  "leader_nudge": {
+    "enabled": true,
+    "leader_only": true,
+    "stale_threshold_ms": 180000,
+    "precomputed_leader_stale": true,
+    "last_tick_at": "2026-04-21T08:06:53.739Z",
+    "last_error": null,
+    "run_count": 1
+  },
+  "ralph_continue_steer": {
+    "enabled": true,
+    "cadence_ms": 60000,
+    "message": "Ralph loop active continue",
+    "active": false,
+    "last_state_check_at": "2026-04-21T08:06:53.753Z",
+    "last_sent_at": "",
+    "cooldown_anchor_at": "",
+    "last_reason": "blocked_by_current_session",
+    "last_error": null,
+    "state_path": "",
+    "pane_id": "",
+    "pane_current_command": "",
+    "current_phase": "",
+    "shared_timestamp_path": "D:\\Petshop2\\PetShop\\.omx\\state\\ralph-last-steer-at",
+    "shared_last_sent_at": "",
+    "singleton_lock_path": "D:\\Petshop2\\PetShop\\.omx\\state\\ralph-continue-steer.lock"
+  },
+  "fallback_auto_nudge": {
+    "enabled": true,
+    "stall_ms": 5000,
+    "last_tick_at": "2026-04-21T08:06:53.745Z",
+    "last_turn_at": "2026-04-21T05:01:30.713Z",
+    "last_turn_count": 2,
+    "last_message": "Mình kiểm tra code rồi: về mặt **dữ liệu mẫu** thì đúng là:\n\n- **User**: `user1@gmail.com` / `Thanh@",
+    "last_reason": "eligible_but_not_sent",
+    "last_error": null,
+    "last_nudged_signature": "",
+    "last_nudged_at": ""
+  }
+}

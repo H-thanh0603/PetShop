@@ -1,7 +1,6 @@
 package controller.admin;
 
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.List;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
@@ -9,12 +8,16 @@ import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
+import DAO.AdminActionLogDAO;
 import DAO.OrderDAO;
 import Model.Order;
+import Model.OrderStatusHistory;
+import Model.User;
 
 @WebServlet("/admin/orders")
 public class ManageOrderServlet extends HttpServlet {
     private static final long serialVersionUID = 1L;
+    private final AdminActionLogDAO actionLog = new AdminActionLogDAO();
 
     protected void doGet(HttpServletRequest request, HttpServletResponse response) 
             throws ServletException, IOException {
@@ -26,15 +29,28 @@ public class ManageOrderServlet extends HttpServlet {
         if ("view".equals(action)) {
             int orderId = Integer.parseInt(request.getParameter("id"));
             Order order = dao.getOrderById(orderId);
+            List<OrderStatusHistory> statusHistory = dao.getStatusHistory(orderId);
             request.setAttribute("order", order);
+            request.setAttribute("statusHistory", statusHistory);
             request.getRequestDispatcher("/pages/admin/order-detail.jsp").forward(request, response);
             return;
         }
 
-        List<Order> allOrders = dao.getAllOrders();
-        List<Order> list = filterOrders(allOrders, status, keyword);
+        // Pagination
+        int page = 1;
+        int size = 20;
+        try { page = Math.max(1, Integer.parseInt(request.getParameter("page"))); } catch (Exception ignored) {}
+        try { size = Math.max(1, Integer.parseInt(request.getParameter("size"))); } catch (Exception ignored) {}
+
+        List<Order> list = dao.getOrdersPage(page, size, status, keyword);
+        int totalOrders = dao.countOrders(status, keyword);
+        int totalPages = (int) Math.ceil((double) totalOrders / size);
+
         request.setAttribute("orders", list);
-        request.setAttribute("totalOrders", allOrders.size());
+        request.setAttribute("totalOrders", totalOrders);
+        request.setAttribute("currentPage", page);
+        request.setAttribute("pageSize", size);
+        request.setAttribute("totalPages", totalPages);
         request.setAttribute("selectedStatus", status);
         request.setAttribute("keyword", keyword);
         request.getRequestDispatcher("/pages/admin/orders.jsp").forward(request, response);
@@ -45,11 +61,18 @@ public class ManageOrderServlet extends HttpServlet {
         String action = request.getParameter("action");
         OrderDAO dao = new OrderDAO();
         HttpSession session = request.getSession();
+        User admin = (User) session.getAttribute("user");
+        int adminId = admin != null ? admin.getId() : 1;
 
         if ("updateStatus".equals(action)) {
             int orderId = Integer.parseInt(request.getParameter("orderId"));
-            String status = request.getParameter("status");
-            if (dao.updateStatus(orderId, status)) {
+            String newStatus = request.getParameter("status");
+            // Get old status for logging
+            Order existing = dao.getOrderById(orderId);
+            String oldStatus = existing != null ? existing.getStatus() : "Unknown";
+            if (dao.updateStatus(orderId, newStatus, adminId)) {
+                actionLog.log(adminId, "UPDATE_ORDER_STATUS", "order", orderId,
+                        "Status changed from " + oldStatus + " to " + newStatus);
                 session.setAttribute("message", "Cập nhật trạng thái đơn hàng thành công!");
                 session.setAttribute("messageType", "success");
             } else {
@@ -58,25 +81,5 @@ public class ManageOrderServlet extends HttpServlet {
             }
         }
         response.sendRedirect(request.getContextPath() + "/admin/orders");
-    }
-
-    private List<Order> filterOrders(List<Order> orders, String statusFilter, String keyword) {
-        List<Order> filtered = new ArrayList<>();
-        String normalizedStatus = statusFilter == null ? "" : statusFilter.trim();
-        String normalizedKeyword = keyword == null ? "" : keyword.trim().toLowerCase();
-
-        for (Order order : orders) {
-            boolean matchesStatus = normalizedStatus.isEmpty() || "all".equalsIgnoreCase(normalizedStatus)
-                    || order.getStatus().equalsIgnoreCase(normalizedStatus);
-            boolean matchesKeyword = normalizedKeyword.isEmpty()
-                    || String.valueOf(order.getId()).contains(normalizedKeyword)
-                    || (order.getFullname() != null && order.getFullname().toLowerCase().contains(normalizedKeyword))
-                    || (order.getPhone() != null && order.getPhone().toLowerCase().contains(normalizedKeyword))
-                    || (order.getAddress() != null && order.getAddress().toLowerCase().contains(normalizedKeyword));
-            if (matchesStatus && matchesKeyword) {
-                filtered.add(order);
-            }
-        }
-        return filtered;
     }
 }

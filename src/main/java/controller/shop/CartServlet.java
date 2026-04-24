@@ -2,6 +2,7 @@ package controller.shop;
 
 import java.io.IOException;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import com.google.gson.Gson;
@@ -79,9 +80,14 @@ public class CartServlet extends HttpServlet {
             cart = new HashMap<>();
         }
 
-        inventoryService.refreshCartProducts(cart);
+        List<String> removedNames = inventoryService.refreshCartProductsWithNotification(cart);
         session.setAttribute("cart", cart);
         recalculateTotalQuantity(session, cart);
+
+        if (!removedNames.isEmpty()) {
+            session.setAttribute("toastMessage", "Các sản phẩm sau đã bị xóa khỏi giỏ hàng vì không còn hàng: " + String.join(", ", removedNames));
+            session.setAttribute("toastType", "warning");
+        }
 
         request.getRequestDispatcher("/pages/shop/cart.jsp").forward(request, response);
     }

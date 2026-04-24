@@ -6,7 +6,7 @@ This plan implements six concurrency and data integrity improvements plus perfor
 
 ## Tasks
 
-- [ ] 1. Create SQL migration script for schema changes
+- [x] 1. Create SQL migration script for schema changes
   - Create `PetShop/concurrency_data_integrity.sql` migration script containing:
     - `ALTER TABLE products ADD COLUMN IF NOT EXISTS is_active TINYINT(1) NOT NULL DEFAULT 1`
     - Drop and re-create FK on `order_items.product_id` with `ON DELETE RESTRICT` (replacing CASCADE)
@@ -18,7 +18,7 @@ This plan implements six concurrency and data integrity improvements plus perfor
   - _Requirements: 5.1, 5.5, 5.6, 6.4, 6.5, 6.6, 7.1, 7.2, 7.3, 7.4, 7.5, 7.6, 7.7, 7.8, 7.9, 7.10_
 
 - [ ] 2. Add `isActive` field to Product model and update ProductDAO
-  - [ ] 2.1 Add `isActive` boolean field to `Model/Product.java`
+  - [x] 2.1 Add `isActive` boolean field to `Model/Product.java`
     - Add `private boolean isActive = true;` field
     - Add `isActive` getter and setter
     - Update `ProductDAO.mapProduct` to read `is_active` from ResultSet (with try/catch defaulting to true)

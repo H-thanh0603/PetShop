@@ -75,7 +75,10 @@ public class MyOrdersServlet extends HttpServlet {
         if ("cancel".equals(action)) {
             try {
                 int orderId = Integer.parseInt(request.getParameter("orderId"));
-                if (orderDAO.cancelOrderByUser(orderId, user.getId())) {
+                // Check cancellation window first for a clear error message
+                if (!orderDAO.isWithinCancellationWindow(orderId)) {
+                    session.setAttribute("error", "Đã quá thời gian hủy đơn hàng.");
+                } else if (orderDAO.cancelOrderByUser(orderId, user.getId())) {
                     session.setAttribute("success", "Đơn hàng đã được hủy thành công.");
                 } else {
                     session.setAttribute("error", "Không thể hủy đơn hàng này.");
