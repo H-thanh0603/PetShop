@@ -22,6 +22,9 @@ import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
 import services.ShippingService;
 import services.OrderEmailService;
+import services.payment.PaymentProvider;
+import services.payment.PaymentRegistry;
+import services.payment.PaymentResult;
 
 import java.sql.Connection;
 import java.sql.Timestamp;
@@ -306,14 +309,22 @@ public class CheckoutServlet extends HttpServlet {
                 }
 
                 double finalTotal = baseSummary.getTotalAmount() + baseSummary.getShippingFee() - discount;
-                PaymentSelection paymentSelection = resolvePaymentMethod(
-                        request.getParameter("paymentMethod"),
-                        finalTotal
-                );
-                if (!paymentSelection.isValid()) {
+
+                // Resolve payment via registry (extensible, no switch-case)
+                String paymentMethodKey = trimToEmpty(request.getParameter("paymentMethod"));
+                PaymentProvider provider = PaymentRegistry.getInstance().get(paymentMethodKey);
+                if (provider == null) {
                     conn.rollback();
                     result.put("success", false);
-                    result.put("message", paymentSelection.getMessage());
+                    result.put("message", "Phương thức thanh toán không hợp lệ.");
+                    write(response, result);
+                    return;
+                }
+                PaymentResult paymentResult = provider.process(finalTotal);
+                if (!paymentResult.isSuccess()) {
+                    conn.rollback();
+                    result.put("success", false);
+                    result.put("message", paymentResult.getMessage());
                     write(response, result);
                     return;
                 }
@@ -327,8 +338,8 @@ public class CheckoutServlet extends HttpServlet {
                 order.setTotalAmount(finalTotal);
                 order.setStatus("Pending");
                 order.setCreatedAt(Timestamp.valueOf(LocalDateTime.now()));
-                order.setPayment_method(paymentSelection.getPaymentMethodDb());
-                order.setPayment_status(paymentSelection.isPaymentStatus());
+                order.setPayment_method(paymentResult.getPaymentMethodDb());
+                order.setPayment_status(paymentResult.isPaymentStatus());
 
                 int orderId = orderDAO.saveOrder(conn, order);
                 if (orderId <= 0) {
@@ -491,25 +502,6 @@ public class CheckoutServlet extends HttpServlet {
         return new CheckoutSummary(totalAmount, shippingFee, shippingMessage, discount, finalTotal);
     }
 
-    private PaymentSelection resolvePaymentMethod(String paymentMethod, double finalTotal) {
-        switch (trimToEmpty(paymentMethod)) {
-            case "cod":
-                return PaymentSelection.valid("COD", false);
-            case "momo":
-                if (!callMomoApi(finalTotal)) {
-                    return PaymentSelection.invalid("Thanh toán MoMo thất bại.");
-                }
-                return PaymentSelection.valid("MOMO", true);
-            case "bank_transfer":
-                if (!callBankApi(finalTotal)) {
-                    return PaymentSelection.invalid("Thanh toán ngân hàng thất bại.");
-                }
-                return PaymentSelection.valid("BANK_TRANSFER", true);
-            default:
-                return PaymentSelection.invalid("Phương thức thanh toán không hợp lệ.");
-        }
-    }
-
     private double calculateDiscount(double totalAmount, Coupon coupon) {
         if (coupon == null || coupon.getDiscountPercent() <= 0) {
             return 0;
@@ -562,16 +554,6 @@ public class CheckoutServlet extends HttpServlet {
         res.setContentType("application/json;charset=UTF-8");
         res.setCharacterEncoding("UTF-8");
         res.getWriter().write(new Gson().toJson(data));
-    }
-
-    private boolean callMomoApi(double amount) {
-        System.out.println("Mock MoMo: " + amount);
-        return true;
-    }
-
-    private boolean callBankApi(double amount) {
-        System.out.println("Mock Bank: " + amount);
-        return true;
     }
 
     private static final class CheckoutSummary {
@@ -647,41 +629,4 @@ public class CheckoutServlet extends HttpServlet {
         }
     }
 
-    private static final class PaymentSelection {
-        private final boolean valid;
-        private final String paymentMethodDb;
-        private final boolean paymentStatus;
-        private final String message;
-
-        private PaymentSelection(boolean valid, String paymentMethodDb, boolean paymentStatus, String message) {
-            this.valid = valid;
-            this.paymentMethodDb = paymentMethodDb;
-            this.paymentStatus = paymentStatus;
-            this.message = message;
-        }
-
-        private static PaymentSelection valid(String paymentMethodDb, boolean paymentStatus) {
-            return new PaymentSelection(true, paymentMethodDb, paymentStatus, null);
-        }
-
-        private static PaymentSelection invalid(String message) {
-            return new PaymentSelection(false, null, false, message);
-        }
-
-        private boolean isValid() {
-            return valid;
-        }
-
-        private String getPaymentMethodDb() {
-            return paymentMethodDb;
-        }
-
-        private boolean isPaymentStatus() {
-            return paymentStatus;
-        }
-
-        private String getMessage() {
-            return message;
-        }
-    }
 }

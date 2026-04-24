@@ -1,4 +1,6 @@
 package DAO;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -10,7 +12,9 @@ import Model.CartItem;
 import Model.Product;
 
 public class CartDAO {
-    
+
+    private static final Logger log = LoggerFactory.getLogger(CartDAO.class);
+
     private ProductDAO productDAO = new ProductDAO();
     
     // Lưu hoặc cập nhật item trong giỏ hàng
@@ -25,7 +29,7 @@ public class CartDAO {
             ps.setInt(4, quantity);
             ps.executeUpdate();
         } catch (Exception e) {
-            e.printStackTrace();
+            log.error("DB error", e);
         }
     }
     
@@ -71,7 +75,7 @@ public class CartDAO {
                 insertPs.executeUpdate();
             }
         } catch (Exception e) {
-            e.printStackTrace();
+            log.error("DB error", e);
         }
     }
     
@@ -84,7 +88,7 @@ public class CartDAO {
             ps.setInt(2, productId);
             ps.executeUpdate();
         } catch (Exception e) {
-            e.printStackTrace();
+            log.error("DB error", e);
         }
     }
     
@@ -118,7 +122,7 @@ public class CartDAO {
             return rows > 0;
 
         } catch (Exception e) {
-            e.printStackTrace();
+            log.error("DB error", e);
         }
         return false;
     }
@@ -128,7 +132,7 @@ public class CartDAO {
         try (Connection conn = new DBContext().getConnection()) {
             clearCart(conn, userId);
         } catch (Exception e) {
-            e.printStackTrace();
+            log.error("DB error", e);
         }
     }
 
@@ -178,7 +182,7 @@ public class CartDAO {
                 }
             }
         } catch (Exception e) {
-            e.printStackTrace();
+            log.error("DB error", e);
         }
         return cart;
     }
@@ -194,7 +198,7 @@ public class CartDAO {
                 return rs.getInt("total");
             }
         } catch (Exception e) {
-            e.printStackTrace();
+            log.error("DB error", e);
         }
         return 0;
     }
@@ -217,3 +221,4 @@ public class CartDAO {
         }
     }
 }
+

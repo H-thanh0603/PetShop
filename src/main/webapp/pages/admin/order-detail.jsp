@@ -148,6 +148,35 @@
                         </div>
                     </form>
                 </div>
+
+                <%-- Status History --%>
+                <c:if test="${not empty statusHistory}">
+                <div class="order-info-card">
+                    <h5 class="mb-4 fw-bold"><i class='bx bx-history'></i> Lịch sử thay đổi trạng thái</h5>
+                    <div class="table-responsive">
+                        <table class="table table-sm table-hover">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Trạng thái cũ</th>
+                                    <th>Trạng thái mới</th>
+                                    <th>Người thực hiện</th>
+                                    <th>Thời gian</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <c:forEach var="h" items="${statusHistory}">
+                                    <tr>
+                                        <td><span class="badge bg-secondary">${h.oldStatus}</span></td>
+                                        <td><span class="badge bg-primary">${h.newStatus}</span></td>
+                                        <td>${h.changedByName}</td>
+                                        <td><fmt:formatDate value="${h.changedAt}" pattern="dd/MM/yyyy HH:mm:ss"/></td>
+                                    </tr>
+                                </c:forEach>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                </c:if>
             </div>
         </div>
     </main>

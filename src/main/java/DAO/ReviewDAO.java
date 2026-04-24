@@ -1,4 +1,6 @@
 package DAO;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -9,6 +11,8 @@ import Context.DBContext;
 import Model.Review;
 
 public class ReviewDAO {
+
+    private static final Logger log = LoggerFactory.getLogger(ReviewDAO.class);
 
     // 1. Lấy danh sách đánh giá theo sản phẩm
     public List<Review> getReviewsByProductId(int productId) {
@@ -35,7 +39,7 @@ public class ReviewDAO {
                 }
             }
         } catch (Exception e) {
-            e.printStackTrace();
+            log.error("DB error", e);
         }
         return list;
     }
@@ -50,7 +54,7 @@ public class ReviewDAO {
                 return rs.next();
             }
         } catch (Exception e) {
-            e.printStackTrace();
+            log.error("DB error", e);
         }
         return false;
     }
@@ -74,7 +78,7 @@ public class ReviewDAO {
                 r.setCreatedAt(rs.getDate("created_at"));
                 list.add(r);
             }
-        } catch (Exception e) { e.printStackTrace(); }
+        } catch (Exception e) { log.error("DB error", e); }
         return list;
     }
 
@@ -99,7 +103,7 @@ public class ReviewDAO {
                     list.add(r);
                 }
             }
-        } catch (Exception e) { e.printStackTrace(); }
+        } catch (Exception e) { log.error("DB error", e); }
         return list;
     }
 
@@ -110,7 +114,7 @@ public class ReviewDAO {
              PreparedStatement ps = conn.prepareStatement(query)) {
             ps.setInt(1, reviewId);
             return ps.executeUpdate() > 0;
-        } catch (Exception e) { e.printStackTrace(); }
+        } catch (Exception e) { log.error("DB error", e); }
         return false;
     }
 
@@ -125,7 +129,7 @@ public class ReviewDAO {
                 return rs.next();
             }
         } catch (Exception e) {
-            e.printStackTrace();
+            log.error("DB error", e);
         }
         return false;
     }
@@ -142,7 +146,7 @@ public class ReviewDAO {
             
             return ps.executeUpdate() > 0;
         } catch (Exception e) {
-            e.printStackTrace();
+            log.error("DB error", e);
         }
         return false;
     }
@@ -157,7 +161,7 @@ public class ReviewDAO {
                 if (rs.next()) return rs.getInt(1);
             }
         } catch (Exception e) {
-            e.printStackTrace();
+            log.error("DB error", e);
             return Integer.MAX_VALUE; // fail-safe: reject on DB error
         }
         return 0;
@@ -174,8 +178,9 @@ public class ReviewDAO {
                 return rs.next();
             }
         } catch (Exception e) {
-            e.printStackTrace();
+            log.error("DB error", e);
             return true; // fail-safe: reject on DB error
         }
     }
 }
+

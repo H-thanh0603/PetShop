@@ -95,7 +95,7 @@ public class ForgotPasswordServlet extends HttpServlet {
             session.setAttribute("otpVerified", false);
             response.sendRedirect(request.getContextPath() + "/verify-otp");
         } else {
-            request.setAttribute("error", "Không thể gửi email. Vui lòng thử lại sau.");
+            request.setAttribute("error", "Không thể gửi email xác thực. Vui lòng thử lại sau hoặc liên hệ hỗ trợ: support@petshop.vn | 1900-xxxx.");
             request.setAttribute("email", email);
             request.getRequestDispatcher("/pages/auth/forgot-password.jsp").forward(request, response);
         }

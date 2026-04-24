@@ -1,4 +1,6 @@
 package DAO;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -13,6 +15,8 @@ import Model.Product;
 import Model.OrderStatusHistory;
 
 public class OrderDAO {
+
+    private static final Logger log = LoggerFactory.getLogger(OrderDAO.class);
 
     private Order mapOrder(ResultSet rs) throws Exception {
         return new Order(
@@ -34,7 +38,7 @@ public class OrderDAO {
         try (Connection conn = DBContext.getConnection()) {
             return saveOrder(conn, order);
         } catch (Exception e) {
-            e.printStackTrace();
+            log.error("DB error", e);
         }
         return -1;
     }
@@ -67,7 +71,7 @@ public class OrderDAO {
         try (Connection conn = DBContext.getConnection()) {
             return saveOrderItem(conn, item);
         } catch (Exception e) {
-            e.printStackTrace();
+            log.error("DB error", e);
         }
         return false;
     }
@@ -95,7 +99,7 @@ public class OrderDAO {
                 list.add(order);
             }
         } catch (Exception e) {
-            e.printStackTrace();
+            log.error("DB error", e);
         }
         return list;
     }
@@ -140,7 +144,7 @@ public class OrderDAO {
                 loadItemsForOrders(conn, list);
             }
         } catch (Exception e) {
-            e.printStackTrace();
+            log.error("DB error", e);
         }
         return list;
     }
@@ -168,7 +172,7 @@ public class OrderDAO {
                 if (rs.next()) return rs.getInt(1);
             }
         } catch (Exception e) {
-            e.printStackTrace();
+            log.error("DB error", e);
         }
         return 0;
     }
@@ -222,7 +226,7 @@ public class OrderDAO {
                 }
             }
         } catch (Exception e) {
-            e.printStackTrace();
+            log.error("DB error", e);
         }
         return null;
     }
@@ -231,7 +235,7 @@ public class OrderDAO {
         try (Connection conn = DBContext.getConnection()) {
             return getOrderItems(conn, orderId);
         } catch (Exception e) {
-            e.printStackTrace();
+            log.error("DB error", e);
         }
         return new ArrayList<>();
     }
@@ -342,7 +346,7 @@ public class OrderDAO {
                 conn.setAutoCommit(true);
             }
         } catch (Exception e) {
-            e.printStackTrace();
+            log.error("DB error", e);
         }
         return false;
     }
@@ -354,7 +358,7 @@ public class OrderDAO {
              ResultSet rs = ps.executeQuery()) {
             if (rs.next()) return rs.getInt(1);
         } catch (Exception e) {
-            e.printStackTrace();
+            log.error("DB error", e);
         }
         return 0;
     }
@@ -373,7 +377,7 @@ public class OrderDAO {
                 }
             }
         } catch (Exception e) {
-            e.printStackTrace();
+            log.error("DB error", e);
         }
         return list;
     }
@@ -402,7 +406,7 @@ public class OrderDAO {
                 }
             }
         } catch (Exception e) {
-            e.printStackTrace();
+            log.error("DB error", e);
             return false;
         }
         return updateStatus(orderId, "Cancelled", userId);
@@ -426,7 +430,7 @@ public class OrderDAO {
                 }
             }
         } catch (Exception e) {
-            e.printStackTrace();
+            log.error("DB error", e);
         }
         return false;
     }
@@ -442,7 +446,7 @@ public class OrderDAO {
              ResultSet rs = ps.executeQuery()) {
             if (rs.next()) return rs.getDouble(1);
         } catch (Exception e) {
-            e.printStackTrace();
+            log.error("DB error", e);
         }
         return 0;
     }
@@ -463,7 +467,7 @@ public class OrderDAO {
                 }
             }
         } catch (Exception e) {
-            e.printStackTrace();
+            log.error("DB error", e);
         }
 
         return count;
@@ -485,9 +489,10 @@ public class OrderDAO {
                 }
             }
         } catch (Exception e) {
-            e.printStackTrace();
+            log.error("DB error", e);
         }
 
         return count;
     }
 }
+

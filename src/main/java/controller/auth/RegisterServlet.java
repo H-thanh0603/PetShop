@@ -9,9 +9,11 @@ import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
 
 import DAO.UserDAO;
+import Model.User;
 import Util.FormHelper;
 import Util.OTPUtil;
 import Util.ValidationUtil;
+import services.EmailVerificationService;
 
 @WebServlet("/register")
 public class RegisterServlet extends HttpServlet {
@@ -236,11 +238,17 @@ public class RegisterServlet extends HttpServlet {
         // === ĐĂNG KÝ ===
         HttpSession session = request.getSession();
         boolean success = dao.register(username, password, fullname, email);
-        
+
         if (success) {
-            // Lưu email để gợi ý khi đăng nhập
+            // Send email verification
+            User newUser = dao.getUserByEmail(email);
+            if (newUser != null) {
+                String contextPath = request.getScheme() + "://" + request.getServerName()
+                        + ":" + request.getServerPort() + request.getContextPath();
+                new EmailVerificationService(dao).sendVerificationEmail(newUser.getId(), email, contextPath);
+            }
             session.setAttribute("registeredEmail", email);
-            session.setAttribute("success", "Đăng ký thành công! Vui lòng đăng nhập.");
+            session.setAttribute("success", "Đăng ký thành công! Vui lòng kiểm tra email để xác thực tài khoản trước khi đăng nhập.");
             response.sendRedirect(request.getContextPath() + "/login");
         } else {
             form.addGeneralError("Đăng ký thất bại! Vui lòng thử lại.");

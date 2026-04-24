@@ -8,8 +8,12 @@ import java.util.List;
 
 import Context.DBContext;
 import Model.Product;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class ProductDAO {
+
+    private static final Logger log = LoggerFactory.getLogger(ProductDAO.class);
 
     private static final String PRODUCT_SELECT_WITH_REVIEWS =
             "SELECT p.*, COALESCE(AVG(r.rating), 0) AS average_rating, COUNT(r.id) AS review_count " +
