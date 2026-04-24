@@ -1,21 +1,24 @@
-target/
-!.mvn/wrapper/maven-wrapper.jar
-!**/src/main/**/target/
-!**/src/test/**/target/
-.kotlin
+# ===== Gradle =====
+.gradle/
+build/
+!gradle/wrapper/gradle-wrapper.jar
+!gradle/wrapper/gradle-wrapper.properties
+!**/src/main/**/build/
+!**/src/test/**/build/
 
-### Sensitive Files ###
+# ===== Sensitive Files =====
 .env
 src/main/java/Context/DBContext.java
 src/main/java/Util/EmailConfig.java
+secrets.properties
 
-### IntelliJ IDEA ###
+# ===== IntelliJ IDEA =====
 .idea/
 *.iws
 *.iml
 *.ipr
 
-### Eclipse ###
+# ===== Eclipse =====
 .apt_generated
 .classpath
 .factorypath
@@ -24,26 +27,24 @@ src/main/java/Util/EmailConfig.java
 .springBeans
 .sts4-cache
 
-### NetBeans ###
+# ===== NetBeans =====
 /nbproject/private/
 /nbbuild/
 /dist/
 /nbdist/
 /.nb-gradle/
-build/
-!**/src/main/**/build/
-!**/src/test/**/build/
 
-### VS Code ###
+# ===== VS Code =====
 .vscode/
 
-### Mac OS ###
+# ===== OS =====
 .DS_Store
+Thumbs.db
 
-### Log files ###
+# ===== Logs =====
 *.log
-secrets.properties
+logs/
 
-# MemPalace per-project files (issue #185)
+# ===== MemPalace =====
 mempalace.yaml
 entities.json
