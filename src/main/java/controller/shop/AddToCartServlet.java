@@ -181,6 +181,11 @@ public class AddToCartServlet extends HttpServlet {
             return QuantityInputValidation.invalid("Số lượng phải lớn hơn 0.");
         }
 
+        int MAX_ALLOWED_QUANTITY = 100;
+        if (parsedQuantity > MAX_ALLOWED_QUANTITY) {
+            return QuantityInputValidation.invalid("Bạn chỉ có thể thêm tối đa " + MAX_ALLOWED_QUANTITY + " sản phẩm mỗi lần.");
+        }
+
         if (parsedQuantity > Integer.MAX_VALUE) {
             return QuantityInputValidation.invalid("Số lượng không hợp lệ.");
         }
