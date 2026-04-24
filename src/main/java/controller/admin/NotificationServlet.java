@@ -23,6 +23,14 @@ public class NotificationServlet extends HttpServlet {
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
+        jakarta.servlet.http.HttpSession session = request.getSession();
+        Model.User adminUser = (Model.User) session.getAttribute("user");
+
+        if (adminUser == null || !"Admin".equalsIgnoreCase(adminUser.getRole())) {
+            response.sendError(HttpServletResponse.SC_FORBIDDEN, "Bạn không có quyền truy cập trang quản trị này.");
+            return;
+        }
+
         List<Order> pendingOrders = new ArrayList<>();
         for (Order order : reportDAO.getRecentOrders(10)) {
             if ("Pending".equalsIgnoreCase(order.getStatus())) {
