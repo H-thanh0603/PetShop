@@ -16,7 +16,7 @@ import jakarta.servlet.http.HttpSession;
 
 @WebServlet("/my-orders")
 public class MyOrdersServlet extends HttpServlet {
-    private OrderDAO orderDAO = new OrderDAO();
+    private final OrderDAO orderDAO = new OrderDAO();
     private static final long serialVersionUID = 1L;
 
     protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
@@ -29,14 +29,13 @@ public class MyOrdersServlet extends HttpServlet {
         }
 
         String action = request.getParameter("action");
-        OrderDAO dao = new OrderDAO();
-
         if ("view".equals(action)) {
             int orderId = Integer.parseInt(request.getParameter("id"));
-            Order order = dao.getOrderById(orderId);
+            Order order = orderDAO.getOrderById(orderId);
             
             // Bảo mật: Chỉ cho phép xem nếu đơn hàng thuộc về user đang đăng nhập
             if (order != null && order.getUserId() == user.getId()) {
+                order.setItems(orderDAO.getOrderItems(orderId));
                 request.setAttribute("order", order);
                 request.getRequestDispatcher("/pages/shop/order-detail.jsp").forward(request, response);
                 return;
@@ -47,7 +46,7 @@ public class MyOrdersServlet extends HttpServlet {
         }
         int countPending = orderDAO.countPendingOrdersByUserId(user.getId());
         int countCompleted = orderDAO.countCompletedOrdersByUserId(user.getId());
-        List<Order> list = dao.getOrdersByUserId(user.getId());
+        List<Order> list = orderDAO.getOrdersByUserId(user.getId());
         request.setAttribute("countPending", countPending);
         request.setAttribute("countCompleted", countCompleted);
         request.setAttribute("orders", list);

@@ -550,10 +550,20 @@
                 grid-column: 2;
             }
         }
+        .payment-paid {
+            background: var(--success-soft);
+            color: #166534;
+        }
+
+        .payment-unpaid {
+            background: var(--warning-soft);
+            color: #92400e;
+        }
     </style>
 </head>
 <body>
 <jsp:include page="/components/navbar.jsp" />
+<jsp:include page="/components/toast.jsp" />
 
 <div class="container orders-page">
     <div class="hero-box">
@@ -659,6 +669,33 @@
 
                         <div class="order-main">
                             <div class="summary-grid">
+                                <div class="summary-card">
+                                    <div class="summary-label">
+                                        <i class='bx bx-credit-card'></i> Thanh toán
+                                    </div>
+                                    <div class="summary-value">
+                                            <span class="order-status-badge ${o.payment_status ? 'payment-paid' : 'payment-unpaid'}">
+                                                <i class='bx bx-wallet-alt'></i>
+                                                <c:choose>
+                                                    <c:when test="${o.payment_status}">Đã thanh toán</c:when>
+                                                    <c:otherwise>Chưa thanh toán</c:otherwise>
+                                                </c:choose>
+                                            </span>
+
+                                        <div class="mt-2">
+                                            Phương thức:
+                                            <strong>
+                                                <c:choose>
+                                                    <c:when test="${o.payment_method == 'MOMO'}">MoMo</c:when>
+                                                    <c:when test="${o.payment_method == 'VNPAY'}">VNPAY</c:when>
+                                                    <c:when test="${o.payment_method == 'COD'}">COD</c:when>
+                                                    <c:when test="${o.payment_method == 'BANK_TRANSFER'}">Chuyển khoản ngân hàng</c:when>
+                                                    <c:otherwise>${o.payment_method}</c:otherwise>
+                                                </c:choose>
+                                            </strong>
+                                        </div>
+                                    </div>
+                                </div>
                                 <div class="summary-card">
                                     <div class="summary-label">
                                         <i class='bx bx-map'></i> Địa chỉ nhận hàng
@@ -807,7 +844,27 @@
 
                                             <div class="info-item">
                                                 <div class="label">Thanh toán</div>
-                                                <div class="value">${o.formattedTotalAmount}</div>
+                                                <div class="value">
+                                                        <span class="order-status-badge ${o.payment_status ? 'payment-paid' : 'payment-unpaid'}">
+                                                            <c:choose>
+                                                                <c:when test="${o.payment_status}">Đã thanh toán</c:when>
+                                                                <c:otherwise>Chưa thanh toán</c:otherwise>
+                                                            </c:choose>
+                                                        </span>
+                                                    <div class="mt-2">
+                                                        Phương thức:
+                                                        <strong>
+                                                            <c:choose>
+                                                                <c:when test="${o.payment_method == 'MOMO'}">MoMo</c:when>
+                                                                <c:when test="${o.payment_method == 'VNPAY'}">VNPAY</c:when>
+                                                                <c:when test="${o.payment_method == 'COD'}">COD</c:when>
+                                                                <c:when test="${o.payment_method == 'BANK_TRANSFER'}">Chuyển khoản ngân hàng</c:when>
+                                                                <c:otherwise>${o.payment_method}</c:otherwise>
+                                                            </c:choose>
+                                                        </strong>
+                                                    </div>
+                                                    <div class="mt-1">${o.formattedTotalAmount}</div>
+                                                </div>
                                             </div>
 
                                             <div class="info-item">

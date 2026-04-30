@@ -13,6 +13,21 @@ import Model.Product;
 
 public class OrderDAO {
 
+    private void populatePaymentFields(Order order, ResultSet rs) {
+        try {
+            order.setPaymentToken(rs.getString("payment_token"));
+        } catch (Exception ignored) {
+        }
+        try {
+            order.setPaymentProviderTransactionId(rs.getString("payment_provider_transaction_id"));
+        } catch (Exception ignored) {
+        }
+        try {
+            order.setPaymentMessage(rs.getString("payment_message"));
+        } catch (Exception ignored) {
+        }
+    }
+
     public int saveOrder(Order order) {
         try (Connection conn = DBContext.getConnection()) {
             return saveOrder(conn, order);
@@ -23,7 +38,7 @@ public class OrderDAO {
     }
 
     public int saveOrder(Connection conn, Order order) throws Exception {
-        String query = "INSERT INTO orders (user_id, fullname, phone, address, note, total_amount, status, payment_method, payment_status, createdAt) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+        String query = "INSERT INTO orders (user_id, fullname, phone, address, note, total_amount, status, payment_method, payment_status, payment_token, payment_provider_transaction_id, payment_message, createdAt) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
         try (PreparedStatement ps = conn.prepareStatement(query, Statement.RETURN_GENERATED_KEYS)) {
             ps.setInt(1, order.getUserId());
             ps.setString(2, order.getFullname());
@@ -31,10 +46,13 @@ public class OrderDAO {
             ps.setString(4, order.getAddress());
             ps.setString(5, order.getNote());
             ps.setDouble(6, order.getTotalAmount());
-            ps.setString(7, "Pending");
+            ps.setString(7, order.getStatus() == null || order.getStatus().trim().isEmpty() ? "Pending" : order.getStatus());
             ps.setString(8, order.getPayment_method());
             ps.setBoolean(9, order.getPayment_status());
-            ps.setTimestamp(10, order.getCreatedAt());
+            ps.setString(10, order.getPaymentToken());
+            ps.setString(11, order.getPaymentProviderTransactionId());
+            ps.setString(12, order.getPaymentMessage());
+            ps.setTimestamp(13, order.getCreatedAt());
 
             ps.executeUpdate();
             try (ResultSet rs = ps.getGeneratedKeys()) {
@@ -86,6 +104,7 @@ public class OrderDAO {
                         rs.getString("payment_method"),
                         rs.getBoolean("payment_status")
                 ));
+                populatePaymentFields(list.get(list.size() - 1), rs);
             }
         } catch (Exception e) {
             e.printStackTrace();
@@ -94,9 +113,17 @@ public class OrderDAO {
     }
 
     public Order getOrderById(int orderId) {
+        try (Connection conn = new DBContext().getConnection()) {
+            return getOrderById(conn, orderId);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
+
+    public Order getOrderById(Connection conn, int orderId) {
         String query = "SELECT * FROM orders WHERE id = ?";
-        try (Connection conn = new DBContext().getConnection();
-             PreparedStatement ps = conn.prepareStatement(query)) {
+        try (PreparedStatement ps = conn.prepareStatement(query)) {
             ps.setInt(1, orderId);
             try (ResultSet rs = ps.executeQuery()) {
                 if (rs.next()) {
@@ -113,6 +140,7 @@ public class OrderDAO {
                             rs.getString("payment_method"),
                             rs.getBoolean("payment_status")
                     );
+                    populatePaymentFields(order, rs);
                     return order;
                 }
             }
@@ -151,6 +179,7 @@ public class OrderDAO {
                     p.setId(rs.getInt("product_id"));
                     p.setName(rs.getString("product_name"));
                     p.setImage(rs.getString("product_image"));
+                    item.setProduct(p);
 
                     list.add(item);
                 }
@@ -229,6 +258,71 @@ public class OrderDAO {
         return false;
     }
 
+    public boolean updateStatus(Connection conn, int orderId, String status) throws Exception {
+        ProductDAO productDAO = new ProductDAO();
+        String lockOrderQuery = "SELECT status FROM orders WHERE id = ? FOR UPDATE";
+        String updateStatusQuery = "UPDATE orders SET status = ? WHERE id = ?";
+
+        String currentStatus = null;
+        try (PreparedStatement lockPs = conn.prepareStatement(lockOrderQuery)) {
+            lockPs.setInt(1, orderId);
+            try (ResultSet rs = lockPs.executeQuery()) {
+                if (rs.next()) {
+                    currentStatus = rs.getString("status");
+                }
+            }
+        }
+
+        if (currentStatus == null) {
+            return false;
+        }
+
+        boolean wasCancelled = "Cancelled".equalsIgnoreCase(currentStatus);
+        boolean willBeCancelled = "Cancelled".equalsIgnoreCase(status);
+
+        if (!wasCancelled && willBeCancelled) {
+            for (OrderItem item : getOrderItems(conn, orderId)) {
+                if (!productDAO.increaseStock(conn, item.getProductId(), item.getQuantity())) {
+                    return false;
+                }
+            }
+        } else if (wasCancelled && !willBeCancelled) {
+            for (OrderItem item : getOrderItems(conn, orderId)) {
+                if (!productDAO.decreaseStock(conn, item.getProductId(), item.getQuantity())) {
+                    return false;
+                }
+            }
+        }
+
+        try (PreparedStatement updatePs = conn.prepareStatement(updateStatusQuery)) {
+            updatePs.setString(1, status);
+            updatePs.setInt(2, orderId);
+            return updatePs.executeUpdate() > 0;
+        }
+    }
+
+    public boolean updatePaymentDetails(Connection conn, int orderId, boolean paymentStatus,
+                                        String paymentToken, String paymentProviderTransactionId,
+                                        String paymentMessage) throws Exception {
+        String query = """
+            UPDATE orders
+            SET payment_status = ?,
+                payment_token = ?,
+                payment_provider_transaction_id = ?,
+                payment_message = ?
+            WHERE id = ?
+        """;
+
+        try (PreparedStatement ps = conn.prepareStatement(query)) {
+            ps.setBoolean(1, paymentStatus);
+            ps.setString(2, paymentToken);
+            ps.setString(3, paymentProviderTransactionId);
+            ps.setString(4, paymentMessage);
+            ps.setInt(5, orderId);
+            return ps.executeUpdate() > 0;
+        }
+    }
+
     public int countPendingOrders() {
         String query = "SELECT COUNT(*) FROM orders WHERE status = 'Pending'";
         try (Connection conn = new DBContext().getConnection();
@@ -249,7 +343,7 @@ public class OrderDAO {
             ps.setInt(1, userId);
             try (ResultSet rs = ps.executeQuery()) {
                 while (rs.next()) {
-                    list.add(new Order(
+                    Order order = new Order(
                         rs.getInt("id"),
                         rs.getInt("user_id"),
                         rs.getString("fullname"),
@@ -259,9 +353,11 @@ public class OrderDAO {
                         rs.getDouble("total_amount"),
                         rs.getString("status"),
                         rs.getTimestamp("createdAt"),
-                            rs.getString("payment_method"),
-                            rs.getBoolean("payment_status")
-                    ));
+                        rs.getString("payment_method"),
+                        rs.getBoolean("payment_status")
+                    );
+                    populatePaymentFields(order, rs);
+                    list.add(order);
                 }
             }
         } catch (Exception e) {

@@ -4,9 +4,11 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import Context.DBContext;
 import Model.CartItem;
+import Model.OrderItem;
 import Model.Product;
 
 public class CartDAO {
@@ -137,6 +139,42 @@ public class CartDAO {
         try (PreparedStatement ps = conn.prepareStatement(query)) {
             ps.setInt(1, userId);
             ps.executeUpdate();
+        }
+    }
+
+    public void consumeCartItems(Connection conn, int userId, List<OrderItem> items) throws Exception {
+        String selectQuery = "SELECT quantity FROM cart WHERE user_id = ? AND product_id = ?";
+        String updateQuery = "UPDATE cart SET quantity = ? WHERE user_id = ? AND product_id = ?";
+        String deleteQuery = "DELETE FROM cart WHERE user_id = ? AND product_id = ?";
+
+        try (PreparedStatement selectPs = conn.prepareStatement(selectQuery);
+             PreparedStatement updatePs = conn.prepareStatement(updateQuery);
+             PreparedStatement deletePs = conn.prepareStatement(deleteQuery)) {
+
+            for (OrderItem item : items) {
+                selectPs.setInt(1, userId);
+                selectPs.setInt(2, item.getProductId());
+
+                try (ResultSet rs = selectPs.executeQuery()) {
+                    if (!rs.next()) {
+                        continue;
+                    }
+
+                    int currentQuantity = rs.getInt("quantity");
+                    int remainingQuantity = currentQuantity - item.getQuantity();
+
+                    if (remainingQuantity > 0) {
+                        updatePs.setInt(1, remainingQuantity);
+                        updatePs.setInt(2, userId);
+                        updatePs.setInt(3, item.getProductId());
+                        updatePs.executeUpdate();
+                    } else {
+                        deletePs.setInt(1, userId);
+                        deletePs.setInt(2, item.getProductId());
+                        deletePs.executeUpdate();
+                    }
+                }
+            }
         }
     }
     

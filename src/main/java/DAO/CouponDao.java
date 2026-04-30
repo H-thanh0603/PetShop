@@ -66,4 +66,17 @@ public class CouponDao {
             return ps.executeUpdate() > 0;
         }
     }
+
+    public boolean decreaseUsed(Connection conn, int couponId) throws Exception {
+        String sql = """
+        UPDATE coupons
+        SET used = CASE WHEN used > 0 THEN used - 1 ELSE 0 END
+        WHERE id = ?
+    """;
+
+        try (PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setInt(1, couponId);
+            return ps.executeUpdate() > 0;
+        }
+    }
 }

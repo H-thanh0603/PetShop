@@ -5,7 +5,7 @@
 <html lang="vi">
 <head>
     <meta charset="UTF-8">
-    <title>Chi tiết đơn hàng - PetShop</title>
+    <title>Chi tiet don hang - PetShop</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
     <style>
@@ -27,9 +27,9 @@
 
     <div class="container detail-container">
         <div class="d-flex justify-content-between align-items-center mb-4">
-            <h3 class="mb-0 fw-bold">Chi tiết đơn hàng #${order.id}</h3>
+            <h3 class="mb-0 fw-bold">Chi tiet don hang #${order.id}</h3>
             <a href="${pageContext.request.contextPath}/my-orders" class="btn btn-outline-secondary btn-sm">
-                <i class='bx bx-arrow-back'></i> Quay lại
+                <i class='bx bx-arrow-back'></i> Quay lai
             </a>
         </div>
 
@@ -37,7 +37,7 @@
             <div class="col-lg-8">
                 <div class="card mb-4">
                     <div class="card-header d-flex justify-content-between">
-                        <span>Sản phẩm</span>
+                        <span>San pham</span>
                         <span class="status-badge 
                             ${order.status == 'Pending' ? 'bg-warning text-dark' : ''}
                             ${order.status == 'Confirmed' ? 'bg-info text-white' : ''}
@@ -55,18 +55,18 @@
                                      onerror="this.src='https://placehold.co/300x300/e2e8f0/1e293b?text=PetShop'">
                                 <div class="flex-grow-1">
                                     <h6 class="mb-0 fw-bold">${item.product.name}</h6>
-                                    <small class="text-muted">Số lượng: ${item.quantity}</small>
+                                    <small class="text-muted">So luong: ${item.quantity}</small>
                                 </div>
                                 <div class="text-end">
-                                    <p class="mb-0 fw-bold"><fmt:formatNumber value="${item.price * item.quantity}" type="currency" currencySymbol="đ" maxFractionDigits="0"/></p>
-                                    <small class="text-muted"><fmt:formatNumber value="${item.price}" type="currency" currencySymbol="đ" maxFractionDigits="0"/></small>
+                                    <p class="mb-0 fw-bold"><fmt:formatNumber value="${item.price * item.quantity}" type="currency" currencySymbol="d" maxFractionDigits="0"/></p>
+                                    <small class="text-muted"><fmt:formatNumber value="${item.price}" type="currency" currencySymbol="d" maxFractionDigits="0"/></small>
                                 </div>
                             </div>
                         </c:forEach>
                         
                         <div class="mt-4 pt-3 border-top">
                             <div class="d-flex justify-content-between align-items-center">
-                                <h5 class="mb-0 fw-bold">Tổng thanh toán</h5>
+                                <h5 class="mb-0 fw-bold">Tong thanh toan</h5>
                                 <h4 class="mb-0 fw-bold text-primary">${order.formattedTotalAmount}</h4>
                             </div>
                         </div>
@@ -76,22 +76,49 @@
 
             <div class="col-lg-4">
                 <div class="info-section shadow-sm">
-                    <div class="label">Người nhận</div>
+                    <div class="label">Nguoi nhan</div>
                     <div class="value">${order.fullname}</div>
                     
-                    <div class="label">Số điện thoại</div>
+                    <div class="label">So dien thoai</div>
                     <div class="value">${order.phone}</div>
                     
-                    <div class="label">Địa chỉ giao hàng</div>
+                    <div class="label">Dia chi giao hang</div>
                     <div class="value">${order.address}</div>
                     
-                    <div class="label">Ngày đặt hàng</div>
+                    <div class="label">Ngay dat hang</div>
                     <div class="value"><fmt:formatDate value="${order.createdAt}" pattern="dd/MM/yyyy HH:mm:ss"/></div>
                     
                     <c:if test="${not empty order.note}">
-                        <div class="label">Ghi chú từ khách</div>
+                        <div class="label">Ghi chu tu khach</div>
                         <div class="value text-muted small">${order.note}</div>
                     </c:if>
+
+                    <div class="label">Thanh toan</div>
+                    <div class="value">
+                        <span class="badge ${order.payment_status ? 'bg-success' : 'bg-warning text-dark'}">
+                            <c:choose>
+                                <c:when test="${order.payment_status}">Da thanh toan</c:when>
+                                <c:otherwise>Chua thanh toan</c:otherwise>
+                            </c:choose>
+                        </span>
+                        <div class="mt-2">
+                            <strong>
+                                <c:choose>
+                                    <c:when test="${order.payment_method == 'MOMO'}">MoMo</c:when>
+                                    <c:when test="${order.payment_method == 'VNPAY'}">VNPAY</c:when>
+                                    <c:when test="${order.payment_method == 'COD'}">COD</c:when>
+                                    <c:when test="${order.payment_method == 'BANK_TRANSFER'}">Chuyen khoan ngan hang</c:when>
+                                    <c:otherwise>${order.payment_method}</c:otherwise>
+                                </c:choose>
+                            </strong>
+                        </div>
+                        <c:if test="${not empty order.paymentMessage}">
+                            <div class="mt-2 text-muted small">${order.paymentMessage}</div>
+                        </c:if>
+                        <c:if test="${not empty order.paymentToken}">
+                            <div class="mt-2 text-muted small">Ma giao dich: ${order.paymentToken}</div>
+                        </c:if>
+                    </div>
                 </div>
             </div>
         </div>

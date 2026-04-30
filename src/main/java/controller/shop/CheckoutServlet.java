@@ -30,6 +30,12 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import services.InventoryService;
+import services.payment.BankTransferPaymentService;
+import services.payment.MomoPaymentService;
+import services.payment.PaymentGatewayInitResult;
+import services.payment.PaymentGatewayRequest;
+import services.payment.PaymentTransactionService;
+import services.payment.VnpayPaymentService;
 
 @WebServlet("/checkout")
 public class CheckoutServlet extends HttpServlet {
@@ -45,6 +51,10 @@ public class CheckoutServlet extends HttpServlet {
     private final ProductDAO productDAO = new ProductDAO();
     private final OrderDAO orderDAO = new OrderDAO();
     private final UserDAO userDAO = new UserDAO();
+    private final PaymentTransactionService paymentTransactionService = new PaymentTransactionService();
+    private final BankTransferPaymentService bankTransferPaymentService = new BankTransferPaymentService();
+    private final MomoPaymentService momoPaymentService = new MomoPaymentService();
+    private final VnpayPaymentService vnpayPaymentService = new VnpayPaymentService();
 
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
@@ -91,6 +101,13 @@ public class CheckoutServlet extends HttpServlet {
             return;
         }
 
+        paymentTransactionService.releaseExpiredPendingTransactions(user.getId());
+        user = refreshUserSession(session, user.getId());
+        if (user == null) {
+            response.sendRedirect(request.getContextPath() + "/login");
+            return;
+        }
+
         Map<Integer, CartItem> cart = loadLatestCartForUser(session, user);
         if (cart.isEmpty()) {
             response.sendRedirect(request.getContextPath() + "/shop");
@@ -129,7 +146,11 @@ public class CheckoutServlet extends HttpServlet {
         } else if (couponState.getMessage() != null) {
             request.setAttribute("couponMessage", couponState.getMessage());
         }
-
+        String checkoutPaymentMethod = trimToEmpty((String) session.getAttribute("checkoutPaymentMethod"));
+        if (checkoutPaymentMethod.isEmpty()) {
+            checkoutPaymentMethod = "COD";
+        }
+        request.setAttribute("checkoutPaymentMethod", checkoutPaymentMethod);
         request.getRequestDispatcher("/pages/shop/checkout.jsp").forward(request, response);
     }
 
@@ -142,7 +163,10 @@ public class CheckoutServlet extends HttpServlet {
         }
 
         session.setAttribute("checkoutNote", trimToEmpty(request.getParameter("note")));
-
+        String selectedPaymentMethod = normalizeRequestedPaymentMethod(request.getParameter("paymentMethod"));
+        if (!selectedPaymentMethod.isEmpty()) {
+            session.setAttribute("checkoutPaymentMethod", selectedPaymentMethod);
+        }
         CouponValidationResult validation = validateCouponForUser(
                 request.getParameter("couponCode"),
                 user
@@ -226,10 +250,43 @@ public class CheckoutServlet extends HttpServlet {
 
         CheckoutSummary baseSummary = buildCheckoutSummary(cart, defaultAddress, null);
         String note = trimToEmpty(request.getParameter("note"));
+        session.setAttribute("checkoutNote", note);
         String fullAddress = defaultAddress.getAddress() + ", "
                 + defaultAddress.getWard() + ", "
                 + defaultAddress.getDistrict() + ", "
                 + defaultAddress.getProvince();
+        String paymentMethod = normalizeRequestedPaymentMethod(request.getParameter("paymentMethod"));
+        if (paymentMethod.isEmpty()) {
+            result.put("success", false);
+            result.put("message", "Phuong thuc thanh toan khong hop le.");
+            write(response, result);
+            return;
+        }
+        session.setAttribute("checkoutPaymentMethod", paymentMethod);
+
+        if ("MOMO".equals(paymentMethod) || "VNPAY".equals(paymentMethod) || "BANK_TRANSFER".equals(paymentMethod)) {
+            initiateOnlinePayment(
+                    request,
+                    session,
+                    user,
+                    cart,
+                    couponState,
+                    baseSummary,
+                    fullAddress,
+                    note,
+                    paymentMethod,
+                    result,
+                    response
+            );
+            return;
+        }
+
+        if (!"COD".equals(paymentMethod) && !"BANK_TRANSFER".equals(paymentMethod)) {
+            result.put("success", false);
+            result.put("message", "Phuong thuc thanh toan khong hop le.");
+            write(response, result);
+            return;
+        }
 
         try (Connection conn = DBContext.getConnection()) {
             conn.setAutoCommit(false);
@@ -287,10 +344,7 @@ public class CheckoutServlet extends HttpServlet {
                 }
 
                 double finalTotal = baseSummary.getTotalAmount() + baseSummary.getShippingFee() - discount;
-                PaymentSelection paymentSelection = resolvePaymentMethod(
-                        request.getParameter("paymentMethod"),
-                        finalTotal
-                );
+                PaymentSelection paymentSelection = resolvePaymentMethod(paymentMethod, finalTotal);
                 if (!paymentSelection.isValid()) {
                     conn.rollback();
                     result.put("success", false);
@@ -310,6 +364,7 @@ public class CheckoutServlet extends HttpServlet {
                 order.setCreatedAt(Timestamp.valueOf(LocalDateTime.now()));
                 order.setPayment_method(paymentSelection.getPaymentMethodDb());
                 order.setPayment_status(paymentSelection.isPaymentStatus());
+                order.setPaymentMessage(paymentSelection.getMessage());
 
                 int orderId = orderDAO.saveOrder(conn, order);
                 if (orderId <= 0) {
@@ -349,6 +404,7 @@ public class CheckoutServlet extends HttpServlet {
 
                 cartDAO.clearCart(conn, user.getId());
                 conn.commit();
+                result.put("orderId", orderId);
             } catch (Exception e) {
                 conn.rollback();
                 throw e;
@@ -368,7 +424,7 @@ public class CheckoutServlet extends HttpServlet {
         session.removeAttribute("appliedCoupon");
         session.removeAttribute("couponMessage");
         session.removeAttribute("checkoutNote");
-
+        session.removeAttribute("checkoutPaymentMethod");
         result.put("success", true);
         result.put("message", "Đặt hàng thành công!");
         write(response, result);
@@ -453,22 +509,195 @@ public class CheckoutServlet extends HttpServlet {
         return new CheckoutSummary(totalAmount, shippingFee, shippingMessage, discount, finalTotal);
     }
 
-    private PaymentSelection resolvePaymentMethod(String paymentMethod, double finalTotal) {
-        switch (trimToEmpty(paymentMethod)) {
+    private void initiateOnlinePayment(HttpServletRequest request, HttpSession session, User user,
+                                       Map<Integer, CartItem> cart, CouponValidationResult couponState,
+                                       CheckoutSummary baseSummary, String fullAddress, String note,
+                                       String paymentMethod, Map<String, Object> result,
+                                       HttpServletResponse response) throws IOException {
+        double discount = couponState.isValid()
+                ? calculateDiscount(baseSummary.getTotalAmount(), couponState.getCoupon())
+                : 0;
+        double finalTotal = baseSummary.getTotalAmount() + baseSummary.getShippingFee() - discount;
+
+        Order order = new Order();
+        order.setUserId(user.getId());
+        order.setFullname(user.getFullname());
+        order.setPhone(user.getPhone());
+        order.setAddress(fullAddress);
+        order.setNote(note);
+        order.setTotalAmount(finalTotal);
+        order.setStatus("Pending");
+        order.setCreatedAt(Timestamp.valueOf(LocalDateTime.now()));
+        order.setPayment_method(paymentMethod);
+        order.setPayment_status(false);
+        order.setPaymentMessage("Dang cho thanh toan online.");
+
+        List<OrderItem> orderItems = buildOrderItems(cart);
+        String providerOrderId = generateProviderOrderId(paymentMethod, user.getId());
+        String requestId = generateRequestId(paymentMethod, user.getId());
+
+        PaymentTransactionService.ReservationRequest reservationRequest =
+                new PaymentTransactionService.ReservationRequest(
+                        order,
+                        orderItems,
+                        paymentMethod,
+                        providerOrderId,
+                        requestId,
+                        couponState.isValid() ? couponState.getCoupon().getId() : null,
+                        couponState.isValid(),
+                        productDAO::decreaseStock
+                );
+
+        PaymentTransactionService.ReservationResult reservationResult =
+                paymentTransactionService.reserveOnlinePayment(reservationRequest);
+        if (!reservationResult.isSuccess()) {
+            refreshCheckoutSessionAfterFailedOnlinePayment(session, user);
+            result.put("success", false);
+            result.put("message", reservationResult.getMessage());
+            write(response, result);
+            return;
+        }
+
+        PaymentGatewayRequest gatewayRequest = new PaymentGatewayRequest();
+        gatewayRequest.setProviderOrderId(providerOrderId);
+        gatewayRequest.setRequestId(requestId);
+        gatewayRequest.setAmount(Math.round(finalTotal));
+        gatewayRequest.setOrderInfo("Thanh toan don hang #" + reservationResult.getOrderId());
+        gatewayRequest.setRedirectUrl(buildPaymentReturnUrl(request, paymentMethod));
+        gatewayRequest.setIpnUrl(buildPaymentIpnUrl(request, paymentMethod));
+        gatewayRequest.setClientIp(resolveClientIp(request));
+        gatewayRequest.setCustomerName(user.getFullname());
+        gatewayRequest.setCustomerEmail(user.getEmail());
+        gatewayRequest.setCustomerPhone(user.getPhone());
+
+        PaymentGatewayInitResult initResult;
+        if ("MOMO".equals(paymentMethod)) {
+            initResult = momoPaymentService.createPayment(gatewayRequest);
+        } else if ("VNPAY".equals(paymentMethod)) {
+            initResult = vnpayPaymentService.createPayment(gatewayRequest);
+        } else {
+            initResult = bankTransferPaymentService.createPayment(gatewayRequest);
+        }
+
+        if (!initResult.isSuccess() || isBlank(initResult.getRedirectUrl())) {
+            paymentTransactionService.failTransaction(
+                    providerOrderId,
+                    "FAILED",
+                    initResult.getResponseCode(),
+                    initResult.getMessage(),
+                    null,
+                    initResult.getRawResponse()
+            );
+            refreshCheckoutSessionAfterFailedOnlinePayment(session, user);
+            result.put("success", false);
+            result.put("message", initResult.getMessage());
+            write(response, result);
+            return;
+        }
+
+        if (!paymentTransactionService.updateGatewayInit(providerOrderId, initResult)) {
+            paymentTransactionService.failTransaction(
+                    providerOrderId,
+                    "FAILED",
+                    "INIT_SAVE_ERROR",
+                    "Khong luu duoc thong tin redirect thanh toan.",
+                    null,
+                    initResult.getRawResponse()
+            );
+            refreshCheckoutSessionAfterFailedOnlinePayment(session, user);
+            result.put("success", false);
+            result.put("message", "Khong khoi tao duoc giao dich thanh toan. Vui long thu lai.");
+            write(response, result);
+            return;
+        }
+
+        result.put("success", true);
+        result.put("redirect", true);
+        result.put("redirectUrl", initResult.getRedirectUrl());
+        result.put("message", "Dang chuyen huong den cong thanh toan...");
+        write(response, result);
+    }
+
+    private List<OrderItem> buildOrderItems(Map<Integer, CartItem> cart) {
+        List<OrderItem> items = new ArrayList<>();
+        for (CartItem cartItem : cart.values()) {
+            OrderItem orderItem = new OrderItem();
+            orderItem.setProductId(cartItem.getProduct().getId());
+            orderItem.setQuantity(cartItem.getQuantity());
+            orderItem.setPrice(cartItem.getProduct().getPrice());
+            items.add(orderItem);
+        }
+        return items;
+    }
+
+    private String normalizeRequestedPaymentMethod(String paymentMethod) {
+        String normalized = trimToEmpty(paymentMethod).toLowerCase();
+        switch (normalized) {
             case "cod":
-                return PaymentSelection.valid("COD", false);
+                return "COD";
             case "momo":
-                if (!callMomoApi(finalTotal)) {
-                    return PaymentSelection.invalid("Thanh toán MoMo thất bại.");
-                }
-                return PaymentSelection.valid("MOMO", true);
+                return "MOMO";
+            case "vnpay":
+                return "VNPAY";
             case "bank_transfer":
-                if (!callBankApi(finalTotal)) {
-                    return PaymentSelection.invalid("Thanh toán ngân hàng thất bại.");
-                }
-                return PaymentSelection.valid("BANK_TRANSFER", true);
+            case "bank":
+                return "BANK_TRANSFER";
             default:
-                return PaymentSelection.invalid("Phương thức thanh toán không hợp lệ.");
+                return "";
+        }
+    }
+
+    private String buildPaymentReturnUrl(HttpServletRequest request, String paymentMethod) {
+        return buildPaymentBaseUrl(request) + "/payment/" + resolvePaymentCallbackPath(paymentMethod) + "/return";
+    }
+
+    private String buildPaymentIpnUrl(HttpServletRequest request, String paymentMethod) {
+        return buildPaymentBaseUrl(request) + "/payment/" + resolvePaymentCallbackPath(paymentMethod) + "/ipn";
+    }
+
+    private String resolvePaymentCallbackPath(String paymentMethod) {
+        if ("BANK_TRANSFER".equals(paymentMethod)) {
+            return "bank";
+        }
+        return paymentMethod.toLowerCase();
+    }
+
+    private String buildPaymentBaseUrl(HttpServletRequest request) {
+        String configuredBaseUrl = trimToEmpty(Util.SecretConfig.get("payment_public_base_url"));
+        if (!configuredBaseUrl.isEmpty()) {
+            return configuredBaseUrl.endsWith("/") ? configuredBaseUrl.substring(0, configuredBaseUrl.length() - 1) : configuredBaseUrl;
+        }
+
+        StringBuilder baseUrl = new StringBuilder();
+        baseUrl.append(request.getScheme()).append("://").append(request.getServerName());
+        if ((request.getScheme().equals("http") && request.getServerPort() != 80)
+                || (request.getScheme().equals("https") && request.getServerPort() != 443)) {
+            baseUrl.append(":").append(request.getServerPort());
+        }
+        baseUrl.append(request.getContextPath());
+        return baseUrl.toString();
+    }
+
+    private String resolveClientIp(HttpServletRequest request) {
+        String forwardedFor = request.getHeader("X-Forwarded-For");
+        if (!isBlank(forwardedFor)) {
+            return forwardedFor.split(",")[0].trim();
+        }
+        return request.getRemoteAddr();
+    }
+
+    private String generateProviderOrderId(String paymentMethod, int userId) {
+        return paymentMethod + "_" + userId + "_" + System.currentTimeMillis();
+    }
+
+    private String generateRequestId(String paymentMethod, int userId) {
+        return "REQ_" + paymentMethod + "_" + userId + "_" + System.nanoTime();
+    }
+
+    private void refreshCheckoutSessionAfterFailedOnlinePayment(HttpSession session, User user) {
+        User latestUser = refreshUserSession(session, user.getId());
+        if (latestUser != null) {
+            loadLatestCartForUser(session, latestUser);
         }
     }
 
@@ -514,21 +743,44 @@ public class CheckoutServlet extends HttpServlet {
     private String trimToEmpty(String value) {
         return value == null ? "" : value.trim();
     }
+    private PaymentSelection resolvePaymentMethod(String paymentMethod, double finalTotal) {
+        switch (trimToEmpty(paymentMethod).toUpperCase()) {
+            case "COD":
+                return PaymentSelection.valid("COD", false);
+            case "BANK_TRANSFER":
+                return PaymentSelection.valid("BANK_TRANSFER", false, buildBankTransferMessage(finalTotal));
+            default:
+                return PaymentSelection.invalid("Phương thức thanh toán không hợp lệ.");
+        }
+    }
+
+    private String buildBankTransferMessage(double finalTotal) {
+        String bankName = trimToEmpty(Util.SecretConfig.get("bank_transfer_bank_name"));
+        String accountNumber = trimToEmpty(Util.SecretConfig.get("bank_transfer_account_number"));
+        String accountName = trimToEmpty(Util.SecretConfig.get("bank_transfer_account_name"));
+
+        if (bankName.isEmpty() && accountNumber.isEmpty() && accountName.isEmpty()) {
+            return "Cho xac nhan chuyen khoan ngan hang.";
+        }
+
+        StringBuilder message = new StringBuilder("Cho chuyen khoan");
+        if (!bankName.isEmpty()) {
+            message.append(" - ").append(bankName);
+        }
+        if (!accountNumber.isEmpty()) {
+            message.append(" - STK ").append(accountNumber);
+        }
+        if (!accountName.isEmpty()) {
+            message.append(" - ").append(accountName);
+        }
+        message.append(" - So tien ").append(Math.round(finalTotal)).append(" VND.");
+        return message.toString();
+    }
 
     private void write(HttpServletResponse res, Map<String, Object> data) throws IOException {
         res.setContentType("application/json;charset=UTF-8");
         res.setCharacterEncoding("UTF-8");
         res.getWriter().write(new Gson().toJson(data));
-    }
-
-    private boolean callMomoApi(double amount) {
-        System.out.println("Mock MoMo: " + amount);
-        return true;
-    }
-
-    private boolean callBankApi(double amount) {
-        System.out.println("Mock Bank: " + amount);
-        return true;
     }
 
     private static final class CheckoutSummary {
@@ -619,6 +871,10 @@ public class CheckoutServlet extends HttpServlet {
 
         private static PaymentSelection valid(String paymentMethodDb, boolean paymentStatus) {
             return new PaymentSelection(true, paymentMethodDb, paymentStatus, null);
+        }
+
+        private static PaymentSelection valid(String paymentMethodDb, boolean paymentStatus, String message) {
+            return new PaymentSelection(true, paymentMethodDb, paymentStatus, message);
         }
 
         private static PaymentSelection invalid(String message) {

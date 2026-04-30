@@ -1,0 +1,25 @@
+deployHost=103.56.160.196
+deployUser=root
+deployPort=24700
+deployPassword=your_vps_password
+# deployIdentity=C:/Users/you/.ssh/id_rsa
+
+deployDir=/usr/deploy
+httpPort=80
+appContext=ROOT
+
+dockerNetwork=petshop-net
+tomcatContainer=tomcat10
+tomcatImage=tomcat:10.1
+mysqlContainer=mysql
+mysqlImage=mysql:8.0
+
+mysqlRootPassword=12345
+mysqlDatabase=petvaccine
+
+dbHost=mysql
+dbPort=3306
+dbName=petvaccine
+dbUser=root
+dbPassword=12345
+dbOption=useUnicode=true&characterEncoding=utf-8&useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true
