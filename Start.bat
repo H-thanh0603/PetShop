@@ -16,8 +16,8 @@ set "PETSHOP_DB_PASSWORD=%PETSHOP_DB_PASSWORD%"
 
 :: 1. Cấu hình đường dẫn
 set "CATALINA_HOME=E:\apache-tomcat-10.1.49-windows-x64\apache-tomcat-10.1.49"
-set "PROJECT_ROOT=d:\PetShop2\PetShop"
-set "WAR_FILE=%PROJECT_ROOT%\target\PetShop.war"
+set "PROJECT_ROOT=d:\Petshop2\PetShop"
+set "WAR_FILE=%PROJECT_ROOT%\build\libs\PetShop.war"
 
 if not exist "%CATALINA_HOME%\bin\startup.bat" (
     echo [ERROR] Khong tim thay Tomcat tai: %CATALINA_HOME%
@@ -26,23 +26,14 @@ if not exist "%CATALINA_HOME%\bin\startup.bat" (
     exit /b 1
 )
 
+:: 3. Build dự án bằng Gradle
 echo Step 1: Building project with Gradle...
 cd /d "%PROJECT_ROOT%"
-if /I "%PETSHOP_SKIP_BUILD%"=="true" (
-    echo [INFO] Bo qua buoc build vi PETSHOP_SKIP_BUILD=true
-) else (
-    call gradlew.bat clean war
-    if %ERRORLEVEL% NEQ 0 (
-        echo [ERROR] Build Gradle that bai!
-        pause
-        exit /b 1
-    )
-)
-
-if not exist "%WAR_FILE%" (
-    echo [ERROR] Khong tim thay file WAR tai %WAR_FILE%
+call gradlew.bat clean war
+if %ERRORLEVEL% NEQ 0 (
+    echo [ERROR] Build Gradle that bai!
     pause
-    exit /b 1
+    exit /b
 )
 
 echo.
