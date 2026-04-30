@@ -16,8 +16,8 @@ set "PETSHOP_DB_PASSWORD=%PETSHOP_DB_PASSWORD%"
 
 :: 1. Cấu hình đường dẫn
 set "CATALINA_HOME=E:\apache-tomcat-10.1.49-windows-x64\apache-tomcat-10.1.49"
-set "PROJECT_ROOT=d:\PetShop2\PetShop"
-set "WAR_FILE=%PROJECT_ROOT%\target\PetShop.war"
+set "PROJECT_ROOT=d:\Petshop2\PetShop"
+set "WAR_FILE=%PROJECT_ROOT%\build\libs\PetShop.war"
 
 :: 2. Kiểm tra đường dẫn Tomcat
 if not exist "%CATALINA_HOME%\bin\startup.bat" (
@@ -27,12 +27,12 @@ if not exist "%CATALINA_HOME%\bin\startup.bat" (
     exit /b
 )
 
-:: 3. Build dự án bằng Maven
-echo Step 1: Building project with Maven...
+:: 3. Build dự án bằng Gradle
+echo Step 1: Building project with Gradle...
 cd /d "%PROJECT_ROOT%"
-call mvn clean package -DskipTests
+call gradlew.bat clean war
 if %ERRORLEVEL% NEQ 0 (
-    echo [ERROR] Build Maven that bai!
+    echo [ERROR] Build Gradle that bai!
     pause
     exit /b
 )

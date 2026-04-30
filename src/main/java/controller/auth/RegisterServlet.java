@@ -145,14 +145,17 @@ public class RegisterServlet extends HttpServlet {
             valid = false;
         }
         
-        // C. Tên đăng nhập - chữ thường, số, gạch dưới, 3-20 ký tự
+        // C. Tên đăng nhập - chữ cái, số, gạch dưới, 3-30 ký tự (tự động lowercase)
         if (username == null || username.trim().isEmpty()) {
             form.addError("username", "Vui lòng nhập tên đăng nhập");
             valid = false;
         } else {
             username = username.trim().toLowerCase();
-            if (!username.matches("^[a-z0-9_]{3,20}$")) {
-                form.addError("username", "Tên đăng nhập không hợp lệ");
+            if (username.length() < 3 || username.length() > 30) {
+                form.addError("username", "Tên đăng nhập phải từ 3-30 ký tự");
+                valid = false;
+            } else if (!username.matches("^[a-z0-9_]+$")) {
+                form.addError("username", "Tên đăng nhập chỉ được chứa chữ thường, số và dấu gạch dưới");
                 valid = false;
             }
         }
