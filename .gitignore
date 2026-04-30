@@ -3,6 +3,8 @@ target/
 !**/src/main/**/target/
 !**/src/test/**/target/
 .kotlin
+.gradle/
+gradle.properties
 
 ### Sensitive Files ###
 .env

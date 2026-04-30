@@ -15,7 +15,11 @@ public class Order {
     private String status; // Pending, Confirmed, Shipping, Completed, Cancelled
     private String payment_method;
     private boolean payment_status;
+    private String paymentToken;
+    private String paymentProviderTransactionId;
+    private String paymentMessage;
     private Timestamp createdAt;
+    private List<OrderItem> items;
 
     public Order() {}
 
@@ -79,5 +83,37 @@ public class Order {
 
     public void setPayment_status(boolean payment_status) {
         this.payment_status = payment_status;
+    }
+
+    public String getPaymentToken() {
+        return paymentToken;
+    }
+
+    public void setPaymentToken(String paymentToken) {
+        this.paymentToken = paymentToken;
+    }
+
+    public String getPaymentProviderTransactionId() {
+        return paymentProviderTransactionId;
+    }
+
+    public void setPaymentProviderTransactionId(String paymentProviderTransactionId) {
+        this.paymentProviderTransactionId = paymentProviderTransactionId;
+    }
+
+    public String getPaymentMessage() {
+        return paymentMessage;
+    }
+
+    public void setPaymentMessage(String paymentMessage) {
+        this.paymentMessage = paymentMessage;
+    }
+
+    public List<OrderItem> getItems() {
+        return items;
+    }
+
+    public void setItems(List<OrderItem> items) {
+        this.items = items;
     }
 }

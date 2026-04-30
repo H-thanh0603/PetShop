@@ -460,9 +460,6 @@
 
                 <div class="d-flex justify-content-between align-items-center mb-3">
                     <h4>🛒 Sản phẩm thanh toán</h4>
-                    <div class="countdown">
-                        ⏳ <span id="timer">15:00</span>
-                    </div>
                 </div>
 
                 <c:forEach var="item" items="${cartItems}">
@@ -759,6 +756,7 @@
                 <form action="${pageContext.request.contextPath}/checkout" method="post" id="couponForm">
                     <input type="hidden" name="action" value="applyCoupon">
                     <input type="hidden" name="note" id="couponNoteHidden">
+                    <input type="hidden" name="paymentMethod" id="couponPaymentMethodHidden" value="${checkoutPaymentMethod}">
                     <div class="input-group mb-3">
                         <input name="couponCode" class="form-control" placeholder="Nhập mã coupon" value="${appliedCouponCode}">
                         <button type="submit" class="btn btn-primary">Áp dụng</button>
@@ -773,21 +771,28 @@
 
                 <div class="payment-card mb-2">
                     <label>
-                        <input type="radio" name="payment" value="cod" checked>
+                        <input type="radio" name="payment" value="cod"
+                        ${checkoutPaymentMethod == 'COD' ? 'checked' : ''}>
                         Thanh toán khi nhận hàng (COD)
                     </label>
                 </div>
 
                 <div class="payment-card mb-2">
-                    <label>
-                        <input type="radio" name="payment" value="momo">
-                        Ví điện tử MoMo
-                    </label>
+                    <input type="radio" name="payment" value="momo"
+                    ${checkoutPaymentMethod == 'MOMO' ? 'checked' : ''}>
+                    Ví điện tử MoMo
                 </div>
-
                 <div class="payment-card mb-3">
                     <label>
-                        <input type="radio" name="payment" value="bank_transfer">
+                        <input type="radio" name="payment" value="vnpay"
+                        ${checkoutPaymentMethod == 'VNPAY' ? 'checked' : ''}>
+                        Thanh toán qua VNPAY
+                    </label>
+                </div>
+                <div class="payment-card mb-3">
+                    <label>
+                        <input type="radio" name="payment" value="bank_transfer"
+                        ${checkoutPaymentMethod == 'BANK_TRANSFER' ? 'checked' : ''}>
                         Chuyển khoản ngân hàng
                     </label>
                 </div>
@@ -958,7 +963,7 @@
     }
 
 <%--    payment js--%>
-        document.getElementById("btnCheckout").addEventListener("click", function () {
+        document.getElementById("btnCheckout").addEventListener("click", async function () {
         const selectedPayment = document.querySelector('input[name="payment"]:checked').value;
         const note = document.getElementById("note")?.value || "";
         const paymentResult = document.getElementById("paymentResult");
@@ -978,33 +983,47 @@
 
         paymentResult.innerHTML = `<div class="alert alert-info">Đang xử lý đơn hàng...</div>`;
 
-        const bodyData =
-        "action=placeOrder" +
-        "&paymentMethod=" + encodeURIComponent(selectedPayment) +
-        "&note=" + encodeURIComponent(note);
+            const formData = new URLSearchParams();
+            formData.append("action", "placeOrder");
+            formData.append("paymentMethod", selectedPayment);
+            formData.append("note", note);
 
-        fetch("<%= request.getContextPath() %>/checkout", {
-        method: "POST",
-        headers: {
-        "Content-Type": "application/x-www-form-urlencoded"
-    },
-        body: bodyData
-    })
-        .then(response => response.json())
-        .then(data => {
-        if (data.success) {
-        paymentResult.innerHTML = `<div class="alert alert-success">${data.message}</div>`;
-        setTimeout(() => {
-        window.location.href = "<%= request.getContextPath() %>/my-orders";
-    }, 1200);
-    } else {
-        paymentResult.innerHTML = `<div class="alert alert-danger">${data.message}</div>`;
-    }
-    })
-        .catch(error => {
-        paymentResult.innerHTML = `<div class="alert alert-danger">Có lỗi xảy ra: ${error}</div>`;
-    });
-    });
+            try {
+                const response = await fetch("<%= request.getContextPath() %>/checkout", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/x-www-form-urlencoded;charset=UTF-8"
+                    },
+                    body: formData.toString()
+                });
+
+                const data = await response.json();
+
+                if (!data.success) {
+                    paymentResult.innerHTML = `<div class="alert alert-danger">${data.message}</div>`;
+                    return;
+                }
+
+                if (data.redirectUrl) {
+                    paymentResult.innerHTML = `<div class="alert alert-info">${data.message || 'Đang chuyển tới cổng thanh toán...'}</div>`;
+                    window.location.href = data.redirectUrl;
+                    return;
+                }
+
+                paymentResult.innerHTML = `<div class="alert alert-success">${data.message}</div>`;
+                setTimeout(() => {
+                    if (data.orderId) {
+                        window.location.href = "<%= request.getContextPath() %>/my-orders?action=view&id=" + data.orderId;
+                    } else {
+                        window.location.href = "<%= request.getContextPath() %>/my-orders";
+                    }
+                }, 700);
+
+            } catch (error) {
+                console.error(error);
+                paymentResult.innerHTML = `<div class="alert alert-danger">Có lỗi xảy ra khi kết nối hệ thống thanh toán.</div>`;
+            }
+        });
 
         const API_BASE = "https://provinces.open-api.vn/api/v1";
         let provincesLoaded = false;
@@ -1430,34 +1449,17 @@
     }
 
 
-    let time = 15 * 60;
-    let timer = document.getElementById("timer");
-
-    setInterval(() => {
-        let minutes = Math.floor(time / 60);
-        let seconds = time % 60;
-
-        timer.innerHTML =
-            String(minutes).padStart(2, '0') + ":" +
-            String(seconds).padStart(2, '0');
-
-        time--;
-
-        if (time < 0) {
-            alert("Hết thời gian thanh toán!");
-            window.location.href = "cart";
-        }
-
-    }, 1000);
 <%--    đồng bộ note vào hidden--%>
 document.addEventListener("DOMContentLoaded", function () {
     const couponForm = document.getElementById("couponForm");
     const noteInput = document.getElementById("note");
     const couponNoteHidden = document.getElementById("couponNoteHidden");
-
-    if (couponForm && noteInput && couponNoteHidden) {
+    const couponPaymentMethodHidden = document.getElementById("couponPaymentMethodHidden");
+    if (couponForm && noteInput && couponNoteHidden && couponPaymentMethodHidden) {
         couponForm.addEventListener("submit", function () {
             couponNoteHidden.value = noteInput.value;
+            const selectedPayment = document.querySelector('input[name="payment"]:checked');
+            couponPaymentMethodHidden.value = selectedPayment ? selectedPayment.value : "cod";
         });
     }
 });
