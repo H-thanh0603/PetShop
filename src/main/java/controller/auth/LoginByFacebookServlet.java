@@ -14,6 +14,8 @@ import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.Map;
@@ -21,6 +23,7 @@ import java.util.Map;
 @WebServlet("/LoginByFacebookServlet")
 public class LoginByFacebookServlet extends HttpServlet {
     private UserDAO userDao = new UserDAO();
+    private static final Logger logger = LoggerFactory.getLogger(LoginByFacebookServlet.class);
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
         HttpSession session = request.getSession();
@@ -96,7 +99,7 @@ public class LoginByFacebookServlet extends HttpServlet {
                 response.sendRedirect(request.getContextPath() + "/home");
             }
         } catch (Exception e) {
-            e.printStackTrace();
+            logger.error("Facebook OAuth login failed", e);
             session.setAttribute("error", "Đăng nhập Facebook thất bại. Kiểm tra lại cấu hình OAuth.");
             response.sendRedirect(request.getContextPath() + "/login");
         }

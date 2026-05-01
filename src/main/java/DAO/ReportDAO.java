@@ -4,7 +4,10 @@ import Context.DBContext;
 import Model.Order;
 import Model.Product;
 import Model.Review;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
+import java.math.BigDecimal;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -14,6 +17,8 @@ import java.util.List;
 import java.util.Map;
 
 public class ReportDAO {
+
+    private static final Logger logger = LoggerFactory.getLogger(ReportDAO.class);
 
     public Map<String, Integer> getOverviewStats() {
         Map<String, Integer> stats = new HashMap<>();
@@ -37,7 +42,7 @@ public class ReportDAO {
                 stats.put("lowRatingReviews", rs.getInt("low_rating_reviews"));
             }
         } catch (Exception e) {
-            e.printStackTrace();
+            logger.error("Error fetching overview stats", e);
         }
         return stats;
     }
@@ -56,12 +61,12 @@ public class ReportDAO {
                 while (rs.next()) {
                     Map<String, Object> map = new HashMap<>();
                     map.put("month", rs.getInt("month"));
-                    map.put("revenue", rs.getDouble("revenue"));
+                    map.put("revenue", rs.getBigDecimal("revenue"));
                     list.add(map);
                 }
             }
         } catch (Exception e) {
-            e.printStackTrace();
+            logger.error("Error fetching revenue by month year={}", year, e);
         }
         return list;
     }
@@ -79,7 +84,7 @@ public class ReportDAO {
                 list.add(map);
             }
         } catch (Exception e) {
-            e.printStackTrace();
+            logger.error("Error fetching orders by status", e);
         }
         return list;
     }
@@ -103,12 +108,12 @@ public class ReportDAO {
                     map.put("productId", rs.getInt("id"));
                     map.put("product", rs.getString("name"));
                     map.put("count", rs.getInt("total_sold"));
-                    map.put("revenue", rs.getDouble("revenue"));
+                    map.put("revenue", rs.getBigDecimal("revenue"));
                     list.add(map);
                 }
             }
         } catch (Exception e) {
-            e.printStackTrace();
+            logger.error("Error fetching top selling products limit={}", limit, e);
         }
         return list;
     }
@@ -139,38 +144,40 @@ public class ReportDAO {
                 }
             }
         } catch (Exception e) {
-            e.printStackTrace();
+            logger.error("Error fetching orders by month with status year={}", year, e);
         }
         return list;
     }
 
-    public double getTotalRevenue() {
+    public BigDecimal getTotalRevenue() {
         String query = "SELECT COALESCE(SUM(total_amount), 0) FROM orders WHERE status != 'Cancelled'";
         try (Connection conn = DBContext.getConnection();
              PreparedStatement ps = conn.prepareStatement(query);
              ResultSet rs = ps.executeQuery()) {
             if (rs.next()) {
-                return rs.getDouble(1);
+                BigDecimal result = rs.getBigDecimal(1);
+                return result != null ? result : BigDecimal.ZERO;
             }
         } catch (Exception e) {
-            e.printStackTrace();
+            logger.error("Error fetching total revenue", e);
         }
-        return 0;
+        return BigDecimal.ZERO;
     }
 
-    public double getCurrentMonthRevenue() {
+    public BigDecimal getCurrentMonthRevenue() {
         String query = "SELECT COALESCE(SUM(total_amount), 0) FROM orders " +
                 "WHERE status != 'Cancelled' AND MONTH(createdAt) = MONTH(CURDATE()) AND YEAR(createdAt) = YEAR(CURDATE())";
         try (Connection conn = DBContext.getConnection();
              PreparedStatement ps = conn.prepareStatement(query);
              ResultSet rs = ps.executeQuery()) {
             if (rs.next()) {
-                return rs.getDouble(1);
+                BigDecimal result = rs.getBigDecimal(1);
+                return result != null ? result : BigDecimal.ZERO;
             }
         } catch (Exception e) {
-            e.printStackTrace();
+            logger.error("Error fetching current month revenue", e);
         }
-        return 0;
+        return BigDecimal.ZERO;
     }
 
     public int getCompletedOrdersCount() {
@@ -182,7 +189,7 @@ public class ReportDAO {
                 return rs.getInt(1);
             }
         } catch (Exception e) {
-            e.printStackTrace();
+            logger.error("Error counting completed orders", e);
         }
         return 0;
     }
@@ -199,7 +206,7 @@ public class ReportDAO {
                 }
             }
         } catch (Exception e) {
-            e.printStackTrace();
+            logger.error("Error fetching recent orders limit={}", limit, e);
         }
         return list;
     }
@@ -223,7 +230,7 @@ public class ReportDAO {
                 }
             }
         } catch (Exception e) {
-            e.printStackTrace();
+            logger.error("Error fetching low stock products threshold={} limit={}", threshold, limit, e);
         }
         return list;
     }
@@ -247,7 +254,7 @@ public class ReportDAO {
                 }
             }
         } catch (Exception e) {
-            e.printStackTrace();
+            logger.error("Error fetching recent low rating reviews limit={}", limit, e);
         }
         return list;
     }
@@ -270,7 +277,7 @@ public class ReportDAO {
                 }
             }
         } catch (Exception e) {
-            e.printStackTrace();
+            logger.error("Error fetching recent reviews limit={}", limit, e);
         }
         return list;
     }
@@ -295,12 +302,12 @@ public class ReportDAO {
                     map.put("fullname", rs.getString("fullname"));
                     map.put("email", rs.getString("email"));
                     map.put("totalOrders", rs.getInt("total_orders"));
-                    map.put("totalSpent", rs.getDouble("total_spent"));
+                    map.put("totalSpent", rs.getBigDecimal("total_spent"));
                     list.add(map);
                 }
             }
         } catch (Exception e) {
-            e.printStackTrace();
+            logger.error("Error fetching top customers limit={}", limit, e);
         }
         return list;
     }
@@ -320,13 +327,13 @@ public class ReportDAO {
                     map.put("quantity", rs.getInt("quantity"));
                     map.put("active", rs.getBoolean("is_active"));
                     map.put("discountType", rs.getString("discount_type"));
-                    map.put("discountValue", rs.getDouble("discount_value"));
+                    map.put("discountValue", rs.getBigDecimal("discount_value"));
                     map.put("discountPercent", rs.getInt("discount_percent"));
                     list.add(map);
                 }
             }
         } catch (Exception e) {
-            e.printStackTrace();
+            logger.error("Error fetching coupon usage limit={}", limit, e);
         }
         return list;
     }
@@ -354,7 +361,7 @@ public class ReportDAO {
                 }
             }
         } catch (Exception e) {
-            e.printStackTrace();
+            logger.error("Error fetching stored notifications limit={}", limit, e);
         }
         return list;
     }
@@ -367,7 +374,7 @@ public class ReportDAO {
                 rs.getString("phone"),
                 rs.getString("address"),
                 rs.getString("note"),
-                rs.getDouble("total_amount"),
+                rs.getBigDecimal("total_amount"),
                 rs.getString("status"),
                 rs.getTimestamp("createdAt"),
                 rs.getString("payment_method"),

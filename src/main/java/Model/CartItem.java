@@ -1,5 +1,7 @@
 package Model;
 
+import java.math.BigDecimal;
+
 public class CartItem {
     private Product product;
     private int quantity;
@@ -20,7 +22,7 @@ public class CartItem {
     public void setQuantity(int quantity) { this.quantity = quantity; }
     
     // Hàm tính tổng tiền của riêng món này (Giá * Số lượng)
-    public double getTotalPrice() {
-        return product.getPrice() * quantity;
+    public BigDecimal getTotalPrice() {
+        return product.getPrice().multiply(BigDecimal.valueOf(quantity));
     }
 }

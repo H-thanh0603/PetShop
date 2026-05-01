@@ -2,7 +2,10 @@ package controller.admin;
 
 import java.io.File;
 import java.io.IOException;
-import java.io.PrintWriter;
+import java.util.HashMap;
+import java.util.Map;
+
+import com.google.gson.Gson;
 
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.MultipartConfig;
@@ -14,6 +17,8 @@ import jakarta.servlet.http.Part;
 
 import Util.FileUploadUtil;
 import Util.FileUploadValidator;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Servlet upload file sử dụng Servlet 3.0 API (@MultipartConfig)
@@ -36,6 +41,8 @@ import Util.FileUploadValidator;
 )
 public class FileUploadServlet extends HttpServlet {
     private static final long serialVersionUID = 1L;
+    private static final Logger logger = LoggerFactory.getLogger(FileUploadServlet.class);
+    private final Gson gson = new Gson();
     
     // Thư mục lưu ảnh theo loại
     private static final String UPLOAD_FOLDER_PRODUCT = "assets/images/shop_pic";
@@ -46,8 +53,8 @@ public class FileUploadServlet extends HttpServlet {
             throws ServletException, IOException {
         
         request.setCharacterEncoding("UTF-8");
-        response.setContentType("application/json; charset=UTF-8");
-        PrintWriter out = response.getWriter();
+        response.setContentType("application/json;charset=UTF-8");
+        response.setCharacterEncoding("UTF-8");
         
         try {
             // Lấy file từ request
@@ -56,13 +63,13 @@ public class FileUploadServlet extends HttpServlet {
             // Validate file using FileUploadValidator
             FileUploadValidator.ValidationResult validationResult = FileUploadValidator.validate(filePart);
             if (!validationResult.isValid()) {
-                out.print("{\"success\": false, \"message\": \"" + validationResult.getErrorMessage() + "\"}");
+                writeJsonResponse(response, false, validationResult.getErrorMessage());
                 return;
             }
             
             // Kiểm tra kích thước
             if (!FileUploadUtil.isValidSize(filePart)) {
-                out.print("{\"success\": false, \"message\": \"File quá lớn. Tối đa 5MB\"}");
+                writeJsonResponse(response, false, "File quá lớn. Tối đa 5MB");
                 return;
             }
             
@@ -91,21 +98,31 @@ public class FileUploadServlet extends HttpServlet {
             if (fileName != null) {
                 // Trả về JSON thành công
                 String fileUrl = request.getContextPath() + "/" + uploadFolder + "/" + fileName;
-                out.print("{\"success\": true, \"fileName\": \"" + fileName + "\", " +
-                         "\"fileUrl\": \"" + fileUrl + "\", " +
-                         "\"fileSize\": \"" + FileUploadUtil.formatFileSize(filePart.getSize()) + "\", " +
-                         "\"message\": \"Upload thành công!\"}");
+                Map<String, Object> result = new HashMap<>();
+                result.put("success", true);
+                result.put("fileName", fileName);
+                result.put("fileUrl", fileUrl);
+                result.put("fileSize", FileUploadUtil.formatFileSize(filePart.getSize()));
+                result.put("message", "Upload thành công!");
+                response.getWriter().write(gson.toJson(result));
             } else {
-                out.print("{\"success\": false, \"message\": \"Không thể lưu file\"}");
+                writeJsonResponse(response, false, "Không thể lưu file");
             }
             
         } catch (IllegalStateException e) {
             // File quá lớn (vượt maxFileSize hoặc maxRequestSize)
-            out.print("{\"success\": false, \"message\": \"File quá lớn. Tối đa 5MB\"}");
+            writeJsonResponse(response, false, "File quá lớn. Tối đa 5MB");
         } catch (Exception e) {
-            e.printStackTrace();
-            out.print("{\"success\": false, \"message\": \"Lỗi server: " + e.getMessage() + "\"}");
+            logger.error("Error uploading file", e);
+            writeJsonResponse(response, false, "Lỗi server khi upload file");
         }
+    }
+    
+    private void writeJsonResponse(HttpServletResponse response, boolean success, String message) throws IOException {
+        Map<String, Object> result = new HashMap<>();
+        result.put("success", success);
+        result.put("message", message);
+        response.getWriter().write(gson.toJson(result));
     }
     
     @Override

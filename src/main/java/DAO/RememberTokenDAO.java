@@ -7,12 +7,16 @@ import java.sql.Timestamp;
 
 import Context.DBContext;
 import Util.PasswordUtil;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Manages secure remember-me tokens.
  * Tokens are stored as BCrypt hashes; plain tokens are only in cookies.
  */
 public class RememberTokenDAO {
+
+    private static final Logger logger = LoggerFactory.getLogger(RememberTokenDAO.class);
 
     /**
      * Store a hashed token for the user with a 7-day expiry.
@@ -27,7 +31,7 @@ public class RememberTokenDAO {
             ps.setString(2, hash);
             return ps.executeUpdate() > 0;
         } catch (Exception e) {
-            e.printStackTrace();
+            logger.error("Error saving remember token for user id={}", userId, e);
         }
         return false;
     }
@@ -50,7 +54,7 @@ public class RememberTokenDAO {
                 }
             }
         } catch (Exception e) {
-            e.printStackTrace();
+            logger.error("Error finding matching remember token", e);
         }
         return -1;
     }
@@ -65,7 +69,7 @@ public class RememberTokenDAO {
             ps.setInt(1, tokenId);
             ps.executeUpdate();
         } catch (Exception e) {
-            e.printStackTrace();
+            logger.error("Error deleting remember token id={}", tokenId, e);
         }
     }
 
@@ -79,7 +83,7 @@ public class RememberTokenDAO {
             ps.setInt(1, userId);
             ps.executeUpdate();
         } catch (Exception e) {
-            e.printStackTrace();
+            logger.error("Error deleting all remember tokens for user id={}", userId, e);
         }
     }
 
@@ -92,7 +96,7 @@ public class RememberTokenDAO {
              PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.executeUpdate();
         } catch (Exception e) {
-            e.printStackTrace();
+            logger.error("Error deleting expired remember tokens", e);
         }
     }
 }

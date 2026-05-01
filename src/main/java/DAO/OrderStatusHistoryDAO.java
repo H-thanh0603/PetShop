@@ -8,8 +8,12 @@ import java.util.List;
 
 import Context.DBContext;
 import Model.OrderStatusHistory;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class OrderStatusHistoryDAO {
+
+    private static final Logger logger = LoggerFactory.getLogger(OrderStatusHistoryDAO.class);
 
     /**
      * Insert a status history record within an existing transaction.
@@ -55,7 +59,7 @@ public class OrderStatusHistoryDAO {
                 }
             }
         } catch (Exception e) {
-            e.printStackTrace();
+            logger.error("Error fetching status history for order id={}", orderId, e);
         }
         return list;
     }

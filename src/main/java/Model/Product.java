@@ -1,5 +1,7 @@
 package Model;
 
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.text.DecimalFormat;
 import java.util.Locale;
 
@@ -7,7 +9,7 @@ public class Product {
     private int id;
     private String name;
     private String image;
-    private double price;    
+    private BigDecimal price;    
     private int discount;     
     private String description;
     private String category;
@@ -19,22 +21,30 @@ public class Product {
     private boolean wishlisted;
     private boolean isActive = true;
     
-    public Product() {}
+    public Product() {
+        this.price = BigDecimal.ZERO;
+    }
 
     // Constructor 6 tham số
-    public Product(int id, String name, String image, double price, int discount, String description) {
+    public Product(int id, String name, String image, BigDecimal price, int discount, String description) {
         this.id = id;
         this.name = name;
         this.image = image;
-        this.price = price;
+        this.price = price != null ? price : BigDecimal.ZERO;
         this.discount = discount;
         this.description = description;
     }
 
     // Constructor 7 tham số (có category)
-    public Product(int id, String name, String image, double price, int discount, String description, String category) {
+    public Product(int id, String name, String image, BigDecimal price, int discount, String description, String category) {
         this(id, name, image, price, discount, description);
         this.category = category;
+    }
+
+    // Constructor 7 tham số (có weight - từ main)
+    public Product(int id, String name, String image, BigDecimal price, int discount, String description, int weight) {
+        this(id, name, image, price, discount, description);
+        this.weight = weight;
     }
 
     // Getters & Setters
@@ -44,8 +54,8 @@ public class Product {
     public void setName(String name) { this.name = name; }
     public String getImage() { return image; }
     public void setImage(String image) { this.image = image; }
-    public double getPrice() { return price; }
-    public void setPrice(double price) { this.price = price; }
+    public BigDecimal getPrice() { return price; }
+    public void setPrice(BigDecimal price) { this.price = price != null ? price : BigDecimal.ZERO; }
     public int getDiscount() { return discount; }
     public void setDiscount(int discount) { this.discount = discount; }
     public String getDescription() { return description; }
@@ -60,9 +70,9 @@ public class Product {
         return formatter.format(price).replace(',', '.') + "đ";
     }
     
-    public double getOldPrice() {
+    public BigDecimal getOldPrice() {
         if (discount > 0 && discount < 100) {
-            return price / (1 - discount / 100.0);
+            return price.divide(BigDecimal.ONE.subtract(BigDecimal.valueOf(discount).divide(BigDecimal.valueOf(100), 10, RoundingMode.HALF_UP)), 0, RoundingMode.HALF_UP);
         }
         return price;
     }
@@ -72,8 +82,9 @@ public class Product {
         return formatter.format(getOldPrice()).replace(',', '.') + "đ";
     }
 
-    public double getDiscountAmount() {
-        return Math.max(0, getOldPrice() - price);
+    public BigDecimal getDiscountAmount() {
+        BigDecimal diff = getOldPrice().subtract(price);
+        return diff.compareTo(BigDecimal.ZERO) > 0 ? diff : BigDecimal.ZERO;
     }
 
     public String getFormattedDiscountAmount() {

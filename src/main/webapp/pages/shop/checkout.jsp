@@ -139,11 +139,22 @@
 
 
                 <div class="info-row">
-                    <span>Địa chỉ giao hàng</span>
-                    <button type="button" class="btn-add" onclick="toggleForm()">+ Thêm địa chỉ mới</button>
+                    <span>Địa chỉ giao hàng (Mặc định)</span>
                 </div>
-                <div class="info-row">
+                <div class="mb-3 px-2">
+                    <c:choose>
+                        <c:when test="${not empty defaultAddress}">
+                            <strong>${fn:escapeXml(defaultAddress.address)}, ${fn:escapeXml(defaultAddress.ward)}, ${fn:escapeXml(defaultAddress.district)}, ${fn:escapeXml(defaultAddress.province)}</strong>
+                        </c:when>
+                        <c:otherwise>
+                            <span class="text-danger">Bạn chưa có địa chỉ mặc định.</span>
+                        </c:otherwise>
+                    </c:choose>
+                </div>
+
+                <div class="info-row mt-4">
                     <span><strong>Danh sách địa chỉ</strong></span>
+                    <button type="button" class="btn-add" onclick="toggleForm()">+ Thêm địa chỉ mới</button>
                 </div>
 
                 <div class="right">
@@ -233,25 +244,32 @@
                     <c:choose>
                         <c:when test="${not empty addressList}">
                             <c:forEach var="addr" items="${addressList}">
-                                <div class="address-item">
-                                    <c:if test="${addr.defaultt}">
-                                        <strong>Mặc định</strong>
-                                    </c:if>
-                                    <span>
-                                        ${fn:escapeXml(addr.address)}, ${fn:escapeXml(addr.ward)}, ${fn:escapeXml(addr.district)}, ${fn:escapeXml(addr.province)}
-                                    </span>
-                                    <button type="button"
-                                            class="btn btn-secondary"
-                                            onclick="openEditAddress(
-                                                    '${addr.id}',
-                                                    '${addr.province}',
-                                                    '${addr.district}',
-                                                    '${addr.ward}',
-                                                    '${addr.address}',
-                                                    '${addr.defaultt}'
-                                                    )">
-                                        Sửa
-                                    </button>
+                                <div class="address-item" style="${addr.defaultt ? 'border: 2px solid #00bfa5;' : ''}">
+                                    <div style="flex:1;">
+                                        <c:if test="${addr.defaultt}">
+                                            <span class="badge bg-success mb-1">Mặc định</span><br>
+                                        </c:if>
+                                        <span>
+                                            ${fn:escapeXml(addr.address)}, ${fn:escapeXml(addr.ward)}, ${fn:escapeXml(addr.district)}, ${fn:escapeXml(addr.province)}
+                                        </span>
+                                    </div>
+                                    <div class="d-flex flex-column gap-1">
+                                        <button type="button"
+                                                class="btn btn-sm btn-secondary"
+                                                onclick="openEditAddress(
+                                                        '${addr.id}',
+                                                        '${addr.province}',
+                                                        '${addr.district}',
+                                                        '${addr.ward}',
+                                                        '${addr.address}',
+                                                        '${addr.defaultt}'
+                                                        )">
+                                            Sửa
+                                        </button>
+                                        <c:if test="${!addr.defaultt}">
+                                            <a href="${pageContext.request.contextPath}/addresses?defaultId=${addr.id}&redirect=checkout" class="btn btn-sm btn-outline-primary">Chọn</a>
+                                        </c:if>
+                                    </div>
                                 </div>
 
                             </c:forEach>

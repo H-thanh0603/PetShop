@@ -1,5 +1,6 @@
 <%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
 <%@ taglib prefix="c" uri="jakarta.tags.core" %>
+<%@ taglib prefix="fn" uri="jakarta.tags.functions" %>
 <%@ taglib prefix="fmt" uri="jakarta.tags.fmt" %>
 <!DOCTYPE html>
 <html lang="vi">
@@ -83,8 +84,8 @@
                             <c:forEach var="order" items="${pendingOrders}">
                                 <tr>
                                     <td><span class="pill pending">#${order.id}</span></td>
-                                    <td>${order.fullname}<div class="muted">${order.phone}</div></td>
-                                    <td>${order.formattedTotalAmount}</td>
+                                    <td>${fn:escapeXml(order.fullname)}<div class="muted">${fn:escapeXml(order.phone)}</div></td>
+                                    <td>${fn:escapeXml(order.formattedTotalAmount)}</td>
                                     <td><fmt:formatDate value="${order.createdAt}" pattern="dd/MM/yyyy HH:mm"/></td>
                                 </tr>
                             </c:forEach>
@@ -111,8 +112,8 @@
                             <tbody>
                             <c:forEach var="product" items="${lowStockProducts}">
                                 <tr>
-                                    <td>${product.name}</td>
-                                    <td>${empty product.category ? 'Chưa phân loại' : product.category}</td>
+                                    <td>${fn:escapeXml(product.name)}</td>
+                                    <td>${empty product.category ? 'Chưa phân loại' : fn:escapeXml(product.category)}</td>
                                     <td><span class="pill low-stock">${product.stock}</span></td>
                                 </tr>
                             </c:forEach>
@@ -139,10 +140,10 @@
                             <tbody>
                             <c:forEach var="review" items="${lowRatingReviews}">
                                 <tr>
-                                    <td>${review.userName}</td>
-                                    <td>${review.productName}</td>
+                                    <td>${fn:escapeXml(review.userName)}</td>
+                                    <td>${fn:escapeXml(review.productName)}</td>
                                     <td><span class="pill review">${review.rating}/5</span></td>
-                                    <td>${review.comment}</td>
+                                    <td>${fn:escapeXml(review.comment)}</td>
                                 </tr>
                             </c:forEach>
                             </tbody>
@@ -168,8 +169,8 @@
                             <tbody>
                             <c:forEach var="item" items="${storedNotifications}">
                                 <tr>
-                                    <td>${item.title}<div class="muted">${item.message}</div></td>
-                                    <td>${item.fullname}</td>
+                                    <td>${fn:escapeXml(item.title)}<div class="muted">${fn:escapeXml(item.message)}</div></td>
+                                    <td>${fn:escapeXml(item.fullname)}</td>
                                     <td><span class="pill system">${item.type}</span></td>
                                     <td><fmt:formatDate value="${item.createdAt}" pattern="dd/MM/yyyy HH:mm"/></td>
                                 </tr>

@@ -35,8 +35,15 @@ public class MyOrdersServlet extends HttpServlet {
         OrderDAO dao = new OrderDAO();
 
         if ("view".equals(action)) {
-            int orderId = Integer.parseInt(request.getParameter("id"));
-            Order order = orderDAO.getOrderById(orderId);
+            int orderId;
+            try {
+                orderId = Integer.parseInt(request.getParameter("id"));
+            } catch (NumberFormatException e) {
+                session.setAttribute("error", "Mã đơn hàng không hợp lệ.");
+                response.sendRedirect("my-orders");
+                return;
+            }
+            Order order = dao.getOrderById(orderId);
             
             // Bảo mật: Chỉ cho phép xem nếu đơn hàng thuộc về user đang đăng nhập
             if (order != null && order.getUserId() == user.getId()) {

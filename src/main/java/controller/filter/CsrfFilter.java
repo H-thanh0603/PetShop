@@ -3,6 +3,8 @@ package controller.filter;
 import jakarta.servlet.*;
 import jakarta.servlet.http.*;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
 import java.security.SecureRandom;
 
 public class CsrfFilter implements Filter {
@@ -38,17 +40,16 @@ public class CsrfFilter implements Filter {
             return;
         }
         
-        // POST/PUT/DELETE - validate token
-        // Exclude JSON API endpoints
-        String accept = request.getHeader("Accept");
-        if (accept != null && accept.contains("application/json")) {
-            request.setAttribute("csrfToken", sessionToken);
-            chain.doFilter(req, res);
-            return;
+        // POST/PUT/DELETE - validate CSRF token from header or parameter
+        // Check X-CSRF-Token header first, then fall back to csrfToken parameter
+        String submittedToken = request.getHeader("X-CSRF-Token");
+        if (submittedToken == null || submittedToken.isEmpty()) {
+            submittedToken = request.getParameter("csrfToken");
         }
-        
-        String submittedToken = request.getParameter("csrfToken");
-        if (submittedToken != null && submittedToken.equals(sessionToken)) {
+
+        if (submittedToken != null && MessageDigest.isEqual(
+                submittedToken.getBytes(StandardCharsets.UTF_8),
+                sessionToken.getBytes(StandardCharsets.UTF_8))) {
             request.setAttribute("csrfToken", sessionToken);
             chain.doFilter(req, res);
         } else {

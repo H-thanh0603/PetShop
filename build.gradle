@@ -58,6 +58,14 @@ dependencies {
     // JUnit 5
     testImplementation 'org.junit.jupiter:junit-jupiter:5.10.2'
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+
+    // jqwik — property-based testing
+    testImplementation 'net.jqwik:jqwik:1.9.1'
+
+    // Mockito — unit testing with mocks (inline for constructor/static mocking)
+    testImplementation 'org.mockito:mockito-core:5.11.0'
+    testImplementation 'org.mockito:mockito-junit-jupiter:5.11.0'
+    testImplementation 'org.mockito:mockito-inline:5.2.0'
 }
 
 war {

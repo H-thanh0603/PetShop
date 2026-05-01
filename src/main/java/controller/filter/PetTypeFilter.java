@@ -15,6 +15,8 @@ import jakarta.servlet.http.HttpServletRequest;
 import DAO.PetTypeDAO;
 import Model.PetType;
 import services.PetTypeCache;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Filter để load danh sách loại thú cưng cho tất cả các trang.
@@ -23,6 +25,7 @@ import services.PetTypeCache;
 @WebFilter("/*")
 public class PetTypeFilter implements Filter {
 
+    private static final Logger logger = LoggerFactory.getLogger(PetTypeFilter.class);
     private PetTypeDAO petTypeDao;
 
     @Override
@@ -45,7 +48,7 @@ public class PetTypeFilter implements Filter {
                         cache.update(petTypes);
                     } catch (Exception e) {
                         // Retain previously cached data on DB failure
-                        System.err.println("[PetTypeFilter] DB reload failed, using cached data: " + e.getMessage());
+                        logger.warn("[PetTypeFilter] DB reload failed, using cached data: {}", e.getMessage(), e);
                     }
                 }
                 httpRequest.setAttribute("petTypes", cache.get());

@@ -1,5 +1,6 @@
 <%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
 <%@ taglib prefix="c" uri="jakarta.tags.core" %>
+<%@ taglib prefix="fn" uri="jakarta.tags.functions" %>
 <%-- 
     Component: alerts.jsp
     Mô tả: Hiển thị thông báo success/error/warning - tự động ẩn sau 3 giây
@@ -8,21 +9,21 @@
 
 <c:if test="${not empty error}">
     <div class="alert alert-danger alert-dismissible fade show alert-auto-hide" role="alert">
-        <i class='bx bx-error-circle'></i> ${error}
+        <i class='bx bx-error-circle'></i> ${fn:escapeXml(error)}
         <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
     </div>
 </c:if>
 
 <c:if test="${not empty success}">
     <div class="alert alert-success alert-dismissible fade show alert-auto-hide" role="alert">
-        <i class='bx bx-check-circle'></i> ${success}
+        <i class='bx bx-check-circle'></i> ${fn:escapeXml(success)}
         <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
     </div>
 </c:if>
 
 <c:if test="${not empty warning}">
     <div class="alert alert-warning alert-dismissible fade show alert-auto-hide" role="alert">
-        <i class='bx bx-info-circle'></i> ${warning}
+        <i class='bx bx-info-circle'></i> ${fn:escapeXml(warning)}
         <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
     </div>
 </c:if>

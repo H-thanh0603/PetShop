@@ -1,5 +1,6 @@
 <%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
 <%@ taglib prefix="c" uri="jakarta.tags.core" %>
+<%@ taglib prefix="fn" uri="jakarta.tags.functions" %>
 
 <c:if test="${not empty sessionScope.toastMessage}">
     
@@ -170,7 +171,7 @@
                             <c:otherwise>Thành công!</c:otherwise>
                         </c:choose>
                     </div>
-                    <div class="toast-message">${sessionScope.toastMessage}</div>
+                    <div class="toast-message">${fn:escapeXml(sessionScope.toastMessage)}</div>
                 </div>
                 <button type="button" class="toast-close" onclick="closeToast()">
                     <i class='bx bx-x'></i>

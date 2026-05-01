@@ -2,6 +2,8 @@ package DAO;
 
 import Context.DBContext;
 import Model.Product;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -12,6 +14,8 @@ import java.util.List;
 import java.util.Set;
 
 public class WishlistDAO {
+
+    private static final Logger logger = LoggerFactory.getLogger(WishlistDAO.class);
 
     public List<Product> getWishlistProductsByUserId(int userId) {
         List<Product> products = new ArrayList<>();
@@ -40,7 +44,7 @@ public class WishlistDAO {
                 }
             }
         } catch (Exception e) {
-            e.printStackTrace();
+            logger.error("Error fetching wishlist product ids for user id={}", userId, e);
         }
 
         return ids;
@@ -57,7 +61,7 @@ public class WishlistDAO {
                 return rs.next();
             }
         } catch (Exception e) {
-            e.printStackTrace();
+            logger.error("Error checking wishlist for user id={} product id={}", userId, productId, e);
         }
 
         return false;
@@ -72,7 +76,7 @@ public class WishlistDAO {
             ps.setInt(2, productId);
             return ps.executeUpdate() > 0;
         } catch (Exception e) {
-            e.printStackTrace();
+            logger.error("Error adding to wishlist user id={} product id={}", userId, productId, e);
         }
 
         return false;
@@ -87,7 +91,7 @@ public class WishlistDAO {
             ps.setInt(2, productId);
             return ps.executeUpdate() > 0;
         } catch (Exception e) {
-            e.printStackTrace();
+            logger.error("Error removing from wishlist user id={} product id={}", userId, productId, e);
         }
 
         return false;

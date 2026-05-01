@@ -23,7 +23,7 @@ public class CartDAO {
     public void saveCartItem(int userId, int productId, int quantity) {
         String query = "INSERT INTO cart (user_id, product_id, quantity) VALUES (?, ?, ?) " +
                        "ON DUPLICATE KEY UPDATE quantity = ?";
-        try (Connection conn = new DBContext().getConnection();
+        try (Connection conn = DBContext.getConnection();
              PreparedStatement ps = conn.prepareStatement(query)) {
             ps.setInt(1, userId);
             ps.setInt(2, productId);
@@ -47,34 +47,37 @@ public class CartDAO {
         String insertQuery = "INSERT INTO cart (user_id, product_id, quantity) VALUES (?, ?, ?)";
         String updateQuery = "UPDATE cart SET quantity = ? WHERE user_id = ? AND product_id = ?";
         
-        try (Connection conn = new DBContext().getConnection()) {
-            PreparedStatement checkPs = conn.prepareStatement(checkQuery);
-            checkPs.setInt(1, userId);
-            checkPs.setInt(2, productId);
-            ResultSet rs = checkPs.executeQuery();
-            
-            if (rs.next()) {
-                int currentQuantity = rs.getInt("quantity");
-                int newQuantity = Math.min(currentQuantity + quantityToAdd, product.getStock());
+        try (Connection conn = DBContext.getConnection()) {
+            try (PreparedStatement checkPs = conn.prepareStatement(checkQuery)) {
+                checkPs.setInt(1, userId);
+                checkPs.setInt(2, productId);
+                try (ResultSet rs = checkPs.executeQuery()) {
+                    if (rs.next()) {
+                        int currentQuantity = rs.getInt("quantity");
+                        int newQuantity = Math.min(currentQuantity + quantityToAdd, product.getStock());
 
-                // Đã có, cập nhật số lượng
-                PreparedStatement updatePs = conn.prepareStatement(updateQuery);
-                updatePs.setInt(1, newQuantity);
-                updatePs.setInt(2, userId);
-                updatePs.setInt(3, productId);
-                updatePs.executeUpdate();
-            } else {
-                int quantityToSave = Math.min(quantityToAdd, product.getStock());
-                if (quantityToSave <= 0) {
-                    return;
+                        // Đã có, cập nhật số lượng
+                        try (PreparedStatement updatePs = conn.prepareStatement(updateQuery)) {
+                            updatePs.setInt(1, newQuantity);
+                            updatePs.setInt(2, userId);
+                            updatePs.setInt(3, productId);
+                            updatePs.executeUpdate();
+                        }
+                    } else {
+                        int quantityToSave = Math.min(quantityToAdd, product.getStock());
+                        if (quantityToSave <= 0) {
+                            return;
+                        }
+
+                        // Chưa có, thêm mới
+                        try (PreparedStatement insertPs = conn.prepareStatement(insertQuery)) {
+                            insertPs.setInt(1, userId);
+                            insertPs.setInt(2, productId);
+                            insertPs.setInt(3, quantityToSave);
+                            insertPs.executeUpdate();
+                        }
+                    }
                 }
-
-                // Chưa có, thêm mới
-                PreparedStatement insertPs = conn.prepareStatement(insertQuery);
-                insertPs.setInt(1, userId);
-                insertPs.setInt(2, productId);
-                insertPs.setInt(3, quantityToSave);
-                insertPs.executeUpdate();
             }
         } catch (Exception e) {
             log.error("DB error", e);
@@ -84,7 +87,7 @@ public class CartDAO {
     // Xóa item khỏi giỏ hàng
     public void removeFromCart(int userId, int productId) {
         String query = "DELETE FROM cart WHERE user_id = ? AND product_id = ?";
-        try (Connection conn = new DBContext().getConnection();
+        try (Connection conn = DBContext.getConnection();
              PreparedStatement ps = conn.prepareStatement(query)) {
             ps.setInt(1, userId);
             ps.setInt(2, productId);
@@ -98,7 +101,7 @@ public class CartDAO {
     public boolean updateCartQuantity(int userId, int productId, int newQuantity) {
         String query = "UPDATE cart SET quantity = ? WHERE user_id = ? AND product_id = ?";
 
-        try (Connection conn = new DBContext().getConnection();
+        try (Connection conn = DBContext.getConnection();
              PreparedStatement ps = conn.prepareStatement(query)) {
 
             Product product = productDAO.getProductById(productId);
@@ -131,7 +134,7 @@ public class CartDAO {
     
     // Xóa toàn bộ giỏ hàng của user
     public void clearCart(int userId) {
-        try (Connection conn = new DBContext().getConnection()) {
+        try (Connection conn = DBContext.getConnection()) {
             clearCart(conn, userId);
         } catch (Exception e) {
             log.error("DB error", e);
@@ -189,7 +192,7 @@ public class CartDAO {
         String updateQuery = "UPDATE cart SET quantity = ? WHERE user_id = ? AND product_id = ?";
         String deleteQuery = "DELETE FROM cart WHERE user_id = ? AND product_id = ?";
         
-        try (Connection conn = new DBContext().getConnection();
+        try (Connection conn = DBContext.getConnection();
              PreparedStatement selectPs = conn.prepareStatement(selectQuery);
              PreparedStatement updatePs = conn.prepareStatement(updateQuery);
              PreparedStatement deletePs = conn.prepareStatement(deleteQuery)) {
@@ -228,12 +231,13 @@ public class CartDAO {
     // Đếm tổng số lượng sản phẩm trong giỏ
     public int getTotalQuantity(int userId) {
         String query = "SELECT SUM(quantity) as total FROM cart WHERE user_id = ?";
-        try (Connection conn = new DBContext().getConnection();
+        try (Connection conn = DBContext.getConnection();
              PreparedStatement ps = conn.prepareStatement(query)) {
             ps.setInt(1, userId);
-            ResultSet rs = ps.executeQuery();
-            if (rs.next()) {
-                return rs.getInt("total");
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    return rs.getInt("total");
+                }
             }
         } catch (Exception e) {
             log.error("DB error", e);

@@ -1,6 +1,7 @@
 <%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
 <%@ taglib uri="jakarta.tags.core" prefix="c" %>
 <%@ taglib uri="jakarta.tags.fmt" prefix="fmt" %>
+<%@ taglib uri="jakarta.tags.functions" prefix="fn" %>
 <!DOCTYPE html>
 <html lang="vi">
 <head>
@@ -144,8 +145,8 @@
                 <c:choose>
                     <c:when test="${selectedPet == 'dog'}">Dành cho Chó</c:when>
                     <c:when test="${selectedPet == 'cat'}">Dành cho Mèo</c:when>
-                    <c:when test="${not empty selectedCategory}">${selectedCategory}</c:when>
-                    <c:when test="${not empty searchKeyword}">Tìm kiếm: ${searchKeyword}</c:when>
+                    <c:when test="${not empty selectedCategory}">${fn:escapeXml(selectedCategory)}</c:when>
+                    <c:when test="${not empty searchKeyword}">Tìm kiếm: ${fn:escapeXml(searchKeyword)}</c:when>
                     <c:otherwise>Tất cả</c:otherwise>
                 </c:choose>
             </span>
@@ -173,38 +174,23 @@
             </div>
         </div>
 
+        <div class="pet-nav">
+            <c:forEach items="${petTypes}" var="pt">
+                <a href="${pageContext.request.contextPath}/shop?pet=${pt.code}" class="${selectedPet == pt.code ? 'active' : ''}"><i class='bx ${pt.icon}'></i> ${pt.name}</a>
+            </c:forEach>
+            <a href="${pageContext.request.contextPath}/shop?discountOnly=true" class="${selectedDiscountOnly == 'true' ? 'active' : ''}">🔥 Khuyến mãi</a>
+            <a href="${pageContext.request.contextPath}/shop" class="${empty selectedPet && empty selectedCategory && empty searchKeyword && empty selectedDiscountOnly ? 'active' : ''}">Tất cả</a>
+        </div>
+
         <div class="row">
             <div class="col-lg-3 mb-4">
                 <div class="sidebar-section"><div class="sidebar-title"><i class='bx bx-filter-alt'></i> Bộ lọc tìm kiếm</div></div>
                 <div class="sidebar-section">
                     <div class="sidebar-title">Loại thú cưng</div>
-                    <a href="${pageContext.request.contextPath}/shop"
-                       class="filter-link ${empty selectedPet && empty selectedCategory ? 'active' : ''}">Tất cả thú cưng</a>
-                    <a href="javascript:void(0)" onclick="navigateWithFilters({pet: 'dog', category: null})"
-                       class="filter-link ${selectedPet == 'dog' ? 'active' : ''}">🐶 Chó</a>
-                    <a href="javascript:void(0)" onclick="navigateWithFilters({pet: 'cat', category: null})"
-                       class="filter-link ${selectedPet == 'cat' ? 'active' : ''}">🐱 Mèo</a>
-                    <a href="javascript:void(0)" onclick="navigateWithFilters({discountOnly: 'true'})"
-                       class="filter-link ${selectedDiscountOnly == 'true' ? ' active' : ''}">🔥 Khuyến mãi</a>
-                </div>
-                <div class="sidebar-section">
-                    <div class="sidebar-title">Thương hiệu</div>
-                    <div class="brand-list">
-                        <c:forEach var="b" items="${brand}">
-                            <label class="brand-item">
-                                <input type="checkbox" name="brand" value="${b}" onchange="applyBrand()"
-                                <c:forEach var="selected" items="${paramValues.brand}">
-                                       <c:if test="${selected == b}">checked</c:if>
-                                </c:forEach>
-                                >
-                                <span class="brand-name">${b}</span>
-                            </label>
-                        </c:forEach>
-                    </div>
-                </div>
-                <div class="sidebar-section">
-                    <div class="sidebar-title">Đánh giá</div>
-
+                    <a href="${pageContext.request.contextPath}/shop" class="filter-link ${empty selectedPet && empty selectedCategory ? 'active' : ''}">Tất cả thú cưng</a>
+                    <c:forEach items="${petTypes}" var="pt">
+                        <a href="${pageContext.request.contextPath}/shop?pet=${pt.code}" class="filter-link ${selectedPet == pt.code ? 'active' : ''}"><i class='bx ${pt.icon}'></i> ${pt.name}</a>
+                    </c:forEach>
                 </div>
                 <div class="sidebar-section">
                     <div class="sidebar-title">Danh mục</div>
@@ -241,8 +227,10 @@
                         <span class="small text-muted">Sắp xếp:</span>
                         <select onchange="applySort(this.value)">
                             <option value="">Phổ biến nhất</option>
+                            <option value="newest" ${selectedSort == 'newest' ? 'selected' : ''}>Mới nhất</option>
                             <option value="price-asc" ${selectedSort == 'price-asc' ? 'selected' : ''}>Giá tăng dần</option>
                             <option value="price-desc" ${selectedSort == 'price-desc' ? 'selected' : ''}>Giá giảm dần</option>
+                            <option value="rating" ${selectedSort == 'rating' ? 'selected' : ''}>Đánh giá cao</option>
                             <option value="discount" ${selectedSort == 'discount' ? 'selected' : ''}>Giảm giá nhiều</option>
                             <option value="availability" ${selectedSort == 'availability' ? 'selected' : ''}>Còn hàng</option>
                             <option value="name" ${selectedSort == 'name' ? 'selected' : ''}>Tên A-Z</option>
@@ -257,17 +245,17 @@
                                 <div class="img-wrap">
                                     <c:if test="${p.discount > 0}"><span class="badge-sale">-${p.discount}%</span></c:if>
                                     <a href="${pageContext.request.contextPath}/product-detail?id=${p.id}">
-                                        <img src="${pageContext.request.contextPath}/assets/images/shop_pic/${p.image}" alt="${p.name}" onerror="this.src='https://placehold.co/200x200/f9f9f9/999?text=PetShop'">
+                                        <img src="${pageContext.request.contextPath}/assets/images/shop_pic/${fn:escapeXml(p.image)}" alt="${fn:escapeXml(p.name)}" onerror="this.src='https://placehold.co/200x200/f9f9f9/999?text=PetShop'">
                                     </a>
                                 </div>
                                 <div class="info">
-                                    <div class="cat-label">${p.category}</div>
-                                    <div class="name"><a href="${pageContext.request.contextPath}/product-detail?id=${p.id}">${p.name}</a></div>
-                                    <div class="rating"><i class='bx bxs-star'></i> ${p.formattedAverageRating} <span class="muted">(${p.reviewCount} đánh giá)</span></div>
+                                    <div class="cat-label">${fn:escapeXml(p.category)}</div>
+                                    <div class="name"><a href="${pageContext.request.contextPath}/product-detail?id=${p.id}">${fn:escapeXml(p.name)}</a></div>
+                                    <div class="rating"><i class='bx bxs-star'></i> ${fn:escapeXml(p.formattedAverageRating)} <span class="muted">(${p.reviewCount} đánh giá)</span></div>
                                     <div class="d-flex justify-content-between align-items-start">
                                         <div>
-                                            <span class="price">${p.formattedPrice}</span>
-                                            <c:if test="${p.discount > 0}"><span class="old-price">${p.formattedOldPrice}</span></c:if>
+                                            <span class="price">${fn:escapeXml(p.formattedPrice)}</span>
+                                            <c:if test="${p.discount > 0}"><span class="old-price">${fn:escapeXml(p.formattedOldPrice)}</span></c:if>
                                             <c:choose>
                                                 <c:when test="${p.stock <= 0}">
                                                     <div class="stock-pill stock-out">Hết hàng</div>
@@ -282,6 +270,7 @@
                                         </div>
                                         <div class="product-actions">
                                             <form action="${pageContext.request.contextPath}/toggle-wishlist" method="post">
+                                                <input type="hidden" name="csrfToken" value="${csrfToken}">
                                                 <input type="hidden" name="productId" value="${p.id}">
                                                 <input type="hidden" name="redirect" value="${currentPageUrl}">
                                                 <button type="submit" class="btn-wishlist ${p.wishlisted ? 'active' : ''}" title="Yêu thích">
@@ -289,6 +278,7 @@
                                                 </button>
                                             </form>
                                             <form action="${pageContext.request.contextPath}/add-to-cart" method="post">
+                                                <input type="hidden" name="csrfToken" value="${csrfToken}">
                                                 <input type="hidden" name="id" value="${p.id}">
                                                 <input type="hidden" name="quantity" value="1">
                                                 <button type="submit" class="btn-cart" <c:if test="${p.stock <= 0}">disabled="disabled"</c:if>><i class='bx bx-cart-add'></i></button>

@@ -1,5 +1,6 @@
 <%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
 <%@ taglib prefix="c" uri="jakarta.tags.core" %>
+<%@ taglib prefix="fn" uri="jakarta.tags.functions" %>
 <!DOCTYPE html>
 <html lang="vi">
 <head>
@@ -139,8 +140,8 @@
                     <c:forEach items="${reviews}" var="r" varStatus="loop">
                         <tr>
                             <td><strong>${loop.index + 1}</strong></td>
-                            <td><span style="font-weight: 600; color: #0f172a;">${r.productName}</span></td>
-                            <td>${r.userName}</td>
+                            <td><span style="font-weight: 600; color: #0f172a;">${fn:escapeXml(r.productName)}</span></td>
+                            <td>${fn:escapeXml(r.userName)}</td>
                             <td>
                                 <div class="star-rating">
                                     <c:forEach begin="1" end="5" var="i">
@@ -156,7 +157,7 @@
                                 </div>
                             </td>
                             <td>
-                                <span class="comment-text" title="${r.comment}">
+                                <span class="comment-text" title="${fn:escapeXml(r.comment)}">
                                     <c:choose>
                                         <c:when test="${not empty r.comment}">
                                             ${r.comment.length() > 80 ? r.comment.substring(0, 80).concat('...') : r.comment}

@@ -1,5 +1,6 @@
 <%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
 <%@ taglib prefix="c" uri="jakarta.tags.core" %>
+<%@ taglib prefix="fn" uri="jakarta.tags.functions" %>
 <%@ taglib prefix="fmt" uri="jakarta.tags.fmt" %>
 <!DOCTYPE html>
 <html lang="vi">
@@ -80,7 +81,7 @@
                             <tbody>
                             <c:forEach var="item" items="${topProducts}">
                                 <tr>
-                                    <td>${item.product}</td>
+                                    <td>${fn:escapeXml(item.product)}</td>
                                     <td>${item.count}</td>
                                     <td><fmt:formatNumber value="${item.revenue}" type="number" maxFractionDigits="0"/>đ</td>
                                 </tr>
@@ -103,7 +104,7 @@
                             <tbody>
                             <c:forEach var="item" items="${topCustomers}">
                                 <tr>
-                                    <td>${item.fullname}<div class="muted">${item.email}</div></td>
+                                    <td>${fn:escapeXml(item.fullname)}<div class="muted">${fn:escapeXml(item.email)}</div></td>
                                     <td>${item.totalOrders}</td>
                                     <td><fmt:formatNumber value="${item.totalSpent}" type="number" maxFractionDigits="0"/>đ</td>
                                 </tr>
@@ -126,7 +127,7 @@
                             <tbody>
                             <c:forEach var="item" items="${couponUsage}">
                                 <tr>
-                                    <td>${item.code}</td>
+                                    <td>${fn:escapeXml(item.code)}</td>
                                     <td>
                                         <c:choose>
                                             <c:when test="${item.discountType == 'percent'}">${item.discountPercent}%</c:when>
@@ -179,8 +180,8 @@
                             <tbody>
                             <c:forEach var="product" items="${lowStockProducts}">
                                 <tr>
-                                    <td>${product.name}</td>
-                                    <td>${empty product.category ? 'Chưa phân loại' : product.category}</td>
+                                    <td>${fn:escapeXml(product.name)}</td>
+                                    <td>${empty product.category ? 'Chưa phân loại' : fn:escapeXml(product.category)}</td>
                                     <td><span class="pill orange">${product.stock}</span></td>
                                     <td>${product.formattedAverageRating} ★</td>
                                 </tr>
@@ -203,10 +204,10 @@
                             <tbody>
                             <c:forEach var="review" items="${lowRatingReviews}">
                                 <tr>
-                                    <td>${review.userName}</td>
-                                    <td>${review.productName}</td>
+                                    <td>${fn:escapeXml(review.userName)}</td>
+                                    <td>${fn:escapeXml(review.productName)}</td>
                                     <td><span class="pill red">${review.rating}/5</span></td>
-                                    <td>${review.comment}</td>
+                                    <td>${fn:escapeXml(review.comment)}</td>
                                 </tr>
                             </c:forEach>
                             </tbody>

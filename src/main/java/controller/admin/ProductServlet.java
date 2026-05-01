@@ -2,6 +2,7 @@ package controller.admin;
 
 import java.io.File;
 import java.io.IOException;
+import java.math.BigDecimal;
 import java.util.List;
 
 import jakarta.servlet.ServletException;
@@ -80,10 +81,10 @@ public class ProductServlet extends HttpServlet {
                 errors.append("Tên sản phẩm phải từ 2-200 ký tự. ");
             }
             
-            double price = 0;
+            BigDecimal price = BigDecimal.ZERO;
             try {
-                price = Double.parseDouble(priceStr);
-                if (price <= 0) {
+                price = new BigDecimal(priceStr);
+                if (price.compareTo(BigDecimal.ZERO) <= 0) {
                     valid = false;
                     errors.append("Giá bán phải lớn hơn 0. ");
                 }

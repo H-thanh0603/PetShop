@@ -19,10 +19,13 @@ import Model.Product;
 import Model.User;
 import services.InventoryService;
 import services.InventoryService.StockValidationResult;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 @WebServlet("/cart")
 public class CartServlet extends HttpServlet {
     private static final long serialVersionUID = 1L;
+    private static final Logger logger = LoggerFactory.getLogger(CartServlet.class);
     private final CartDAO cartDAO = new CartDAO();
     private final InventoryService inventoryService = new InventoryService();
     private final Gson gson = new Gson();
@@ -148,7 +151,15 @@ public class CartServlet extends HttpServlet {
             return;
         }
         
-        int productId = Integer.parseInt(idStr);
+        int productId;
+        try {
+            productId = Integer.parseInt(idStr);
+        } catch (NumberFormatException e) {
+            session.setAttribute("toastMessage", "Mã sản phẩm không hợp lệ.");
+            session.setAttribute("toastType", "error");
+            response.sendRedirect(request.getContextPath() + "/cart");
+            return;
+        }
         User user = (User) session.getAttribute("user");
         
         @SuppressWarnings("unchecked")
@@ -185,7 +196,7 @@ public class CartServlet extends HttpServlet {
         String quantityStr = request.getParameter("quantity");
 
         if (idStr == null || quantityStr == null) {
-            response.getWriter().write("{\"success\":false,\"message\":\"Thiếu id hoặc quantity\"}");
+            writeJson(response, false, "Thiếu id hoặc quantity");
             return;
         }
 
@@ -221,20 +232,19 @@ public class CartServlet extends HttpServlet {
                     }
                 }
 
-                response.getWriter().write(
-                        "{\"success\":true," +
-                                "\"quantity\":" + quantity + "," +
-                                "\"totalQuantity\":" + totalQuantity +
-                                "}"
-                );
+                Map<String, Object> result = new HashMap<>();
+                result.put("success", true);
+                result.put("quantity", quantity);
+                result.put("totalQuantity", totalQuantity);
+                writeJson(response, result);
                 return;
             }
 
-            response.getWriter().write("{\"success\":false,\"message\":\"Không tìm thấy sản phẩm trong cart\"}");
+            writeJson(response, false, "Không tìm thấy sản phẩm trong cart");
 
         } catch (Exception e) {
-            e.printStackTrace();
-            response.getWriter().write("{\"success\":false,\"message\":\"Lỗi server\"}");
+            logger.error("Error updating cart for product id={}", request.getParameter("id"), e);
+            writeJson(response, false, "Lỗi server");
         }
     }
 
@@ -351,7 +361,7 @@ public class CartServlet extends HttpServlet {
             result.put("totalQuantity", recalculateTotalQuantity(session, cart));
             writeJson(response, result);
         } catch (Exception e) {
-            e.printStackTrace();
+            logger.error("Error updating cart with stock check for product id={}", request.getParameter("id"), e);
             writeJson(response, false, "Loi server");
         }
     }

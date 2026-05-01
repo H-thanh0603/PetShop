@@ -1,6 +1,7 @@
 <%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
 <%@ taglib prefix="c" uri="jakarta.tags.core" %>
 <%@ taglib prefix="fmt" uri="jakarta.tags.fmt" %>
+<%@ taglib prefix="fn" uri="jakarta.tags.functions" %>
 <!DOCTYPE html>
 <html lang="vi">
 <head>
@@ -27,6 +28,8 @@
         .status-shipping { background: #e0e7ff; color: #4338ca; }
         .status-completed { background: #dcfce7; color: #166534; }
         .status-cancelled { background: #fee2e2; color: #991b1b; }
+        .avatar-circle { width: 56px; height: 56px; border-radius: 50%; background: rgba(255,255,255,.2); border: 2px solid rgba(255,255,255,.4); display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+        .avatar-circle span { font-size: 1.5rem; font-weight: 800; color: #fff; text-transform: uppercase; }
     </style>
 </head>
 <body>
@@ -44,14 +47,22 @@
     <div class="hero">
         <div class="row g-3 align-items-center">
             <div class="col-lg-7">
-                <h2 class="fw-bold mb-1"><i class='bx bx-user-circle me-2'></i>Tài khoản của tôi</h2>
-                <div class="opacity-75">Quản lý hồ sơ, địa chỉ giao hàng và xem nhanh trạng thái đơn hàng gần đây.</div>
+                <div class="d-flex align-items-center gap-3 mb-2">
+                    <div class="avatar-circle">
+                        <span>${fn:substring(sessionScope.user.fullname, 0, 1)}</span>
+                    </div>
+                    <div>
+                        <h2 class="fw-bold mb-0">${fn:escapeXml(sessionScope.user.fullname)}</h2>
+                        <div class="opacity-75 small">@${fn:escapeXml(sessionScope.user.username)} · Thành viên từ <fmt:formatDate value="${memberSince}" pattern="MM/yyyy"/></div>
+                    </div>
+                </div>
             </div>
             <div class="col-lg-5">
                 <div class="row g-2">
-                    <div class="col-4"><div class="hero-stat"><div class="small opacity-75">Đang xử lý</div><div class="fs-5 fw-bold">${countPending}</div></div></div>
-                    <div class="col-4"><div class="hero-stat"><div class="small opacity-75">Hoàn thành</div><div class="fs-5 fw-bold">${countCompleted}</div></div></div>
-                    <div class="col-4"><div class="hero-stat"><div class="small opacity-75">Địa chỉ</div><div class="fs-5 fw-bold">${addressList.size()}</div></div></div>
+                    <div class="col-3"><div class="hero-stat"><div class="small opacity-75">Tổng đơn</div><div class="fs-5 fw-bold">${totalOrders}</div></div></div>
+                    <div class="col-3"><div class="hero-stat"><div class="small opacity-75">Đang xử lý</div><div class="fs-5 fw-bold">${countPending}</div></div></div>
+                    <div class="col-3"><div class="hero-stat"><div class="small opacity-75">Hoàn thành</div><div class="fs-5 fw-bold">${countCompleted}</div></div></div>
+                    <div class="col-3"><div class="hero-stat"><div class="small opacity-75">Chi tiêu</div><div class="fs-6 fw-bold"><fmt:formatNumber value="${totalSpent}" type="number" maxFractionDigits="0"/>đ</div></div></div>
                 </div>
             </div>
         </div>
@@ -64,19 +75,19 @@
                 <form action="${pageContext.request.contextPath}/my-account" method="post" class="row g-3">
                     <div class="col-12">
                         <label class="form-label">Họ và tên</label>
-                        <input class="form-control" name="fullname" value="${sessionScope.user.fullname}" required>
+                        <input class="form-control" name="fullname" value="${fn:escapeXml(sessionScope.user.fullname)}" required>
                     </div>
                     <div class="col-12">
                         <label class="form-label">Email</label>
-                        <input class="form-control" type="email" name="email" value="${sessionScope.user.email}" required>
+                        <input class="form-control" type="email" name="email" value="${fn:escapeXml(sessionScope.user.email)}" required>
                     </div>
                     <div class="col-12">
                         <label class="form-label">Số điện thoại</label>
-                        <input class="form-control" name="phone" value="${sessionScope.user.phone}" placeholder="Nhập số điện thoại">
+                        <input class="form-control" name="phone" value="${fn:escapeXml(sessionScope.user.phone)}" placeholder="Nhập số điện thoại">
                     </div>
                     <div class="col-12">
                         <label class="form-label">Tên đăng nhập</label>
-                        <input class="form-control" value="${sessionScope.user.username}" disabled>
+                        <input class="form-control" value="${fn:escapeXml(sessionScope.user.username)}" disabled>
                     </div>
                     <div class="col-12 d-grid">
                         <button class="btn btn-primary" type="submit"><i class='bx bx-save'></i> Lưu thay đổi</button>
@@ -89,10 +100,10 @@
 
                 <%-- Change password form --%>
                 <c:if test="${not empty pwError}">
-                    <div class="alert alert-danger mb-3" style="border-radius:10px;">${pwError}</div>
+                    <div class="alert alert-danger mb-3" style="border-radius:10px;">${fn:escapeXml(pwError)}</div>
                 </c:if>
                 <c:if test="${not empty pwSuccess}">
-                    <div class="alert alert-success mb-3" style="border-radius:10px;">${pwSuccess}</div>
+                    <div class="alert alert-success mb-3" style="border-radius:10px;">${fn:escapeXml(pwSuccess)}</div>
                 </c:if>
 
                 <form action="${pageContext.request.contextPath}/my-account" method="post" class="row g-3">
@@ -133,7 +144,7 @@
                     <div class="address-card ${addr.defaultt ? 'default' : ''}">
                         <div class="d-flex justify-content-between align-items-start gap-2">
                             <div>
-                                <div class="fw-bold">${addr.address}, ${addr.ward}, ${addr.district}, ${addr.province}</div>
+                                <div class="fw-bold">${fn:escapeXml(addr.address)}, ${fn:escapeXml(addr.ward)}, ${fn:escapeXml(addr.district)}, ${fn:escapeXml(addr.province)}</div>
                                 <div class="text-muted small mt-1">Cập nhật: <fmt:formatDate value="${addr.createAt}" pattern="dd/MM/yyyy HH:mm"/></div>
                             </div>
                             <c:if test="${addr.defaultt}">
@@ -164,15 +175,21 @@
                         <input type="hidden" name="redirect" value="account">
                         <div class="col-md-6">
                             <label class="form-label">Tỉnh / Thành</label>
-                            <input class="form-control" name="province" required>
+                            <select class="form-select" id="province" name="province" required>
+                                <option value="">-- Chọn Tỉnh / Thành --</option>
+                            </select>
                         </div>
                         <div class="col-md-6">
                             <label class="form-label">Quận / Huyện</label>
-                            <input class="form-control" name="district" required>
+                            <select class="form-select" id="district" name="district" required disabled>
+                                <option value="">-- Chọn Quận / Huyện --</option>
+                            </select>
                         </div>
                         <div class="col-md-6">
                             <label class="form-label">Phường / Xã</label>
-                            <input class="form-control" name="ward" required>
+                            <select class="form-select" id="ward" name="ward" required disabled>
+                                <option value="">-- Chọn Phường / Xã --</option>
+                            </select>
                         </div>
                         <div class="col-md-6">
                             <label class="form-label">Chi tiết địa chỉ</label>
@@ -183,7 +200,7 @@
                             <label class="form-check-label" for="isDefaultAccount">Đặt làm địa chỉ mặc định</label>
                         </div>
                         <div class="col-12 d-grid">
-                            <button class="btn btn-primary" type="submit"><i class='bx bx-plus'></i> Thêm địa chỉ</button>
+                            <button class="btn btn-primary" type="submit"><i class='bx bx-save'></i> Lưu địa chỉ</button>
                         </div>
                     </form>
                 </div>
@@ -203,10 +220,10 @@
                                         <div class="fw-bold">Đơn #${o.id}</div>
                                         <div class="text-muted small"><fmt:formatDate value="${o.createdAt}" pattern="dd/MM/yyyy HH:mm"/> · ${o.itemCount} sản phẩm</div>
                                     </div>
-                                    <span class="status-pill ${o.statusCssClass}">${o.statusLabel}</span>
+                                    <span class="status-pill ${o.statusCssClass}">${fn:escapeXml(o.statusLabel)}</span>
                                 </div>
                                 <div class="d-flex justify-content-between align-items-center mt-3 flex-wrap gap-2">
-                                    <div class="fw-semibold text-primary">${o.formattedTotalAmount}</div>
+                                    <div class="fw-semibold text-primary">${fn:escapeXml(o.formattedTotalAmount)}</div>
                                     <a href="${pageContext.request.contextPath}/my-orders?action=view&id=${o.id}" class="btn btn-sm btn-outline-dark">Xem chi tiết</a>
                                 </div>
                             </div>
@@ -221,5 +238,71 @@
 
 <jsp:include page="/components/footer.jsp" />
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+    const provinceSelect = document.getElementById("province");
+    const districtSelect = document.getElementById("district");
+    const wardSelect = document.getElementById("ward");
+    const apiUrl = "https://provinces.open-api.vn/api/v1";
+
+    fetch(apiUrl + "/p/")
+        .then(res => res.json())
+        .then(data => {
+            data.forEach(p => {
+                const option = document.createElement("option");
+                option.value = p.name;
+                option.textContent = p.name;
+                option.dataset.code = p.code;
+                provinceSelect.appendChild(option);
+            });
+        });
+
+    provinceSelect.addEventListener("change", function () {
+        districtSelect.innerHTML = '<option value="">-- Chọn Quận / Huyện --</option>';
+        wardSelect.innerHTML = '<option value="">-- Chọn Phường / Xã --</option>';
+        districtSelect.disabled = true;
+        wardSelect.disabled = true;
+
+        const selected = this.options[this.selectedIndex];
+        const code = selected ? selected.dataset.code : null;
+        if (!code) return;
+
+        districtSelect.disabled = false;
+        fetch(apiUrl + "/p/" + code + "?depth=2")
+            .then(res => res.json())
+            .then(data => {
+                data.districts.forEach(d => {
+                    const option = document.createElement("option");
+                    option.value = d.name;
+                    option.textContent = d.name;
+                    option.dataset.code = d.code;
+                    districtSelect.appendChild(option);
+                });
+            });
+    });
+
+    districtSelect.addEventListener("change", function () {
+        wardSelect.innerHTML = '<option value="">-- Chọn Phường / Xã --</option>';
+        wardSelect.disabled = true;
+
+        const selected = this.options[this.selectedIndex];
+        const code = selected ? selected.dataset.code : null;
+        if (!code) return;
+
+        wardSelect.disabled = false;
+        fetch(apiUrl + "/d/" + code + "?depth=2")
+            .then(res => res.json())
+            .then(data => {
+                data.wards.forEach(w => {
+                    const option = document.createElement("option");
+                    option.value = w.name;
+                    option.textContent = w.name;
+                    option.dataset.code = w.code;
+                    wardSelect.appendChild(option);
+                });
+            });
+    });
+});
+</script>
 </body>
 </html>
