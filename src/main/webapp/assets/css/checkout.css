@@ -1,0 +1,462 @@
+body {
+    background: #f5f6fa;
+    font-family: 'Poppins', sans-serif;
+}
+
+.checkout-container {
+    max-width: 1400px;
+    margin: auto;
+    padding: 30px;
+}
+
+.checkout-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 16px;
+    margin-bottom: 24px;
+    flex-wrap: wrap;
+}
+
+.checkout-header h1 {
+    font-size: 2rem;
+    font-weight: 700;
+    margin: 0 0 6px;
+    color: #1f2937;
+}
+
+.checkout-header p {
+    margin: 0;
+    color: #6b7280;
+}
+
+.checkout-back-link {
+    text-decoration: none;
+    font-weight: 600;
+    color: #4a6cf7;
+}
+
+.checkout-back-link:hover {
+    color: #3557df;
+}
+
+.card-modern {
+    background: white;
+    border-radius: 16px;
+    padding: 25px;
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.05);
+}
+
+.product-item {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    padding: 15px;
+    border-radius: 12px;
+    transition: 0.3s;
+}
+
+.product-item:hover {
+    background: #f8f9ff;
+}
+
+.product-img {
+    width: 80px;
+    height: 80px;
+    object-fit: cover;
+    border-radius: 10px;
+}
+
+.qty-badge {
+    background: #eef1ff;
+    padding: 5px 12px;
+    border-radius: 20px;
+    font-size: 14px;
+}
+
+.countdown {
+    background: #ffe9e9;
+    color: #ff3b3b;
+    padding: 8px 16px;
+    border-radius: 20px;
+    font-weight: 600;
+}
+
+.payment-card {
+    border: 2px solid #eee;
+    border-radius: 14px;
+    padding: 15px;
+    cursor: pointer;
+    transition: 0.3s;
+}
+
+.payment-card:hover {
+    border-color: #4a6cf7;
+    background: #f7f9ff;
+}
+
+.payment-card input {
+    margin-right: 10px;
+}
+
+.btn-checkout {
+    width: 100%;
+    padding: 14px;
+    border: none;
+    border-radius: 14px;
+    background: linear-gradient(45deg, #4a6cf7, #6f8cff);
+    color: white;
+    font-size: 18px;
+    font-weight: 600;
+    transition: 0.3s;
+}
+
+.btn-checkout:hover {
+    transform: scale(1.03);
+}
+
+.info-row {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 12px;
+}
+
+.edit-btn {
+    color: #4a6cf7;
+    cursor: pointer;
+    font-size: 14px;
+    margin-left: 10px;
+}
+
+.edit-btn:hover {
+    text-decoration: underline;
+}
+
+textarea {
+    border-radius: 12px !important;
+}
+
+.missing {
+    color: #999;
+    font-style: italic;
+}
+
+.gradient-btn {
+    background: linear-gradient(45deg, #4a6cf7, #6f8cff);
+    border: none;
+}
+
+.modal-dialog {
+    display: flex;
+    align-items: center;
+    min-height: 90vh;
+}
+
+.modal {
+    z-index: 999999 !important;
+}
+
+.left,
+.right {
+    width: 100%;
+}
+
+.address-section {
+    background: #fff;
+    padding: 20px;
+    border-radius: 16px;
+    margin-bottom: 20px;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.05);
+}
+
+.address-list {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    margin-top: 12px;
+}
+
+.address-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    padding: 14px 16px;
+    border: 1px solid #e9ecf5;
+    border-radius: 14px;
+    background: #fcfcff;
+    transition: all 0.25s ease;
+    line-height: 1.6;
+}
+
+.address-item:hover {
+    border-color: #4a6cf7;
+    background: #f7f9ff;
+    transform: translateY(-1px);
+}
+
+.address-item strong {
+    flex-shrink: 0;
+    font-size: 12px;
+    font-weight: 600;
+    color: #fff;
+    background: linear-gradient(45deg, #4a6cf7, #6f8cff);
+    padding: 4px 10px;
+    border-radius: 999px;
+    min-width: fit-content;
+}
+
+.address-item span {
+    color: #2f3542;
+    font-size: 14px;
+    word-break: break-word;
+}
+
+.address-list p {
+    margin: 0;
+    color: #888;
+    font-style: italic;
+}
+
+.btn-add {
+    background: linear-gradient(45deg, #ff4d4f, #ff7875);
+    color: #fff;
+    border: none;
+    padding: 8px 12px;
+    border-radius: 10px;
+    cursor: pointer;
+    font-size: 13px;
+    font-weight: 500;
+    transition: 0.25s ease;
+}
+
+.btn-add:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 6px 16px rgba(255, 77, 79, 0.25);
+}
+
+.address-form {
+    display: none;
+    background: #ffffff;
+    padding: 20px;
+    border-radius: 16px;
+    margin-top: 16px;
+    border: 1px solid #e9ecf5;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.05);
+    max-width: 500px;
+    animation: fadeIn 0.3s ease;
+}
+
+.address-form .form-label {
+    font-size: 13px;
+    font-weight: 600;
+    color: #2f3542;
+    margin-bottom: 6px;
+}
+
+.address-form .form-control,
+.address-form .form-select {
+    width: 100%;
+    padding: 10px 12px;
+    border-radius: 10px;
+    border: 1px solid #dcdfe6;
+    font-size: 14px;
+    transition: all 0.2s ease;
+    background: #fff;
+}
+
+.address-form .form-control:focus,
+.address-form .form-select:focus {
+    border-color: #4a6cf7;
+    box-shadow: 0 0 0 3px rgba(74, 108, 247, 0.15);
+    outline: none;
+}
+
+.address-form select:disabled {
+    background: #f5f6fa;
+    cursor: not-allowed;
+}
+
+.address-form .text-danger {
+    color: #ff4d4f;
+    font-size: 12px;
+    margin-top: 4px;
+}
+
+.address-form .form-check {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.address-form .form-check-input {
+    width: 16px;
+    height: 16px;
+    cursor: pointer;
+}
+
+.address-form .form-check-label {
+    font-size: 13px;
+    color: #444;
+    cursor: pointer;
+}
+
+.address-form .d-flex {
+    display: flex;
+    gap: 10px;
+    margin-top: 10px;
+}
+
+.address-form .btn-primary {
+    background: linear-gradient(45deg, #4a6cf7, #6f8cff);
+    border: none;
+    color: #fff;
+    padding: 10px 16px;
+    border-radius: 10px;
+    font-size: 14px;
+    cursor: pointer;
+    transition: 0.25s ease;
+}
+
+.address-form .btn-primary:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 6px 16px rgba(74, 108, 247, 0.3);
+}
+
+.address-form .btn-secondary {
+    background: #f1f3f9;
+    border: none;
+    color: #555;
+    padding: 10px 16px;
+    border-radius: 10px;
+    font-size: 14px;
+    cursor: pointer;
+    transition: 0.25s ease;
+}
+
+.address-form .btn-secondary:hover {
+    background: #e4e7f2;
+}
+
+.btn-danger {
+    background: linear-gradient(45deg, #ff4d4f, #ff7875);
+    border: none;
+    color: #fff;
+    padding: 10px 16px;
+    border-radius: 10px;
+    font-size: 14px;
+    cursor: pointer;
+    transition: 0.25s ease;
+}
+
+.btn-danger:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 6px 16px rgba(255, 77, 79, 0.28);
+}
+
+.delete-modal {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.35);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 9999;
+}
+
+.delete-modal-content {
+    width: 360px;
+    max-width: calc(100% - 24px);
+    background: #fff;
+    border-radius: 16px;
+    padding: 22px;
+    box-shadow: 0 18px 40px rgba(0, 0, 0, 0.18);
+    animation: fadeIn 0.2s ease;
+}
+
+.delete-modal-content h4 {
+    margin: 0 0 10px;
+    font-size: 18px;
+    color: #2f3542;
+}
+
+.delete-modal-content p {
+    margin: 0 0 18px;
+    font-size: 14px;
+    color: #666;
+    line-height: 1.5;
+}
+
+.delete-modal-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+}
+
+#bankInfo {
+    display: none;
+    margin-top: 12px;
+    padding: 12px;
+    background: #f0f9ff;
+    border-radius: 10px;
+    font-size: 0.88rem;
+    line-height: 1.8;
+}
+
+.bank-qr-wrapper {
+    text-align: center;
+    margin-bottom: 10px;
+}
+
+#bankQrImg {
+    width: 200px;
+    height: 200px;
+    border-radius: 10px;
+    border: 2px solid #e0f2fe;
+}
+
+.bank-qr-note {
+    font-size: 0.75rem;
+    color: #64748b;
+    margin-top: 4px;
+}
+
+.bank-account-number {
+    font-family: monospace;
+    font-size: 1rem;
+    color: #0369a1;
+    font-weight: 700;
+}
+
+#bankAmount {
+    color: #dc2626;
+    font-weight: 700;
+}
+
+#bankContent {
+    font-style: italic;
+    color: #0369a1;
+}
+
+.bank-warning {
+    margin-top: 8px;
+    padding: 8px;
+    background: #fef3c7;
+    border-radius: 8px;
+    font-size: 0.8rem;
+    color: #92400e;
+}
+
+.mb-3 {
+    margin-bottom: 14px;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(8px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}

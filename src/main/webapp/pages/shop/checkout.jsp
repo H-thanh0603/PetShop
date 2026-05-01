@@ -1,5 +1,6 @@
 <%@ page contentType="text/html;charset=UTF-8" %>
 <%@ taglib uri="jakarta.tags.core" prefix="c" %>
+<%@ taglib uri="jakarta.tags.functions" prefix="fn" %>
 <!DOCTYPE html>
 <html>
 <head>
@@ -11,467 +12,7 @@
 
     <!-- BOOTSTRAP -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
-
-    <style>
-        body {
-            background: #f5f6fa;
-            font-family: 'Poppins', sans-serif;
-        }
-
-        .checkout-container {
-            max-width: 1400px;
-            margin: auto;
-            padding: 30px;
-        }
-        .checkout-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            gap: 16px;
-            margin-bottom: 24px;
-            flex-wrap: wrap;
-        }
-        .checkout-header h1 {
-            font-size: 2rem;
-            font-weight: 700;
-            margin: 0 0 6px;
-            color: #1f2937;
-        }
-        .checkout-header p {
-            margin: 0;
-            color: #6b7280;
-        }
-        .checkout-back-link {
-            text-decoration: none;
-            font-weight: 600;
-            color: #4a6cf7;
-        }
-        .checkout-back-link:hover {
-            color: #3557df;
-        }
-
-        .card-modern {
-            background: white;
-            border-radius: 16px;
-            padding: 25px;
-            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.05);
-        }
-
-        .product-item {
-            display: flex;
-            align-items: center;
-            gap: 15px;
-            padding: 15px;
-            border-radius: 12px;
-            transition: 0.3s;
-        }
-
-        .product-item:hover {
-            background: #f8f9ff;
-        }
-
-        .product-img {
-            width: 80px;
-            height: 80px;
-            object-fit: cover;
-            border-radius: 10px;
-        }
-
-        .qty-badge {
-            background: #eef1ff;
-            padding: 5px 12px;
-            border-radius: 20px;
-            font-size: 14px;
-        }
-
-        .countdown {
-            background: #ffe9e9;
-            color: #ff3b3b;
-            padding: 8px 16px;
-            border-radius: 20px;
-            font-weight: 600;
-        }
-
-        .payment-card {
-            border: 2px solid #eee;
-            border-radius: 14px;
-            padding: 15px;
-            cursor: pointer;
-            transition: 0.3s;
-        }
-
-        .payment-card:hover {
-            border-color: #4a6cf7;
-            background: #f7f9ff;
-        }
-
-        .payment-card input {
-            margin-right: 10px;
-        }
-
-        .btn-checkout {
-            width: 100%;
-            padding: 14px;
-            border: none;
-            border-radius: 14px;
-            background: linear-gradient(45deg, #4a6cf7, #6f8cff);
-            color: white;
-            font-size: 18px;
-            font-weight: 600;
-            transition: 0.3s;
-        }
-
-        .btn-checkout:hover {
-            transform: scale(1.03);
-        }
-
-        .info-row {
-            display: flex;
-            justify-content: space-between;
-            margin-bottom: 10px;
-        }
-
-        .edit-btn {
-            font-size: 13px;
-            color: #4a6cf7;
-            cursor: pointer;
-        }
-
-        textarea {
-            border-radius: 12px !important;
-        }
-
-        .info-box {
-            background: #fff;
-            padding: 25px;
-            border-radius: 18px;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, .05);
-            font-family: 'Poppins';
-        }
-
-        .info-row {
-            display: flex;
-            justify-content: space-between;
-            margin-bottom: 12px;
-        }
-
-        .missing {
-            color: #999;
-            font-style: italic;
-        }
-
-        .edit-btn {
-            color: #4a6cf7;
-            cursor: pointer;
-            font-size: 14px;
-            margin-left: 10px;
-        }
-
-        .edit-btn:hover {
-            text-decoration: underline;
-        }
-
-        .gradient-btn {
-            background: linear-gradient(45deg, #4a6cf7, #6f8cff);
-            border: none;
-        }
-
-        .modal-dialog {
-            display: flex;
-            align-items: center;
-            min-height: 90vh;
-        }
-
-        .modal {
-            z-index: 999999 !important;
-        }
-
-        .address-section {
-            background: #fff;
-            padding: 20px;
-            border-radius: 12px;
-            margin-bottom: 20px;
-        }
-
-        .section-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 15px;
-        }
-
-        .btn-add {
-            background: #ff4d4f;
-            color: #fff;
-            border: none;
-            padding: 3px 7px;
-            border-radius: 8px;
-            cursor: pointer;
-        }
-
-        .address-list {
-            display: flex;
-            flex-direction: column;
-            gap: 12px;
-        }
-
-
-        .left, .right { width: 100%; }
-        .address-form { display: none; border: 1px solid #ccc; padding: 10px; margin-top: 10px; }
-        .address-section {
-            background: #fff;
-            padding: 20px;
-            border-radius: 16px;
-            margin-bottom: 20px;
-            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.05);
-        }
-
-        .address-list {
-            display: flex;
-            flex-direction: column;
-            gap: 14px;
-            margin-top: 12px;
-        }
-
-        .address-item {
-            display: flex;
-            align-items: flex-start;
-            gap: 10px;
-            padding: 14px 16px;
-            border: 1px solid #e9ecf5;
-            border-radius: 14px;
-            background: #fcfcff;
-            transition: all 0.25s ease;
-            line-height: 1.6;
-        }
-
-        .address-item:hover {
-            border-color: #4a6cf7;
-            background: #f7f9ff;
-            transform: translateY(-1px);
-        }
-
-        .address-item strong {
-            flex-shrink: 0;
-            font-size: 12px;
-            font-weight: 600;
-            color: #fff;
-            background: linear-gradient(45deg, #4a6cf7, #6f8cff);
-            padding: 4px 10px;
-            border-radius: 999px;
-            min-width: fit-content;
-        }
-
-        .address-item span {
-            color: #2f3542;
-            font-size: 14px;
-            word-break: break-word;
-        }
-
-        .address-list p {
-            margin: 0;
-            color: #888;
-            font-style: italic;
-        }
-
-        .btn-add {
-            background: linear-gradient(45deg, #ff4d4f, #ff7875);
-            color: #fff;
-            border: none;
-            padding: 8px 12px;
-            border-radius: 10px;
-            cursor: pointer;
-            font-size: 13px;
-            font-weight: 500;
-            transition: 0.25s ease;
-        }
-
-        .btn-add:hover {
-            transform: translateY(-1px);
-            box-shadow: 0 6px 16px rgba(255, 77, 79, 0.25);
-        }
-        .address-form {
-            background: #ffffff;
-            padding: 20px;
-            border-radius: 16px;
-            margin-top: 16px;
-            border: 1px solid #e9ecf5;
-            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.05);
-            max-width: 500px;
-            animation: fadeIn 0.3s ease;
-        }
-
-        /* Label */
-        .address-form .form-label {
-            font-size: 13px;
-            font-weight: 600;
-            color: #2f3542;
-            margin-bottom: 6px;
-        }
-
-        /* Input + Select */
-        .address-form .form-control,
-        .address-form .form-select {
-            width: 100%;
-            padding: 10px 12px;
-            border-radius: 10px;
-            border: 1px solid #dcdfe6;
-            font-size: 14px;
-            transition: all 0.2s ease;
-            background: #fff;
-        }
-
-        /* Focus effect */
-        .address-form .form-control:focus,
-        .address-form .form-select:focus {
-            border-color: #4a6cf7;
-            box-shadow: 0 0 0 3px rgba(74, 108, 247, 0.15);
-            outline: none;
-        }
-
-        /* Disabled select */
-        .address-form select:disabled {
-            background: #f5f6fa;
-            cursor: not-allowed;
-        }
-
-        /* Error message */
-        .address-form .text-danger {
-            color: #ff4d4f;
-            font-size: 12px;
-            margin-top: 4px;
-        }
-
-        /* Checkbox */
-        .address-form .form-check {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-
-        .address-form .form-check-input {
-            width: 16px;
-            height: 16px;
-            cursor: pointer;
-        }
-
-        .address-form .form-check-label {
-            font-size: 13px;
-            color: #444;
-            cursor: pointer;
-        }
-
-        /* Button group */
-        .address-form .d-flex {
-            display: flex;
-            gap: 10px;
-            margin-top: 10px;
-        }
-
-        /* Save button */
-        .address-form .btn-primary {
-            background: linear-gradient(45deg, #4a6cf7, #6f8cff);
-            border: none;
-            color: #fff;
-            padding: 10px 16px;
-            border-radius: 10px;
-            font-size: 14px;
-            cursor: pointer;
-            transition: 0.25s ease;
-        }
-
-        .address-form .btn-primary:hover {
-            transform: translateY(-1px);
-            box-shadow: 0 6px 16px rgba(74, 108, 247, 0.3);
-        }
-
-        /* Cancel button */
-        .address-form .btn-secondary {
-            background: #f1f3f9;
-            border: none;
-            color: #555;
-            padding: 10px 16px;
-            border-radius: 10px;
-            font-size: 14px;
-            cursor: pointer;
-            transition: 0.25s ease;
-        }
-
-        .address-form .btn-secondary:hover {
-            background: #e4e7f2;
-        }
-        .btn-danger {
-            background: linear-gradient(45deg, #ff4d4f, #ff7875);
-            border: none;
-            color: #fff;
-            padding: 10px 16px;
-            border-radius: 10px;
-            font-size: 14px;
-            cursor: pointer;
-            transition: 0.25s ease;
-        }
-
-        .btn-danger:hover {
-            transform: translateY(-1px);
-            box-shadow: 0 6px 16px rgba(255, 77, 79, 0.28);
-        }
-
-        .delete-modal {
-            position: fixed;
-            inset: 0;
-            background: rgba(0, 0, 0, 0.35);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            z-index: 9999;
-        }
-
-        .delete-modal-content {
-            width: 360px;
-            max-width: calc(100% - 24px);
-            background: #fff;
-            border-radius: 16px;
-            padding: 22px;
-            box-shadow: 0 18px 40px rgba(0, 0, 0, 0.18);
-            animation: fadeIn 0.2s ease;
-        }
-
-        .delete-modal-content h4 {
-            margin: 0 0 10px;
-            font-size: 18px;
-            color: #2f3542;
-        }
-
-        .delete-modal-content p {
-            margin: 0 0 18px;
-            font-size: 14px;
-            color: #666;
-            line-height: 1.5;
-        }
-
-        .delete-modal-actions {
-            display: flex;
-            justify-content: flex-end;
-            gap: 10px;
-        }
-
-        /* spacing */
-        .mb-3 {
-            margin-bottom: 14px;
-        }
-
-        /* animation */
-        @keyframes fadeIn {
-            from {
-                opacity: 0;
-                transform: translateY(8px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-    </style>
+    <link href="${pageContext.request.contextPath}/assets/css/checkout.css" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 </head>
 <body>
@@ -503,10 +44,10 @@
                 <c:forEach var="item" items="${cartItems}">
                     <div class="product-item" data-product-id="${item.product.id}" data-quantity="${item.quantity}">
                         <img class="product-img"
-                             src="${pageContext.request.contextPath}/assets/images/shop_pic/${item.product.image}">
+                             src="${pageContext.request.contextPath}/assets/images/shop_pic/${fn:escapeXml(item.product.image)}">
                         <div class="flex-grow-1">
-                            <div class="fw-semibold">${item.product.name}</div>
-                            <div class="text-muted">${item.product.price}₫</div>
+                            <div class="fw-semibold">${fn:escapeXml(item.product.name)}</div>
+                            <div class="text-muted">${fn:escapeXml(item.product.price)}₫</div>
                         </div>
 
                         <div class="qty-badge">
@@ -552,7 +93,7 @@
                     <span>${finalTotal} ₫</span>
                 </div>
                 <c:if test="${not empty shippingMessage}">
-                    <div class="alert alert-warning mt-2">${shippingMessage}</div>
+                    <div class="alert alert-warning mt-2">${fn:escapeXml(shippingMessage)}</div>
                 </c:if>
             </div>
         </div>
@@ -570,8 +111,7 @@
                                 <span class="missing">Chưa cập nhật</span>
                                 <span class="edit-btn" data-bs-toggle="modal" data-bs-target="#profileModal">Thêm thông tin</span>
                             </c:when>
-                            <c:otherwise>
-                                ${user.fullname}
+                            <c:otherwise>${fn:escapeXml(user.fullname)}
                                 <span class="edit-btn" data-bs-toggle="modal" data-bs-target="#profileModal">Thay đổi</span>
                             </c:otherwise>
                         </c:choose>
@@ -579,7 +119,7 @@
                 </div>
                 <div class="info-row">
                     <span>Email</span>
-                    <span>${user.email}</span>
+                    <span>${fn:escapeXml(user.email)}</span>
                 </div>
                 <div class="info-row">
                     <span>SĐT</span>
@@ -589,8 +129,7 @@
                                 <span class="missing">Chưa cập nhật</span>
                                 <span class="edit-btn" data-bs-toggle="modal" data-bs-target="#profileModal">Thêm thông tin</span>
                             </c:when>
-                            <c:otherwise>
-                                ${user.phone}
+                            <c:otherwise>${fn:escapeXml(user.phone)}
                                 <span class="edit-btn" data-bs-toggle="modal" data-bs-target="#profileModal">Thay đổi</span>
                             </c:otherwise>
                         </c:choose>
@@ -702,7 +241,7 @@
                                         <strong>Mặc định</strong>
                                     </c:if>
                                     <span>
-                                        ${addr.address}, ${addr.ward}, ${addr.district}, ${addr.province}
+                                        ${fn:escapeXml(addr.address)}, ${fn:escapeXml(addr.ward)}, ${fn:escapeXml(addr.district)}, ${fn:escapeXml(addr.province)}
                                     </span>
                                     <button type="button"
                                             class="btn btn-secondary"
@@ -792,7 +331,7 @@
                 <hr>
 
                 <label>📦 Ghi chú</label>
-                <textarea id="note" name="note" class="form-control mb-3" rows="3" placeholder="Nhập ghi chú cho shop...">${sessionScope.checkoutNote}</textarea>
+                <textarea id="note" name="note" class="form-control mb-3" rows="3" placeholder="Nhập ghi chú cho shop...">${fn:escapeXml(sessionScope.checkoutNote)}</textarea>
 
                 <label>🎟 Mã giảm giá</label>
                 <form action="${pageContext.request.contextPath}/checkout" method="post" id="couponForm">
@@ -800,13 +339,13 @@
                     <input type="hidden" name="action" value="applyCoupon">
                     <input type="hidden" name="note" id="couponNoteHidden">
                     <div class="input-group mb-3">
-                        <input name="couponCode" class="form-control" placeholder="Nhập mã coupon" value="${appliedCouponCode}">
+                        <input name="couponCode" class="form-control" placeholder="Nhập mã coupon" value="${fn:escapeXml(appliedCouponCode)}">
                         <button type="submit" class="btn btn-primary">Áp dụng</button>
                     </div>
                 </form>
 
                 <c:if test="${not empty couponMessage}">
-                    <div class="alert alert-info">${couponMessage}</div>
+                    <div class="alert alert-info">${fn:escapeXml(couponMessage)}</div>
                 </c:if>
 
                 <label class="mb-2 d-block">💳 Phương thức thanh toán</label>
@@ -825,13 +364,28 @@
                     </label>
                 </div>
 
-                <div class="payment-card mb-3">
-                    <label>
+                <div class="payment-card mb-3" id="bankCard">
+                    <label style="width:100%; cursor:pointer;">
                         <input type="radio" name="payment" value="bank_transfer">
-                        Chuyển khoản ngân hàng <span style="font-size: 0.75rem; color: #94a3b8; font-style: italic;">(Demo)</span>
+                        🏦 Chuyển khoản ngân hàng
                     </label>
+                    <div id="bankInfo">
+                        <div class="bank-qr-wrapper">
+                            <img id="bankQrImg" src="" alt="QR Chuyển khoản">
+                            <div class="bank-qr-note">Quét mã QR để chuyển khoản</div>
+                        </div>
+                        <div><b>Ngân hàng:</b> <span id="bankDisplayName">${fn:escapeXml(bankDisplayName)}</span></div>
+                        <div><b>Số tài khoản:</b> <span id="bankAccountNumber" class="bank-account-number">${fn:escapeXml(bankAccountNumber)}</span></div>
+                        <div><b>Chủ tài khoản:</b> <span id="bankAccountName">${fn:escapeXml(bankAccountName)}</span></div>
+                        <div><b>Số tiền:</b> <span id="bankAmount"></span></div>
+                        <div><b>Nội dung CK:</b> <span id="bankContent"></span></div>
+                        <div class="bank-warning">
+                            ⚠️ Vui lòng chuyển khoản đúng số tiền và nội dung. Đơn hàng sẽ được xác nhận sau khi nhận được thanh toán.
+                        </div>
+                    </div>
                 </div>
 
+                <input type="hidden" id="checkoutCsrfToken" value="${fn:escapeXml(csrfToken)}">
                 <button type="button" id="btnCheckout" class="btn-checkout">Đặt hàng</button>
 
                 <div id="paymentResult" class="mt-3"></div>
@@ -841,734 +395,17 @@
 
     </div>
 </div>
-
-<script>
-<%--validate address--%>
-
-    document.addEventListener("DOMContentLoaded", function () {
-    const addressInput = document.getElementById("addressDetail");
-    const errorEl = document.getElementById("addressDetailError");
-
-    function validateAddressDetail(value) {
-    const input = value.trim();
-
-    if (input.length === 0) {
-    return "Vui lòng nhập chi tiết địa chỉ.";
-}
-
-    if (input.length < 5) {
-    return "Chi tiết địa chỉ phải có ít nhất 5 ký tự.";
-}
-
-    if (input.length > 255) {
-    return "Chi tiết địa chỉ không được vượt quá 255 ký tự.";
-}
-
-    // Chỉ cho phép chữ, số, khoảng trắng và một số dấu câu phổ biến trong địa chỉ
-    const allowedRegex = /^[\p{L}0-9\s,./-]+$/u;
-    if (!allowedRegex.test(input)) {
-    return "Địa chỉ chứa ký tự không hợp lệ.";
-}
-
-    // Phải có ít nhất 1 chữ hoặc số
-    const meaningfulRegex = /[\p{L}0-9]/u;
-    if (!meaningfulRegex.test(input)) {
-    return "Địa chỉ không hợp lệ.";
-}
-
-    // Không cho toàn số hoặc toàn dấu câu kiểu 11111 / -----
-    const hasLetterOrDigit = /[\p{L}0-9]/u.test(input);
-    if (!hasLetterOrDigit) {
-    return "Địa chỉ phải có nội dung rõ ràng.";
-}
-
-    // Không cho 2+ dấu đặc biệt liên tiếp
-    const repeatedSpecialRegex = /[,.\/-]{2,}/;
-    if (repeatedSpecialRegex.test(input)) {
-    return "Địa chỉ không được chứa quá nhiều dấu đặc biệt liên tiếp.";
-}
-
-    // Không cho nhiều khoảng trắng liên tiếp
-    const multiSpaceRegex = /\s{2,}/;
-    if (multiSpaceRegex.test(input)) {
-    return "Địa chỉ không được chứa nhiều khoảng trắng liên tiếp.";
-}
-
-    // Không cho dạng quá vô nghĩa, ví dụ: aaaaa, 11111, ----abc
-    const onlyOneTypeCharRegex = /^([a-zA-Z])\1+$/;
-    if (onlyOneTypeCharRegex.test(input)) {
-    return "Địa chỉ không có ý nghĩa.";
-}
-
-    return "";
-}
-
-    addressInput.addEventListener("input", function () {
-    const error = validateAddressDetail(addressInput.value);
-    errorEl.textContent = error;
-    addressInput.classList.toggle("is-invalid", !!error);
-});
-
-    addressInput.form.addEventListener("submit", function (e) {
-    const error = validateAddressDetail(addressInput.value);
-    if (error) {
-    e.preventDefault();
-    errorEl.textContent = error;
-    addressInput.classList.add("is-invalid");
-    addressInput.focus();
-}
-});
-});
-<%-- shared address detail helpers --%>
-    function sanitizeAddressDetailValue(value) {
-        return value
-            .replace(/[^\p{L}0-9\s,./-]/gu, "")
-            .replace(/\s+/g, " ");
-    }
-
-    function validateAddressDetailInput(value) {
-        const input = value.trim().replace(/\s+/g, " ");
-
-        if (!input) {
-            return "Vui lòng nhập chi tiết địa chỉ.";
-        }
-
-        if (input.length < 5) {
-            return "Chi tiết địa chỉ phải có ít nhất 5 ký tự.";
-        }
-
-        if (input.length > 255) {
-            return "Chi tiết địa chỉ không được vượt quá 255 ký tự.";
-        }
-
-        if (!/^[\p{L}0-9\s,./-]+$/u.test(input)) {
-            return "Chi tiết địa chỉ chỉ được chứa chữ, số và các ký tự , . / -.";
-        }
-
-        if (!/[\p{L}]/u.test(input)) {
-            return "Chi tiết địa chỉ phải có ít nhất một chữ cái.";
-        }
-
-        if (/[,.\/-]{2,}/.test(input)) {
-            return "Chi tiết địa chỉ không được chứa nhiều ký tự đặc biệt liên tiếp.";
-        }
-
-        if (/^[,./-]|[,./-]$/.test(input)) {
-            return "Chi tiết địa chỉ không được bắt đầu hoặc kết thúc bằng dấu câu.";
-        }
-
-        if (/^[0-9\s,./-]+$/u.test(input)) {
-            return "Chi tiết địa chỉ không được chỉ gồm số và ký tự đặc biệt.";
-        }
-
-        if (/^([\p{L}0-9])\1{4,}$/u.test(input)) {
-            return "Chi tiết địa chỉ không hợp lệ.";
-        }
-
-        return "";
-    }
-
-    function syncAddressDetailValidation(input, errorEl) {
-        const error = validateAddressDetailInput(input.value);
-        errorEl.textContent = error;
-        input.classList.toggle("is-invalid", Boolean(error));
-        return error;
-    }
-
-    function bindAddressDetailValidation(inputId, errorId) {
-        const input = document.getElementById(inputId);
-        const errorEl = document.getElementById(errorId);
-
-        if (!input || !errorEl || !input.form) {
-            return;
-        }
-
-        input.addEventListener("input", function () {
-            const sanitized = sanitizeAddressDetailValue(input.value);
-            if (sanitized !== input.value) {
-                input.value = sanitized;
-            }
-            syncAddressDetailValidation(input, errorEl);
-        });
-
-        input.addEventListener("blur", function () {
-            input.value = input.value.trim().replace(/\s+/g, " ");
-            syncAddressDetailValidation(input, errorEl);
-        });
-    }
-
-<%--    payment js--%>
-        document.getElementById("btnCheckout").addEventListener("click", function () {
-        const selectedPayment = document.querySelector('input[name="payment"]:checked').value;
-        const note = document.getElementById("note")?.value || "";
-        const paymentResult = document.getElementById("paymentResult");
-
-        const fullname = "<c:out value='${user.fullname}'/>";
-        const phone = "<c:out value='${user.phone}'/>";
-
-        if (!fullname || fullname.trim() === "") {
-        paymentResult.innerHTML = `<div class="alert alert-danger">Vui lòng cập nhật họ tên.</div>`;
-        return;
-    }
-
-        if (!phone || phone.trim() === "") {
-        paymentResult.innerHTML = `<div class="alert alert-danger">Vui lòng cập nhật số điện thoại.</div>`;
-        return;
-    }
-
-        paymentResult.innerHTML = `<div class="alert alert-info">Đang xử lý đơn hàng...</div>`;
-
-        const bodyData =
-        "action=placeOrder" +
-        "&csrfToken=" + encodeURIComponent("${csrfToken}") +
-        "&paymentMethod=" + encodeURIComponent(selectedPayment) +
-        "&note=" + encodeURIComponent(note);
-
-        fetch("<%= request.getContextPath() %>/checkout", {
-        method: "POST",
-        headers: {
-        "Content-Type": "application/x-www-form-urlencoded"
-    },
-        body: bodyData
-    })
-        .then(response => response.json())
-        .then(data => {
-        if (data.success) {
-        paymentResult.innerHTML = `<div class="alert alert-success">${data.message}</div>`;
-        setTimeout(() => {
-        window.location.href = "<%= request.getContextPath() %>/my-orders";
-    }, 1200);
-    } else {
-        paymentResult.innerHTML = `<div class="alert alert-danger">${data.message}</div>`;
-    }
-    })
-        .catch(error => {
-        paymentResult.innerHTML = `<div class="alert alert-danger">Có lỗi xảy ra: ${error}</div>`;
-    });
-    });
-
-        const API_BASE = "https://provinces.open-api.vn/api/v1";
-        let provincesLoaded = false;
-        function clearAddressErrors() {
-            const ids = [
-                "provinceError",
-                "districtError",
-                "wardError",
-                "addressDetailError",
-                "editProvinceError",
-                "editDistrictError",
-                "editWardError",
-                "editAddressDetailError"
-            ];
-            ids.forEach(id => {
-                const el = document.getElementById(id);
-                if (el) el.textContent = "";
-            });
-        }
-        async function loadProvinces() {
-            const provinceSelect = document.getElementById("province");
-            if (!provinceSelect) return;
-
-            provinceSelect.innerHTML = '<option value="">Đang tải tỉnh/thành...</option>';
-            provinceSelect.disabled = true;
-
-            try {
-                const res = await fetch(API_BASE + "/p/");
-                if (!res.ok) throw new Error("HTTP " + res.status);
-
-                const provinces = await res.json();
-                provinceSelect.innerHTML = '<option value="">-- Chọn tỉnh/thành --</option>';
-
-                provinces.forEach(p => {
-                    const option = document.createElement("option");
-                    option.value = p.name;
-                    option.textContent = p.name;
-                    option.dataset.code = p.code;
-                    provinceSelect.appendChild(option);
-                });
-
-                provinceSelect.disabled = false;
-                provincesLoaded = true;
-            } catch (e) {
-                console.error("Lỗi load tỉnh:", e);
-                provinceSelect.innerHTML = '<option value="">Không tải được tỉnh/thành</option>';
-            }
-        }
-        async function loadDistricts(provinceCode) {
-            const districtSelect = document.getElementById("district");
-            const wardSelect = document.getElementById("ward");
-
-            districtSelect.innerHTML = '<option value="">Đang tải quận/huyện...</option>';
-            wardSelect.innerHTML = '<option value="">-- Chọn phường/xã --</option>';
-            districtSelect.disabled = true;
-            wardSelect.disabled = true;
-
-            if (!provinceCode) {
-                districtSelect.innerHTML = '<option value="">-- Chọn quận/huyện --</option>';
-                return;
-            }
-
-            try {
-                const res = await fetch(API_BASE + "/p/" + provinceCode + "?depth=2");
-                if (!res.ok) throw new Error("HTTP " + res.status);
-
-                const province = await res.json();
-                districtSelect.innerHTML = '<option value="">-- Chọn quận/huyện --</option>';
-
-                (province.districts || []).forEach(d => {
-                    const option = document.createElement("option");
-                    option.value = d.name;
-                    option.textContent = d.name;
-                    option.dataset.code = d.code;
-                    districtSelect.appendChild(option);
-                });
-
-                districtSelect.disabled = false;
-            } catch (e) {
-                console.error("Lỗi load quận/huyện:", e);
-                districtSelect.innerHTML = '<option value="">Không tải được quận/huyện</option>';
-            }
-        }
-        async function loadWards(districtCode) {
-            const wardSelect = document.getElementById("ward");
-            wardSelect.innerHTML = '<option value="">Đang tải phường/xã...</option>';
-            wardSelect.disabled = true;
-
-            if (!districtCode) {
-                wardSelect.innerHTML = '<option value="">-- Chọn phường/xã --</option>';
-                return;
-            }
-
-            try {
-                const res = await fetch(API_BASE + "/d/" + districtCode + "?depth=2");
-                if (!res.ok) throw new Error("HTTP " + res.status);
-
-                const district = await res.json();
-                wardSelect.innerHTML = '<option value="">-- Chọn phường/xã --</option>';
-
-                (district.wards || []).forEach(w => {
-                    const option = document.createElement("option");
-                    option.value = w.name;
-                    option.textContent = w.name;
-                    option.dataset.code = w.code;
-                    wardSelect.appendChild(option);
-                });
-
-                wardSelect.disabled = false;
-            } catch (e) {
-                console.error("Lỗi load phường/xã:", e);
-                wardSelect.innerHTML = '<option value="">Không tải được phường/xã</option>';
-            }
-        }
-
-        function toggleEditForm(show) {
-            const form = document.getElementById("editAddressForm");
-            if (!form) return;
-            form.style.display = show ? "block" : "none";
-        }
-
-        async function loadEditProvinces(selectedProvince) {
-            const provinceSelect = document.getElementById("editProvince");
-            provinceSelect.innerHTML = '<option value="">-- Chọn tỉnh/thành --</option>';
-            provinceSelect.disabled = true;
-
-            try {
-                const res = await fetch(API_BASE + "/p/");
-                if (!res.ok) throw new Error("HTTP " + res.status);
-
-                const provinces = await res.json();
-
-                provinces.forEach(p => {
-                    const option = document.createElement("option");
-                    option.value = p.name;
-                    option.textContent = p.name;
-                    option.dataset.code = p.code;
-
-                    if (p.name === selectedProvince) {
-                        option.selected = true;
-                    }
-
-                    provinceSelect.appendChild(option);
-                });
-
-                provinceSelect.disabled = false;
-            } catch (e) {
-                console.error("Lỗi load tỉnh edit:", e);
-                provinceSelect.innerHTML = '<option value="">Không tải được tỉnh/thành</option>';
-            }
-        }
-
-        async function loadEditDistricts(provinceCode, selectedDistrict) {
-            const districtSelect = document.getElementById("editDistrict");
-            const wardSelect = document.getElementById("editWard");
-
-            districtSelect.innerHTML = '<option value="">-- Chọn quận/huyện --</option>';
-            wardSelect.innerHTML = '<option value="">-- Chọn phường/xã --</option>';
-            districtSelect.disabled = true;
-            wardSelect.disabled = true;
-
-            if (!provinceCode) return;
-
-            try {
-                const res = await fetch(API_BASE + "/p/" + provinceCode + "?depth=2");
-                if (!res.ok) throw new Error("HTTP " + res.status);
-
-                const province = await res.json();
-
-                (province.districts || []).forEach(d => {
-                    const option = document.createElement("option");
-                    option.value = d.name;
-                    option.textContent = d.name;
-                    option.dataset.code = d.code;
-
-                    if (d.name === selectedDistrict) {
-                        option.selected = true;
-                    }
-
-                    districtSelect.appendChild(option);
-                });
-
-                districtSelect.disabled = false;
-            } catch (e) {
-                console.error("Lỗi load quận/huyện edit:", e);
-                districtSelect.innerHTML = '<option value="">Không tải được quận/huyện</option>';
-            }
-        }
-
-        async function loadEditWards(districtCode, selectedWard) {
-            const wardSelect = document.getElementById("editWard");
-            wardSelect.innerHTML = '<option value="">-- Chọn phường/xã --</option>';
-            wardSelect.disabled = true;
-
-            if (!districtCode) return;
-
-            try {
-                const res = await fetch(API_BASE + "/d/" + districtCode + "?depth=2");
-                if (!res.ok) throw new Error("HTTP " + res.status);
-
-                const district = await res.json();
-
-                (district.wards || []).forEach(w => {
-                    const option = document.createElement("option");
-                    option.value = w.name;
-                    option.textContent = w.name;
-                    option.dataset.code = w.code;
-
-                    if (w.name === selectedWard) {
-                        option.selected = true;
-                    }
-
-                    wardSelect.appendChild(option);
-                });
-
-                wardSelect.disabled = false;
-            } catch (e) {
-                console.error("Lỗi load phường/xã edit:", e);
-                wardSelect.innerHTML = '<option value="">Không tải được phường/xã</option>';
-            }
-        }
-
-        async function openEditAddress(id, province, district, ward, address, isDefault) {
-            document.getElementById("editAddressId").value = id;
-            document.getElementById("editAddressDetail").value = sanitizeAddressDetailValue(address);
-            document.getElementById("editIsDefault").checked = (isDefault === "true");
-            document.getElementById("editAddressDetailError").textContent = "";
-
-            toggleEditForm(true);
-
-            await loadEditProvinces(province);
-
-            const provinceSelect = document.getElementById("editProvince");
-            const provinceOption = provinceSelect.options[provinceSelect.selectedIndex];
-            const provinceCode = provinceOption ? provinceOption.dataset.code : "";
-
-            await loadEditDistricts(provinceCode, district);
-
-            const districtSelect = document.getElementById("editDistrict");
-            const districtOption = districtSelect.options[districtSelect.selectedIndex];
-            const districtCode = districtOption ? districtOption.dataset.code : "";
-
-            await loadEditWards(districtCode, ward);
-        }
-        function validateAddressForm() {
-            clearAddressErrors();
-
-            const province = document.getElementById("province").value.trim();
-            const district = document.getElementById("district").value.trim();
-            const ward = document.getElementById("ward").value.trim();
-            const addressInput = document.getElementById("addressDetail");
-            addressInput.value = addressInput.value.trim().replace(/\s+/g, " ");
-            const addressDetail = addressInput.value;
-
-            let isValid = true;
-
-            if (!province) {
-                document.getElementById("provinceError").textContent = "Vui lòng chọn tỉnh/thành.";
-                isValid = false;
-            }
-
-            if (!district) {
-                document.getElementById("districtError").textContent = "Vui lòng chọn quận/huyện.";
-                isValid = false;
-            }
-
-            if (!ward) {
-                document.getElementById("wardError").textContent = "Vui lòng chọn phường/xã.";
-                isValid = false;
-            }
-
-            const addressDetailError = validateAddressDetailInput(addressDetail);
-            if (addressDetailError && addressDetail.length >= 5) {
-                document.getElementById("addressDetailError").textContent = addressDetailError;
-                addressInput.classList.add("is-invalid");
-                return false;
-            }
-
-            if (!addressDetail) {
-                document.getElementById("addressDetailError").textContent = "Vui lòng nhập địa chỉ chi tiết.";
-                isValid = false;
-            } else if (addressDetail.length < 5) {
-                document.getElementById("addressDetailError").textContent = "Địa chỉ chi tiết phải có ít nhất 5 ký tự.";
-                isValid = false;
-            }
-
-            if (isValid) {
-                addressInput.classList.remove("is-invalid");
-            }
-
-            return isValid;
-        }
-        document.addEventListener("DOMContentLoaded", function () {
-            const provinceSelect = document.getElementById("province");
-            const districtSelect = document.getElementById("district");
-            const editProvince = document.getElementById("editProvince");
-            const editDistrict = document.getElementById("editDistrict");
-
-            bindAddressDetailValidation("addressDetail", "addressDetailError");
-            bindAddressDetailValidation("editAddressDetail", "editAddressDetailError");
-
-            if (provinceSelect) {
-                provinceSelect.addEventListener("change", async function () {
-                    clearAddressErrors();
-                    const selected = this.options[this.selectedIndex];
-                    const provinceCode = selected ? selected.dataset.code : "";
-                    await loadDistricts(provinceCode);
-                });
-            }
-
-            if (districtSelect) {
-                districtSelect.addEventListener("change", async function () {
-                    clearAddressErrors();
-                    const selected = this.options[this.selectedIndex];
-                    const districtCode = selected ? selected.dataset.code : "";
-                    await loadWards(districtCode);
-                });
-            }
-
-            if (editProvince) {
-                editProvince.addEventListener("change", async function () {
-                    const selected = this.options[this.selectedIndex];
-                    const provinceCode = selected ? selected.dataset.code : "";
-                    await loadEditDistricts(provinceCode, "");
-                });
-            }
-
-            if (editDistrict) {
-                editDistrict.addEventListener("change", async function () {
-                    const selected = this.options[this.selectedIndex];
-                    const districtCode = selected ? selected.dataset.code : "";
-                    await loadEditWards(districtCode, "");
-                });
-            }
-        });
-        function validateEditAddressForm() {
-        let ok = true;
-
-        document.getElementById("editProvinceError").textContent = "";
-        document.getElementById("editDistrictError").textContent = "";
-        document.getElementById("editWardError").textContent = "";
-        document.getElementById("editAddressDetailError").textContent = "";
-
-        const province = document.getElementById("editProvince").value.trim();
-        const district = document.getElementById("editDistrict").value.trim();
-        const ward = document.getElementById("editWard").value.trim();
-        const detailInput = document.getElementById("editAddressDetail");
-        detailInput.value = detailInput.value.trim().replace(/\s+/g, " ");
-        const detail = detailInput.value;
-
-        if (!province) {
-        document.getElementById("editProvinceError").textContent = "Vui lòng chọn tỉnh/thành.";
-        ok = false;
-    }
-        if (!district) {
-        document.getElementById("editDistrictError").textContent = "Vui lòng chọn quận/huyện.";
-        ok = false;
-    }
-        if (!ward) {
-        document.getElementById("editWardError").textContent = "Vui lòng chọn phường/xã.";
-        ok = false;
-    }
-        const editDetailError = validateAddressDetailInput(detail);
-        if (editDetailError && detail.length >= 5) {
-        document.getElementById("editAddressDetailError").textContent = editDetailError;
-        detailInput.classList.add("is-invalid");
-        return false;
-    }
-        if (!detail) {
-        document.getElementById("editAddressDetailError").textContent = "Vui lòng nhập địa chỉ chi tiết.";
-        ok = false;
-    } else if (detail.length < 5) {
-        document.getElementById("editAddressDetailError").textContent = "Địa chỉ chi tiết phải có ít nhất 5 ký tự.";
-        ok = false;
-    }
-        if (ok) {
-        detailInput.classList.remove("is-invalid");
-    }
-
-        return ok;
-    }
-        async function toggleForm(forceShow) {
-            const form = document.getElementById("addressForm");
-            if (!form) return;
-
-            const shouldShow = (typeof forceShow === "boolean")
-                ? forceShow
-                : (form.style.display === "none" || form.style.display === "");
-
-            form.style.display = shouldShow ? "block" : "none";
-
-            if (shouldShow && !provincesLoaded) {
-                await loadProvinces();
-            }
-        }
-        function confirmDeleteAddress() {
-            const id = document.getElementById("editAddressId").value;
-            if (!id) return;
-
-            document.getElementById("deleteAddressId").value = id;
-            document.getElementById("deleteConfirmModal").style.display = "flex";
-        }
-
-        function closeDeleteConfirm() {
-            document.getElementById("deleteConfirmModal").style.display = "none";
-        }
-
-        function deleteAddressNow() {
-            document.getElementById("deleteAddressForm").submit();
-        }
-
-
-    function validateForm() {
-        let phone = document.getElementById("phone").value;
-
-        let regex = /^[0-9]{9,11}$/;
-
-        if (!regex.test(phone)) {
-            alert("Số điện thoại không hợp lệ");
-            return false;
-        }
-        return true;
-    }
-
-
-    let time = 15 * 60;
-    let timer = document.getElementById("timer");
-
-    setInterval(() => {
-        let minutes = Math.floor(time / 60);
-        let seconds = time % 60;
-
-        timer.innerHTML =
-            String(minutes).padStart(2, '0') + ":" +
-            String(seconds).padStart(2, '0');
-
-        time--;
-
-        if (time < 0) {
-            alert("Hết thời gian thanh toán!");
-            window.location.href = "cart";
-        }
-
-    }, 1000);
-<%--    đồng bộ note vào hidden--%>
-document.addEventListener("DOMContentLoaded", function () {
-    const couponForm = document.getElementById("couponForm");
-    const noteInput = document.getElementById("note");
-    const couponNoteHidden = document.getElementById("couponNoteHidden");
-
-    if (couponForm && noteInput && couponNoteHidden) {
-        couponForm.addEventListener("submit", function () {
-            couponNoteHidden.value = noteInput.value;
-        });
-    }
-});
-
-</script>
-<script>
-    function getRenderedCheckoutState() {
-        const items = Array.from(document.querySelectorAll('.product-item[data-product-id]')).map(item => ({
-            productId: Number.parseInt(item.dataset.productId, 10),
-            quantity: Number.parseInt(item.dataset.quantity, 10) || 0
-        })).sort((a, b) => a.productId - b.productId);
-
-        return {
-            items,
-            totalQuantity: items.reduce((sum, item) => sum + item.quantity, 0)
-        };
-    }
-
-    function hasCheckoutStateChanged(serverState) {
-        const currentState = getRenderedCheckoutState();
-        const serverItems = (serverState.items || []).map(item => ({
-            productId: Number.parseInt(item.productId, 10),
-            quantity: Number.parseInt(item.quantity, 10) || 0
-        })).sort((a, b) => a.productId - b.productId);
-
-        if (currentState.totalQuantity !== (serverState.totalQuantity || 0)) {
-            return true;
-        }
-
-        if (currentState.items.length !== serverItems.length) {
-            return true;
-        }
-
-        for (let i = 0; i < serverItems.length; i++) {
-            const currentItem = currentState.items[i];
-            const serverItem = serverItems[i];
-
-            if (!currentItem
-                || currentItem.productId !== serverItem.productId
-                || currentItem.quantity !== serverItem.quantity) {
-                return true;
-            }
-        }
-
-        return false;
-    }
-
-    function syncCheckoutStateIfNeeded() {
-        fetch('<%= request.getContextPath() %>/cart?action=state', {
-            cache: 'no-store'
-        })
-            .then(response => response.json())
-            .then(data => {
-                if (data.success && hasCheckoutStateChanged(data)) {
-                    window.location.reload();
-                }
-            })
-            .catch(error => {
-                console.error('Khong dong bo duoc trang checkout:', error);
-            });
-    }
-
-    window.addEventListener('focus', syncCheckoutStateIfNeeded);
-    document.addEventListener('visibilitychange', () => {
-        if (!document.hidden) {
-            syncCheckoutStateIfNeeded();
-        }
-    });
-    setInterval(syncCheckoutStateIfNeeded, 10000);
-</script>
+<div id="checkoutConfig"
+     hidden
+     data-context-path="${fn:escapeXml(pageContext.request.contextPath)}"
+     data-csrf-token="${fn:escapeXml(csrfToken)}"
+     data-provinces-api-base-url="${fn:escapeXml(provincesApiBaseUrl)}"
+     data-bank-id="${fn:escapeXml(bankId)}"
+     data-bank-display-name="${fn:escapeXml(bankDisplayName)}"
+     data-bank-account-number="${fn:escapeXml(bankAccountNumber)}"
+     data-bank-account-name="${fn:escapeXml(bankAccountName)}"
+     data-bank-transfer-prefix="${fn:escapeXml(bankTransferPrefix)}"></div>
+<script src="${pageContext.request.contextPath}/assets/js/checkout.js"></script>
 <jsp:include page="/components/footer.jsp"/>
 <%--        modal cập nhật thông tin--%>
 <div class="modal fade" id="profileModal">

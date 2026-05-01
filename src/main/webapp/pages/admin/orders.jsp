@@ -1,6 +1,7 @@
 <%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
 <%@ taglib prefix="c" uri="jakarta.tags.core" %>
 <%@ taglib prefix="fmt" uri="jakarta.tags.fmt" %>
+<%@ taglib prefix="fn" uri="jakarta.tags.functions" %>
 <!DOCTYPE html>
 <html lang="vi">
 <head>
@@ -53,16 +54,16 @@
 
             <div class="toolbar-wrap px-4 pt-3">
                 <div class="d-flex flex-wrap gap-2">
-                    <a class="filter-chip ${empty selectedStatus || selectedStatus == 'all' ? 'active' : ''}" href="${pageContext.request.contextPath}/admin/orders?status=all&keyword=${keyword}">Tất cả</a>
-                    <a class="filter-chip ${selectedStatus == 'Pending' ? 'active' : ''}" href="${pageContext.request.contextPath}/admin/orders?status=Pending&keyword=${keyword}">Chờ xử lý</a>
-                    <a class="filter-chip ${selectedStatus == 'Confirmed' ? 'active' : ''}" href="${pageContext.request.contextPath}/admin/orders?status=Confirmed&keyword=${keyword}">Đã xác nhận</a>
-                    <a class="filter-chip ${selectedStatus == 'Shipping' ? 'active' : ''}" href="${pageContext.request.contextPath}/admin/orders?status=Shipping&keyword=${keyword}">Đang giao</a>
-                    <a class="filter-chip ${selectedStatus == 'Completed' ? 'active' : ''}" href="${pageContext.request.contextPath}/admin/orders?status=Completed&keyword=${keyword}">Hoàn thành</a>
-                    <a class="filter-chip ${selectedStatus == 'Cancelled' ? 'active' : ''}" href="${pageContext.request.contextPath}/admin/orders?status=Cancelled&keyword=${keyword}">Đã hủy</a>
+                    <a class="filter-chip ${empty selectedStatus || selectedStatus == 'all' ? 'active' : ''}" href="${pageContext.request.contextPath}/admin/orders?status=all&keyword=${fn:escapeXml(keyword)}">Tất cả</a>
+                    <a class="filter-chip ${selectedStatus == 'Pending' ? 'active' : ''}" href="${pageContext.request.contextPath}/admin/orders?status=Pending&keyword=${fn:escapeXml(keyword)}">Chờ xử lý</a>
+                    <a class="filter-chip ${selectedStatus == 'Confirmed' ? 'active' : ''}" href="${pageContext.request.contextPath}/admin/orders?status=Confirmed&keyword=${fn:escapeXml(keyword)}">Đã xác nhận</a>
+                    <a class="filter-chip ${selectedStatus == 'Shipping' ? 'active' : ''}" href="${pageContext.request.contextPath}/admin/orders?status=Shipping&keyword=${fn:escapeXml(keyword)}">Đang giao</a>
+                    <a class="filter-chip ${selectedStatus == 'Completed' ? 'active' : ''}" href="${pageContext.request.contextPath}/admin/orders?status=Completed&keyword=${fn:escapeXml(keyword)}">Hoàn thành</a>
+                    <a class="filter-chip ${selectedStatus == 'Cancelled' ? 'active' : ''}" href="${pageContext.request.contextPath}/admin/orders?status=Cancelled&keyword=${fn:escapeXml(keyword)}">Đã hủy</a>
                 </div>
                 <form action="${pageContext.request.contextPath}/admin/orders" method="get" class="search-form">
                     <input type="hidden" name="status" value="${empty selectedStatus ? 'all' : selectedStatus}">
-                    <input type="text" class="form-control" name="keyword" value="${keyword}" placeholder="Tìm theo mã đơn, tên khách, số điện thoại...">
+                    <input type="text" class="form-control" name="keyword" value="${fn:escapeXml(keyword)}" placeholder="Tìm theo mã đơn, tên khách, số điện thoại...">
                     <button class="btn btn-primary" type="submit"><i class='bx bx-search'></i> Tìm</button>
                 </form>
             </div>
@@ -90,19 +91,22 @@
                         <tr>
                             <td><span class="order-id">#${o.id}</span></td>
                             <td class="customer-info">
-                                <p><strong>${o.fullname}</strong></p>
-                                <p class="text-muted"><i class='bx bx-phone'></i> ${o.phone}</p>
-                                <p class="text-muted small">${o.address}</p>
+                                <p><strong>${fn:escapeXml(o.fullname)}</strong></p>
+                                <p class="text-muted"><i class='bx bx-phone'></i> ${fn:escapeXml(o.phone)}</p>
+                                <p class="text-muted small">${fn:escapeXml(o.address)}</p>
                             </td>
                             <td><span class="badge bg-light text-dark">${o.itemCount} SP</span></td>
                             <td>
-                                <div>${o.paymentMethodLabel}</div>
-                                <small class="text-muted">${o.paymentStatusLabel}</small>
+                                <div>${fn:escapeXml(o.paymentMethodLabel)}</div>
+                                <small class="text-muted">${fn:escapeXml(o.paymentFlowLabel)}</small>
+                                <c:if test="${not empty o.paymentReference}">
+                                    <br><small class="text-muted">Ref: ${fn:escapeXml(o.paymentReference)}</small>
+                                </c:if>
                             </td>
-                            <td><span class="total-amount">${o.formattedTotalAmount}</span></td>
+                            <td><span class="total-amount">${fn:escapeXml(o.formattedTotalAmount)}</span></td>
                             <td><fmt:formatDate value="${o.createdAt}" pattern="dd/MM/yyyy HH:mm"/></td>
                             <td>
-                                <span class="status-badge ${o.statusCssClass}">${o.statusLabel}</span>
+                                <span class="status-badge ${o.statusCssClass}">${fn:escapeXml(o.statusLabel)}</span>
                             </td>
                             <td>
                                 <div class="table-actions">
@@ -154,7 +158,7 @@
     <c:if test="${totalPages > 1}">
     <div class="d-flex justify-content-center align-items-center gap-2 py-4">
         <c:if test="${currentPage > 1}">
-            <a href="${pageContext.request.contextPath}/admin/orders?page=${currentPage-1}&size=${pageSize}&status=${selectedStatus}&keyword=${keyword}"
+            <a href="${pageContext.request.contextPath}/admin/orders?page=${currentPage-1}&size=${pageSize}&status=${selectedStatus}&keyword=${fn:escapeXml(keyword)}"
                class="btn btn-sm btn-outline-secondary"><i class='bx bx-chevron-left'></i> Trước</a>
         </c:if>
         <c:forEach begin="1" end="${totalPages}" var="p">
@@ -163,13 +167,13 @@
                     <span class="btn btn-sm btn-primary">${p}</span>
                 </c:when>
                 <c:otherwise>
-                    <a href="${pageContext.request.contextPath}/admin/orders?page=${p}&size=${pageSize}&status=${selectedStatus}&keyword=${keyword}"
+                    <a href="${pageContext.request.contextPath}/admin/orders?page=${p}&size=${pageSize}&status=${selectedStatus}&keyword=${fn:escapeXml(keyword)}"
                        class="btn btn-sm btn-outline-secondary">${p}</a>
                 </c:otherwise>
             </c:choose>
         </c:forEach>
         <c:if test="${currentPage < totalPages}">
-            <a href="${pageContext.request.contextPath}/admin/orders?page=${currentPage+1}&size=${pageSize}&status=${selectedStatus}&keyword=${keyword}"
+            <a href="${pageContext.request.contextPath}/admin/orders?page=${currentPage+1}&size=${pageSize}&status=${selectedStatus}&keyword=${fn:escapeXml(keyword)}"
                class="btn btn-sm btn-outline-secondary">Sau <i class='bx bx-chevron-right'></i></a>
         </c:if>
     </div>

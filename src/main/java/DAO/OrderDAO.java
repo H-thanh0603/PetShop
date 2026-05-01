@@ -2,6 +2,7 @@ package DAO;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.math.BigDecimal;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -11,12 +12,14 @@ import java.util.List;
 import Context.DBContext;
 import Model.Order;
 import Model.OrderItem;
-import Model.Product;
+import Model.OrderStatus;
 import Model.OrderStatusHistory;
+import Model.Product;
 
 public class OrderDAO {
 
     private static final Logger log = LoggerFactory.getLogger(OrderDAO.class);
+    private final PaymentTransactionDAO paymentTransactionDAO = new PaymentTransactionDAO();
 
     private Order mapOrder(ResultSet rs) throws Exception {
         return new Order(
@@ -26,7 +29,7 @@ public class OrderDAO {
                 rs.getString("phone"),
                 rs.getString("address"),
                 rs.getString("note"),
-                rs.getDouble("total_amount"),
+                rs.getBigDecimal("total_amount"),
                 rs.getString("status"),
                 rs.getTimestamp("createdAt"),
                 rs.getString("payment_method"),
@@ -51,7 +54,7 @@ public class OrderDAO {
             ps.setString(3, order.getPhone());
             ps.setString(4, order.getAddress());
             ps.setString(5, order.getNote());
-            ps.setDouble(6, order.getTotalAmount());
+            ps.setBigDecimal(6, order.getTotalAmount());
             ps.setString(7, "Pending");
             ps.setString(8, order.getPayment_method());
             ps.setBoolean(9, order.getPayment_status());
@@ -82,7 +85,7 @@ public class OrderDAO {
             ps.setInt(1, item.getOrderId());
             ps.setInt(2, item.getProductId());
             ps.setInt(3, item.getQuantity());
-            ps.setDouble(4, item.getPrice());
+            ps.setBigDecimal(4, item.getPrice());
             return ps.executeUpdate() > 0;
         }
     }
@@ -90,7 +93,7 @@ public class OrderDAO {
     public List<Order> getAllOrders() {
         List<Order> list = new ArrayList<>();
         String query = "SELECT * FROM orders ORDER BY createdAt DESC";
-        try (Connection conn = new DBContext().getConnection();
+        try (Connection conn = DBContext.getConnection();
              PreparedStatement ps = conn.prepareStatement(query);
              ResultSet rs = ps.executeQuery()) {
             while (rs.next()) {
@@ -98,6 +101,7 @@ public class OrderDAO {
                 order.setItems(getOrderItems(conn, order.getId()));
                 list.add(order);
             }
+            paymentTransactionDAO.attachLatestToOrders(conn, list);
         } catch (Exception e) {
             log.error("DB error", e);
         }
@@ -142,6 +146,7 @@ public class OrderDAO {
             // Batch load items for all orders in this page
             if (!list.isEmpty()) {
                 loadItemsForOrders(conn, list);
+                paymentTransactionDAO.attachLatestToOrders(conn, list);
             }
         } catch (Exception e) {
             log.error("DB error", e);
@@ -182,30 +187,34 @@ public class OrderDAO {
      */
     private void loadItemsForOrders(Connection conn, List<Order> orders) throws Exception {
         if (orders.isEmpty()) return;
-        StringBuilder ids = new StringBuilder();
+        StringBuilder placeholders = new StringBuilder();
         for (int i = 0; i < orders.size(); i++) {
-            if (i > 0) ids.append(",");
-            ids.append(orders.get(i).getId());
+            if (i > 0) placeholders.append(",");
+            placeholders.append("?");
         }
         String sql = "SELECT oi.*, p.name as product_name, p.image as product_image " +
                      "FROM order_items oi JOIN products p ON oi.product_id = p.id " +
-                     "WHERE oi.order_id IN (" + ids + ")";
+                     "WHERE oi.order_id IN (" + placeholders + ")";
         java.util.Map<Integer, List<OrderItem>> itemMap = new java.util.HashMap<>();
-        try (PreparedStatement ps = conn.prepareStatement(sql);
-             ResultSet rs = ps.executeQuery()) {
-            while (rs.next()) {
-                OrderItem item = new OrderItem();
-                item.setId(rs.getInt("id"));
-                item.setOrderId(rs.getInt("order_id"));
-                item.setProductId(rs.getInt("product_id"));
-                item.setQuantity(rs.getInt("quantity"));
-                item.setPrice(rs.getDouble("price"));
-                Product p = new Product();
-                p.setId(rs.getInt("product_id"));
-                p.setName(rs.getString("product_name"));
-                p.setImage(rs.getString("product_image"));
-                item.setProduct(p);
-                itemMap.computeIfAbsent(item.getOrderId(), k -> new ArrayList<>()).add(item);
+        try (PreparedStatement ps = conn.prepareStatement(sql)) {
+            for (int i = 0; i < orders.size(); i++) {
+                ps.setInt(i + 1, orders.get(i).getId());
+            }
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    OrderItem item = new OrderItem();
+                    item.setId(rs.getInt("id"));
+                    item.setOrderId(rs.getInt("order_id"));
+                    item.setProductId(rs.getInt("product_id"));
+                    item.setQuantity(rs.getInt("quantity"));
+                    item.setPrice(rs.getBigDecimal("price"));
+                    Product p = new Product();
+                    p.setId(rs.getInt("product_id"));
+                    p.setName(rs.getString("product_name"));
+                    p.setImage(rs.getString("product_image"));
+                    item.setProduct(p);
+                    itemMap.computeIfAbsent(item.getOrderId(), k -> new ArrayList<>()).add(item);
+                }
             }
         }
         for (Order order : orders) {
@@ -215,13 +224,14 @@ public class OrderDAO {
 
     public Order getOrderById(int orderId) {
         String query = "SELECT * FROM orders WHERE id = ?";
-        try (Connection conn = new DBContext().getConnection();
+        try (Connection conn = DBContext.getConnection();
              PreparedStatement ps = conn.prepareStatement(query)) {
             ps.setInt(1, orderId);
             try (ResultSet rs = ps.executeQuery()) {
                 if (rs.next()) {
                     Order order = mapOrder(rs);
                     order.setItems(getOrderItems(conn, orderId));
+                    paymentTransactionDAO.applyTransaction(order, paymentTransactionDAO.getLatestByOrderId(conn, orderId));
                     return order;
                 }
             }
@@ -254,7 +264,7 @@ public class OrderDAO {
                     item.setOrderId(rs.getInt("order_id"));
                     item.setProductId(rs.getInt("product_id"));
                     item.setQuantity(rs.getInt("quantity"));
-                    item.setPrice(rs.getDouble("price"));
+                    item.setPrice(rs.getBigDecimal("price"));
 
                     Product p = new Product();
                     p.setId(rs.getInt("product_id"));
@@ -297,6 +307,16 @@ public class OrderDAO {
                     conn.rollback();
                     return false;
                 }
+
+                // --- State-machine validation ---
+                OrderStatus fromStatus = OrderStatus.fromString(currentStatus);
+                OrderStatus toStatus   = OrderStatus.fromString(status);
+                if (fromStatus == null || toStatus == null || !fromStatus.canTransitionTo(toStatus)) {
+                    log.warn("Invalid order status transition: {} → {} (orderId={})", currentStatus, status, orderId);
+                    conn.rollback();
+                    return false;
+                }
+                // --------------------------------
 
                 boolean wasCancelled = "Cancelled".equalsIgnoreCase(currentStatus);
                 boolean willBeCancelled = "Cancelled".equalsIgnoreCase(status);
@@ -353,7 +373,7 @@ public class OrderDAO {
 
     public int countPendingOrders() {
         String query = "SELECT COUNT(*) FROM orders WHERE status = 'Pending'";
-        try (Connection conn = new DBContext().getConnection();
+        try (Connection conn = DBContext.getConnection();
              PreparedStatement ps = conn.prepareStatement(query);
              ResultSet rs = ps.executeQuery()) {
             if (rs.next()) return rs.getInt(1);
@@ -366,15 +386,18 @@ public class OrderDAO {
     public List<Order> getOrdersByUserId(int userId) {
         List<Order> list = new ArrayList<>();
         String query = "SELECT * FROM orders WHERE user_id = ? ORDER BY createdAt DESC";
-        try (Connection conn = new DBContext().getConnection();
+        try (Connection conn = DBContext.getConnection();
              PreparedStatement ps = conn.prepareStatement(query)) {
             ps.setInt(1, userId);
             try (ResultSet rs = ps.executeQuery()) {
                 while (rs.next()) {
-                    Order order = mapOrder(rs);
-                    order.setItems(getOrderItems(conn, order.getId()));
-                    list.add(order);
+                    list.add(mapOrder(rs));
                 }
+            }
+            // Batch-load all order items in a single query to avoid N+1
+            if (!list.isEmpty()) {
+                loadItemsForOrders(conn, list);
+                paymentTransactionDAO.attachLatestToOrders(conn, list);
             }
         } catch (Exception e) {
             log.error("DB error", e);
@@ -383,33 +406,83 @@ public class OrderDAO {
     }
 
     public boolean cancelOrderByUser(int orderId, int userId) {
-        String query = "SELECT status, createdAt FROM orders WHERE id = ? AND user_id = ?";
-        try (Connection conn = DBContext.getConnection();
-             PreparedStatement ps = conn.prepareStatement(query)) {
-            ps.setInt(1, orderId);
-            ps.setInt(2, userId);
-            try (ResultSet rs = ps.executeQuery()) {
-                if (!rs.next()) {
+        ProductDAO productDAO = new ProductDAO();
+        OrderStatusHistoryDAO historyDAO = new OrderStatusHistoryDAO();
+        // Lock the row atomically to prevent concurrent cancellations / status changes
+        String lockQuery = "SELECT created_at, status FROM orders WHERE id = ? AND user_id = ? FOR UPDATE";
+        String updateQuery = "UPDATE orders SET status = 'Cancelled' WHERE id = ?";
+
+        try (Connection conn = DBContext.getConnection()) {
+            conn.setAutoCommit(false);
+            try {
+                String currentStatus;
+                java.sql.Timestamp createdAt;
+
+                // 1. Lock and read the row inside the transaction
+                try (PreparedStatement ps = conn.prepareStatement(lockQuery)) {
+                    ps.setInt(1, orderId);
+                    ps.setInt(2, userId);
+                    try (ResultSet rs = ps.executeQuery()) {
+                        if (!rs.next()) {
+                            conn.rollback();
+                            return false;
+                        }
+                        currentStatus = rs.getString("status");
+                        createdAt = rs.getTimestamp("created_at");
+                    }
+                }
+
+                // 2. Validate status (must be Pending or Confirmed)
+                OrderStatus fromStatus = OrderStatus.fromString(currentStatus);
+                if (fromStatus == null || !fromStatus.canTransitionTo(OrderStatus.CANCELLED)) {
+                    conn.rollback();
                     return false;
                 }
-                String status = rs.getString("status");
-                if (!"Pending".equalsIgnoreCase(status) && !"Confirmed".equalsIgnoreCase(status)) {
-                    return false;
-                }
-                // Enforce 1-hour cancellation window
-                java.sql.Timestamp createdAt = rs.getTimestamp("createdAt");
+
+                // 3. Enforce 1-hour cancellation window inside the transaction
                 if (createdAt != null) {
                     long elapsedSeconds = (System.currentTimeMillis() - createdAt.getTime()) / 1000;
                     if (elapsedSeconds > 3600) {
+                        conn.rollback();
                         return false; // past cancellation window
                     }
                 }
+
+                // 4. Restore stock for each cancelled item
+                for (OrderItem item : getOrderItems(conn, orderId)) {
+                    if (!productDAO.increaseStock(conn, item.getProductId(), item.getQuantity())) {
+                        conn.rollback();
+                        return false;
+                    }
+                }
+
+                // 5. Update the order status to Cancelled
+                try (PreparedStatement ps = conn.prepareStatement(updateQuery)) {
+                    ps.setInt(1, orderId);
+                    if (ps.executeUpdate() <= 0) {
+                        conn.rollback();
+                        return false;
+                    }
+                }
+
+                // 6. Record status history
+                if (!historyDAO.insertHistory(conn, orderId, currentStatus, "Cancelled", userId)) {
+                    conn.rollback();
+                    return false;
+                }
+
+                conn.commit();
+                return true;
+            } catch (Exception e) {
+                conn.rollback();
+                throw e;
+            } finally {
+                conn.setAutoCommit(true);
             }
         } catch (Exception e) {
             log.error("DB error", e);
-            return false;
         }
-        return updateStatus(orderId, "Cancelled", userId);
+        return false;
     }
 
     /**
@@ -439,16 +512,19 @@ public class OrderDAO {
         return new OrderStatusHistoryDAO().getHistoryByOrderId(orderId);
     }
 
-    public double getTodayRevenue() {
+    public BigDecimal getTodayRevenue() {
         String query = "SELECT SUM(total_amount) FROM orders WHERE DATE(createdAt) = CURDATE() AND status != 'Cancelled'";
-        try (Connection conn = new DBContext().getConnection();
+        try (Connection conn = DBContext.getConnection();
              PreparedStatement ps = conn.prepareStatement(query);
              ResultSet rs = ps.executeQuery()) {
-            if (rs.next()) return rs.getDouble(1);
+            if (rs.next()) {
+                BigDecimal result = rs.getBigDecimal(1);
+                return result != null ? result : BigDecimal.ZERO;
+            }
         } catch (Exception e) {
             log.error("DB error", e);
         }
-        return 0;
+        return BigDecimal.ZERO;
     }
     // trả về so lượng order đang xử lý
     public int countPendingOrdersByUserId(int userId) {
@@ -493,6 +569,43 @@ public class OrderDAO {
         }
 
         return count;
+    }
+
+    /**
+     * Tổng chi tiêu của user (chỉ tính đơn Completed).
+     */
+    public BigDecimal getTotalSpentByUserId(int userId) {
+        String sql = "SELECT COALESCE(SUM(total_amount), 0) FROM orders WHERE user_id = ? AND status = 'Completed'";
+        try (Connection conn = DBContext.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setInt(1, userId);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    BigDecimal result = rs.getBigDecimal(1);
+                    return result != null ? result : BigDecimal.ZERO;
+                }
+            }
+        } catch (Exception e) {
+            log.error("DB error", e);
+        }
+        return BigDecimal.ZERO;
+    }
+
+    /**
+     * Tổng số đơn hàng của user.
+     */
+    public int countOrdersByUserId(int userId) {
+        String sql = "SELECT COUNT(*) FROM orders WHERE user_id = ?";
+        try (Connection conn = DBContext.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setInt(1, userId);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) return rs.getInt(1);
+            }
+        } catch (Exception e) {
+            log.error("DB error", e);
+        }
+        return 0;
     }
 }
 

@@ -1,6 +1,7 @@
 <%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
 <%@ taglib prefix="c" uri="jakarta.tags.core" %>
 <%@ taglib prefix="fmt" uri="jakarta.tags.fmt" %>
+<%@ taglib prefix="fn" uri="jakarta.tags.functions" %>
 
 <!DOCTYPE html>
 <html lang="vi">
@@ -255,17 +256,17 @@
     <div class="toolbar">
         <form action="${pageContext.request.contextPath}/my-orders" method="get">
             <div class="toolbar-left">
-                <a class="chip-filter ${empty selectedStatus || selectedStatus == 'all' ? 'active' : ''}" href="${pageContext.request.contextPath}/my-orders?status=all&keyword=${keyword}">Tất cả</a>
-                <a class="chip-filter ${selectedStatus == 'Pending' ? 'active' : ''}" href="${pageContext.request.contextPath}/my-orders?status=Pending&keyword=${keyword}">Chờ xử lý</a>
-                <a class="chip-filter ${selectedStatus == 'Shipping' ? 'active' : ''}" href="${pageContext.request.contextPath}/my-orders?status=Shipping&keyword=${keyword}">Đang giao</a>
-                <a class="chip-filter ${selectedStatus == 'Completed' ? 'active' : ''}" href="${pageContext.request.contextPath}/my-orders?status=Completed&keyword=${keyword}">Hoàn thành</a>
-                <a class="chip-filter ${selectedStatus == 'Cancelled' ? 'active' : ''}" href="${pageContext.request.contextPath}/my-orders?status=Cancelled&keyword=${keyword}">Đã hủy</a>
+                <a class="chip-filter ${empty selectedStatus || selectedStatus == 'all' ? 'active' : ''}" href="${pageContext.request.contextPath}/my-orders?status=all&keyword=${fn:escapeXml(keyword)}">Tất cả</a>
+                <a class="chip-filter ${selectedStatus == 'Pending' ? 'active' : ''}" href="${pageContext.request.contextPath}/my-orders?status=Pending&keyword=${fn:escapeXml(keyword)}">Chờ xử lý</a>
+                <a class="chip-filter ${selectedStatus == 'Shipping' ? 'active' : ''}" href="${pageContext.request.contextPath}/my-orders?status=Shipping&keyword=${fn:escapeXml(keyword)}">Đang giao</a>
+                <a class="chip-filter ${selectedStatus == 'Completed' ? 'active' : ''}" href="${pageContext.request.contextPath}/my-orders?status=Completed&keyword=${fn:escapeXml(keyword)}">Hoàn thành</a>
+                <a class="chip-filter ${selectedStatus == 'Cancelled' ? 'active' : ''}" href="${pageContext.request.contextPath}/my-orders?status=Cancelled&keyword=${fn:escapeXml(keyword)}">Đã hủy</a>
             </div>
             <div class="toolbar-right">
                 <input type="hidden" name="status" value="${empty selectedStatus ? 'all' : selectedStatus}">
                 <div class="search-box">
                     <i class='bx bx-search-alt-2 text-secondary'></i>
-                    <input type="text" name="keyword" value="${keyword}" placeholder="Tìm theo mã đơn, người nhận, số điện thoại...">
+                    <input type="text" name="keyword" value="${fn:escapeXml(keyword)}" placeholder="Tìm theo mã đơn, người nhận, số điện thoại...">
                 </div>
                 <button class="btn btn-primary rounded-pill px-4" type="submit">Tìm</button>
             </div>
@@ -290,7 +291,7 @@
                                 <div class="order-code"><i class='bx bx-receipt'></i> Đơn hàng #${o.id}</div>
                                 <div class="order-meta">
                                     <span><i class='bx bx-calendar'></i> <fmt:formatDate value="${o.createdAt}" pattern="dd/MM/yyyy HH:mm"/></span>
-                                    <span><i class='bx bx-user'></i> ${o.fullname}</span>
+                                    <span><i class='bx bx-user'></i> ${fn:escapeXml(o.fullname)}</span>
                                     <span><i class='bx bx-package'></i> ${o.itemCount} sản phẩm</span>
                                 </div>
                             </div>
@@ -303,7 +304,7 @@
                             <div class="summary-grid">
                                 <div class="summary-card">
                                     <div class="summary-label"><i class='bx bx-map'></i> Địa chỉ nhận hàng</div>
-                                    <div class="summary-value">${o.address}</div>
+                                    <div class="summary-value">${fn:escapeXml(o.address)}</div>
                                 </div>
                                 <div class="summary-card">
                                     <div class="summary-label"><i class='bx bx-wallet'></i> Tổng thanh toán</div>
@@ -311,11 +312,11 @@
                                 </div>
                                 <div class="summary-card">
                                     <div class="summary-label"><i class='bx bx-credit-card'></i> Thanh toán</div>
-                                    <div class="summary-value">${o.paymentMethodLabel}<br><span class="text-muted small">${o.paymentStatusLabel}</span></div>
+                                    <div class="summary-value">${fn:escapeXml(o.paymentMethodLabel)}<br><span class="text-muted small">${fn:escapeXml(o.paymentFlowLabel)}</span></div>
                                 </div>
                                 <div class="summary-card">
                                     <div class="summary-label"><i class='bx bx-package'></i> Trạng thái đơn</div>
-                                    <div class="summary-value">${o.statusDescription}</div>
+                                    <div class="summary-value">${fn:escapeXml(o.statusDescription)}</div>
                                 </div>
                             </div>
 
@@ -369,11 +370,11 @@
                                             <c:forEach items="${o.items}" var="item">
                                                 <div class="product-row">
                                                     <div class="product-thumb">
-                                                        <img src="${pageContext.request.contextPath}/assets/images/shop_pic/${item.product.image}"
+                                                        <img src="${pageContext.request.contextPath}/assets/images/shop_pic/${fn:escapeXml(item.product.image)}"
                                                              onerror="this.src='https://placehold.co/120x120/e2e8f0/1e293b?text=PetShop'">
                                                     </div>
                                                     <div>
-                                                        <div class="product-name">${item.product.name}</div>
+                                                        <div class="product-name">${fn:escapeXml(item.product.name)}</div>
                                                         <div class="product-meta">SL: ${item.quantity} · Đơn giá:
                                                             <fmt:formatNumber value="${item.price}" type="currency" currencySymbol="₫" maxFractionDigits="0"/>
                                                         </div>
@@ -391,23 +392,28 @@
                                         <div class="info-list">
                                             <div class="info-item">
                                                 <div class="label">Người nhận</div>
-                                                <div class="value">${o.fullname}</div>
+                                                <div class="value">${fn:escapeXml(o.fullname)}</div>
                                             </div>
                                             <div class="info-item">
                                                 <div class="label">Số điện thoại</div>
-                                                <div class="value">${o.phone}</div>
+                                                <div class="value">${fn:escapeXml(o.phone)}</div>
                                             </div>
                                             <div class="info-item">
                                                 <div class="label">Địa chỉ giao hàng</div>
-                                                <div class="value">${o.address}</div>
+                                                <div class="value">${fn:escapeXml(o.address)}</div>
                                             </div>
                                             <div class="info-item">
                                                 <div class="label">Thanh toán</div>
-                                                <div class="value">${o.paymentMethodLabel} · ${o.paymentStatusLabel}</div>
+                                                <div class="value">
+                                                    ${fn:escapeXml(o.paymentMethodLabel)} · ${fn:escapeXml(o.paymentFlowLabel)}
+                                                    <c:if test="${not empty o.paymentReference}">
+                                                        <br><span class="text-muted small">Mã chuyển khoản: ${fn:escapeXml(o.paymentReference)}</span>
+                                                    </c:if>
+                                                </div>
                                             </div>
                                             <div class="info-item">
                                                 <div class="label">Ghi chú</div>
-                                                <div class="value">${empty o.note ? 'Không có ghi chú từ khách hàng.' : o.note}</div>
+                                                <div class="value">${empty o.note ? 'Không có ghi chú từ khách hàng.' : fn:escapeXml(o.note)}</div>
                                             </div>
                                         </div>
                                     </div>

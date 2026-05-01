@@ -1,0 +1,22 @@
+CREATE TABLE IF NOT EXISTS payment_transactions (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    order_id INT NOT NULL,
+    user_id INT NOT NULL,
+    provider_key VARCHAR(50) NOT NULL,
+    provider_display_name VARCHAR(100) NULL,
+    amount DECIMAL(15,2) NOT NULL,
+    currency VARCHAR(10) NOT NULL DEFAULT 'VND',
+    transfer_reference VARCHAR(100) NULL,
+    provider_transaction_id VARCHAR(255) NULL,
+    status VARCHAR(50) NOT NULL,
+    verification_status VARCHAR(50) NULL,
+    verification_message VARCHAR(255) NULL,
+    provider_metadata TEXT NULL,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    verified_at TIMESTAMP NULL,
+    CONSTRAINT fk_payment_transactions_order FOREIGN KEY (order_id) REFERENCES orders(id) ON DELETE CASCADE,
+    CONSTRAINT fk_payment_transactions_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+    INDEX idx_payment_transactions_order_id (order_id),
+    INDEX idx_payment_transactions_status (status)
+);

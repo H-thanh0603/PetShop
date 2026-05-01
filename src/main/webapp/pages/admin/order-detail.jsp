@@ -1,6 +1,7 @@
 <%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
 <%@ taglib prefix="c" uri="jakarta.tags.core" %>
 <%@ taglib prefix="fmt" uri="jakarta.tags.fmt" %>
+<%@ taglib prefix="fn" uri="jakarta.tags.functions" %>
 <!DOCTYPE html>
 <html lang="vi">
 <head>
@@ -40,27 +41,32 @@
                 <div class="order-info-card">
                     <h5 class="mb-4 fw-bold">Thông tin khách hàng</h5>
                     <div class="info-label">Người nhận</div>
-                    <div class="info-value text-primary fw-bold">${order.fullname}</div>
+                    <div class="info-value text-primary fw-bold">${fn:escapeXml(order.fullname)}</div>
 
                     <div class="info-label">Số điện thoại</div>
-                    <div class="info-value">${order.phone}</div>
+                    <div class="info-value">${fn:escapeXml(order.phone)}</div>
 
                     <div class="info-label">Địa chỉ</div>
-                    <div class="info-value">${order.address}</div>
+                    <div class="info-value">${fn:escapeXml(order.address)}</div>
 
                     <div class="info-label">Ngày đặt</div>
                     <div class="info-value"><fmt:formatDate value="${order.createdAt}" pattern="dd/MM/yyyy HH:mm:ss"/></div>
 
                     <div class="info-label">Thanh toán</div>
-                    <div class="info-value">${order.paymentMethodLabel} · ${order.paymentStatusLabel}</div>
+                    <div class="info-value">
+                        ${fn:escapeXml(order.paymentMethodLabel)} · ${fn:escapeXml(order.paymentFlowLabel)}
+                        <c:if test="${not empty order.paymentReference}">
+                            <br><span class="text-muted small">Mã chuyển khoản: ${fn:escapeXml(order.paymentReference)}</span>
+                        </c:if>
+                    </div>
 
                     <div class="info-label">Trạng thái hiện tại</div>
                     <div class="info-value">
-                        <span class="badge ${order.statusCssClass}">${order.statusLabel}</span>
+                        <span class="badge ${order.statusCssClass}">${fn:escapeXml(order.statusLabel)}</span>
                     </div>
 
                     <div class="info-label">Ghi chú</div>
-                    <div class="info-value">${empty order.note ? 'Không có ghi chú.' : order.note}</div>
+                    <div class="info-value">${empty order.note ? 'Không có ghi chú.' : fn:escapeXml(order.note)}</div>
                 </div>
 
                 <div class="order-info-card">
@@ -102,11 +108,11 @@
                                 <c:forEach var="item" items="${order.items}">
                                     <tr>
                                         <td>
-                                            <img src="${pageContext.request.contextPath}/assets/images/shop_pic/${item.product.image}"
+                                            <img src="${pageContext.request.contextPath}/assets/images/shop_pic/${fn:escapeXml(item.product.image)}"
                                                  class="product-img"
                                                  onerror="this.src='https://placehold.co/300x300/e2e8f0/1e293b?text=PetShop'">
                                         </td>
-                                        <td class="align-middle fw-bold">${item.product.name}</td>
+                                        <td class="align-middle fw-bold">${fn:escapeXml(item.product.name)}</td>
                                         <td class="align-middle text-center">${item.quantity}</td>
                                         <td class="align-middle text-end">
                                             <fmt:formatNumber value="${item.price}" type="currency" currencySymbol="₫" maxFractionDigits="0"/>
@@ -168,7 +174,7 @@
                                     <tr>
                                         <td><span class="badge bg-secondary">${h.oldStatus}</span></td>
                                         <td><span class="badge bg-primary">${h.newStatus}</span></td>
-                                        <td>${h.changedByName}</td>
+                                        <td>${fn:escapeXml(h.changedByName)}</td>
                                         <td><fmt:formatDate value="${h.changedAt}" pattern="dd/MM/yyyy HH:mm:ss"/></td>
                                     </tr>
                                 </c:forEach>

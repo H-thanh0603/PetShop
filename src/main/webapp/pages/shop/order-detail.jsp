@@ -1,6 +1,7 @@
 <%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
 <%@ taglib prefix="c" uri="jakarta.tags.core" %>
 <%@ taglib prefix="fmt" uri="jakarta.tags.fmt" %>
+<%@ taglib prefix="fn" uri="jakarta.tags.functions" %>
 <!DOCTYPE html>
 <html lang="vi">
 <head>
@@ -59,16 +60,16 @@
                 <div class="card mb-4">
                     <div class="card-header d-flex justify-content-between align-items-center flex-wrap gap-2">
                         <span>Sản phẩm trong đơn</span>
-                        <span class="status-badge ${order.statusCssClass}">${order.statusLabel}</span>
+                        <span class="status-badge ${order.statusCssClass}">${fn:escapeXml(order.statusLabel)}</span>
                     </div>
                     <div class="card-body">
                         <c:forEach var="item" items="${order.items}">
                             <div class="product-item d-flex align-items-center gap-3">
-                                <img src="${pageContext.request.contextPath}/assets/images/shop_pic/${item.product.image}"
+                                <img src="${pageContext.request.contextPath}/assets/images/shop_pic/${fn:escapeXml(item.product.image)}"
                                      class="product-img"
                                      onerror="this.src='https://placehold.co/300x300/e2e8f0/1e293b?text=PetShop'">
                                 <div class="flex-grow-1">
-                                    <h6 class="mb-0 fw-bold">${item.product.name}</h6>
+                                    <h6 class="mb-0 fw-bold">${fn:escapeXml(item.product.name)}</h6>
                                     <small class="text-muted">Số lượng: ${item.quantity}</small>
                                 </div>
                                 <div class="text-end">
@@ -92,19 +93,24 @@
                 <div class="info-section shadow-sm">
                     <h5 class="fw-bold mb-4">Thông tin giao hàng</h5>
                     <div class="label">Người nhận</div>
-                    <div class="value">${order.fullname}</div>
+                    <div class="value">${fn:escapeXml(order.fullname)}</div>
 
                     <div class="label">Số điện thoại</div>
-                    <div class="value">${order.phone}</div>
+                    <div class="value">${fn:escapeXml(order.phone)}</div>
 
                     <div class="label">Địa chỉ giao hàng</div>
-                    <div class="value">${order.address}</div>
+                    <div class="value">${fn:escapeXml(order.address)}</div>
 
                     <div class="label">Thanh toán</div>
-                    <div class="value">${order.paymentMethodLabel} · ${order.paymentStatusLabel}</div>
+                    <div class="value">
+                        ${fn:escapeXml(order.paymentMethodLabel)} · ${fn:escapeXml(order.paymentFlowLabel)}
+                        <c:if test="${not empty order.paymentReference}">
+                            <br><span class="text-muted small">Mã chuyển khoản: ${fn:escapeXml(order.paymentReference)}</span>
+                        </c:if>
+                    </div>
 
                     <div class="label">Ghi chú từ khách</div>
-                    <div class="value">${empty order.note ? 'Không có ghi chú.' : order.note}</div>
+                    <div class="value">${empty order.note ? 'Không có ghi chú.' : fn:escapeXml(order.note)}</div>
                 </div>
 
                 <div class="info-section shadow-sm">

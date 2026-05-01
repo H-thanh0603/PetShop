@@ -1,0 +1,27 @@
+# Base application URL and deploy settings
+app.base-url=http://localhost:8080/PetShop
+app.context-path=/PetShop
+deploy.tomcat-home=
+
+# Checkout client config
+api.provinces.base-url=https://provinces.open-api.vn/api/v1
+
+# Bank transfer display config
+payment.bank.id=VPB
+payment.bank.account-number=0368600557
+payment.bank.account-name=NGUYEN HUU THANH
+payment.bank.display-name=VP Bank
+payment.bank.transfer-prefix=PETSHOP
+payment.bank.currency=VND
+
+# Future bank verification integration placeholders
+payment.bank.verification-mode=stub
+payment.bank.api-base-url=
+payment.bank.api-key=
+payment.bank.api-secret=
+
+# MoMo placeholders
+payment.momo.mode=demo
+payment.momo.partner-code=
+payment.momo.access-key=
+payment.momo.secret-key=

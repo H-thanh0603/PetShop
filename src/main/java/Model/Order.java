@@ -1,5 +1,6 @@
 package Model;
 
+import java.math.BigDecimal;
 import java.sql.Timestamp;
 import java.text.DecimalFormat;
 import java.util.List;
@@ -11,23 +12,29 @@ public class Order {
     private String phone;
     private String address;
     private String note;
-    private double totalAmount;
+    private BigDecimal totalAmount;
     private String status; // Pending, Confirmed, Shipping, Completed, Cancelled
     private String payment_method;
     private boolean payment_status;
+    private String paymentTransactionStatus;
+    private String paymentVerificationStatus;
+    private String paymentReference;
+    private String paymentVerificationMessage;
     private Timestamp createdAt;
     private List<OrderItem> items;
 
-    public Order() {}
+    public Order() {
+        this.totalAmount = BigDecimal.ZERO;
+    }
 
-    public Order(int id, int userId, String fullname, String phone, String address, String note, double totalAmount, String status, Timestamp createdAt,  String payment_method, boolean payment_status) {
+    public Order(int id, int userId, String fullname, String phone, String address, String note, BigDecimal totalAmount, String status, Timestamp createdAt,  String payment_method, boolean payment_status) {
         this.id = id;
         this.userId = userId;
         this.fullname = fullname;
         this.phone = phone;
         this.address = address;
         this.note = note;
-        this.totalAmount = totalAmount;
+        this.totalAmount = totalAmount != null ? totalAmount : BigDecimal.ZERO;
         this.status = status;
         this.createdAt = createdAt;
         this.payment_method = payment_method;
@@ -52,8 +59,8 @@ public class Order {
     public String getNote() { return note; }
     public void setNote(String note) { this.note = note; }
 
-    public double getTotalAmount() { return totalAmount; }
-    public void setTotalAmount(double totalAmount) { this.totalAmount = totalAmount; }
+    public BigDecimal getTotalAmount() { return totalAmount; }
+    public void setTotalAmount(BigDecimal totalAmount) { this.totalAmount = totalAmount != null ? totalAmount : BigDecimal.ZERO; }
 
     public String getStatus() { return status; }
     public void setStatus(String status) { this.status = status; }
@@ -192,5 +199,47 @@ public class Order {
 
     public String getPaymentStatusLabel() {
         return payment_status ? "Đã thanh toán" : "Chưa thanh toán";
+    }
+
+    public String getPaymentTransactionStatus() {
+        return paymentTransactionStatus;
+    }
+
+    public void setPaymentTransactionStatus(String paymentTransactionStatus) {
+        this.paymentTransactionStatus = paymentTransactionStatus;
+    }
+
+    public String getPaymentVerificationStatus() {
+        return paymentVerificationStatus;
+    }
+
+    public void setPaymentVerificationStatus(String paymentVerificationStatus) {
+        this.paymentVerificationStatus = paymentVerificationStatus;
+    }
+
+    public String getPaymentReference() {
+        return paymentReference;
+    }
+
+    public void setPaymentReference(String paymentReference) {
+        this.paymentReference = paymentReference;
+    }
+
+    public String getPaymentVerificationMessage() {
+        return paymentVerificationMessage;
+    }
+
+    public void setPaymentVerificationMessage(String paymentVerificationMessage) {
+        this.paymentVerificationMessage = paymentVerificationMessage;
+    }
+
+    public String getPaymentFlowLabel() {
+        if ("PENDING_VERIFICATION".equalsIgnoreCase(paymentTransactionStatus)) {
+            return "Chờ đối soát chuyển khoản";
+        }
+        if (payment_status) {
+            return "Đã thanh toán";
+        }
+        return "Chưa thanh toán";
     }
 }
