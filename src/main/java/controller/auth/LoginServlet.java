@@ -1,7 +1,7 @@
 package controller.auth;
 
 import java.io.IOException;
-import java.sql.Timestamp;
+import java.util.Collection;
 import java.util.Map;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
@@ -14,8 +14,10 @@ import jakarta.servlet.http.HttpSession;
 import DAO.CartDAO;
 import DAO.UserDAO;
 import DAO.RememberTokenDAO;
+import DAO.SecurityEventDAO;
 import Model.CartItem;
 import Model.User;
+import Util.AppConfig;
 import Util.AuthRedirectUtil;
 import Util.FormHelper;
 import Util.SocialAuthUtil;
@@ -28,6 +30,7 @@ public class LoginServlet extends HttpServlet {
     private static final int REMEMBER_ME_DAYS = 7;
     private static final SecureRandom SECURE_RANDOM = new SecureRandom();
     private final RememberTokenDAO rememberTokenDAO = new RememberTokenDAO();
+    private final SecurityEventDAO securityEventDAO = new SecurityEventDAO();
 
     private void populateLoginViewData(HttpServletRequest request) {
         request.setAttribute("googleAuthUrl", SocialAuthUtil.buildGoogleAuthUrl(request));
@@ -61,6 +64,8 @@ public class LoginServlet extends HttpServlet {
                                     rememberTokenDAO.saveToken(user.getId(), newToken);
                                     Cookie newCookie = buildRememberCookie(newToken, request);
                                     response.addCookie(newCookie);
+                                    applySameSiteToRememberCookie(response,
+                                            request.getContextPath().isEmpty() ? "/" : request.getContextPath());
 
                                     // Establish session
                                     session.setAttribute("user", user);
@@ -128,9 +133,39 @@ public class LoginServlet extends HttpServlet {
         cookie.setMaxAge(REMEMBER_ME_DAYS * 24 * 60 * 60);
         cookie.setPath(request.getContextPath().isEmpty() ? "/" : request.getContextPath());
         cookie.setHttpOnly(true);
-        // Secure flag: only set in production (HTTPS). In dev (HTTP) skip to avoid cookie not being sent.
-        // cookie.setSecure(true);
+        cookie.setSecure(shouldUseSecureCookies(request));
         return cookie;
+    }
+
+    /**
+     * Appends SameSite=Lax to the Set-Cookie header for the remember_token cookie.
+     * Jakarta Servlet API does not expose a setSameSite() method, so we must
+     * rewrite the header manually after the cookie has been added to the response.
+     *
+     * @param response the current HTTP response
+     * @param cookiePath the cookie path used when building the cookie
+     */
+    private void applySameSiteToRememberCookie(HttpServletResponse response, String cookiePath) {
+        Collection<String> headers = response.getHeaders("Set-Cookie");
+        boolean firstHeader = true;
+        for (String header : headers) {
+            if (header.startsWith("remember_token=")) {
+                String updated = header + "; SameSite=Lax";
+                if (firstHeader) {
+                    response.setHeader("Set-Cookie", updated);
+                    firstHeader = false;
+                } else {
+                    response.addHeader("Set-Cookie", updated);
+                }
+            } else {
+                if (firstHeader) {
+                    response.setHeader("Set-Cookie", header);
+                    firstHeader = false;
+                } else {
+                    response.addHeader("Set-Cookie", header);
+                }
+            }
+        }
     }
 
     private void loadCartIntoSession(HttpSession session, User user, UserDAO dao) {
@@ -178,10 +213,9 @@ public class LoginServlet extends HttpServlet {
         
         // Check if account is locked before password verification
         if (dao.isAccountLocked(email)) {
-            Timestamp lockedUntil = dao.getLockedUntil(email);
-            long remainingMs = lockedUntil.getTime() - System.currentTimeMillis();
-            long remainingMinutes = (remainingMs / 60000) + 1; // Round up
-            form.addGeneralError("Tài khoản đã bị khóa tạm thời. Vui lòng thử lại sau " + remainingMinutes + " phút.");
+            securityEventDAO.log("ACCOUNT_LOCKED_ATTEMPT", email, request.getRemoteAddr(),
+                    "Login attempt blocked while the account lock is still active.");
+            form.addGeneralError("Email hoặc mật khẩu không đúng.");
             form.applyToRequest();
             populateLoginViewData(request);
             request.getRequestDispatcher("/pages/auth/login.jsp").forward(request, response);
@@ -204,15 +238,6 @@ public class LoginServlet extends HttpServlet {
                 return;
             }
 
-            // Check email verification
-            if (!dao.isEmailVerified(email)) {
-                form.addGeneralError("Email chưa được xác thực. Vui lòng kiểm tra hộp thư và nhấn link xác thực.");
-                request.setAttribute("unverifiedEmail", email);
-                form.applyToRequest();
-                populateLoginViewData(request);
-                request.getRequestDispatcher("/pages/auth/login.jsp").forward(request, response);
-                return;
-            }
             
             // Save cart data from old session before invalidation
             HttpSession oldSession = request.getSession(false);
@@ -265,12 +290,15 @@ public class LoginServlet extends HttpServlet {
                 rememberTokenDAO.saveToken(user.getId(), plainToken);
                 Cookie tokenCookie = buildRememberCookie(plainToken, request);
                 response.addCookie(tokenCookie);
+                applySameSiteToRememberCookie(response,
+                        request.getContextPath().isEmpty() ? "/" : request.getContextPath());
             } else {
                 // Clear any existing remember_token cookie
                 Cookie clearCookie = new Cookie("remember_token", "");
                 clearCookie.setMaxAge(0);
                 clearCookie.setPath(request.getContextPath().isEmpty() ? "/" : request.getContextPath());
                 clearCookie.setHttpOnly(true);
+                clearCookie.setSecure(shouldUseSecureCookies(request));
                 response.addCookie(clearCookie);
             }
             
@@ -291,15 +319,18 @@ public class LoginServlet extends HttpServlet {
             
             if (failedAttempts >= 5) {
                 dao.lockAccount(email, 15);
-                form.addGeneralError("Tài khoản đã bị khóa tạm thời. Vui lòng thử lại sau 15 phút.");
-            } else {
-                int remaining = 5 - failedAttempts;
-                form.addGeneralError("Email hoặc mật khẩu không đúng! Bạn còn " + remaining + " lần thử.");
+                securityEventDAO.log("ACCOUNT_LOCKED", email, request.getRemoteAddr(),
+                        "Account locked for 15 minutes after " + failedAttempts + " failed login attempts.");
             }
+            form.addGeneralError("Email hoặc mật khẩu không đúng.");
             
             form.applyToRequest();
             populateLoginViewData(request);
             request.getRequestDispatcher("/pages/auth/login.jsp").forward(request, response);
         }
+    }
+
+    private boolean shouldUseSecureCookies(HttpServletRequest request) {
+        return AppConfig.getBoolean("app.cookies.secure", request.isSecure());
     }
 }

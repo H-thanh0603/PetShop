@@ -69,6 +69,7 @@ public class ForgotPasswordServlet extends HttpServlet {
     private void handleForgotPassword(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
         String email = request.getParameter("email");
+        String genericSuccessMessage = "Nếu email tồn tại trong hệ thống, hướng dẫn đặt lại mật khẩu đã được gửi.";
         
         if (email == null || email.trim().isEmpty()) {
             request.setAttribute("error", "Vui lòng nhập email");
@@ -78,22 +79,17 @@ public class ForgotPasswordServlet extends HttpServlet {
         
         email = email.trim().toLowerCase();
         
-        // Kiểm tra email tồn tại
         User user = userDAO.getUserByEmail(email);
-        if (user == null) {
-            request.setAttribute("error", "Email không tồn tại trong hệ thống");
-            request.setAttribute("email", email);
-            request.getRequestDispatcher("/pages/auth/forgot-password.jsp").forward(request, response);
-            return;
-        }
-        
-        // Tạo và gửi OTP
-        boolean sent = OTPUtil.generateAndSendOTP(email);
+        boolean sent = user != null && OTPUtil.generateAndSendOTP(email);
         if (sent) {
             HttpSession session = request.getSession();
             session.setAttribute("resetEmail", email);
             session.setAttribute("otpVerified", false);
             response.sendRedirect(request.getContextPath() + "/verify-otp");
+        } else if (user == null) {
+            request.setAttribute("success", genericSuccessMessage);
+            request.setAttribute("email", email);
+            request.getRequestDispatcher("/pages/auth/forgot-password.jsp").forward(request, response);
         } else {
             request.setAttribute("error", "Không thể gửi email xác thực. Vui lòng thử lại sau hoặc liên hệ hỗ trợ: support@petshop.vn | 1900-xxxx.");
             request.setAttribute("email", email);

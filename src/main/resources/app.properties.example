@@ -2,9 +2,12 @@
 app.base-url=http://localhost:8080/PetShop
 app.context-path=/PetShop
 deploy.tomcat-home=
+app.cookies.secure=false
+app.static.cache.max-age-seconds=86400
 
 # Checkout client config
 api.provinces.base-url=https://provinces.open-api.vn/api/v1
+payment.bank.pending-hours=2
 
 # Bank transfer display config
 payment.bank.id=VPB
@@ -25,3 +28,11 @@ payment.momo.mode=demo
 payment.momo.partner-code=
 payment.momo.access-key=
 payment.momo.secret-key=
+
+# Rate-limit defaults (requests per minute)
+ratelimit.login=10
+ratelimit.register=6
+ratelimit.forgot-password=6
+ratelimit.checkout=8
+ratelimit.add-review=5
+ratelimit.search-autocomplete=8

@@ -160,3 +160,13 @@ Trang `Admin > Đơn hàng` hiện đã có:
 - badge trạng thái đối soát thanh toán
 - cảnh báo số đơn đang chờ đối soát
 - thao tác duyệt thanh toán chuyển khoản trực tiếp từ danh sách hoặc trang chi tiết đơn
+## Operations Handbook
+
+Tài liệu vận hành/audit thực chiến cho đồ án nằm tại [docs/petshop-operating-handbook.md](docs/petshop-operating-handbook.md). File này tổng hợp:
+
+- cách hệ thống phản ứng khi số user tăng lên
+- tối ưu hơn 1.000 sản phẩm
+- chống spam, lock account, session timeout
+- timeout thanh toán chuyển khoản
+- mô hình kho theo lô, cận hạn, tồn lâu, đề xuất nhập hàng
+- backup, audit log và các góc khuất vận hành khác

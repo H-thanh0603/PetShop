@@ -150,6 +150,13 @@
         .status-shipping { background: #e0e7ff; color: #4338ca; }
         .status-completed { background: #dcfce7; color: #166534; }
         .status-cancelled { background: #fee2e2; color: #991b1b; }
+        .payment-badge { display: inline-flex; align-items: center; gap: 6px; margin-top: 8px; border-radius: 999px; padding: 6px 10px; font-size: 0.78rem; font-weight: 700; }
+        .payment-pending { background: #fff7ed; color: #c2410c; }
+        .payment-verified { background: #dcfce7; color: #166534; }
+        .payment-failed { background: #fee2e2; color: #991b1b; }
+        .payment-neutral { background: #e0f2fe; color: #075985; }
+        .payment-unpaid { background: #f1f5f9; color: #475569; }
+        .payment-expired { background: #fef2f2; color: #b91c1c; }
         .order-main { padding: 20px 22px 18px; }
         .summary-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 14px; }
         .summary-card { background: #f8fafc; border: 1px solid #e9eef5; border-radius: 18px; padding: 16px; }
@@ -321,7 +328,10 @@
                                 </div>
                                 <div class="summary-card">
                                     <div class="summary-label"><i class='bx bx-credit-card'></i> Thanh toán</div>
-                                    <div class="summary-value">${fn:escapeXml(o.paymentMethodLabel)}<br><span class="text-muted small">${fn:escapeXml(o.paymentFlowLabel)}</span></div>
+                                    <div class="summary-value">
+                                        ${fn:escapeXml(o.paymentMethodLabel)}<br><span class="text-muted small">${fn:escapeXml(o.paymentFlowLabel)}</span>
+                                        <br><span class="payment-badge ${o.paymentVerificationCssClass}">${fn:escapeXml(o.paymentVerificationLabel)}</span>
+                                    </div>
                                 </div>
                                 <div class="summary-card">
                                     <div class="summary-label"><i class='bx bx-package'></i> Trạng thái đơn</div>
@@ -415,8 +425,12 @@
                                                 <div class="label">Thanh toán</div>
                                                 <div class="value">
                                                     ${fn:escapeXml(o.paymentMethodLabel)} · ${fn:escapeXml(o.paymentFlowLabel)}
+                                                    <br><span class="payment-badge ${o.paymentVerificationCssClass}">${fn:escapeXml(o.paymentVerificationLabel)}</span>
                                                     <c:if test="${not empty o.paymentReference}">
                                                         <br><span class="text-muted small">Mã chuyển khoản: ${fn:escapeXml(o.paymentReference)}</span>
+                                                    </c:if>
+                                                    <c:if test="${not empty o.paymentVerificationMessage}">
+                                                        <br><span class="text-muted small">${fn:escapeXml(o.paymentVerificationMessage)}</span>
                                                     </c:if>
                                                 </div>
                                             </div>

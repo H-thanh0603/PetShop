@@ -35,6 +35,7 @@ import services.payment.PaymentResult;
 
 import java.sql.Connection;
 import java.sql.Timestamp;
+import java.time.temporal.ChronoUnit;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -698,6 +699,8 @@ public class CheckoutServlet extends HttpServlet {
         transaction.setUpdatedAt(now);
         if (paymentResult.isPendingVerification()) {
             transaction.setTransferReference(bankTransferDetails.buildTransferReference(orderId));
+            int pendingHours = AppConfig.getInt("payment.bank.pending-hours", 2);
+            transaction.setExpiresAt(Timestamp.valueOf(LocalDateTime.now().plus(pendingHours, ChronoUnit.HOURS)));
         }
         return transaction;
     }

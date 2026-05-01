@@ -249,6 +249,9 @@ public class Order {
         if ("FAILED".equalsIgnoreCase(paymentTransactionStatus)) {
             return "Đối soát thất bại";
         }
+        if ("EXPIRED".equalsIgnoreCase(paymentTransactionStatus)) {
+            return "Quá hạn thanh toán";
+        }
         if ("VERIFIED".equalsIgnoreCase(paymentTransactionStatus)) {
             return "Đã xác nhận thanh toán";
         }
@@ -277,6 +280,8 @@ public class Order {
                 return "Đã xác nhận";
             case "FAILED":
                 return "Đối soát lỗi";
+            case "EXPIRED":
+                return "Quá hạn";
             case "NOT_REQUIRED":
                 return "Không yêu cầu";
             default:
@@ -295,6 +300,8 @@ public class Order {
                 return "payment-verified";
             case "FAILED":
                 return "payment-failed";
+            case "EXPIRED":
+                return "payment-expired";
             case "NOT_REQUIRED":
                 return "payment-neutral";
             default:
