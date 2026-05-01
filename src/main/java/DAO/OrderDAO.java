@@ -966,5 +966,32 @@ public class OrderDAO {
             log.error("Auto-complete delivered orders error", e);
         }
     }
+    public int countOrders(int userId, String status) {
+        // Nếu chọn "Tất cả", tham số status truyền vào sẽ là null hoặc rỗng
+        boolean filterStatus = (status != null && !status.trim().isEmpty() && !status.equalsIgnoreCase("All"));
+
+        String sql = "SELECT COUNT(*) FROM orders WHERE user_id = ?";
+        if (filterStatus) {
+            sql += " AND status = ?";
+        }
+
+        try (Connection conn = Context.DBContext.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+
+            ps.setInt(1, userId);
+            if (filterStatus) {
+                ps.setString(2, status);
+            }
+
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    return rs.getInt(1);
+                }
+            }
+        } catch (Exception e) {
+            log.error("Lỗi khi đếm số lượng đơn hàng: ", e);
+        }
+        return 0;
+    }
 }
 
