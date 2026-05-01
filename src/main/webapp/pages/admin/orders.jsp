@@ -28,6 +28,13 @@
         .search-form { display: flex; gap: 10px; flex-wrap: wrap; }
         .search-form input { min-width: 280px; }
         .table-subtitle { color: #64748b; font-size: 0.9rem; }
+        .payment-badge { display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px; border-radius: 999px; font-size: 0.78rem; font-weight: 700; margin-top: 6px; }
+        .payment-pending { background: #fff7ed; color: #c2410c; }
+        .payment-verified { background: #dcfce7; color: #166534; }
+        .payment-failed { background: #fee2e2; color: #991b1b; }
+        .payment-neutral { background: #e0f2fe; color: #075985; }
+        .payment-unpaid { background: #f1f5f9; color: #475569; }
+        .review-alert { margin: 0 1.5rem 1rem; padding: 14px 16px; border-radius: 14px; background: linear-gradient(135deg, #fff7ed 0%, #ffedd5 100%); color: #9a3412; border: 1px solid #fdba74; }
     </style>
 </head>
 <body>
@@ -68,6 +75,12 @@
                 </form>
             </div>
 
+            <c:if test="${pendingPaymentReviewCount > 0}">
+                <div class="review-alert">
+                    <strong>${pendingPaymentReviewCount}</strong> đơn hàng đang chờ admin đối soát thanh toán chuyển khoản.
+                </div>
+            </c:if>
+
             <table class="data-table">
                 <thead>
                     <tr>
@@ -99,8 +112,16 @@
                             <td>
                                 <div>${fn:escapeXml(o.paymentMethodLabel)}</div>
                                 <small class="text-muted">${fn:escapeXml(o.paymentFlowLabel)}</small>
+                                <div>
+                                    <span class="payment-badge ${o.paymentVerificationCssClass}">
+                                        ${fn:escapeXml(o.paymentVerificationLabel)}
+                                    </span>
+                                </div>
                                 <c:if test="${not empty o.paymentReference}">
                                     <br><small class="text-muted">Ref: ${fn:escapeXml(o.paymentReference)}</small>
+                                </c:if>
+                                <c:if test="${not empty o.paymentVerificationMessage}">
+                                    <br><small class="text-muted">${fn:escapeXml(o.paymentVerificationMessage)}</small>
                                 </c:if>
                             </td>
                             <td><span class="total-amount">${fn:escapeXml(o.formattedTotalAmount)}</span></td>
@@ -113,6 +134,11 @@
                                     <a href="${pageContext.request.contextPath}/admin/orders?action=view&id=${o.id}" class="action-btn edit" title="Xem chi tiết">
                                         <i class='bx bx-show'></i>
                                     </a>
+                                    <c:if test="${o.awaitingPaymentReview}">
+                                        <button class="action-btn edit" onclick="openPaymentModal(${o.id}, '${fn:escapeXml(o.paymentVerificationStatus)}', '${fn:escapeXml(o.paymentReference)}')" title="Đối soát thanh toán">
+                                            <i class='bx bx-check-circle'></i>
+                                        </button>
+                                    </c:if>
                                     <button class="action-btn edit" onclick="openUpdateModal(${o.id}, '${o.status}')" title="Cập nhật trạng thái">
                                         <i class='bx bx-refresh'></i>
                                     </button>
@@ -154,6 +180,40 @@
         </div>
     </div>
 
+    <div class="modal-overlay" id="paymentReviewModal">
+        <div class="modal-box" style="max-width: 460px;">
+            <div class="modal-header">
+                <h3 class="modal-title">Duyệt thanh toán chuyển khoản</h3>
+                <button class="modal-close" onclick="closePaymentModal()"><i class='bx bx-x'></i></button>
+            </div>
+            <form action="${pageContext.request.contextPath}/admin/orders" method="post">
+                <input type="hidden" name="action" value="updatePaymentVerification">
+                <input type="hidden" name="orderId" id="paymentModalOrderId">
+                <div class="modal-body">
+                    <div class="mb-3 text-muted small">
+                        Mã chuyển khoản: <strong id="paymentModalReference">Chưa có</strong>
+                    </div>
+                    <div class="form-group mb-3">
+                        <label class="form-label">Trạng thái đối soát</label>
+                        <select name="verificationStatus" id="paymentModalStatus" class="form-select">
+                            <option value="PENDING">Tiếp tục chờ đối soát</option>
+                            <option value="VERIFIED">Đã nhận tiền</option>
+                            <option value="FAILED">Đối soát chưa khớp</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Ghi chú</label>
+                        <textarea name="verificationMessage" class="form-control" rows="3" placeholder="Ví dụ: Đã khớp nội dung chuyển khoản / cần kiểm tra lại sao kê..."></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" onclick="closePaymentModal()">Đóng</button>
+                    <button type="submit" class="btn btn-primary">Lưu đối soát</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
     <%-- Pagination controls --%>
     <c:if test="${totalPages > 1}">
     <div class="d-flex justify-content-center align-items-center gap-2 py-4">
@@ -189,6 +249,15 @@
         }
         function closeModal() {
             document.getElementById('updateStatusModal').classList.remove('show');
+        }
+        function openPaymentModal(id, status, reference) {
+            document.getElementById('paymentModalOrderId').value = id;
+            document.getElementById('paymentModalStatus').value = status || 'PENDING';
+            document.getElementById('paymentModalReference').textContent = reference || 'Chưa có';
+            document.getElementById('paymentReviewModal').classList.add('show');
+        }
+        function closePaymentModal() {
+            document.getElementById('paymentReviewModal').classList.remove('show');
         }
     </script>
 </body>

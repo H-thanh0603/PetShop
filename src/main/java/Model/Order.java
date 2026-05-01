@@ -20,6 +20,7 @@ public class Order {
     private String paymentVerificationStatus;
     private String paymentReference;
     private String paymentVerificationMessage;
+    private Timestamp paymentVerifiedAt;
     private Timestamp createdAt;
     private List<OrderItem> items;
 
@@ -233,13 +234,71 @@ public class Order {
         this.paymentVerificationMessage = paymentVerificationMessage;
     }
 
+    public Timestamp getPaymentVerifiedAt() {
+        return paymentVerifiedAt;
+    }
+
+    public void setPaymentVerifiedAt(Timestamp paymentVerifiedAt) {
+        this.paymentVerifiedAt = paymentVerifiedAt;
+    }
+
     public String getPaymentFlowLabel() {
         if ("PENDING_VERIFICATION".equalsIgnoreCase(paymentTransactionStatus)) {
             return "Chờ đối soát chuyển khoản";
+        }
+        if ("FAILED".equalsIgnoreCase(paymentTransactionStatus)) {
+            return "Đối soát thất bại";
+        }
+        if ("VERIFIED".equalsIgnoreCase(paymentTransactionStatus)) {
+            return "Đã xác nhận thanh toán";
         }
         if (payment_status) {
             return "Đã thanh toán";
         }
         return "Chưa thanh toán";
+    }
+
+    public boolean isBankTransferPayment() {
+        return "bank_transfer".equalsIgnoreCase(payment_method) || "bank".equalsIgnoreCase(payment_method);
+    }
+
+    public boolean isAwaitingPaymentReview() {
+        return isBankTransferPayment() && "PENDING".equalsIgnoreCase(paymentVerificationStatus);
+    }
+
+    public String getPaymentVerificationLabel() {
+        if (paymentVerificationStatus == null || paymentVerificationStatus.isBlank()) {
+            return payment_status ? "Đã thanh toán" : "Chưa thanh toán";
+        }
+        switch (paymentVerificationStatus.toUpperCase()) {
+            case "PENDING":
+                return "Chờ đối soát";
+            case "VERIFIED":
+                return "Đã xác nhận";
+            case "FAILED":
+                return "Đối soát lỗi";
+            case "NOT_REQUIRED":
+                return "Không yêu cầu";
+            default:
+                return paymentVerificationStatus;
+        }
+    }
+
+    public String getPaymentVerificationCssClass() {
+        if (paymentVerificationStatus == null || paymentVerificationStatus.isBlank()) {
+            return payment_status ? "payment-verified" : "payment-unpaid";
+        }
+        switch (paymentVerificationStatus.toUpperCase()) {
+            case "PENDING":
+                return "payment-pending";
+            case "VERIFIED":
+                return "payment-verified";
+            case "FAILED":
+                return "payment-failed";
+            case "NOT_REQUIRED":
+                return "payment-neutral";
+            default:
+                return "payment-unpaid";
+        }
     }
 }
