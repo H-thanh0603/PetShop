@@ -1,56 +1,35 @@
 package DAO;
 
-import java.io.IOException;
-import java.util.Properties;
+import Util.AppConfig;
 
 public class DBProperties {
-    private static Properties prop = new Properties();
-
-    static {
-        try {
-            prop.load(DBProperties.class
-                    .getClassLoader()
-                    .getResourceAsStream("db.properties"));  // Đúng cú pháp
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-    }
 
     public static String host() {
-        return prop.getProperty("db.host");
+        return AppConfig.getOrDefault("db.host", "localhost");
     }
 
     public static int port() {
-        try {
-            return Integer.parseInt(prop.getProperty("db.port"));
-        } catch (NumberFormatException e) {
-            return 3306; // mặc định
-        }
+        return AppConfig.getInt("db.port", 3306);
     }
 
     public static String username() {
-        return prop.getProperty("db.username");
+        return AppConfig.getOrDefault("db.username", "root");
     }
 
     public static String password() {
-        String override = System.getProperty("petshop.db.password");
-        if (override == null || override.isBlank()) {
-            override = System.getenv("PETSHOP_DB_PASSWORD");
+        String filePw = AppConfig.getOrDefault("db.password", "");
+        if (!filePw.isEmpty() && !filePw.equals("YOUR_PASSWORD_HERE")) {
+            return filePw;
         }
-        if (override == null || override.isBlank()) {
-            override = System.getenv("MYSQL_PASSWORD");
-        }
-        if (override != null && !override.isBlank()) {
-            return override;
-        }
-        return prop.getProperty("db.password", "");
+        String override = AppConfig.get("petshop.db.password", "PETSHOP_DB_PASSWORD", "MYSQL_PASSWORD");
+        return override != null ? override.trim() : "";
     }
 
     public static String dbname() {
-        return prop.getProperty("db.dbname");
+        return AppConfig.getOrDefault("db.dbname", "petshop");
     }
 
     public static String option() {
-        return prop.getProperty("db.option");
+        return AppConfig.getOrDefault("db.option", "useUnicode=true&characterEncoding=UTF-8&serverTimezone=UTC");
     }
 }

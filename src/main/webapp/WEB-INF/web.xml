@@ -38,7 +38,6 @@
         <session-timeout>30</session-timeout>
         <cookie-config>
             <http-only>true</http-only>
-            <secure>true</secure>
         </cookie-config>
     </session-config>
 
@@ -48,6 +47,10 @@
     </error-page>
     <error-page>
         <error-code>500</error-code>
+        <location>/pages/error/500.jsp</location>
+    </error-page>
+    <error-page>
+        <exception-type>java.lang.Throwable</exception-type>
         <location>/pages/error/500.jsp</location>
     </error-page>
 </web-app>

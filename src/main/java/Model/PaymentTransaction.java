@@ -1,27 +1,25 @@
 package Model;
 
+import java.math.BigDecimal;
 import java.sql.Timestamp;
 
 public class PaymentTransaction {
     private int id;
     private int orderId;
     private int userId;
-    private String provider;
-    private String providerOrderId;
-    private String requestId;
-    private double amount;
-    private Integer couponId;
-    private boolean discountReserved;
-    private String status;
-    private String paymentToken;
+    private String providerKey;
+    private String providerDisplayName;
+    private BigDecimal amount;
+    private String currency;
+    private String transferReference;
     private String providerTransactionId;
-    private String responseCode;
-    private String providerMessage;
-    private String redirectUrl;
-    private String rawPayload;
+    private String status;
+    private String verificationStatus;
+    private String verificationMessage;
+    private String providerMetadata;
     private Timestamp createdAt;
     private Timestamp updatedAt;
-    private Timestamp completedAt;
+    private Timestamp verifiedAt;
 
     public int getId() {
         return id;
@@ -47,68 +45,44 @@ public class PaymentTransaction {
         this.userId = userId;
     }
 
-    public String getProvider() {
-        return provider;
+    public String getProviderKey() {
+        return providerKey;
     }
 
-    public void setProvider(String provider) {
-        this.provider = provider;
+    public void setProviderKey(String providerKey) {
+        this.providerKey = providerKey;
     }
 
-    public String getProviderOrderId() {
-        return providerOrderId;
+    public String getProviderDisplayName() {
+        return providerDisplayName;
     }
 
-    public void setProviderOrderId(String providerOrderId) {
-        this.providerOrderId = providerOrderId;
+    public void setProviderDisplayName(String providerDisplayName) {
+        this.providerDisplayName = providerDisplayName;
     }
 
-    public String getRequestId() {
-        return requestId;
-    }
-
-    public void setRequestId(String requestId) {
-        this.requestId = requestId;
-    }
-
-    public double getAmount() {
+    public BigDecimal getAmount() {
         return amount;
     }
 
-    public void setAmount(double amount) {
+    public void setAmount(BigDecimal amount) {
         this.amount = amount;
     }
 
-    public Integer getCouponId() {
-        return couponId;
+    public String getCurrency() {
+        return currency;
     }
 
-    public void setCouponId(Integer couponId) {
-        this.couponId = couponId;
+    public void setCurrency(String currency) {
+        this.currency = currency;
     }
 
-    public boolean isDiscountReserved() {
-        return discountReserved;
+    public String getTransferReference() {
+        return transferReference;
     }
 
-    public void setDiscountReserved(boolean discountReserved) {
-        this.discountReserved = discountReserved;
-    }
-
-    public String getStatus() {
-        return status;
-    }
-
-    public void setStatus(String status) {
-        this.status = status;
-    }
-
-    public String getPaymentToken() {
-        return paymentToken;
-    }
-
-    public void setPaymentToken(String paymentToken) {
-        this.paymentToken = paymentToken;
+    public void setTransferReference(String transferReference) {
+        this.transferReference = transferReference;
     }
 
     public String getProviderTransactionId() {
@@ -119,36 +93,36 @@ public class PaymentTransaction {
         this.providerTransactionId = providerTransactionId;
     }
 
-    public String getResponseCode() {
-        return responseCode;
+    public String getStatus() {
+        return status;
     }
 
-    public void setResponseCode(String responseCode) {
-        this.responseCode = responseCode;
+    public void setStatus(String status) {
+        this.status = status;
     }
 
-    public String getProviderMessage() {
-        return providerMessage;
+    public String getVerificationStatus() {
+        return verificationStatus;
     }
 
-    public void setProviderMessage(String providerMessage) {
-        this.providerMessage = providerMessage;
+    public void setVerificationStatus(String verificationStatus) {
+        this.verificationStatus = verificationStatus;
     }
 
-    public String getRedirectUrl() {
-        return redirectUrl;
+    public String getVerificationMessage() {
+        return verificationMessage;
     }
 
-    public void setRedirectUrl(String redirectUrl) {
-        this.redirectUrl = redirectUrl;
+    public void setVerificationMessage(String verificationMessage) {
+        this.verificationMessage = verificationMessage;
     }
 
-    public String getRawPayload() {
-        return rawPayload;
+    public String getProviderMetadata() {
+        return providerMetadata;
     }
 
-    public void setRawPayload(String rawPayload) {
-        this.rawPayload = rawPayload;
+    public void setProviderMetadata(String providerMetadata) {
+        this.providerMetadata = providerMetadata;
     }
 
     public Timestamp getCreatedAt() {
@@ -167,11 +141,15 @@ public class PaymentTransaction {
         this.updatedAt = updatedAt;
     }
 
-    public Timestamp getCompletedAt() {
-        return completedAt;
+    public Timestamp getVerifiedAt() {
+        return verifiedAt;
     }
 
-    public void setCompletedAt(Timestamp completedAt) {
-        this.completedAt = completedAt;
+    public void setVerifiedAt(Timestamp verifiedAt) {
+        this.verifiedAt = verifiedAt;
+    }
+
+    public boolean isPendingVerification() {
+        return "PENDING_VERIFICATION".equalsIgnoreCase(status);
     }
 }
