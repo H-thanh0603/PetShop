@@ -19,6 +19,12 @@
         .timeline-dot { width: 40px; height: 40px; border-radius: 50%; display: grid; place-items: center; background: #e2e8f0; color: #64748b; flex-shrink: 0; }
         .timeline-step.active .timeline-dot { background: #dbeafe; color: #2563eb; }
         .timeline-step.done .timeline-dot { background: #dcfce7; color: #16a34a; }
+        .payment-badge { display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px; border-radius: 999px; font-size: 0.78rem; font-weight: 700; margin-top: 8px; }
+        .payment-pending { background: #fff7ed; color: #c2410c; }
+        .payment-verified { background: #dcfce7; color: #166534; }
+        .payment-failed { background: #fee2e2; color: #991b1b; }
+        .payment-neutral { background: #e0f2fe; color: #075985; }
+        .payment-unpaid { background: #f1f5f9; color: #475569; }
     </style>
 </head>
 <body>
@@ -55,8 +61,15 @@
                     <div class="info-label">Thanh toán</div>
                     <div class="info-value">
                         ${fn:escapeXml(order.paymentMethodLabel)} · ${fn:escapeXml(order.paymentFlowLabel)}
+                        <br><span class="payment-badge ${order.paymentVerificationCssClass}">${fn:escapeXml(order.paymentVerificationLabel)}</span>
                         <c:if test="${not empty order.paymentReference}">
                             <br><span class="text-muted small">Mã chuyển khoản: ${fn:escapeXml(order.paymentReference)}</span>
+                        </c:if>
+                        <c:if test="${not empty order.paymentVerificationMessage}">
+                            <br><span class="text-muted small">${fn:escapeXml(order.paymentVerificationMessage)}</span>
+                        </c:if>
+                        <c:if test="${not empty order.paymentVerifiedAt}">
+                            <br><span class="text-muted small">Thời gian xác nhận: <fmt:formatDate value="${order.paymentVerifiedAt}" pattern="dd/MM/yyyy HH:mm:ss"/></span>
                         </c:if>
                     </div>
 
@@ -140,6 +153,7 @@
                     <form action="${pageContext.request.contextPath}/admin/orders" method="post" class="row g-3">
                         <input type="hidden" name="action" value="updateStatus">
                         <input type="hidden" name="orderId" value="${order.id}">
+                        <input type="hidden" name="returnTo" value="detail">
                         <div class="col-md-8">
                             <select name="status" class="form-select">
                                 <option value="Pending" ${order.status == 'Pending' ? 'selected' : ''}>Chờ xử lý</option>
@@ -154,6 +168,34 @@
                         </div>
                     </form>
                 </div>
+
+                <c:if test="${order.bankTransferPayment}">
+                    <div class="order-info-card">
+                        <h5 class="mb-4 fw-bold">Duyệt thanh toán chuyển khoản</h5>
+                        <form action="${pageContext.request.contextPath}/admin/orders" method="post" class="row g-3">
+                            <input type="hidden" name="action" value="updatePaymentVerification">
+                            <input type="hidden" name="orderId" value="${order.id}">
+                            <input type="hidden" name="returnTo" value="detail">
+                            <div class="col-md-5">
+                                <label class="form-label">Trạng thái đối soát</label>
+                                <select name="verificationStatus" class="form-select">
+                                    <option value="PENDING" ${order.paymentVerificationStatus == 'PENDING' ? 'selected' : ''}>Tiếp tục chờ đối soát</option>
+                                    <option value="VERIFIED" ${order.paymentVerificationStatus == 'VERIFIED' ? 'selected' : ''}>Đã nhận tiền</option>
+                                    <option value="FAILED" ${order.paymentVerificationStatus == 'FAILED' ? 'selected' : ''}>Đối soát chưa khớp</option>
+                                </select>
+                            </div>
+                            <div class="col-md-7">
+                                <label class="form-label">Ghi chú</label>
+                                <input type="text" name="verificationMessage" class="form-control"
+                                       value="${fn:escapeXml(order.paymentVerificationMessage)}"
+                                       placeholder="Nhập ghi chú để admin khác dễ theo dõi">
+                            </div>
+                            <div class="col-12">
+                                <button type="submit" class="btn btn-primary">Lưu trạng thái thanh toán</button>
+                            </div>
+                        </form>
+                    </div>
+                </c:if>
 
                 <%-- Status History --%>
                 <c:if test="${not empty statusHistory}">

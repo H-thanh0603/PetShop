@@ -7,6 +7,8 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.Statement;
+import java.sql.Timestamp;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import Context.DBContext;
@@ -14,6 +16,7 @@ import Model.Order;
 import Model.OrderItem;
 import Model.OrderStatus;
 import Model.OrderStatusHistory;
+import Model.PaymentTransaction;
 import Model.Product;
 
 public class OrderDAO {
@@ -460,6 +463,82 @@ public class OrderDAO {
         return 0;
     }
 
+    public int countOrdersAwaitingPaymentVerification() {
+        String query = "SELECT COUNT(*) " +
+                "FROM payment_transactions pt " +
+                "JOIN (" +
+                "  SELECT MAX(id) AS latest_id FROM payment_transactions GROUP BY order_id" +
+                ") latest ON latest.latest_id = pt.id " +
+                "WHERE pt.verification_status = 'PENDING'";
+        try (Connection conn = DBContext.getConnection();
+             PreparedStatement ps = conn.prepareStatement(query);
+             ResultSet rs = ps.executeQuery()) {
+            if (rs.next()) {
+                return rs.getInt(1);
+            }
+        } catch (Exception e) {
+            log.error("DB error", e);
+        }
+        return 0;
+    }
+
+    public boolean updatePaymentVerification(int orderId, String verificationStatus, String verificationMessage) {
+        String normalizedStatus = normalizeVerificationStatus(verificationStatus);
+        if (normalizedStatus == null) {
+            return false;
+        }
+
+        try (Connection conn = DBContext.getConnection()) {
+            conn.setAutoCommit(false);
+            try {
+                PaymentTransaction transaction = paymentTransactionDAO.getLatestByOrderIdForUpdate(conn, orderId);
+                if (transaction == null) {
+                    conn.rollback();
+                    return false;
+                }
+
+                String transactionStatus = mapTransactionStatus(normalizedStatus);
+                boolean paid = "VERIFIED".equals(normalizedStatus);
+                Timestamp now = Timestamp.valueOf(LocalDateTime.now());
+                Timestamp verifiedAt = paid ? now : null;
+
+                if (!paymentTransactionDAO.updateVerificationStatus(
+                        conn,
+                        transaction.getId(),
+                        transactionStatus,
+                        normalizedStatus,
+                        normalizeVerificationMessage(verificationMessage, normalizedStatus),
+                        now,
+                        verifiedAt
+                )) {
+                    conn.rollback();
+                    return false;
+                }
+
+                try (PreparedStatement ps = conn.prepareStatement(
+                        "UPDATE orders SET payment_status = ? WHERE id = ?")) {
+                    ps.setBoolean(1, paid);
+                    ps.setInt(2, orderId);
+                    if (ps.executeUpdate() <= 0) {
+                        conn.rollback();
+                        return false;
+                    }
+                }
+
+                conn.commit();
+                return true;
+            } catch (Exception e) {
+                conn.rollback();
+                throw e;
+            } finally {
+                conn.setAutoCommit(true);
+            }
+        } catch (Exception e) {
+            log.error("DB error", e);
+        }
+        return false;
+    }
+
     public List<Order> getOrdersByUserId(int userId) {
         List<Order> list = new ArrayList<>();
         String query = "SELECT * FROM orders WHERE user_id = ? ORDER BY createdAt DESC";
@@ -683,6 +762,48 @@ public class OrderDAO {
             log.error("DB error", e);
         }
         return 0;
+    }
+
+    private String normalizeVerificationStatus(String verificationStatus) {
+        if (verificationStatus == null) {
+            return null;
+        }
+        switch (verificationStatus.trim().toUpperCase()) {
+            case "PENDING":
+            case "VERIFIED":
+            case "FAILED":
+                return verificationStatus.trim().toUpperCase();
+            default:
+                return null;
+        }
+    }
+
+    private String mapTransactionStatus(String verificationStatus) {
+        switch (verificationStatus) {
+            case "VERIFIED":
+                return "VERIFIED";
+            case "FAILED":
+                return "FAILED";
+            case "PENDING":
+            default:
+                return "PENDING_VERIFICATION";
+        }
+    }
+
+    private String normalizeVerificationMessage(String verificationMessage, String verificationStatus) {
+        String trimmed = verificationMessage == null ? "" : verificationMessage.trim();
+        if (!trimmed.isEmpty()) {
+            return trimmed;
+        }
+        switch (verificationStatus) {
+            case "VERIFIED":
+                return "Admin đã xác nhận thanh toán chuyển khoản.";
+            case "FAILED":
+                return "Admin đánh dấu đối soát chưa khớp.";
+            case "PENDING":
+            default:
+                return "Đang chờ đối soát thanh toán chuyển khoản.";
+        }
     }
 }
 

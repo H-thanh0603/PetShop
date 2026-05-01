@@ -9,6 +9,7 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.Statement;
+import java.sql.Timestamp;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -61,6 +62,36 @@ public class PaymentTransactionDAO {
             }
         }
         return null;
+    }
+
+    public PaymentTransaction getLatestByOrderIdForUpdate(Connection conn, int orderId) throws Exception {
+        String sql = "SELECT * FROM payment_transactions WHERE order_id = ? ORDER BY created_at DESC, id DESC LIMIT 1 FOR UPDATE";
+        try (PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setInt(1, orderId);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    return map(rs);
+                }
+            }
+        }
+        return null;
+    }
+
+    public boolean updateVerificationStatus(Connection conn, int transactionId, String transactionStatus,
+                                            String verificationStatus, String verificationMessage,
+                                            Timestamp updatedAt, Timestamp verifiedAt) throws Exception {
+        String sql = "UPDATE payment_transactions " +
+                "SET status = ?, verification_status = ?, verification_message = ?, updated_at = ?, verified_at = ? " +
+                "WHERE id = ?";
+        try (PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setString(1, transactionStatus);
+            ps.setString(2, verificationStatus);
+            ps.setString(3, verificationMessage);
+            ps.setTimestamp(4, updatedAt);
+            ps.setTimestamp(5, verifiedAt);
+            ps.setInt(6, transactionId);
+            return ps.executeUpdate() > 0;
+        }
     }
 
     public void attachLatestToOrders(Connection conn, List<Order> orders) {
@@ -117,6 +148,7 @@ public class PaymentTransactionDAO {
         order.setPaymentVerificationStatus(transaction.getVerificationStatus());
         order.setPaymentReference(transaction.getTransferReference());
         order.setPaymentVerificationMessage(transaction.getVerificationMessage());
+        order.setPaymentVerifiedAt(transaction.getVerifiedAt());
     }
 
     private PaymentTransaction map(ResultSet rs) throws Exception {
