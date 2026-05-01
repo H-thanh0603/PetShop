@@ -99,6 +99,7 @@ public class OrderDAO {
         try (Connection conn = DBContext.getConnection();
              PreparedStatement ps = conn.prepareStatement(query);
              ResultSet rs = ps.executeQuery()) {
+            paymentTransactionDAO.expirePendingTransactions();
             while (rs.next()) {
                 Order order = mapOrder(rs);
                 order.setItems(getOrderItems(conn, order.getId()));
@@ -128,6 +129,7 @@ public class OrderDAO {
 
         try (Connection conn = DBContext.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql.toString())) {
+            paymentTransactionDAO.expirePendingTransactions();
             int idx = 1;
             if (statusFilter != null && !statusFilter.isEmpty() && !"all".equalsIgnoreCase(statusFilter)) {
                 ps.setString(idx++, statusFilter);
@@ -167,6 +169,7 @@ public class OrderDAO {
         }
         try (Connection conn = DBContext.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql.toString())) {
+            paymentTransactionDAO.expirePendingTransactions();
             int idx = 1;
             if (statusFilter != null && !statusFilter.isEmpty() && !"all".equalsIgnoreCase(statusFilter)) {
                 ps.setString(idx++, statusFilter);
@@ -229,6 +232,7 @@ public class OrderDAO {
         String query = "SELECT * FROM orders WHERE id = ?";
         try (Connection conn = DBContext.getConnection();
              PreparedStatement ps = conn.prepareStatement(query)) {
+            paymentTransactionDAO.expirePendingTransactions();
             ps.setInt(1, orderId);
             try (ResultSet rs = ps.executeQuery()) {
                 if (rs.next()) {
@@ -393,6 +397,7 @@ public class OrderDAO {
                 "  SELECT MAX(id) AS latest_id FROM payment_transactions GROUP BY order_id" +
                 ") latest ON latest.latest_id = pt.id " +
                 "WHERE pt.verification_status = 'PENDING'";
+        paymentTransactionDAO.expirePendingTransactions();
         try (Connection conn = DBContext.getConnection();
              PreparedStatement ps = conn.prepareStatement(query);
              ResultSet rs = ps.executeQuery()) {
@@ -467,6 +472,7 @@ public class OrderDAO {
         String query = "SELECT * FROM orders WHERE user_id = ? ORDER BY createdAt DESC";
         try (Connection conn = DBContext.getConnection();
              PreparedStatement ps = conn.prepareStatement(query)) {
+            paymentTransactionDAO.expirePendingTransactions();
             ps.setInt(1, userId);
             try (ResultSet rs = ps.executeQuery()) {
                 while (rs.next()) {
@@ -695,6 +701,7 @@ public class OrderDAO {
             case "PENDING":
             case "VERIFIED":
             case "FAILED":
+            case "EXPIRED":
                 return verificationStatus.trim().toUpperCase();
             default:
                 return null;
@@ -707,6 +714,8 @@ public class OrderDAO {
                 return "VERIFIED";
             case "FAILED":
                 return "FAILED";
+            case "EXPIRED":
+                return "EXPIRED";
             case "PENDING":
             default:
                 return "PENDING_VERIFICATION";
@@ -723,6 +732,8 @@ public class OrderDAO {
                 return "Admin đã xác nhận thanh toán chuyển khoản.";
             case "FAILED":
                 return "Admin đánh dấu đối soát chưa khớp.";
+            case "EXPIRED":
+                return "Quá thời gian chờ thanh toán chuyển khoản.";
             case "PENDING":
             default:
                 return "Đang chờ đối soát thanh toán chuyển khoản.";

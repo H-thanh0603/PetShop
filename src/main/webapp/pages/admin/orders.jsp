@@ -34,6 +34,7 @@
         .payment-failed { background: #fee2e2; color: #991b1b; }
         .payment-neutral { background: #e0f2fe; color: #075985; }
         .payment-unpaid { background: #f1f5f9; color: #475569; }
+        .payment-expired { background: #fef2f2; color: #b91c1c; }
         .review-alert { margin: 0 1.5rem 1rem; padding: 14px 16px; border-radius: 14px; background: linear-gradient(135deg, #fff7ed 0%, #ffedd5 100%); color: #9a3412; border: 1px solid #fdba74; }
     </style>
 </head>
@@ -199,6 +200,7 @@
                             <option value="PENDING">Tiếp tục chờ đối soát</option>
                             <option value="VERIFIED">Đã nhận tiền</option>
                             <option value="FAILED">Đối soát chưa khớp</option>
+                            <option value="EXPIRED">Quá hạn thanh toán</option>
                         </select>
                     </div>
                     <div class="form-group">

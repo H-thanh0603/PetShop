@@ -1,5 +1,7 @@
 package DAO;
 
+import Context.DBContext;
+import Util.AppConfig;
 import Model.Order;
 import Model.PaymentTransaction;
 import org.slf4j.Logger;
@@ -21,8 +23,8 @@ public class PaymentTransactionDAO {
         String sql = "INSERT INTO payment_transactions (" +
                 "order_id, user_id, provider_key, provider_display_name, amount, currency, " +
                 "transfer_reference, provider_transaction_id, status, verification_status, " +
-                "verification_message, provider_metadata, created_at, updated_at, verified_at" +
-                ") VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+                "verification_message, provider_metadata, created_at, updated_at, verified_at, expires_at" +
+                ") VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
 
         try (PreparedStatement ps = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
             ps.setInt(1, transaction.getOrderId());
@@ -40,6 +42,7 @@ public class PaymentTransactionDAO {
             ps.setTimestamp(13, transaction.getCreatedAt());
             ps.setTimestamp(14, transaction.getUpdatedAt());
             ps.setTimestamp(15, transaction.getVerifiedAt());
+            ps.setTimestamp(16, transaction.getExpiresAt());
             ps.executeUpdate();
 
             try (ResultSet rs = ps.getGeneratedKeys()) {
@@ -91,6 +94,24 @@ public class PaymentTransactionDAO {
             ps.setTimestamp(5, verifiedAt);
             ps.setInt(6, transactionId);
             return ps.executeUpdate() > 0;
+        }
+    }
+
+    public int expirePendingTransactions() {
+        int pendingHours = AppConfig.getInt("payment.bank.pending-hours", 2);
+        String sql = "UPDATE payment_transactions " +
+                "SET status = 'EXPIRED', verification_status = 'EXPIRED', " +
+                "verification_message = COALESCE(NULLIF(verification_message, ''), 'Quá thời gian chờ thanh toán chuyển khoản.'), " +
+                "updated_at = CURRENT_TIMESTAMP " +
+                "WHERE status = 'PENDING_VERIFICATION' " +
+                "AND created_at <= DATE_SUB(NOW(), INTERVAL ? HOUR)";
+        try (Connection conn = DBContext.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setInt(1, pendingHours);
+            return ps.executeUpdate();
+        } catch (Exception e) {
+            log.error("Failed to expire pending payment transactions", e);
+            return 0;
         }
     }
 
@@ -169,6 +190,10 @@ public class PaymentTransactionDAO {
         transaction.setCreatedAt(rs.getTimestamp("created_at"));
         transaction.setUpdatedAt(rs.getTimestamp("updated_at"));
         transaction.setVerifiedAt(rs.getTimestamp("verified_at"));
+        try {
+            transaction.setExpiresAt(rs.getTimestamp("expires_at"));
+        } catch (Exception ignored) {
+        }
         return transaction;
     }
 }

@@ -20,6 +20,7 @@ public class PaymentTransaction {
     private Timestamp createdAt;
     private Timestamp updatedAt;
     private Timestamp verifiedAt;
+    private Timestamp expiresAt;
 
     public int getId() {
         return id;
@@ -151,5 +152,13 @@ public class PaymentTransaction {
 
     public boolean isPendingVerification() {
         return "PENDING_VERIFICATION".equalsIgnoreCase(status);
+    }
+
+    public Timestamp getExpiresAt() {
+        return expiresAt;
+    }
+
+    public void setExpiresAt(Timestamp expiresAt) {
+        this.expiresAt = expiresAt;
     }
 }

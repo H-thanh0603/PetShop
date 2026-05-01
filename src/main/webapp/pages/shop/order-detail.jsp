@@ -21,6 +21,13 @@
         .label { color: #64748b; font-size: 0.8rem; font-weight: 700; text-transform: uppercase; margin-bottom: 5px; }
         .value { color: #1e293b; font-weight: 500; margin-bottom: 15px; }
         .status-badge { font-weight: 700; font-size: 0.85rem; padding: 5px 12px; border-radius: 20px; }
+        .payment-badge { display: inline-flex; align-items: center; gap: 6px; padding: 5px 10px; border-radius: 999px; font-size: 0.78rem; font-weight: 700; margin-top: 8px; }
+        .payment-pending { background: #fff7ed; color: #c2410c; }
+        .payment-verified { background: #dcfce7; color: #166534; }
+        .payment-failed { background: #fee2e2; color: #991b1b; }
+        .payment-neutral { background: #e0f2fe; color: #075985; }
+        .payment-unpaid { background: #f1f5f9; color: #475569; }
+        .payment-expired { background: #fef2f2; color: #b91c1c; }
         .timeline-step { display: flex; gap: 12px; margin-bottom: 18px; }
         .timeline-dot { width: 40px; height: 40px; border-radius: 50%; display: grid; place-items: center; background: #e2e8f0; color: #64748b; flex-shrink: 0; }
         .timeline-step.active .timeline-dot { background: #dbeafe; color: #2563eb; }
@@ -104,8 +111,15 @@
                     <div class="label">Thanh toán</div>
                     <div class="value">
                         ${fn:escapeXml(order.paymentMethodLabel)} · ${fn:escapeXml(order.paymentFlowLabel)}
+                        <br><span class="payment-badge ${order.paymentVerificationCssClass}">${fn:escapeXml(order.paymentVerificationLabel)}</span>
                         <c:if test="${not empty order.paymentReference}">
                             <br><span class="text-muted small">Mã chuyển khoản: ${fn:escapeXml(order.paymentReference)}</span>
+                        </c:if>
+                        <c:if test="${not empty order.paymentVerificationMessage}">
+                            <br><span class="text-muted small">${fn:escapeXml(order.paymentVerificationMessage)}</span>
+                        </c:if>
+                        <c:if test="${not empty order.paymentVerifiedAt}">
+                            <br><span class="text-muted small">Xác nhận lúc: <fmt:formatDate value="${order.paymentVerifiedAt}" pattern="dd/MM/yyyy HH:mm:ss"/></span>
                         </c:if>
                     </div>
 
