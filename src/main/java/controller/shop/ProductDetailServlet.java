@@ -16,10 +16,13 @@ import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 @WebServlet("/product-detail")
 public class ProductDetailServlet extends HttpServlet {
     private static final long serialVersionUID = 1L;
+    private static final Logger logger = LoggerFactory.getLogger(ProductDetailServlet.class);
 
     protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
         try {
@@ -36,6 +39,7 @@ public class ProductDetailServlet extends HttpServlet {
             Product p = pDao.getProductById(id);
             
             if (p == null) {
+                request.getSession().setAttribute("error", "Sản phẩm không tồn tại hoặc đã bị xóa.");
                 response.sendRedirect("shop");
                 return;
             }
@@ -69,8 +73,13 @@ public class ProductDetailServlet extends HttpServlet {
             
             request.getRequestDispatcher("/pages/shop/product.jsp").forward(request, response);
             
+        } catch (NumberFormatException e) {
+            logger.warn("Invalid product id parameter: {}", request.getParameter("id"));
+            request.getSession().setAttribute("error", "Mã sản phẩm không hợp lệ.");
+            response.sendRedirect("shop");
         } catch (Exception e) {
-            e.printStackTrace();
+            logger.error("Error loading product detail for id={}", request.getParameter("id"), e);
+            request.getSession().setAttribute("error", "Không thể tải thông tin sản phẩm. Vui lòng thử lại.");
             response.sendRedirect("shop");
         }
     }

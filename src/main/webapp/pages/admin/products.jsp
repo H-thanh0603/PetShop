@@ -1,5 +1,6 @@
 <%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
 <%@ taglib prefix="c" uri="jakarta.tags.core" %>
+<%@ taglib prefix="fn" uri="jakarta.tags.functions" %>
 <!DOCTYPE html>
 <html lang="vi">
 <head>
@@ -279,16 +280,16 @@
                         </tr>
                     </c:if>
                     <c:forEach items="${products}" var="p" varStatus="loop">
-                        <tr data-id="${p.id}" data-name="${p.name}" data-image="${p.image}" 
-                            data-price="${p.price}" data-discount="${p.discount}" data-description="${p.description}"
-                            data-stock="${p.stock}" data-weight="${p.weight}" data-category="${p.category}" data-pet-type-id="${p.pet_type_id}">
+                        <tr data-id="${p.id}" data-name="${fn:escapeXml(p.name)}" data-image="${fn:escapeXml(p.image)}" 
+                            data-price="${p.price}" data-discount="${p.discount}" data-description="${fn:escapeXml(p.description)}"
+                            data-stock="${p.stock}" data-weight="${p.weight}" data-category="${fn:escapeXml(p.category)}" data-pet-type-id="${p.pet_type_id}">
                             <td><strong>${loop.index + 1}</strong></td>
                             <td>
-                                <img src="${pageContext.request.contextPath}/assets/images/shop_pic/${p.image}" 
+                                <img src="${pageContext.request.contextPath}/assets/images/shop_pic/${fn:escapeXml(p.image)}" 
                                      alt="" class="product-thumb"
                                      onerror="this.src='https://placehold.co/300x300/e2e8f0/1e293b?text=PetShop'" loading="lazy">
                             </td>
-                            <td><span class="product-name">${p.name}</span></td>
+                            <td><span class="product-name">${fn:escapeXml(p.name)}</span></td>
                             <td>
                                 <span class="product-desc" title="${p.description}">
                                     <c:choose>
@@ -301,7 +302,7 @@
                                     </c:choose>
                                 </span>
                             </td>
-                            <td><span class="price-current">${p.formattedPrice}</span></td>
+                            <td><span class="price-current">${fn:escapeXml(p.formattedPrice)}</span></td>
                             <td>
                                 <c:choose>
                                     <c:when test="${p.discount > 0}">
@@ -325,7 +326,7 @@
                             <td>
                                 <c:choose>
                                     <c:when test="${not empty p.category}">
-                                        ${p.category}
+                                        ${fn:escapeXml(p.category)}
                                     </c:when>
                                     <c:otherwise>
                                         <span style="color: #94a3b8;">—</span>

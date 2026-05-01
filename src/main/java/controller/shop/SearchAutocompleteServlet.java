@@ -1,7 +1,10 @@
 package controller.shop;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServlet;
@@ -19,7 +22,7 @@ import Model.Product;
 public class SearchAutocompleteServlet extends HttpServlet {
     private static final long serialVersionUID = 1L;
     private ProductDAO productDAO = new ProductDAO();
-    private Gson gson = new Gson();
+    private final Gson gson = new Gson();
 
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
@@ -42,28 +45,16 @@ public class SearchAutocompleteServlet extends HttpServlet {
         List<Product> products = productDAO.searchProductsLimit(keyword, 8);
         
         // Chuyển đổi sang JSON đơn giản (chỉ lấy id, name, image, price)
-        StringBuilder json = new StringBuilder("[");
-        for (int i = 0; i < products.size(); i++) {
-            Product p = products.get(i);
-            if (i > 0) json.append(",");
-            json.append("{");
-            json.append("\"id\":").append(p.getId()).append(",");
-            json.append("\"name\":\"").append(escapeJson(p.getName())).append("\",");
-            json.append("\"image\":\"").append(escapeJson(p.getImage() != null ? p.getImage() : "")).append("\",");
-            json.append("\"price\":").append(p.getPrice());
-            json.append("}");
+        List<Map<String, Object>> results = new ArrayList<>();
+        for (Product p : products) {
+            Map<String, Object> item = new HashMap<>();
+            item.put("id", p.getId());
+            item.put("name", p.getName());
+            item.put("image", p.getImage() != null ? p.getImage() : "");
+            item.put("price", p.getPrice());
+            results.add(item);
         }
-        json.append("]");
         
-        response.getWriter().write(json.toString());
-    }
-    
-    private String escapeJson(String str) {
-        if (str == null) return "";
-        return str.replace("\\", "\\\\")
-                  .replace("\"", "\\\"")
-                  .replace("\n", "\\n")
-                  .replace("\r", "\\r")
-                  .replace("\t", "\\t");
+        response.getWriter().write(gson.toJson(results));
     }
 }

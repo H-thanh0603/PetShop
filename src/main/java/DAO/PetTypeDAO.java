@@ -8,12 +8,16 @@ import java.util.List;
 
 import Context.DBContext;
 import Model.PetType;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * DAO quản lý các loại thú cưng
  * Hỗ trợ mở rộng dễ dàng khi thêm loại thú cưng mới
  */
 public class PetTypeDAO {
+
+    private static final Logger logger = LoggerFactory.getLogger(PetTypeDAO.class);
 
     /**
      * Lấy tất cả loại thú cưng đang active
@@ -28,7 +32,7 @@ public class PetTypeDAO {
                 list.add(mapResultSet(rs));
             }
         } catch (Exception e) {
-            e.printStackTrace();
+            logger.error("Error fetching active pet types", e);
         }
         return list;
     }
@@ -46,7 +50,7 @@ public class PetTypeDAO {
                 list.add(mapResultSet(rs));
             }
         } catch (Exception e) {
-            e.printStackTrace();
+            logger.error("Error fetching all pet types", e);
         }
         return list;
     }
@@ -64,7 +68,7 @@ public class PetTypeDAO {
                 return mapResultSet(rs);
             }
         } catch (Exception e) {
-            e.printStackTrace();
+            logger.error("Error fetching pet type by code={}", code, e);
         }
         return null;
     }
@@ -82,7 +86,7 @@ public class PetTypeDAO {
                 return mapResultSet(rs);
             }
         } catch (Exception e) {
-            e.printStackTrace();
+            logger.error("Error fetching pet type by id={}", id, e);
         }
         return null;
     }
@@ -101,7 +105,7 @@ public class PetTypeDAO {
             ps.setBoolean(5, petType.isActive());
             return ps.executeUpdate() > 0;
         } catch (Exception e) {
-            e.printStackTrace();
+            logger.error("Error adding pet type code={}", petType.getCode(), e);
         }
         return false;
     }
@@ -120,7 +124,7 @@ public class PetTypeDAO {
             ps.setInt(5, petType.getId());
             return ps.executeUpdate() > 0;
         } catch (Exception e) {
-            e.printStackTrace();
+            logger.error("Error updating pet type id={}", petType.getId(), e);
         }
         return false;
     }
@@ -136,7 +140,7 @@ public class PetTypeDAO {
             ps.setInt(2, id);
             return ps.executeUpdate() > 0;
         } catch (Exception e) {
-            e.printStackTrace();
+            logger.error("Error toggling pet type status id={}", id, e);
         }
         return false;
     }

@@ -1,4 +1,5 @@
 <%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
+<%@ taglib prefix="fn" uri="jakarta.tags.functions" %>
 <%@ taglib prefix="c" uri="jakarta.tags.core" %>
 <!DOCTYPE html>
 <html lang="vi">
@@ -370,7 +371,10 @@
             
             fetch(contextPath + '/register', {
                 method: 'POST',
-                headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                    'X-CSRF-Token': '${csrfToken}'
+                },
                 body: 'action=sendOTP&email=' + encodeURIComponent(email)
             })
             .then(res => res.json())
@@ -420,7 +424,10 @@
             
             fetch(contextPath + '/register', {
                 method: 'POST',
-                headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                    'X-CSRF-Token': '${csrfToken}'
+                },
                 body: 'action=checkUsername&username=' + encodeURIComponent(username)
             })
             .then(res => res.json())

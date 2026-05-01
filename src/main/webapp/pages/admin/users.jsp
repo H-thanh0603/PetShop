@@ -1,6 +1,7 @@
 <%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
 <%@ taglib prefix="c" uri="jakarta.tags.core" %>
 <%@ taglib prefix="fmt" uri="jakarta.tags.fmt" %>
+<%@ taglib prefix="fn" uri="jakarta.tags.functions" %>
 <!DOCTYPE html>
 <html lang="vi">
 <head>
@@ -229,7 +230,7 @@
                         <div class="position-relative">
                             <i class='bx bx-search position-absolute' style="left:12px;top:50%;transform:translateY(-50%);color:#94a3b8;"></i>
                             <input type="text" name="keyword" class="form-control ps-5" 
-                                   placeholder="Tìm theo tên, email, SĐT..." value="${keyword}">
+                                   placeholder="Tìm theo tên, email, SĐT..." value="${fn:escapeXml(keyword)}">
                         </div>
                     </div>
                     <select name="role" class="form-select" style="width:180px;">
@@ -276,11 +277,11 @@
                                 <tr style="cursor:pointer;" 
                                     onclick="viewUserDetail(this)"
                                     data-id="${user.id}"
-                                    data-username="${user.username}"
-                                    data-fullname="${user.fullname}"
-                                    data-email="${user.email}"
-                                    data-phone="${user.phone}"
-                                    data-address="${user.address}"
+                                    data-username="${fn:escapeXml(user.username)}"
+                                    data-fullname="${fn:escapeXml(user.fullname)}"
+                                    data-email="${fn:escapeXml(user.email)}"
+                                    data-phone="${fn:escapeXml(user.phone)}"
+                                    data-address="${fn:escapeXml(user.address)}"
                                     data-role="${user.role}"
                                     data-status="${user.status != null ? user.status : 'active'}"
                                     data-ordercount="${user.orderCount}"
@@ -293,14 +294,14 @@
                                                 ${not empty user.fullname ? user.fullname.substring(0,1).toUpperCase() : 'U'}
                                             </div>
                                             <div>
-                                                <div class="fw-bold">${not empty user.fullname ? user.fullname : 'Unknown'}</div>
-                                                <small class="text-muted">@${user.username}</small>
+                                                <div class="fw-bold">${not empty user.fullname ? fn:escapeXml(user.fullname) : 'Unknown'}</div>
+                                                <small class="text-muted">@${fn:escapeXml(user.username)}</small>
                                             </div>
                                         </div>
                                     </td>
                                     <td>
-                                        <div>${user.email}</div>
-                                        <small class="text-muted">${not empty user.phone ? user.phone : '-'}</small>
+                                        <div>${fn:escapeXml(user.email)}</div>
+                                        <small class="text-muted">${not empty user.phone ? fn:escapeXml(user.phone) : '-'}</small>
                                     </td>
                                     <td>
                                         <span class="badge-admin ${user.role == 'admin' ? 'badge-warning' : 'badge-primary'}">

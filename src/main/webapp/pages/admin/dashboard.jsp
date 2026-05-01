@@ -1,6 +1,7 @@
 <%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
 <%@ taglib prefix="c" uri="jakarta.tags.core" %>
 <%@ taglib prefix="fmt" uri="jakarta.tags.fmt" %>
+<%@ taglib prefix="fn" uri="jakarta.tags.functions" %>
 <!DOCTYPE html>
 <html lang="vi">
 <head>
@@ -8,6 +9,7 @@
     <title>Admin Dashboard - PetShop</title>
     <jsp:include page="/components/head.jsp" />
     <jsp:include page="/components/admin-styles.jsp" />
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         .stats-grid, .content-grid { display:grid; gap:20px; }
         .stats-grid { grid-template-columns: repeat(4, 1fr); margin-bottom: 24px; }
@@ -36,8 +38,14 @@
         .rating-low { color:#dc2626; font-weight:700; }
         .stock-low { color:#b45309; font-weight:700; }
         .empty-state { text-align:center; color:#94a3b8; padding:28px 16px; }
+        .chart-row { display:grid; grid-template-columns: 3fr 2fr; gap:20px; margin-bottom:24px; }
+        .chart-card { background:#fff; border:1px solid #e2e8f0; border-radius:16px; box-shadow:0 4px 12px rgba(15,23,42,.04); overflow:hidden; }
+        .chart-card .chart-header { padding:16px 20px; border-bottom:1px solid #e2e8f0; }
+        .chart-card .chart-header h5 { margin:0; font-weight:700; display:flex; gap:8px; align-items:center; font-size:.95rem; }
+        .chart-card .chart-body { padding:18px 20px; position:relative; height:260px; }
         @media (max-width: 1100px) {
             .stats-grid, .content-grid { grid-template-columns: 1fr 1fr; }
+            .chart-row { grid-template-columns: 1fr; }
         }
         @media (max-width: 768px) {
             .stats-grid, .content-grid { grid-template-columns: 1fr; }
@@ -81,6 +89,25 @@
         </a>
     </div>
 
+    <div class="chart-row">
+        <div class="chart-card">
+            <div class="chart-header">
+                <h5><i class='bx bx-bar-chart-alt-2'></i> Doanh thu theo tháng</h5>
+            </div>
+            <div class="chart-body">
+                <canvas id="dashRevenueChart"></canvas>
+            </div>
+        </div>
+        <div class="chart-card">
+            <div class="chart-header">
+                <h5><i class='bx bx-pie-chart-alt-2'></i> Trạng thái đơn hàng</h5>
+            </div>
+            <div class="chart-body">
+                <canvas id="dashStatusChart"></canvas>
+            </div>
+        </div>
+    </div>
+
     <div class="content-grid">
         <section class="panel">
             <div class="panel-header">
@@ -101,8 +128,8 @@
                             <c:forEach var="order" items="${recentOrders}">
                                 <tr>
                                     <td><strong>#${order.id}</strong></td>
-                                    <td>${order.fullname}<div class="muted">${order.phone}</div></td>
-                                    <td>${order.formattedTotalAmount}</td>
+                                    <td>${fn:escapeXml(order.fullname)}<div class="muted">${fn:escapeXml(order.phone)}</div></td>
+                                    <td>${fn:escapeXml(order.formattedTotalAmount)}</td>
                                     <td>
                                         <span class="badge-soft ${order.status == 'Pending' ? 'warning' : (order.status == 'Completed' ? 'success' : 'info')}">${order.statusLabel}</span>
                                     </td>
@@ -133,8 +160,8 @@
                             <tbody>
                             <c:forEach var="product" items="${lowStockProducts}">
                                 <tr>
-                                    <td>${product.name}</td>
-                                    <td>${empty product.category ? 'Chưa phân loại' : product.category}</td>
+                                    <td>${fn:escapeXml(product.name)}</td>
+                                    <td>${empty product.category ? 'Chưa phân loại' : fn:escapeXml(product.category)}</td>
                                     <td><span class="stock-low">${product.stock}</span></td>
                                     <td>${product.formattedAverageRating} ★ / ${product.reviewCount}</td>
                                 </tr>
@@ -164,10 +191,10 @@
                             <tbody>
                             <c:forEach var="review" items="${recentReviews}">
                                 <tr>
-                                    <td>${review.userName}</td>
-                                    <td>${review.productName}</td>
+                                    <td>${fn:escapeXml(review.userName)}</td>
+                                    <td>${fn:escapeXml(review.productName)}</td>
                                     <td><span class="${review.rating <= 2 ? 'rating-low' : ''}">${review.rating}/5</span></td>
-                                    <td>${review.comment}</td>
+                                    <td>${fn:escapeXml(review.comment)}</td>
                                 </tr>
                             </c:forEach>
                             </tbody>
@@ -195,7 +222,7 @@
                             <tbody>
                             <c:forEach var="product" items="${topProducts}">
                                 <tr>
-                                    <td>${product.product}</td>
+                                    <td>${fn:escapeXml(product.product)}</td>
                                     <td>${product.count}</td>
                                     <td><fmt:formatNumber value="${product.revenue}" type="number" maxFractionDigits="0"/>đ</td>
                                 </tr>
@@ -210,5 +237,61 @@
 </main>
 
 <jsp:include page="/components/scripts.jsp" />
+<script>
+(function() {
+    var monthLabels = ['T1','T2','T3','T4','T5','T6','T7','T8','T9','T10','T11','T12'];
+
+    // Revenue chart
+    var revenueData = ${revenueByMonthJson};
+    var revenueCounts = new Array(12).fill(0);
+    revenueData.forEach(function(item) { revenueCounts[item.month - 1] = item.revenue; });
+
+    new Chart(document.getElementById('dashRevenueChart'), {
+        type: 'bar',
+        data: {
+            labels: monthLabels,
+            datasets: [{
+                label: 'Doanh thu (VNĐ)',
+                data: revenueCounts,
+                backgroundColor: 'rgba(11, 26, 51, 0.85)',
+                borderRadius: 6,
+                barThickness: 18
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: { legend: { display: false } },
+            scales: {
+                y: { beginAtZero: true, ticks: { callback: function(v) { return v >= 1000000 ? (v/1000000)+'M' : v >= 1000 ? (v/1000)+'K' : v; } } },
+                x: { grid: { display: false } }
+            }
+        }
+    });
+
+    // Order status chart
+    var statusData = ${orderStatusJson};
+    var statusColors = { 'Pending': '#f59e0b', 'Confirmed': '#3b82f6', 'Shipping': '#8b5cf6', 'Completed': '#10b981', 'Cancelled': '#ef4444' };
+    var bgColors = statusData.map(function(item) { return statusColors[item.label] || '#64748b'; });
+
+    new Chart(document.getElementById('dashStatusChart'), {
+        type: 'doughnut',
+        data: {
+            labels: statusData.map(function(item) { return item.label; }),
+            datasets: [{
+                data: statusData.map(function(item) { return item.count; }),
+                backgroundColor: bgColors,
+                borderWidth: 0
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            cutout: '65%',
+            plugins: { legend: { position: 'right', labels: { padding: 12, usePointStyle: true, pointStyle: 'circle' } } }
+        }
+    });
+})();
+</script>
 </body>
 </html>

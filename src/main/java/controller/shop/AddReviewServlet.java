@@ -12,10 +12,13 @@ import DAO.ReviewDAO;
 import Model.Review;
 import Model.User;
 import Util.ValidationUtil;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 @WebServlet("/add-review")
 public class AddReviewServlet extends HttpServlet {
     private static final long serialVersionUID = 1L;
+    private static final Logger logger = LoggerFactory.getLogger(AddReviewServlet.class);
 
     protected void doPost(HttpServletRequest request, HttpServletResponse response) 
             throws ServletException, IOException {
@@ -107,7 +110,7 @@ public class AddReviewServlet extends HttpServlet {
             response.sendRedirect(request.getContextPath() + "/product-detail?id=" + productId);
             
         } catch (Exception e) {
-            e.printStackTrace();
+            logger.error("Error submitting review for product id={}", request.getParameter("productId"), e);
             request.getSession().setAttribute("error", "Không thể gửi đánh giá.");
             response.sendRedirect(request.getContextPath() + "/home");
         }

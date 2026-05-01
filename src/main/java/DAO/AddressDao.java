@@ -2,12 +2,16 @@ package DAO;
 
 import Context.DBContext;
 import Model.Address;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
 
 public class AddressDao {
+
+    private static final Logger logger = LoggerFactory.getLogger(AddressDao.class);
 
     public List<Address> getAddressesByUserId(int userId) {
         List<Address> list = new ArrayList<>();
@@ -17,64 +21,52 @@ public class AddressDao {
              PreparedStatement ps = conn.prepareStatement(sql)) {
 
             ps.setInt(1, userId);
-            ResultSet rs = ps.executeQuery();
-
-            while (rs.next()) {
-                Address a = new Address();
-                a.setId(rs.getInt("id"));
-                a.setUserId(rs.getInt("user_id"));
-                a.setDefaultt(rs.getBoolean("defaultt"));
-                a.setAddress(rs.getString("address"));
-                a.setCreateAt(rs.getTimestamp("created_at"));
-                a.setProvince(rs.getString("province"));
-                a.setDistrict(rs.getString("district"));
-                a.setWard(rs.getString("ward"));
-                list.add(a);
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    Address a = new Address();
+                    a.setId(rs.getInt("id"));
+                    a.setUserId(rs.getInt("user_id"));
+                    a.setDefaultt(rs.getBoolean("defaultt"));
+                    a.setAddress(rs.getString("address"));
+                    a.setCreateAt(rs.getTimestamp("created_at"));
+                    a.setProvince(rs.getString("province"));
+                    a.setDistrict(rs.getString("district"));
+                    a.setWard(rs.getString("ward"));
+                    list.add(a);
+                }
             }
 
         } catch (Exception e) {
-            e.printStackTrace();
+            logger.error("Error fetching addresses for user id={}", userId, e);
         }
         return list;
     }
 
     public void setDefaultAddress(int userId, int addressId) {
-        Connection conn = null;
-        PreparedStatement ps1 = null;
-        PreparedStatement ps2 = null;
+        String sql1 = "UPDATE addresses SET defaultt = 0 WHERE user_id = ?";
+        String sql2 = "UPDATE addresses SET defaultt = 1 WHERE id = ? AND user_id = ?";
 
-        try {
-            conn = DBContext.getConnection();
+        try (Connection conn = DBContext.getConnection()) {
             conn.setAutoCommit(false);
-
-            String sql1 = "UPDATE addresses SET defaultt = 0 WHERE user_id = ?";
-            ps1 = conn.prepareStatement(sql1);
-            ps1.setInt(1, userId);
-            ps1.executeUpdate();
-
-            String sql2 = "UPDATE addresses SET defaultt = 1 WHERE id = ? AND user_id = ?";
-            ps2 = conn.prepareStatement(sql2);
-            ps2.setInt(1, addressId);
-            ps2.setInt(2, userId);
-            ps2.executeUpdate();
-
-            conn.commit();
-
-        } catch (Exception e) {
-            e.printStackTrace();
             try {
-                if (conn != null) conn.rollback();
-            } catch (Exception ex) {
-                ex.printStackTrace();
-            }
-        } finally {
-            try {
-                if (ps1 != null) ps1.close();
-                if (ps2 != null) ps2.close();
-                if (conn != null) conn.close();
+                try (PreparedStatement ps1 = conn.prepareStatement(sql1)) {
+                    ps1.setInt(1, userId);
+                    ps1.executeUpdate();
+                }
+                try (PreparedStatement ps2 = conn.prepareStatement(sql2)) {
+                    ps2.setInt(1, addressId);
+                    ps2.setInt(2, userId);
+                    ps2.executeUpdate();
+                }
+                conn.commit();
             } catch (Exception e) {
-                e.printStackTrace();
+                logger.error("Error setting default address id={} for user id={}", addressId, userId, e);
+                conn.rollback();
+            } finally {
+                conn.setAutoCommit(true);
             }
+        } catch (Exception e) {
+            logger.error("Error in setDefaultAddress transaction for user id={}", userId, e);
         }
     }
 
@@ -85,47 +77,34 @@ public class AddressDao {
         String insertSql = "INSERT INTO addresses (user_id, defaultt, created_at, address, province, district, ward) "
                 + "VALUES (?, ?, ?, ?, ?, ?, ?)";
 
-        Connection conn = null;
-        PreparedStatement psReset = null;
-        PreparedStatement psInsert = null;
-
-        try {
-            conn = DBContext.getConnection();
+        try (Connection conn = DBContext.getConnection()) {
             conn.setAutoCommit(false);
-
-            if (defaultt) {
-                psReset = conn.prepareStatement(resetSql);
-                psReset.setInt(1, userId);
-                psReset.executeUpdate();
-            }
-
-            psInsert = conn.prepareStatement(insertSql);
-            psInsert.setInt(1, userId);
-            psInsert.setBoolean(2, defaultt);
-            psInsert.setTimestamp(3, createdAt);
-            psInsert.setString(4, address);
-            psInsert.setString(5, province);
-            psInsert.setString(6, district);
-            psInsert.setString(7, ward);
-            psInsert.executeUpdate();
-
-            conn.commit();
-
-        } catch (Exception e) {
-            e.printStackTrace();
             try {
-                if (conn != null) conn.rollback();
-            } catch (Exception ex) {
-                ex.printStackTrace();
-            }
-        } finally {
-            try {
-                if (psReset != null) psReset.close();
-                if (psInsert != null) psInsert.close();
-                if (conn != null) conn.close();
+                if (defaultt) {
+                    try (PreparedStatement psReset = conn.prepareStatement(resetSql)) {
+                        psReset.setInt(1, userId);
+                        psReset.executeUpdate();
+                    }
+                }
+                try (PreparedStatement psInsert = conn.prepareStatement(insertSql)) {
+                    psInsert.setInt(1, userId);
+                    psInsert.setBoolean(2, defaultt);
+                    psInsert.setTimestamp(3, createdAt);
+                    psInsert.setString(4, address);
+                    psInsert.setString(5, province);
+                    psInsert.setString(6, district);
+                    psInsert.setString(7, ward);
+                    psInsert.executeUpdate();
+                }
+                conn.commit();
             } catch (Exception e) {
-                e.printStackTrace();
+                logger.error("Error adding address for user id={}", userId, e);
+                conn.rollback();
+            } finally {
+                conn.setAutoCommit(true);
             }
+        } catch (Exception e) {
+            logger.error("Error in addAddress transaction for user id={}", userId, e);
         }
     }
 
@@ -140,7 +119,7 @@ public class AddressDao {
             return rs.next();
 
         } catch (Exception e) {
-            e.printStackTrace();
+            logger.error("Error checking address existence for user id={}", userId, e);
         }
         return false;
     }
@@ -153,47 +132,35 @@ public class AddressDao {
                 + "SET defaultt = ?, created_at = ?, address = ?, province = ?, district = ?, ward = ? "
                 + "WHERE id = ? AND user_id = ?";
 
-        Connection conn = null;
-        PreparedStatement psReset = null;
-        PreparedStatement psUpdate = null;
-
-        try {
-            conn = DBContext.getConnection();
+        try (Connection conn = DBContext.getConnection()) {
             conn.setAutoCommit(false);
-
-            if (isDefault) {
-                psReset = conn.prepareStatement(resetSql);
-                psReset.setInt(1, userId);
-                psReset.executeUpdate();
-            }
-
-            psUpdate = conn.prepareStatement(updateSql);
-            psUpdate.setBoolean(1, isDefault);
-            psUpdate.setTimestamp(2, updatedAt);
-            psUpdate.setString(3, address);
-            psUpdate.setString(4, province);
-            psUpdate.setString(5, district);
-            psUpdate.setString(6, ward);
-            psUpdate.setInt(7, id);
-            psUpdate.setInt(8, userId);
-            psUpdate.executeUpdate();
-
-            conn.commit();
-        } catch (Exception e) {
-            e.printStackTrace();
             try {
-                if (conn != null) conn.rollback();
-            } catch (Exception ex) {
-                ex.printStackTrace();
-            }
-        } finally {
-            try {
-                if (psReset != null) psReset.close();
-                if (psUpdate != null) psUpdate.close();
-                if (conn != null) conn.close();
+                if (isDefault) {
+                    try (PreparedStatement psReset = conn.prepareStatement(resetSql)) {
+                        psReset.setInt(1, userId);
+                        psReset.executeUpdate();
+                    }
+                }
+                try (PreparedStatement psUpdate = conn.prepareStatement(updateSql)) {
+                    psUpdate.setBoolean(1, isDefault);
+                    psUpdate.setTimestamp(2, updatedAt);
+                    psUpdate.setString(3, address);
+                    psUpdate.setString(4, province);
+                    psUpdate.setString(5, district);
+                    psUpdate.setString(6, ward);
+                    psUpdate.setInt(7, id);
+                    psUpdate.setInt(8, userId);
+                    psUpdate.executeUpdate();
+                }
+                conn.commit();
             } catch (Exception e) {
-                e.printStackTrace();
+                logger.error("Error updating address id={} for user id={}", id, userId, e);
+                conn.rollback();
+            } finally {
+                conn.setAutoCommit(true);
             }
+        } catch (Exception e) {
+            logger.error("Error in updateAddress transaction id={} for user id={}", id, userId, e);
         }
     }
 
@@ -220,7 +187,7 @@ public class AddressDao {
                 return a;
             }
         } catch (Exception e) {
-            e.printStackTrace();
+            logger.error("Error fetching address by id={} for user id={}", id, userId, e);
         }
 
         return null;
@@ -237,7 +204,7 @@ public class AddressDao {
             return ps.executeUpdate() > 0;
 
         } catch (Exception e) {
-            e.printStackTrace();
+            logger.error("Error deleting address id={} for user id={}", addressId, userId, e);
         }
         return false;
     }
@@ -255,7 +222,7 @@ public class AddressDao {
                 return rs.getBoolean("defaultt");
             }
         } catch (Exception e) {
-            e.printStackTrace();
+            logger.error("Error checking if address id={} is default for user id={}", addressId, userId, e);
         }
         return false;
     }
@@ -275,7 +242,7 @@ public class AddressDao {
             ps.executeUpdate();
 
         } catch (Exception e) {
-            e.printStackTrace();
+            logger.error("Error setting newest address as default for user id={}", userId, e);
         }
     }
     public Address getDefaultAddressByUserId(int userId) {
@@ -300,7 +267,7 @@ public class AddressDao {
                 return a;
             }
         } catch (Exception e) {
-            e.printStackTrace();
+            logger.error("Error fetching default address for user id={}", userId, e);
         }
 
         return null;

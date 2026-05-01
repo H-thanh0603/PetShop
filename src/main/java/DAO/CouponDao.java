@@ -2,12 +2,16 @@ package DAO;
 
 import Context.DBContext;
 import Model.Coupon;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 
 public class CouponDao {
+    private static final Logger logger = LoggerFactory.getLogger(CouponDao.class);
+
     public Coupon getValidCouponByCode(String code) {
         if (code == null || code.trim().isEmpty()) {
             return null;
@@ -16,7 +20,7 @@ public class CouponDao {
         try (Connection conn = DBContext.getConnection()) {
             return getValidCouponByCode(conn, code.trim());
         } catch (Exception e) {
-            e.printStackTrace();
+            logger.error("Error fetching valid coupon by code={}", code, e);
         }
         return null;
     }

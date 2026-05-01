@@ -14,6 +14,8 @@ import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.Map;
@@ -21,6 +23,7 @@ import java.util.Map;
 @WebServlet("/LoginByGoogleServlet")
 public class LoginByGoogleServlet extends HttpServlet {
     private UserDAO userDao = new UserDAO();
+    private static final Logger logger = LoggerFactory.getLogger(LoginByGoogleServlet.class);
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
         HttpSession session = request.getSession();
@@ -96,7 +99,7 @@ public class LoginByGoogleServlet extends HttpServlet {
                 response.sendRedirect(request.getContextPath() + "/home");
             }
         } catch (Exception e) {
-            e.printStackTrace();
+            logger.error("Google OAuth login failed", e);
             session.setAttribute("error", "Đăng nhập Google thất bại. Kiểm tra lại cấu hình OAuth.");
             response.sendRedirect(request.getContextPath() + "/login");
         }

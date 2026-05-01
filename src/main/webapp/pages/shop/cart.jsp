@@ -1,6 +1,7 @@
 <%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
 <%@ taglib uri="jakarta.tags.core" prefix="c" %>
 <%@ taglib uri="jakarta.tags.fmt" prefix="fmt" %>
+<%@ taglib uri="jakarta.tags.functions" prefix="fn" %>
 
 <c:set var="totalAmount" value="0" />
 <%-- Chỉ tính giỏ hàng khi user đã đăng nhập --%>
@@ -116,11 +117,11 @@
                                     <tr class="cart-row">
                                         <td>
                                             <div class="d-flex align-items-center">
-                                                <img src="${pageContext.request.contextPath}/assets/images/shop_pic/${item.product.image}" 
+                                                <img src="${pageContext.request.contextPath}/assets/images/shop_pic/${fn:escapeXml(item.product.image)}" 
                                                      class="cart-product-img"
                                                      onerror="this.src='https://placehold.co/300x300/e2e8f0/1e293b?text=PetShop'">
                                                 <div>
-                                                    <p class="fw-bold mb-0">${item.product.name}</p>
+                                                    <p class="fw-bold mb-0">${fn:escapeXml(item.product.name)}</p>
                                                     <small class="text-muted">ID: ${item.product.id}</small>
                                                     <c:if test="${item.product.stock > 0 and item.product.stock < 10}">
                                                         <div><small class="text-warning fw-semibold">Còn lại: ${item.product.stock} sản phẩm</small></div>
@@ -265,7 +266,8 @@
             fetch('<%= request.getContextPath() %>/cart', {
                 method: 'POST',
                 headers: {
-                    'Content-Type': 'application/x-www-form-urlencoded'
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                    'X-CSRF-Token': '${csrfToken}'
                 },
                 body: 'action=update'
                     + '&id=' + encodeURIComponent(productId)

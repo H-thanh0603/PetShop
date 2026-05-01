@@ -2,12 +2,13 @@
     pageEncoding="UTF-8"%>
 <%@ taglib prefix="c" uri="jakarta.tags.core"%>
 <%@ taglib prefix="fmt" uri="jakarta.tags.fmt"%>
+<%@ taglib prefix="fn" uri="jakarta.tags.functions"%>
 
 <!DOCTYPE html>
 <html lang="vi">
 <head>
 <meta charset="UTF-8">
-<title>${detail.name} | PetShop</title>
+<title>${fn:escapeXml(detail.name)} | PetShop</title>
 <link
     href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"
     rel="stylesheet">
@@ -163,7 +164,7 @@
                     <li class="breadcrumb-item"><a
                         href="${pageContext.request.contextPath}/shop"
                         class="text-decoration-none">Cửa hàng</a></li>
-                    <li class="breadcrumb-item active" aria-current="page">${detail.name}</li>
+                    <li class="breadcrumb-item active" aria-current="page">${fn:escapeXml(detail.name)}</li>
                 </ol>
             </nav>
         </div>
@@ -177,8 +178,8 @@
             <div class="col-lg-5">
                 <div class="product-img-main text-center mb-3">
                     <img id="mainImage"
-                        src="${pageContext.request.contextPath}/assets/images/shop_pic/${detail.image}"
-                        class="img-fluid" alt="${detail.name}" style="max-height: 400px;"
+                        src="${pageContext.request.contextPath}/assets/images/shop_pic/${fn:escapeXml(detail.image)}"
+                        class="img-fluid" alt="${fn:escapeXml(detail.name)}" style="max-height: 400px;"
                         onerror="this.src='https://placehold.co/400x400/e2e8f0/1e293b?text=PetShop'">
                 </div>
 
@@ -203,7 +204,7 @@
                         <span class="badge bg-warning text-dark">Sắp hết hàng</span>
                     </c:if>
                 </div>
-                <h2 class="fw-bold text-dark mb-2">${detail.name}</h2>
+                <h2 class="fw-bold text-dark mb-2">${fn:escapeXml(detail.name)}</h2>
 
                 <div class="d-flex flex-wrap align-items-center gap-3 mb-3 small">
                     <div class="rating-stars">
@@ -212,7 +213,7 @@
                         <span class="text-muted ms-1">(${detail.reviewCount} đánh giá)</span>
                     </div>
                     <span class="text-muted border-start ps-3">Mã SP: <strong>SP00${detail.id}</strong></span>
-                    <span class="text-muted border-start ps-3">Danh mục: <strong>${detail.category}</strong></span>
+                    <span class="text-muted border-start ps-3">Danh mục: <strong>${fn:escapeXml(detail.category)}</strong></span>
                 </div>
 
                 <div class="mb-4 bg-light p-3 rounded">
@@ -222,8 +223,8 @@
                         </span>
                         <c:if test="${detail.discount > 0}">
                             <div class="pb-2">
-                                <div class="text-muted text-decoration-line-through">${detail.formattedOldPrice}</div>
-                                <div class="text-success fw-semibold">Tiết kiệm ${detail.formattedDiscountAmount}</div>
+                                <div class="text-muted text-decoration-line-through">${fn:escapeXml(detail.formattedOldPrice)}</div>
+                                <div class="text-success fw-semibold">Tiết kiệm ${fn:escapeXml(detail.formattedDiscountAmount)}</div>
                             </div>
                         </c:if>
                     </div>
@@ -264,7 +265,7 @@
                 <p class="text-muted mb-4">
                     <c:choose>
                         <c:when test="${not empty detail.description}">
-                            ${detail.description}
+                            ${fn:escapeXml(detail.description)}
                         </c:when>
                         <c:otherwise>
                             Sản phẩm chất lượng cao dành cho thú cưng, phù hợp cho nhu cầu chăm sóc hằng ngày và hỗ trợ sức khoẻ toàn diện.
@@ -275,6 +276,7 @@
                 <form id="addToCartForm"
                     action="${pageContext.request.contextPath}/add-to-cart"
                     method="post" class="pb-4 border-bottom">
+                    <input type="hidden" name="csrfToken" value="${csrfToken}">
                     <input type="hidden" name="id" value="${detail.id}"> <input
                         type="hidden" name="actionType" id="actionType" value="add">
 
@@ -306,6 +308,7 @@
 
                 <form action="${pageContext.request.contextPath}/toggle-wishlist" method="post"
                     class="wishlist-form mt-3">
+                    <input type="hidden" name="csrfToken" value="${csrfToken}">
                     <input type="hidden" name="productId" value="${detail.id}">
                     <input type="hidden" name="redirect" value="${productRedirect}">
                     <button type="submit"
@@ -376,11 +379,11 @@
                             <tbody>
                                 <tr>
                                     <th width="35%">Danh mục</th>
-                                    <td>${detail.category}</td>
+                                    <td>${fn:escapeXml(detail.category)}</td>
                                 </tr>
                                 <tr>
                                     <th>Giá bán hiện tại</th>
-                                    <td>${detail.formattedPrice}</td>
+                                    <td>${fn:escapeXml(detail.formattedPrice)}</td>
                                 </tr>
                                 <tr>
                                     <th>Khuyến mãi</th>
@@ -429,12 +432,12 @@
                                 <div class="d-flex mb-4 border-bottom pb-3">
                                     <div class="flex-shrink-0">
                                         <img
-                                            src="https://ui-avatars.com/api/?name=${r.userName}&background=random"
+                                            src="https://ui-avatars.com/api/?name=${fn:escapeXml(r.userName)}&background=random"
                                             class="rounded-circle" width="50">
                                     </div>
                                     <div class="flex-grow-1 ms-3">
                                         <div class="d-flex justify-content-between">
-                                            <h6 class="mb-0 fw-bold">${r.userName}</h6>
+                                            <h6 class="mb-0 fw-bold">${fn:escapeXml(r.userName)}</h6>
                                             <small class="text-muted">${r.createdAt}</small>
                                         </div>
                                         <div class="text-warning small mb-1">
@@ -445,7 +448,7 @@
                                                 <i class="far fa-star text-secondary"></i>
                                             </c:forEach>
                                         </div>
-                                        <p class="mb-0 text-secondary">${r.comment}</p>
+                                        <p class="mb-0 text-secondary">${fn:escapeXml(r.comment)}</p>
                                     </div>
                                 </div>
                             </c:forEach>
@@ -520,17 +523,17 @@
                                     <a
                                         href="${pageContext.request.contextPath}/product-detail?id=${rp.id}">
                                         <img
-                                        src="${pageContext.request.contextPath}/assets/images/shop_pic/${rp.image}"
-                                        class="card-img-top" alt="${rp.name}"
+                                        src="${pageContext.request.contextPath}/assets/images/shop_pic/${fn:escapeXml(rp.image)}"
+                                        class="card-img-top" alt="${fn:escapeXml(rp.name)}"
                                         style="height: 200px; object-fit: cover;"
                                         onerror="this.src='https://placehold.co/200x200/e2e8f0/1e293b?text=PetShop'">
                                     </a>
                                     <div class="card-body text-center">
-                                        <div class="small text-uppercase text-success fw-semibold mb-1">${rp.category}</div>
+                                        <div class="small text-uppercase text-success fw-semibold mb-1">${fn:escapeXml(rp.category)}</div>
                                         <h6 class="card-title fw-bold text-truncate">
                                             <a
                                                 href="${pageContext.request.contextPath}/product-detail?id=${rp.id}"
-                                                class="text-decoration-none text-dark"> ${rp.name} </a>
+                                                class="text-decoration-none text-dark"> ${fn:escapeXml(rp.name)} </a>
                                         </h6>
                                         <div class="small text-warning mb-2">
                                             <i class="fas fa-star"></i> ${rp.formattedAverageRating}

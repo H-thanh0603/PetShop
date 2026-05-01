@@ -39,6 +39,15 @@ public class MyAccountServlet extends HttpServlet {
         request.setAttribute("defaultAddress", addressDao.getDefaultAddressByUserId(user.getId()));
         request.setAttribute("countPending", orderDAO.countPendingOrdersByUserId(user.getId()));
         request.setAttribute("countCompleted", orderDAO.countCompletedOrdersByUserId(user.getId()));
+        request.setAttribute("totalSpent", orderDAO.getTotalSpentByUserId(user.getId()));
+        request.setAttribute("totalOrders", orderDAO.countOrdersByUserId(user.getId()));
+
+        // Lấy thông tin đầy đủ từ DB (bao gồm createdAt)
+        User dbUser = userDAO.getUserFullById(user.getId());
+        if (dbUser != null) {
+            request.setAttribute("memberSince", dbUser.getCreatedAt());
+        }
+
         java.util.List<Model.Order> recentOrders = orderDAO.getOrdersByUserId(user.getId());
         if (recentOrders.size() > 3) {
             recentOrders = recentOrders.subList(0, 3);

@@ -333,7 +333,7 @@ public class UserDAO {
                 try { user.setCreatedAt(rs.getTimestamp("created_at")); } catch (Exception e) {}
                 try { user.setStatus(rs.getBoolean("status")); } catch (Exception e) { user.setStatus(true); }
                 try { user.setOrderCount(rs.getInt("order_count")); } catch (Exception e) {}
-                try { user.setTotalSpent(rs.getDouble("total_spent")); } catch (Exception e) {}
+                try { user.setTotalSpent(rs.getBigDecimal("total_spent")); } catch (Exception e) {}
                 list.add(user);
             }
         } catch (Exception e) { log.error("DB error", e); }
@@ -371,7 +371,7 @@ public class UserDAO {
                     try { user.setStatus(rs.getBoolean("status")); } catch (Exception e) { user.setStatus(true); }
                     try { user.setDiscountUsed(rs.getBoolean("has_used_discount")); } catch (Exception e) { user.setDiscountUsed(false); }
                     try { user.setOrderCount(rs.getInt("order_count")); } catch (Exception e) {}
-                    try { user.setTotalSpent(rs.getDouble("total_spent")); } catch (Exception e) {}
+                    try { user.setTotalSpent(rs.getBigDecimal("total_spent")); } catch (Exception e) {}
                     list.add(user);
                 }
             }

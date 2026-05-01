@@ -2,6 +2,8 @@ package Model;
 
 import org.junit.jupiter.api.Test;
 
+import java.math.BigDecimal;
+
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 public class ProductCommerceTest {
@@ -27,9 +29,9 @@ public class ProductCommerceTest {
     @Test
     void calculatesDiscountAmountFromOldPrice() {
         Product product = new Product();
-        product.setPrice(132000);
+        product.setPrice(BigDecimal.valueOf(132000));
         product.setDiscount(20);
 
-        assertEquals(33000, Math.round(product.getDiscountAmount()));
+        assertEquals(0, BigDecimal.valueOf(33000).compareTo(product.getDiscountAmount()));
     }
 }

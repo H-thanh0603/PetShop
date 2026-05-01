@@ -1,21 +1,25 @@
 package Model;
 
+import java.math.BigDecimal;
+
 public class OrderItem {
     private int id;
     private int orderId;
     private int productId;
     private int quantity;
-    private double price;
+    private BigDecimal price;
     private Product product;
 
-    public OrderItem() {}
+    public OrderItem() {
+        this.price = BigDecimal.ZERO;
+    }
 
-    public OrderItem(int id, int orderId, int productId, int quantity, double price) {
+    public OrderItem(int id, int orderId, int productId, int quantity, BigDecimal price) {
         this.id = id;
         this.orderId = orderId;
         this.productId = productId;
         this.quantity = quantity;
-        this.price = price;
+        this.price = price != null ? price : BigDecimal.ZERO;
     }
 
     public int getId() { return id; }
@@ -30,8 +34,8 @@ public class OrderItem {
     public int getQuantity() { return quantity; }
     public void setQuantity(int quantity) { this.quantity = quantity; }
 
-    public double getPrice() { return price; }
-    public void setPrice(double price) { this.price = price; }
+    public BigDecimal getPrice() { return price; }
+    public void setPrice(BigDecimal price) { this.price = price != null ? price : BigDecimal.ZERO; }
 
     public Product getProduct() {
         return product;
@@ -41,7 +45,7 @@ public class OrderItem {
         this.product = product;
     }
 
-    public double getSubtotal() {
-        return price * quantity;
+    public BigDecimal getSubtotal() {
+        return price.multiply(BigDecimal.valueOf(quantity));
     }
 }

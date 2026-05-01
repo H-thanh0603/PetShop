@@ -1,4 +1,5 @@
 <%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
+<%@ taglib prefix="fn" uri="jakarta.tags.functions" %>
 <%@ taglib prefix="c" uri="jakarta.tags.core" %>
 <c:if test="${not empty sessionScope.success}">
     <c:set var="success" value="${sessionScope.success}" scope="request"/>
@@ -182,7 +183,7 @@
                     </span>
                 </div>
                 <c:if test="${not empty errors.email}">
-                    <div class="invalid-feedback">${errors.email}</div>
+                    <div class="invalid-feedback">${fn:escapeXml(errors.email)}</div>
                 </c:if>
             </div>
             
@@ -198,7 +199,7 @@
                     </span>
                 </div>
                 <c:if test="${not empty errors.password}">
-                    <div class="invalid-feedback">${errors.password}</div>
+                    <div class="invalid-feedback">${fn:escapeXml(errors.password)}</div>
                 </c:if>
             </div>
             

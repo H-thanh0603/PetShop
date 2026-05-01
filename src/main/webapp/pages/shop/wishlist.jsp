@@ -1,6 +1,7 @@
 <%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
 <%@ taglib prefix="c" uri="jakarta.tags.core" %>
 <%@ taglib prefix="fmt" uri="jakarta.tags.fmt" %>
+<%@ taglib prefix="fn" uri="jakarta.tags.functions" %>
 <!DOCTYPE html>
 <html lang="vi">
 <head>
@@ -54,26 +55,24 @@
                                     <div class="row align-items-center g-3">
                                         <div class="col-md-auto text-center">
                                             <a href="${pageContext.request.contextPath}/product-detail?id=${p.id}">
-                                                <img src="${pageContext.request.contextPath}/assets/images/shop_pic/${p.image}"
-                                                     alt="${p.name}" class="wishlist-image"
+                                                <img src="${pageContext.request.contextPath}/assets/images/shop_pic/${fn:escapeXml(p.image)}"
+                                                     alt="${fn:escapeXml(p.name)}" class="wishlist-image"
                                                      onerror="this.src='https://placehold.co/140x140/e2e8f0/1e293b?text=PetShop'">
                                             </a>
                                         </div>
                                         <div class="col">
                                             <div class="d-flex flex-column flex-md-row justify-content-between gap-3">
                                                 <div>
-                                                    <div class="text-uppercase small text-success fw-semibold">${p.category}</div>
+                                                    <div class="text-uppercase small text-success fw-semibold">${fn:escapeXml(p.category)}</div>
                                                     <h5 class="fw-bold mb-2">
-                                                        <a class="text-dark text-decoration-none" href="${pageContext.request.contextPath}/product-detail?id=${p.id}">
-                                                            ${p.name}
-                                                        </a>
+                                                        <a class="text-dark text-decoration-none" href="${pageContext.request.contextPath}/product-detail?id=${p.id}">${fn:escapeXml(p.name)}</a>
                                                     </h5>
                                                     <div class="text-warning small mb-2">
-                                                        <i class='bx bxs-star'></i> ${p.formattedAverageRating} (${p.reviewCount} đánh giá)
+                                                        <i class='bx bxs-star'></i> ${fn:escapeXml(p.formattedAverageRating)} (${p.reviewCount} đánh giá)
                                                     </div>
-                                                    <div class="fw-bold text-danger fs-5">${p.formattedPrice}</div>
+                                                    <div class="fw-bold text-danger fs-5">${fn:escapeXml(p.formattedPrice)}</div>
                                                     <c:if test="${p.discount > 0}">
-                                                        <div class="small text-muted">Tiết kiệm ${p.formattedDiscountAmount}</div>
+                                                        <div class="small text-muted">Tiết kiệm ${fn:escapeXml(p.formattedDiscountAmount)}</div>
                                                     </c:if>
                                                     <div class="small mt-2 ${p.stock > 0 ? 'text-success' : 'text-danger'}">
                                                         <i class='bx ${p.stock > 0 ? "bx-check-circle" : "bx-x-circle"}'></i>
@@ -82,6 +81,7 @@
                                                 </div>
                                                 <div class="d-flex flex-column gap-2 justify-content-center">
                                                     <form action="${pageContext.request.contextPath}/add-to-cart" method="post">
+                                                        <input type="hidden" name="csrfToken" value="${csrfToken}">
                                                         <input type="hidden" name="id" value="${p.id}">
                                                         <input type="hidden" name="quantity" value="1">
                                                         <button type="submit" class="btn btn-primary" ${p.stock <= 0 ? 'disabled' : ''}>
@@ -89,6 +89,7 @@
                                                         </button>
                                                     </form>
                                                     <form action="${pageContext.request.contextPath}/toggle-wishlist" method="post">
+                                                        <input type="hidden" name="csrfToken" value="${csrfToken}">
                                                         <input type="hidden" name="productId" value="${p.id}">
                                                         <input type="hidden" name="redirect" value="${pageContext.request.contextPath}/wishlist">
                                                         <button type="submit" class="btn btn-outline-danger">

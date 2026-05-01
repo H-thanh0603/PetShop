@@ -6,6 +6,9 @@ build/
 !**/src/main/**/build/
 !**/src/test/**/build/
 
+# ===== Maven (legacy) =====
+target/
+
 # ===== Sensitive Files =====
 .env
 src/main/java/Context/DBContext.java
@@ -45,6 +48,20 @@ Thumbs.db
 *.log
 logs/
 
-# ===== MemPalace =====
+# ===== Temp / Artifacts =====
+*.class
+test-report*.csv
+test-report*.xlsx
 mempalace.yaml
 entities.json
+RunDemoSQL.java
+RunDemoSQL.class
+
+# ===== User Excludes =====
+.kiro/
+.omx/
+.logs/
+.doc/
+*.kiro
+*.omx
+*.doc
