@@ -993,5 +993,40 @@ public class OrderDAO {
         }
         return 0;
     }
+    public List<Order> getOrdersByPage(int userId, String status, int offset, int limit) {
+        List<List<Order>> list = new ArrayList<>();
+        List<Order> orders = new ArrayList<>();
+
+        boolean filterStatus = (status != null && !status.trim().isEmpty() && !status.equalsIgnoreCase("All"));
+
+        String sql = "SELECT * FROM orders WHERE user_id = ?";
+        if (filterStatus) {
+            sql += " AND status = ?";
+        }
+        // Sắp xếp đơn hàng mới nhất lên đầu và áp dụng phân trang
+        sql += " ORDER BY created_at DESC LIMIT ? OFFSET ?";
+
+        try (Connection conn = Context.DBContext.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+
+            int paramIndex = 1;
+            ps.setInt(paramIndex++, userId);
+            if (filterStatus) {
+                ps.setString(paramIndex++, status);
+            }
+            ps.setInt(paramIndex++, limit);
+            ps.setInt(paramIndex++, offset);
+
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    // Sử dụng lại hàm mapOrder có sẵn trong file của bạn để đọc dữ liệu
+                    orders.add(mapOrder(rs));
+                }
+            }
+        } catch (Exception e) {
+            log.error("Lỗi khi lấy danh sách đơn hàng phân trang: ", e);
+        }
+        return orders;
+    }
 }
 
