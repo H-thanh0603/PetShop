@@ -233,7 +233,13 @@
     <div class="hero-box">
         <div class="row align-items-center g-3">
             <div class="col-lg-7">
-                <h1 class="hero-title"><i class='bx bx-package me-2'></i>Đơn hàng của tôi</h1>
+                <h1 class="hero-title">
+                    <i class='bx bx-package me-2'></i>
+                    <c:choose>
+                        <c:when test="${statusAct == 'Completed'}">Lịch sử mua hàng</c:when>
+                        <c:otherwise>Đơn hàng của tôi</c:otherwise>
+                    </c:choose>
+                </h1>
                 <p class="hero-subtitle">Theo dõi trạng thái đơn hàng, xem sản phẩm thực tế và quản lý lịch sử mua sắm của bạn.</p>
             </div>
             <div class="col-lg-5">

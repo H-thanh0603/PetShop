@@ -549,11 +549,6 @@
                                         <i class='bx bx-cart'></i> Giỏ hàng của tôi
                                     </a>
                                 </li>
-                                <li>
-                                    <a class="dropdown-item" href="${pageContext.request.contextPath}/my-orders">
-                                        <i class="bx bx-history me-2"></i> Lịch sử đơn hàng
-                                    </a>
-                                </li>
                                 <li><hr class="dropdown-divider"></li>
                             </c:if>
                             <li>
