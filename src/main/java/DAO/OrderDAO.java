@@ -990,5 +990,46 @@ public class OrderDAO {
         }
         return 0;
     }
+    public List<Order> getOrdersByUserIdWithPagination(int userId, String status, int offset, int limit) {
+        List<Order> list = new ArrayList<>();
+        String query = "SELECT * FROM orders WHERE userId = ?";
+
+        if (status != null && !status.trim().isEmpty() && !"All".equalsIgnoreCase(status)) {
+            query += " AND status = ?";
+        }
+
+        query += " ORDER BY createdAt DESC LIMIT ? OFFSET ?";
+
+        try (Connection conn = DBContext.getConnection();
+             PreparedStatement ps = conn.prepareStatement(query)) {
+
+            int paramIndex = 1;
+            ps.setInt(paramIndex++, userId);
+
+            if (status != null && !status.trim().isEmpty() && !"All".equalsIgnoreCase(status)) {
+                ps.setString(paramIndex++, status.trim());
+            }
+
+            ps.setInt(paramIndex++, limit);
+            ps.setInt(paramIndex++, offset);
+
+            try (ResultSet rs = ps.executeQuery()) {
+                if (this.paymentTransactionDAO != null) {
+                    this.paymentTransactionDAO.expirePendingTransactions();
+                }
+                while (rs.next()) {
+                    Order order = mapOrder(rs);
+                    order.setItems(getOrderItems(conn, order.getId()));
+                    list.add(order);
+                }
+            }
+            if (this.paymentTransactionDAO != null) {
+                this.paymentTransactionDAO.attachLatestToOrders(conn, list);
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return list;
+    }
 }
 
