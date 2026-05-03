@@ -75,6 +75,33 @@
         }
         .hero-stat-label { font-size: 0.8rem; color: rgba(255,255,255,0.8); }
         .hero-stat-value { font-size: 1.2rem; font-weight: 800; margin-top: 4px; }
+
+        /* Chuyển đổi trạng thái kiểu Tabs của File 2 nhưng giữ màu sắc đồng bộ */
+        .nav-tabs-custom {
+            background: var(--surface);
+            padding: 6px 12px;
+            border-radius: 16px;
+            box-shadow: var(--shadow-sm);
+            border: 1px solid var(--border);
+        }
+        .nav-tabs-custom .nav-link {
+            color: var(--muted);
+            border: none;
+            border-bottom: 3px solid transparent;
+            padding: 12px 16px;
+            font-weight: 600;
+            font-size: 0.95rem;
+            transition: all 0.2s;
+        }
+        .nav-tabs-custom .nav-link:hover {
+            color: var(--primary);
+        }
+        .nav-tabs-custom .nav-link.active {
+            color: var(--primary);
+            border-bottom-color: var(--primary);
+            background: transparent;
+        }
+
         .toolbar {
             display: flex;
             flex-wrap: wrap;
@@ -84,30 +111,13 @@
             margin-bottom: 24px;
         }
         .toolbar form { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; width: 100%; justify-content: space-between; }
-        .toolbar-left, .toolbar-right { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
-        .chip-filter {
-            background: rgba(255,255,255,0.85);
-            border: 1px solid var(--border);
-            color: var(--muted);
-            border-radius: 999px;
-            padding: 10px 16px;
-            font-size: 0.92rem;
-            font-weight: 600;
-            transition: all 0.25s ease;
-            text-decoration: none;
-        }
-        .chip-filter:hover, .chip-filter.active {
-            background: #eff6ff;
-            color: var(--primary);
-            border-color: #bfdbfe;
-            box-shadow: 0 6px 18px rgba(37,99,235,0.12);
-        }
+        .toolbar-right { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; width: 100%; justify-content: flex-end; }
         .search-box {
-            min-width: 280px;
+            min-width: 320px;
             background: rgba(255,255,255,0.9);
             border: 1px solid var(--border);
             border-radius: 999px;
-            padding: 10px 16px;
+            padding: 10px 18px;
             display: flex;
             align-items: center;
             gap: 10px;
@@ -148,18 +158,12 @@
         .status-pending { background: #fef3c7; color: #92400e; }
         .status-confirmed { background: #dbeafe; color: #1d4ed8; }
         .status-shipping { background: #e0e7ff; color: #4338ca; }
-        .status-delivered { background: #cffafe; color: #0891b2; } /* Light cyan for delivered */
+        .status-delivered { background: #cffafe; color: #0891b2; }
         .status-completed { background: #dcfce7; color: #166534; }
         .status-cancelled { background: #fee2e2; color: #991b1b; }
-        .status-awaiting-payment {
-            background: #ffedd5;
-            color: #c2410c;
-        }
+        .status-awaiting-payment { background: #ffedd5; color: #c2410c; }
+        .status-paid { background: #ccfbf1; color: #0f766e; }
 
-        .status-paid {
-            background: #ccfbf1;
-            color: #0f766e;
-        }
         .payment-badge { display: inline-flex; align-items: center; gap: 6px; margin-top: 8px; border-radius: 999px; padding: 6px 10px; font-size: 0.78rem; font-weight: 700; }
         .payment-pending { background: #fff7ed; color: #c2410c; }
         .payment-verified { background: #dcfce7; color: #166534; }
@@ -167,70 +171,50 @@
         .payment-neutral { background: #e0f2fe; color: #075985; }
         .payment-unpaid { background: #f1f5f9; color: #475569; }
         .payment-expired { background: #fef2f2; color: #b91c1c; }
+
         .order-main { padding: 20px 22px 18px; }
         .summary-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 14px; }
         .summary-card { background: #f8fafc; border: 1px solid #e9eef5; border-radius: 18px; padding: 16px; }
         .summary-label { font-size: 0.82rem; color: var(--muted); margin-bottom: 8px; display: flex; align-items: center; gap: 6px; }
         .summary-value { font-weight: 700; color: var(--text); line-height: 1.45; }
-        .summary-value.primary { color: var(--primary); font-size: 1.1rem; font-weight: 800; }
-        .order-actions {
-            margin-top: 18px;
-            display: flex;
-            justify-content: space-between;
-            gap: 12px;
-            align-items: center;
-            flex-wrap: wrap;
-        }
+        .summary-value.primary { color: var(--danger); font-size: 1.1rem; font-weight: 800; }
+
+        .order-actions { margin-top: 18px; display: flex; justify-content: space-between; gap: 12px; align-items: center; flex-wrap: wrap; }
         .mini-hint { color: var(--muted); font-size: 0.9rem; }
-        .btn-glass {
-            border-radius: 14px;
-            padding: 10px 16px;
-            font-weight: 700;
-            border: 1px solid #dbeafe;
-            background: linear-gradient(180deg, #ffffff, #eff6ff);
-            color: var(--primary);
-        }
+        .btn-glass { border-radius: 14px; padding: 10px 16px; font-weight: 700; border: 1px solid #dbeafe; background: linear-gradient(180deg, #ffffff, #eff6ff); color: var(--primary); }
         .btn-soft-dark { border-radius: 14px; padding: 10px 16px; font-weight: 700; }
+
         .order-detail { border-top: 1px dashed #dbe3ef; background: linear-gradient(180deg, #ffffff 0%, #f8fbff 100%); }
         .order-detail-inner { padding: 22px; }
         .detail-grid { display: grid; grid-template-columns: 1.2fr 1fr; gap: 18px; }
         .detail-panel { background: #fff; border: 1px solid #edf2f7; border-radius: 20px; padding: 18px; height: 100%; }
         .detail-title { font-size: 1rem; font-weight: 800; margin-bottom: 14px; display: flex; align-items: center; gap: 8px; }
+
         .progress-track { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-top: 8px; flex-wrap: wrap; }
         .progress-step { flex: 1; min-width: 110px; text-align: center; }
-        .progress-step .dot {
-            width: 36px; height: 36px; border-radius: 50%; margin: 0 auto 8px;
-            display: grid; place-items: center; background: #e2e8f0; color: #64748b; font-weight: 700;
-        }
+        .progress-step .dot { width: 36px; height: 36px; border-radius: 50%; margin: 0 auto 8px; display: grid; place-items: center; background: #e2e8f0; color: #64748b; font-weight: 700; }
         .progress-step.active .dot, .progress-step.done .dot { background: #dbeafe; color: var(--primary); }
         .progress-step.done .dot { background: #dcfce7; color: var(--success); }
         .progress-step .label { font-size: 0.84rem; color: var(--muted); font-weight: 600; }
         .progress-step.active .label, .progress-step.done .label { color: var(--text); }
+
         .info-list { display: grid; gap: 12px; }
         .info-item { background: #f8fafc; border: 1px solid #eef2f7; border-radius: 16px; padding: 14px; }
         .info-item .label { font-size: 0.78rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.04em; margin-bottom: 6px; }
         .info-item .value { font-weight: 700; color: var(--text); line-height: 1.5; }
+
         .product-list { display: grid; gap: 12px; margin-top: 14px; }
-        .product-row {
-            display: grid; grid-template-columns: 56px 1fr auto; gap: 12px; align-items: center;
-            padding: 12px; border: 1px solid #eef2f7; border-radius: 16px; background: #fafcff;
-        }
-        .product-thumb {
-            width: 56px; height: 56px; border-radius: 14px; overflow: hidden;
-            background: linear-gradient(135deg, #dbeafe, #ede9fe); display: grid; place-items: center;
-        }
+        .product-row { display: grid; grid-template-columns: 56px 1fr auto; gap: 12px; align-items: center; padding: 12px; border: 1px solid #eef2f7; border-radius: 16px; background: #fafcff; }
+        .product-thumb { width: 56px; height: 56px; border-radius: 14px; overflow: hidden; background: linear-gradient(135deg, #dbeafe, #ede9fe); display: grid; place-items: center; }
         .product-thumb img { width: 100%; height: 100%; object-fit: cover; }
         .product-name { font-weight: 700; color: var(--text); margin-bottom: 4px; }
         .product-meta { font-size: 0.86rem; color: var(--muted); }
         .product-price { font-weight: 800; color: var(--text); }
+
         .empty-state { background: rgba(255,255,255,0.92); border: 1px solid var(--border); border-radius: 28px; padding: 56px 24px; box-shadow: var(--shadow-sm); }
-        .empty-illustration {
-            width: 108px; height: 108px; border-radius: 50%; background: linear-gradient(135deg, #dbeafe, #ede9fe);
-            display: grid; place-items: center; font-size: 2.4rem; color: var(--primary); margin: 0 auto 18px;
-        }
-        @media (max-width: 992px) {
-            .summary-grid, .detail-grid, .hero-stats { grid-template-columns: 1fr; }
-        }
+        .empty-illustration { width: 108px; height: 108px; border-radius: 50%; background: linear-gradient(135deg, #dbeafe, #ede9fe); display: grid; place-items: center; font-size: 2.4rem; color: var(--primary); margin: 0 auto 18px; }
+
+        @media (max-width: 992px) { .summary-grid, .detail-grid, .hero-stats { grid-template-columns: 1fr; } }
         @media (max-width: 768px) {
             .orders-page { padding-top: 28px; }
             .hero-title { font-size: 1.55rem; }
@@ -296,25 +280,47 @@
         </div>
     </c:if>
 
+    <c:set var="statusAct" value="${not empty selectedStatus ? selectedStatus : (not empty currentStatus ? currentStatus : 'all')}" />
+    <div class="card mb-4 border-0 shadow-sm rounded-3">
+        <div class="card-body p-0">
+            <ul class="nav nav-tabs nav-tabs-custom justify-content-start border-bottom-0">
+                <li class="nav-item">
+                    <a class="nav-link ${statusAct == 'all' || statusAct == 'All' ? 'active' : ''}" href="?status=all&keyword=${fn:escapeXml(keyword)}">Tất cả</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link ${statusAct == 'Awaiting Payment' ? 'active' : ''}" href="?status=Awaiting Payment&keyword=${fn:escapeXml(keyword)}">Chờ thanh toán</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link ${statusAct == 'Pending' ? 'active' : ''}" href="?status=Pending&keyword=${fn:escapeXml(keyword)}">Chờ xử lý</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link ${statusAct == 'Paid' ? 'active' : ''}" href="?status=Paid&keyword=${fn:escapeXml(keyword)}">Đã thanh toán</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link ${statusAct == 'Shipping' ? 'active' : ''}" href="?status=Shipping&keyword=${fn:escapeXml(keyword)}">Đang giao</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link ${statusAct == 'Delivered' ? 'active' : ''}" href="?status=Delivered&keyword=${fn:escapeXml(keyword)}">Đã giao</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link ${statusAct == 'Completed' ? 'active' : ''}" href="?status=Completed&keyword=${fn:escapeXml(keyword)}">Hoàn thành</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link ${statusAct == 'Cancelled' ? 'active' : ''}" href="?status=Cancelled&keyword=${fn:escapeXml(keyword)}">Đã hủy</a>
+                </li>
+            </ul>
+        </div>
+    </div>
+
     <div class="toolbar">
         <form action="${pageContext.request.contextPath}/my-orders" method="get">
-            <div class="toolbar-left">
-                <a class="chip-filter ${empty selectedStatus || selectedStatus == 'all' ? 'active' : ''}" href="${pageContext.request.contextPath}/my-orders?status=all&keyword=${fn:escapeXml(keyword)}">Tất cả</a>
-                <a class="chip-filter ${selectedStatus == 'Awaiting Payment' ? 'active' : ''}" href="${pageContext.request.contextPath}/my-orders?status=Awaiting Payment&keyword=${fn:escapeXml(keyword)}">Đang chờ thanh toán</a>
-                <a class="chip-filter ${selectedStatus == 'Pending' ? 'active' : ''}" href="${pageContext.request.contextPath}/my-orders?status=Pending&keyword=${fn:escapeXml(keyword)}">Chờ xử lý</a>
-                <a class="chip-filter ${selectedStatus == 'Paid' ? 'active' : ''}" href="${pageContext.request.contextPath}/my-orders?status=Paid&keyword=${fn:escapeXml(keyword)}">Đã thanh toán</a>
-                <a class="chip-filter ${selectedStatus == 'Shipping' ? 'active' : ''}" href="${pageContext.request.contextPath}/my-orders?status=Shipping&keyword=${fn:escapeXml(keyword)}">Đang giao</a>
-                <a class="chip-filter ${selectedStatus == 'Delivered' ? 'active' : ''}" href="${pageContext.request.contextPath}/my-orders?status=Delivered&keyword=${fn:escapeXml(keyword)}">Đã giao</a>
-                <a class="chip-filter ${selectedStatus == 'Completed' ? 'active' : ''}" href="${pageContext.request.contextPath}/my-orders?status=Completed&keyword=${fn:escapeXml(keyword)}">Hoàn thành</a>
-                <a class="chip-filter ${selectedStatus == 'Cancelled' ? 'active' : ''}" href="${pageContext.request.contextPath}/my-orders?status=Cancelled&keyword=${fn:escapeXml(keyword)}">Đã hủy</a>
-            </div>
+            <input type="hidden" name="status" value="${fn:escapeXml(statusAct)}">
             <div class="toolbar-right">
-                <input type="hidden" name="status" value="${empty selectedStatus ? 'all' : selectedStatus}">
                 <div class="search-box">
                     <i class='bx bx-search-alt-2 text-secondary'></i>
                     <input type="text" name="keyword" value="${fn:escapeXml(keyword)}" placeholder="Tìm theo mã đơn, người nhận, số điện thoại...">
                 </div>
-                <button class="btn btn-primary rounded-pill px-4" type="submit">Tìm</button>
+                <button class="btn btn-primary rounded-pill px-4" type="submit">Tìm kiếm</button>
             </div>
         </form>
     </div>
@@ -392,7 +398,7 @@
                                             <input type="hidden" name="action" value="confirmReceipt">
                                             <input type="hidden" name="orderId" value="${o.id}">
                                             <button type="submit" class="btn btn-success text-white" ${o.status == 'Completed' ? 'disabled' : ''}>
-                                                <i class='bx bx-check-double'></i> ${o.status == 'Completed' ? 'Đã nhận hàng' : 'Đã nhận hàng'}
+                                                <i class='bx bx-check-double'></i> ${o.status == 'Completed' ? 'Đã nhận hàng' : 'Xác nhận nhận hàng'}
                                             </button>
                                         </form>
                                     </c:if>
@@ -505,6 +511,30 @@
                     </div>
                 </c:forEach>
             </div>
+
+            <c:if test="${totalPages > 1}">
+                <nav class="d-flex justify-content-center mt-4">
+                    <ul class="pagination pagination-md shadow-sm rounded-3">
+                        <li class="page-item ${currentPage == 1 ? 'disabled' : ''}">
+                            <a class="page-link px-3" href="?status=${statusAct}&page=${currentPage - 1}&keyword=${fn:escapeXml(keyword)}">
+                                <i class="bx bx-chevron-left"></i> Trước
+                            </a>
+                        </li>
+
+                        <c:forEach begin="1" end="${totalPages}" var="i">
+                            <li class="page-item ${currentPage == i ? 'active' : ''}">
+                                <a class="page-link px-3" href="?status=${statusAct}&page=${i}&keyword=${fn:escapeXml(keyword)}">${i}</a>
+                            </li>
+                        </c:forEach>
+
+                        <li class="page-item ${currentPage == totalPages ? 'disabled' : ''}">
+                            <a class="page-link px-3" href="?status=${statusAct}&page=${currentPage + 1}&keyword=${fn:escapeXml(keyword)}">
+                                Sau <i class="bx bx-chevron-right"></i>
+                            </a>
+                        </li>
+                    </ul>
+                </nav>
+            </c:if>
         </c:otherwise>
     </c:choose>
 </div>
