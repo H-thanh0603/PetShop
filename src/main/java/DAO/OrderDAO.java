@@ -966,21 +966,18 @@ public class OrderDAO {
             log.error("Auto-complete delivered orders error", e);
         }
     }
-    public int countOrders(int userId, String status) {
-        // Nếu chọn "Tất cả", tham số status truyền vào sẽ là null hoặc rỗng
-        boolean filterStatus = (status != null && !status.trim().isEmpty() && !status.equalsIgnoreCase("All"));
-
-        String sql = "SELECT COUNT(*) FROM orders WHERE user_id = ?";
-        if (filterStatus) {
-            sql += " AND status = ?";
+    public int countOrdersByUserId(int userId, String status) {
+        String query = "SELECT COUNT(*) FROM orders WHERE userId = ?";
+        if (status != null && !status.trim().isEmpty() && !"All".equalsIgnoreCase(status)) {
+            query += " AND status = ?";
         }
 
-        try (Connection conn = Context.DBContext.getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql)) {
+        try (Connection conn = DBContext.getConnection();
+             PreparedStatement ps = conn.prepareStatement(query)) {
 
             ps.setInt(1, userId);
-            if (filterStatus) {
-                ps.setString(2, status);
+            if (status != null && !status.trim().isEmpty() && !"All".equalsIgnoreCase(status)) {
+                ps.setString(2, status.trim());
             }
 
             try (ResultSet rs = ps.executeQuery()) {
@@ -989,44 +986,9 @@ public class OrderDAO {
                 }
             }
         } catch (Exception e) {
-            log.error("Lỗi khi đếm số lượng đơn hàng: ", e);
+            e.printStackTrace();
         }
         return 0;
-    }
-    public List<Order> getOrdersByPage(int userId, String status, int offset, int limit) {
-        List<List<Order>> list = new ArrayList<>();
-        List<Order> orders = new ArrayList<>();
-
-        boolean filterStatus = (status != null && !status.trim().isEmpty() && !status.equalsIgnoreCase("All"));
-
-        String sql = "SELECT * FROM orders WHERE user_id = ?";
-        if (filterStatus) {
-            sql += " AND status = ?";
-        }
-        // Sắp xếp đơn hàng mới nhất lên đầu và áp dụng phân trang
-        sql += " ORDER BY created_at DESC LIMIT ? OFFSET ?";
-
-        try (Connection conn = Context.DBContext.getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql)) {
-
-            int paramIndex = 1;
-            ps.setInt(paramIndex++, userId);
-            if (filterStatus) {
-                ps.setString(paramIndex++, status);
-            }
-            ps.setInt(paramIndex++, limit);
-            ps.setInt(paramIndex++, offset);
-
-            try (ResultSet rs = ps.executeQuery()) {
-                while (rs.next()) {
-                    // Sử dụng lại hàm mapOrder có sẵn trong file của bạn để đọc dữ liệu
-                    orders.add(mapOrder(rs));
-                }
-            }
-        } catch (Exception e) {
-            log.error("Lỗi khi lấy danh sách đơn hàng phân trang: ", e);
-        }
-        return orders;
     }
 }
 
