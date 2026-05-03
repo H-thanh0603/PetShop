@@ -9,7 +9,6 @@ import Util.VnpayUtil;
 import services.ReorderService;
 
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.List;
 
 import jakarta.servlet.ServletException;
@@ -21,23 +20,29 @@ import jakarta.servlet.http.HttpSession;
 
 @WebServlet("/my-orders")
 public class MyOrdersServlet extends HttpServlet {
-    private OrderDAO orderDAO = new OrderDAO();
-    private ReorderService reorderService = new ReorderService();
+    private final OrderDAO orderDAO = new OrderDAO();
+    private final ReorderService reorderService = new ReorderService();
     private static final long serialVersionUID = 1L;
+    private static final int PAGE_SIZE = 5;
 
+    @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
         HttpSession session = request.getSession();
         User user = (User) session.getAttribute("user");
 
         if (user == null) {
-            response.sendRedirect(request.getContextPath() + "/login");
+            session.setAttribute("redirectAfterLogin", request.getContextPath() + "/my-orders");
+            response.sendRedirect(request.getContextPath() + "/auth/login");
             return;
         }
 
         String action = request.getParameter("action");
         String statusFilter = request.getParameter("status");
+        if (statusFilter == null || statusFilter.trim().isEmpty()) {
+            statusFilter = "all";
+        }
         String keyword = request.getParameter("keyword");
-        OrderDAO dao = new OrderDAO();
+        if (keyword != null) keyword = keyword.trim();
 
         if ("view".equals(action)) {
             int orderId;
@@ -48,9 +53,8 @@ public class MyOrdersServlet extends HttpServlet {
                 response.sendRedirect(request.getContextPath() + "/my-orders");
                 return;
             }
-            Order order = dao.getOrderById(orderId);
-            
-            // Bảo mật: Chỉ cho phép xem nếu đơn hàng thuộc về user đang đăng nhập
+            Order order = orderDAO.getOrderById(orderId);
+
             if (order != null && order.getUserId() == user.getId()) {
                 request.setAttribute("order", order);
                 request.getRequestDispatcher("/pages/shop/order-detail.jsp").forward(request, response);
@@ -60,37 +64,64 @@ public class MyOrdersServlet extends HttpServlet {
                 return;
             }
         }
+
+        orderDAO.autoCompleteDeliveredOrders(); // Tự động hoàn thành các đơn đã giao
         int countPending = orderDAO.countPendingOrdersByUserId(user.getId());
         int countCompleted = orderDAO.countCompletedOrdersByUserId(user.getId());
-        dao.autoCompleteDeliveredOrders();
-        List<Order> allOrders = dao.getOrdersByUserId(user.getId());
-        List<Order> list = filterOrders(allOrders, statusFilter, keyword);
-        List<CustomerRepurchaseSuggestion> repurchaseSuggestions =
-                dao.getRepurchaseSuggestions(user.getId(), 30, 5);
+
+        // Gợi ý mua lại sản phẩm
+        List<CustomerRepurchaseSuggestion> repurchaseSuggestions = orderDAO.getRepurchaseSuggestions(user.getId(), 30, 5);
+
+        int currentPage = 1;
+        String pageParam = request.getParameter("page");
+        if (pageParam != null && !pageParam.trim().isEmpty()) {
+            try {
+                currentPage = Integer.parseInt(pageParam);
+                if (currentPage < 1) currentPage = 1;
+            } catch (NumberFormatException e) {
+                currentPage = 1;
+            }
+        }
+        int offset = (currentPage - 1) * PAGE_SIZE;
+
+        // LƯU Ý: Để tối ưu nhất, bạn nên bổ sung tham số `keyword` vào hàm count và hàm pagination trong OrderDAO.
+        // Tạm thời cấu hình theo cấu trúc phân trang tầng DB:
+        int totalOrders = orderDAO.countOrdersByUserId(user.getId(), statusFilter);
+        int totalPages = (int) Math.ceil((double) totalOrders / PAGE_SIZE);
+        if (totalPages == 0) totalPages = 1;
+
+        List<Order> list = orderDAO.getOrdersByUserIdWithPagination(user.getId(), statusFilter, offset, PAGE_SIZE);
+
+        // 4. ĐẨY DỮ LIỆU SANG JSP
         request.setAttribute("countPending", countPending);
         request.setAttribute("countCompleted", countCompleted);
         request.setAttribute("orders", list);
         request.setAttribute("repurchaseSuggestions", repurchaseSuggestions);
-        request.setAttribute("totalOrders", allOrders.size());
+        request.setAttribute("totalOrders", totalOrders);
         request.setAttribute("selectedStatus", statusFilter);
+        request.setAttribute("currentStatus", statusFilter); // Tương thích với cả 2 jsp
         request.setAttribute("keyword", keyword);
+        request.setAttribute("currentPage", currentPage);
+        request.setAttribute("totalPages", totalPages);
+
         request.getRequestDispatcher("/pages/shop/my-orders.jsp").forward(request, response);
     }
 
+    @Override
     protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
         HttpSession session = request.getSession();
         User user = (User) session.getAttribute("user");
 
         if (user == null) {
-            response.sendRedirect(request.getContextPath() + "/login");
+            response.sendRedirect(request.getContextPath() + "/auth/login");
             return;
         }
 
         String action = request.getParameter("action");
+
         if ("cancel".equals(action)) {
             try {
                 int orderId = Integer.parseInt(request.getParameter("orderId"));
-                // Check cancellation window first for a clear error message
                 if (!orderDAO.isWithinCancellationWindow(orderId)) {
                     session.setAttribute("toastMessage", "Đã quá thời gian hủy đơn hàng (1 giờ kể từ khi đặt).");
                     session.setAttribute("toastType", "warning");
@@ -105,7 +136,8 @@ public class MyOrdersServlet extends HttpServlet {
                 session.setAttribute("toastMessage", "Có lỗi xảy ra khi hủy đơn hàng.");
                 session.setAttribute("toastType", "error");
             }
-        } else if ("reorder".equals(action)) {
+        }
+        else if ("reorder".equals(action)) {
             try {
                 int orderId = Integer.parseInt(request.getParameter("orderId"));
                 if (reorderService.reorderToCart(user.getId(), orderId)) {
@@ -120,7 +152,9 @@ public class MyOrdersServlet extends HttpServlet {
                 session.setAttribute("toastMessage", "Có lỗi xảy ra khi mua lại đơn hàng.");
                 session.setAttribute("toastType", "error");
             }
-        } else if ("confirmReceipt".equals(action)) {
+            return;
+        }
+        else if ("confirmReceipt".equals(action)) {
             try {
                 int orderId = Integer.parseInt(request.getParameter("orderId"));
                 Order order = orderDAO.getOrderById(orderId);
@@ -149,13 +183,12 @@ public class MyOrdersServlet extends HttpServlet {
                 session.setAttribute("toastMessage", "Có lỗi xảy ra khi xác nhận đơn hàng.");
                 session.setAttribute("toastType", "error");
             }
-        } else if ("repay".equals(action)) {
+        }
+        else if ("repay".equals(action)) {
             try {
                 int orderId = Integer.parseInt(request.getParameter("orderId"));
                 Order order = orderDAO.getOrderById(orderId);
 
-                // Bảo mật + trạng thái: chỉ chủ đơn mới được thanh toán lại,
-                // và đơn phải còn trong điều kiện thanh toán lại (chưa trả, còn hạn).
                 if (order == null || order.getUserId() != user.getId() || !order.isRepayable()) {
                     session.setAttribute("toastMessage", "Đơn hàng không thể thanh toán lại.");
                     session.setAttribute("toastType", "error");
@@ -163,7 +196,6 @@ public class MyOrdersServlet extends HttpServlet {
                     return;
                 }
 
-                // Nạp lại dữ liệu cho trang order-success (đọc từ session).
                 session.setAttribute("paymentMethod", "VNPAY");
                 session.setAttribute("paymentStatus", 0);
                 session.setAttribute("successOrderId", orderId);
@@ -176,7 +208,6 @@ public class MyOrdersServlet extends HttpServlet {
                 session.setAttribute("successOrderNote", order.getNote());
                 session.setAttribute("successOrderItems", order.getItems());
 
-                // Tái sử dụng đúng luồng VNPAY hiện có cho chính đơn hàng này.
                 String vnpayUrl = VnpayUtil.createPaymentUrl(request, orderId, order.getTotalAmount());
                 response.sendRedirect(vnpayUrl);
                 return;
@@ -184,26 +215,7 @@ public class MyOrdersServlet extends HttpServlet {
                 session.setAttribute("error", "Có lỗi xảy ra khi thanh toán lại đơn hàng.");
             }
         }
+
         response.sendRedirect(request.getContextPath() + "/my-orders");
-    }
-
-    private List<Order> filterOrders(List<Order> orders, String statusFilter, String keyword) {
-        List<Order> filtered = new ArrayList<>();
-        String normalizedStatus = statusFilter == null ? "" : statusFilter.trim();
-        String normalizedKeyword = keyword == null ? "" : keyword.trim().toLowerCase();
-
-        for (Order order : orders) {
-            boolean matchesStatus = normalizedStatus.isEmpty() || "all".equalsIgnoreCase(normalizedStatus)
-                    || order.getStatus().equalsIgnoreCase(normalizedStatus);
-            boolean matchesKeyword = normalizedKeyword.isEmpty()
-                    || String.valueOf(order.getId()).contains(normalizedKeyword)
-                    || (order.getFullname() != null && order.getFullname().toLowerCase().contains(normalizedKeyword))
-                    || (order.getPhone() != null && order.getPhone().toLowerCase().contains(normalizedKeyword))
-                    || (order.getAddress() != null && order.getAddress().toLowerCase().contains(normalizedKeyword));
-            if (matchesStatus && matchesKeyword) {
-                filtered.add(order);
-            }
-        }
-        return filtered;
     }
 }
