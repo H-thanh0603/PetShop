@@ -1031,5 +1031,58 @@ public class OrderDAO {
         }
         return list;
     }
+    /**
+     * Yêu cầu đổi trả / hoàn tiền cho đơn hàng đã giao.
+     * Chỉ áp dụng khi status == 'Delivered'.
+     */
+    public boolean requestReturn(int orderId, int userId, String reason) {
+        String lockSql = "SELECT status, total_amount FROM orders WHERE id = ? AND user_id = ? FOR UPDATE";
+        String updateSql = "UPDATE orders SET status = 'Return_Requested' WHERE id = ?";
+        String insertSql = "INSERT INTO order_returns (order_id, user_id, reason, refund_amount, status) "
+                + "VALUES (?, ?, ?, ?, 'Pending')";
+
+        try (Connection conn = DBContext.getConnection()) {
+            conn.setAutoCommit(false);
+            try {
+                String currentStatus;
+                java.math.BigDecimal totalAmount;
+                try (PreparedStatement ps = conn.prepareStatement(lockSql)) {
+                    ps.setInt(1, orderId);
+                    ps.setInt(2, userId);
+                    try (ResultSet rs = ps.executeQuery()) {
+                        if (!rs.next()) { conn.rollback(); return false; }
+                        currentStatus = rs.getString("status");
+                        totalAmount   = rs.getBigDecimal("total_amount");
+                    }
+                }
+
+                if (!"Delivered".equals(currentStatus)) { conn.rollback(); return false; }
+
+                try (PreparedStatement ps = conn.prepareStatement(updateSql)) {
+                    ps.setInt(1, orderId);
+                    ps.executeUpdate();
+                }
+
+                // 4. Tạo bản ghi đổi trả
+                try (PreparedStatement ps = conn.prepareStatement(insertSql)) {
+                    ps.setInt(1, orderId);
+                    ps.setInt(2, userId);
+                    ps.setString(3, reason);
+                    ps.setBigDecimal(4, totalAmount);
+                    ps.executeUpdate();
+                }
+
+                conn.commit();
+                return true;
+
+            } catch (Exception e) {
+                conn.rollback();
+                throw e;
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
 }
 
