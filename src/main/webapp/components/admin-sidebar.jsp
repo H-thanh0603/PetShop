@@ -38,7 +38,10 @@
         <a href="${pageContext.request.contextPath}/admin/orders" class="<%= "orders".equals(currentPage) ? "active" : "" %>">
             <i class='bx bxs-cart-alt'></i> Quản lý Đơn hàng
         </a>
-        
+        <a href="${pageContext.request.contextPath}/admin/order-returns" class="<%= "order-returns".equals(currentPage) ? "active" : "" %>">
+            <i class='bx bx-undo'></i> Quản lý Đổi trả / Hoàn tiền
+        </a>
+
         <c:if test="${sessionScope.user.role == 'admin' || sessionScope.user.role == 'staff'}">
             <a href="${pageContext.request.contextPath}/pages/admin/reviews" class="<%= "reviews".equals(currentPage) ? "active" : "" %>">
                 <i class='bx bxs-star-half'></i> Quản lý Review
