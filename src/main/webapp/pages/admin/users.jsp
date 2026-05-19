@@ -453,7 +453,10 @@
                             </div>
                             <div class="col-md-6 mb-3">
                                 <label class="form-label fw-bold">Mật khẩu <span class="text-danger">*</span></label>
-                                <input type="password" class="form-control" name="password" required placeholder="Nhập mật khẩu">
+                                <input type="password" class="form-control" name="password" required minlength="8"
+                                       pattern="(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z0-9\s]).{8,}"
+                                       title="Tối thiểu 8 ký tự, gồm chữ hoa, chữ thường, số và ký tự đặc biệt."
+                                       placeholder="Tối thiểu 8 ký tự, hoa/thường/số/đặc biệt">
                             </div>
                         </div>
                         <div class="mb-3">
@@ -569,7 +572,9 @@
                     <div class="modal-body">
                         <div class="mb-3">
                             <label class="form-label fw-bold">Mật khẩu mới</label>
-                            <input type="password" class="form-control" name="newPassword" required minlength="6">
+                            <input type="password" class="form-control" name="newPassword" required minlength="8"
+                                   pattern="(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z0-9\s]).{8,}"
+                                   title="Tối thiểu 8 ký tự, gồm chữ hoa, chữ thường, số và ký tự đặc biệt.">
                         </div>
                     </div>
                     <div class="modal-footer">

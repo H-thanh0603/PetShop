@@ -17,6 +17,7 @@ import DAO.OrderDAO;
 import DAO.AdminActionLogDAO;
 import Model.User;
 import Model.Order;
+import Util.PasswordUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -148,7 +149,10 @@ public class UserManageServlet extends HttpServlet {
                     String phone = request.getParameter("phone");
                     String role = request.getParameter("role");
                     
-                    if (userDAO.checkUsernameExists(username)) {
+                    if (!PasswordUtil.isStrongPassword(password)) {
+                        message = "Mật khẩu phải có tối thiểu 8 ký tự, gồm chữ hoa, chữ thường, số và ký tự đặc biệt.";
+                        messageType = "error";
+                    } else if (userDAO.checkUsernameExists(username)) {
                         message = "Username đã tồn tại!";
                         messageType = "error";
                     } else if (userDAO.addUser(username, password, fullname, email, phone, role)) {
@@ -209,7 +213,10 @@ public class UserManageServlet extends HttpServlet {
                     int resetUserId = Integer.parseInt(request.getParameter("userId"));
                     String newPassword = request.getParameter("newPassword");
                     
-                    if (userDAO.resetUserPassword(resetUserId, newPassword)) {
+                    if (!PasswordUtil.isStrongPassword(newPassword)) {
+                        message = "Mật khẩu mới phải có tối thiểu 8 ký tự, gồm chữ hoa, chữ thường, số và ký tự đặc biệt.";
+                        messageType = "error";
+                    } else if (userDAO.resetUserPassword(resetUserId, newPassword)) {
                         actionLog.log(adminId, "RESET_PASSWORD", "user", resetUserId, null);
                         message = "Đã reset mật khẩu thành công!";
                     } else {

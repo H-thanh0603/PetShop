@@ -37,7 +37,7 @@ public class CartServlet extends HttpServlet {
         String action = request.getParameter("action");
         
         if ("remove".equals(action)) {
-            removeFromCart(request, response);
+            response.sendRedirect(request.getContextPath() + "/cart");
         } else if ("state".equals(action)) {
             writeCartState(request, response);
         } else {

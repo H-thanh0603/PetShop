@@ -34,11 +34,12 @@
             <div class="col-lg-2 col-md-6 mb-4">
                 <h5 class="text-white mb-3">Hỗ trợ</h5>
                 <ul class="list-unstyled footer-links">
-                    <li><a href="#">Chính sách đổi trả</a></li>
-                    <li><a href="#">Chính sách vận chuyển</a></li>
-                    <li><a href="#">Hướng dẫn mua hàng</a></li>
-                    <li><a href="#">Tư vấn khách hàng</a></li>
-                    <li><a href="#">VIP Pet Card</a></li>
+                    <li><a href="${pageContext.request.contextPath}/return-policy">Chính sách đổi trả</a></li>
+                    <li><a href="${pageContext.request.contextPath}/shipping-policy">Chính sách vận chuyển</a></li>
+                    <li><a href="${pageContext.request.contextPath}/buying-guide">Hướng dẫn mua hàng</a></li>
+                    <li><a href="${pageContext.request.contextPath}/support">Tư vấn khách hàng</a></li>
+                    <li><a href="${pageContext.request.contextPath}/privacy-policy">Chính sách bảo mật</a></li>
+                    <li><a href="${pageContext.request.contextPath}/terms">Điều khoản sử dụng</a></li>
                 </ul>
             </div>
 

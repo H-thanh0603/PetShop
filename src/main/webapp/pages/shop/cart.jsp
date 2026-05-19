@@ -53,6 +53,7 @@
         .btn-confirm-delete { background: linear-gradient(135deg, #dc3545 0%, #b91c1c 100%); color: white; border: none; padding: 12px 30px; border-radius: 50px; font-weight: 600; transition: 0.3s; }
         .btn-confirm-delete:hover { background: linear-gradient(135deg, #b91c1c 0%, #991b1b 100%); transform: translateY(-2px); box-shadow: 0 4px 15px rgba(220, 53, 69, 0.4); }
     </style>
+    <link href="${pageContext.request.contextPath}/assets/css/storefront-polish.css" rel="stylesheet">
 </head>
 <body>
 
@@ -78,7 +79,7 @@
         <%-- Hiển thị thông báo nếu chưa đăng nhập --%>
         <c:if test="${empty sessionScope.user}">
             <div class="text-center py-5 bg-white rounded shadow-sm">
-                <img src="https://cdn-icons-png.flaticon.com/512/6195/6195678.png" width="150" style="opacity: 0.6">
+                <img loading="lazy" src="https://cdn-icons-png.flaticon.com/512/6195/6195678.png" width="150" style="opacity: 0.6">
                 <h4 class="mt-4 text-muted">Vui lòng đăng nhập để xem giỏ hàng</h4>
                 <a href="${pageContext.request.contextPath}/login" class="btn btn-checkout px-5 mt-3" style="width: auto;">
                     <i class='bx bx-log-in'></i> Đăng nhập ngay
@@ -89,7 +90,7 @@
         <%-- Giỏ hàng trống (đã đăng nhập nhưng không có sản phẩm) --%>
         <c:if test="${not empty sessionScope.user and empty sessionScope.cart}">
             <div class="text-center py-5 bg-white rounded shadow-sm">
-                <img src="https://cdn-icons-png.flaticon.com/512/11329/11329060.png" width="150" style="opacity: 0.6">
+                <img loading="lazy" src="https://cdn-icons-png.flaticon.com/512/11329/11329060.png" width="150" style="opacity: 0.6">
                 <h4 class="mt-4 text-muted">Giỏ hàng trống</h4>
                 <a href="${pageContext.request.contextPath}/shop" class="btn btn-checkout px-5 mt-3" style="width: auto;">Mua sắm ngay</a>
             </div>
@@ -117,7 +118,7 @@
                                     <tr class="cart-row">
                                         <td>
                                             <div class="d-flex align-items-center">
-                                                <img src="${pageContext.request.contextPath}/assets/images/shop_pic/${fn:escapeXml(item.product.image)}" 
+                                                <img loading="lazy" src="${fn:startsWith(item.product.image, 'http') ? fn:escapeXml(item.product.image) : pageContext.request.contextPath += '/assets/images/shop_pic/' += fn:escapeXml(item.product.image)}" 
                                                      class="cart-product-img"
                                                      onerror="this.src='https://placehold.co/300x300/e2e8f0/1e293b?text=PetShop'">
                                                 <div>
@@ -196,9 +197,14 @@
                         <button type="button" class="btn btn-cancel-delete" data-bs-dismiss="modal">
                             <i class='bx bx-x'></i> Hủy
                         </button>
-                        <a href="#" id="confirmDeleteBtn" class="btn btn-confirm-delete">
-                            <i class='bx bx-check'></i> Xóa
-                        </a>
+                        <form action="${pageContext.request.contextPath}/cart" method="post" class="m-0">
+                            <input type="hidden" name="csrfToken" value="${csrfToken}">
+                            <input type="hidden" name="action" value="remove">
+                            <input type="hidden" name="id" id="deleteProductId">
+                            <button type="submit" id="confirmDeleteBtn" class="btn btn-confirm-delete">
+                                <i class='bx bx-check'></i> Xóa
+                            </button>
+                        </form>
                     </div>
                 </div>
             </div>
@@ -213,7 +219,7 @@
 
         function openDeleteModal(productId, productName) {
             document.getElementById('deleteProductName').textContent = productName;
-            document.getElementById('confirmDeleteBtn').href = '${pageContext.request.contextPath}/cart?action=remove&id=' + productId;
+            document.getElementById('deleteProductId').value = productId;
             var deleteModal = new bootstrap.Modal(document.getElementById('deleteModal'));
             deleteModal.show();
         }

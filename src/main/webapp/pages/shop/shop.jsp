@@ -77,6 +77,7 @@
         .btn-promo:hover { background: #0b1a33; color: #fff; }
         .featured-large { background: #e0f7f5; border-radius: 20px; padding: 30px; height: 100%; display: flex; flex-direction: column; justify-content: space-between; }
         .featured-large h4 { font-weight: 700; color: #1a1a1a; }
+        .featured-large .featured-desc { display: -webkit-box; -webkit-line-clamp: 4; line-clamp: 4; -webkit-box-orient: vertical; overflow: hidden; }
         .featured-large .price { font-size: 1.3rem; font-weight: 800; color: #00bfa5; }
         .featured-large img { max-height: 180px; object-fit: contain; }
         .featured-large .meta { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin: 10px 0; font-size: 0.85rem; }
@@ -92,6 +93,7 @@
         .filter-link:hover { color: #00bfa5; border-left-color: #00bfa5; padding-left: 16px; }
         .filter-link.active { color: #00bfa5; font-weight: 600; border-left-color: #00bfa5; }
     </style>
+    <link href="${pageContext.request.contextPath}/assets/css/storefront-polish.css" rel="stylesheet">
 </head>
 <body>
     <jsp:include page="/components/navbar.jsp" />
@@ -111,7 +113,7 @@
                     </div>
                 </div>
                 <div class="col-lg-6 text-center position-relative">
-                    <img src="https://placehold.co/500x350/e0f7f5/00bfa5?text=🐕+🐈+PetShop" alt="PetShop Banner" class="hero-img">
+                    <img loading="lazy" src="https://placehold.co/500x350/e0f7f5/00bfa5?text=🐕+🐈+PetShop" alt="PetShop Banner" class="hero-img">
                     <div class="hero-stats position-absolute" style="bottom: 20px; right: 10%;">
                         <div class="num">${totalProducts}+</div>
                         <div class="label">sản phẩm đa dạng</div>
@@ -165,7 +167,7 @@
                         <div>
                             <span class="cat-label">${fn:escapeXml(popularProducts[0].category)}</span>
                             <h4 class="mt-2">${fn:escapeXml(popularProducts[0].name)}</h4>
-                            <p class="text-muted small">${fn:escapeXml(popularProducts[0].description)}</p>
+                            <p class="text-muted small featured-desc">${fn:escapeXml(popularProducts[0].description)}</p>
                             <div class="meta">
                                 <span class="rating"><i class='bx bxs-star'></i> ${popularProducts[0].formattedAverageRating}</span>
                                 <span class="text-muted">${popularProducts[0].reviewCount} đánh giá</span>
@@ -185,7 +187,8 @@
                         </div>
                         <div class="text-center">
                             <a href="${pageContext.request.contextPath}/product-detail?id=${popularProducts[0].id}">
-                                <img src="${pageContext.request.contextPath}/assets/images/shop_pic/${fn:escapeXml(popularProducts[0].image)}" alt="${fn:escapeXml(popularProducts[0].name)}" style="max-height: 160px; object-fit: contain;" onerror="this.src='https://placehold.co/300x200/e0f7f5/00bfa5?text=PetShop'">
+                                <c:set var="featuredImageUrl" value="${fn:startsWith(popularProducts[0].image, 'http') ? popularProducts[0].image : pageContext.request.contextPath}${fn:startsWith(popularProducts[0].image, 'http') ? '' : '/assets/images/shop_pic/'}${fn:startsWith(popularProducts[0].image, 'http') ? '' : popularProducts[0].image}${fn:startsWith(popularProducts[0].image, 'http') ? '' : '?v=real-products-1'}" />
+                                <img loading="lazy" src="${fn:escapeXml(featuredImageUrl)}" alt="${fn:escapeXml(popularProducts[0].name)}" style="max-height: 160px; object-fit: contain;" onerror="this.src='https://placehold.co/300x200/e0f7f5/00bfa5?text=PetShop'">
                             </a>
                         </div>
                     </div>
@@ -200,7 +203,8 @@
                                     <c:if test="${p.discount > 0}"><span class="badge-sale">-${p.discount}%</span></c:if>
                                     <span class="badge-top">Hot</span>
                                     <a href="${pageContext.request.contextPath}/product-detail?id=${p.id}">
-                                        <img src="${pageContext.request.contextPath}/assets/images/shop_pic/${fn:escapeXml(p.image)}" alt="${fn:escapeXml(p.name)}" onerror="this.src='https://placehold.co/200x200/f9f9f9/999?text=PetShop'">
+                                        <c:set var="productImageUrl" value="${fn:startsWith(p.image, 'http') ? p.image : pageContext.request.contextPath}${fn:startsWith(p.image, 'http') ? '' : '/assets/images/shop_pic/'}${fn:startsWith(p.image, 'http') ? '' : p.image}${fn:startsWith(p.image, 'http') ? '' : '?v=real-products-1'}" />
+                                        <img loading="lazy" src="${fn:escapeXml(productImageUrl)}" alt="${fn:escapeXml(p.name)}" onerror="this.src='https://placehold.co/200x200/f9f9f9/999?text=PetShop'">
                                     </a>
                                 </div>
                                 <div class="info">
@@ -260,7 +264,8 @@
                             <div class="img-wrap">
                                 <span class="badge-sale">-${p.discount}%</span>
                                 <a href="${pageContext.request.contextPath}/product-detail?id=${p.id}">
-                                    <img src="${pageContext.request.contextPath}/assets/images/shop_pic/${fn:escapeXml(p.image)}" alt="${fn:escapeXml(p.name)}" onerror="this.src='https://placehold.co/200x200/f9f9f9/999?text=PetShop'">
+                                    <c:set var="productImageUrl" value="${fn:startsWith(p.image, 'http') ? p.image : pageContext.request.contextPath}${fn:startsWith(p.image, 'http') ? '' : '/assets/images/shop_pic/'}${fn:startsWith(p.image, 'http') ? '' : p.image}${fn:startsWith(p.image, 'http') ? '' : '?v=real-products-1'}" />
+                                    <img loading="lazy" src="${fn:escapeXml(productImageUrl)}" alt="${fn:escapeXml(p.name)}" onerror="this.src='https://placehold.co/200x200/f9f9f9/999?text=PetShop'">
                                 </a>
                             </div>
                             <div class="info">
@@ -308,9 +313,38 @@
             <c:if test="${saleTotalPages > 1}">
                 <div class="shop-pagination mb-5">
                     <a href="${pageContext.request.contextPath}/shop?salePage=${salePage - 1}&catalogPage=${catalogPage}" class="${salePage <= 1 ? 'disabled' : ''}"><i class='bx bx-chevron-left'></i></a>
-                    <c:forEach begin="1" end="${saleTotalPages}" var="i">
-                        <a href="${pageContext.request.contextPath}/shop?salePage=${i}&catalogPage=${catalogPage}" class="${salePage == i ? 'active' : ''}">${i}</a>
-                    </c:forEach>
+                    <c:choose>
+                        <c:when test="${saleTotalPages <= 4}">
+                            <c:forEach begin="1" end="${saleTotalPages}" var="i">
+                                <a href="${pageContext.request.contextPath}/shop?salePage=${i}&catalogPage=${catalogPage}" class="${salePage == i ? 'active' : ''}">${i}</a>
+                            </c:forEach>
+                        </c:when>
+                        <c:otherwise>
+                            <c:choose>
+                                <c:when test="${salePage <= 2}">
+                                    <c:forEach begin="1" end="3" var="i">
+                                        <a href="${pageContext.request.contextPath}/shop?salePage=${i}&catalogPage=${catalogPage}" class="${salePage == i ? 'active' : ''}">${i}</a>
+                                    </c:forEach>
+                                    <span class="disabled">...</span>
+                                    <a href="${pageContext.request.contextPath}/shop?salePage=${saleTotalPages}&catalogPage=${catalogPage}">${saleTotalPages}</a>
+                                </c:when>
+                                <c:when test="${salePage >= saleTotalPages - 1}">
+                                    <a href="${pageContext.request.contextPath}/shop?salePage=1&catalogPage=${catalogPage}">1</a>
+                                    <span class="disabled">...</span>
+                                    <c:forEach begin="${saleTotalPages - 2}" end="${saleTotalPages}" var="i">
+                                        <a href="${pageContext.request.contextPath}/shop?salePage=${i}&catalogPage=${catalogPage}" class="${salePage == i ? 'active' : ''}">${i}</a>
+                                    </c:forEach>
+                                </c:when>
+                                <c:otherwise>
+                                    <a href="${pageContext.request.contextPath}/shop?salePage=1&catalogPage=${catalogPage}">1</a>
+                                    <span class="disabled">...</span>
+                                    <a href="${pageContext.request.contextPath}/shop?salePage=${salePage}&catalogPage=${catalogPage}" class="active">${salePage}</a>
+                                    <span class="disabled">...</span>
+                                    <a href="${pageContext.request.contextPath}/shop?salePage=${saleTotalPages}&catalogPage=${catalogPage}">${saleTotalPages}</a>
+                                </c:otherwise>
+                            </c:choose>
+                        </c:otherwise>
+                    </c:choose>
                     <a href="${pageContext.request.contextPath}/shop?salePage=${salePage + 1}&catalogPage=${catalogPage}" class="${salePage >= saleTotalPages ? 'disabled' : ''}"><i class='bx bx-chevron-right'></i></a>
                 </div>
             </c:if>
@@ -352,7 +386,8 @@
                             <div class="img-wrap">
                                 <c:if test="${p.discount > 0}"><span class="badge-sale">-${p.discount}%</span></c:if>
                                 <a href="${pageContext.request.contextPath}/product-detail?id=${p.id}">
-                                    <img src="${pageContext.request.contextPath}/assets/images/shop_pic/${fn:escapeXml(p.image)}" alt="${fn:escapeXml(p.name)}" onerror="this.src='https://placehold.co/200x200/f9f9f9/999?text=PetShop'">
+                                    <c:set var="productImageUrl" value="${fn:startsWith(p.image, 'http') ? p.image : pageContext.request.contextPath}${fn:startsWith(p.image, 'http') ? '' : '/assets/images/shop_pic/'}${fn:startsWith(p.image, 'http') ? '' : p.image}${fn:startsWith(p.image, 'http') ? '' : '?v=real-products-1'}" />
+                                    <img loading="lazy" src="${fn:escapeXml(productImageUrl)}" alt="${fn:escapeXml(p.name)}" onerror="this.src='https://placehold.co/200x200/f9f9f9/999?text=PetShop'">
                                 </a>
                             </div>
                             <div class="info">
@@ -398,17 +433,49 @@
                 </c:forEach>
             </div>
             <c:if test="${catalogTotalPages > 1}">
-                <div class="shop-pagination mb-5">
+                <div class="shop-pagination pb-2 mb-5">
                     <a href="${pageContext.request.contextPath}/shop?catalogPage=${catalogPage - 1}&salePage=${salePage}" class="${catalogPage <= 1 ? 'disabled' : ''}"><i class='bx bx-chevron-left'></i></a>
-                    <c:forEach begin="1" end="${catalogTotalPages}" var="i">
-                        <a href="${pageContext.request.contextPath}/shop?catalogPage=${i}&salePage=${salePage}" class="${catalogPage == i ? 'active' : ''}">${i}</a>
-                    </c:forEach>
+                    <c:choose>
+                        <c:when test="${catalogTotalPages <= 4}">
+                            <c:forEach begin="1" end="${catalogTotalPages}" var="i">
+                                <a href="${pageContext.request.contextPath}/shop?catalogPage=${i}&salePage=${salePage}" class="${catalogPage == i ? 'active' : ''}">${i}</a>
+                            </c:forEach>
+                        </c:when>
+                        <c:otherwise>
+                            <c:choose>
+                                <c:when test="${catalogPage <= 2}">
+                                    <c:forEach begin="1" end="3" var="i">
+                                        <a href="${pageContext.request.contextPath}/shop?catalogPage=${i}&salePage=${salePage}" class="${catalogPage == i ? 'active' : ''}">${i}</a>
+                                    </c:forEach>
+                                    <span class="disabled">...</span>
+                                    <a href="${pageContext.request.contextPath}/shop?catalogPage=${catalogTotalPages}&salePage=${salePage}">${catalogTotalPages}</a>
+                                </c:when>
+                                <c:when test="${catalogPage >= catalogTotalPages - 1}">
+                                    <a href="${pageContext.request.contextPath}/shop?catalogPage=1&salePage=${salePage}">1</a>
+                                    <span class="disabled">...</span>
+                                    <c:forEach begin="${catalogTotalPages - 2}" end="${catalogTotalPages}" var="i">
+                                        <a href="${pageContext.request.contextPath}/shop?catalogPage=${i}&salePage=${salePage}" class="${catalogPage == i ? 'active' : ''}">${i}</a>
+                                    </c:forEach>
+                                </c:when>
+                                <c:otherwise>
+                                    <a href="${pageContext.request.contextPath}/shop?catalogPage=1&salePage=${salePage}">1</a>
+                                    <span class="disabled">...</span>
+                                    <a href="${pageContext.request.contextPath}/shop?catalogPage=${catalogPage}&salePage=${salePage}" class="active">${catalogPage}</a>
+                                    <span class="disabled">...</span>
+                                    <a href="${pageContext.request.contextPath}/shop?catalogPage=${catalogTotalPages}&salePage=${salePage}">${catalogTotalPages}</a>
+                                </c:otherwise>
+                            </c:choose>
+                        </c:otherwise>
+                    </c:choose>
                     <a href="${pageContext.request.contextPath}/shop?catalogPage=${catalogPage + 1}&salePage=${salePage}" class="${catalogPage >= catalogTotalPages ? 'disabled' : ''}"><i class='bx bx-chevron-right'></i></a>
                 </div>
-                </div>
+            </c:if>
             </div>
+        </div>
         </c:if>
     </div>
+
+    <div style="padding-bottom: 60px;"></div>
 
     <jsp:include page="/components/footer.jsp" />
     <jsp:include page="/components/back-button.jsp" />

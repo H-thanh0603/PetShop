@@ -187,6 +187,7 @@
     background-color: #008f7a;
 }
 </style>
+<link href="${pageContext.request.contextPath}/assets/css/storefront-polish.css" rel="stylesheet">
 </head>
 <body>
 

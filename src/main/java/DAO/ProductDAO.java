@@ -4,6 +4,7 @@ import java.math.BigDecimal;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
+import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ThreadLocalRandom;
@@ -487,6 +488,31 @@ public class ProductDAO {
             return ps.executeUpdate() > 0;
         } catch (Exception e) { log.error("Error adding product with stock name={}", name, e); }
         return false;
+    }
+
+    public int addProductAndReturnId(String name, String image, BigDecimal price, int discount, String description, int stock, int weight, String category, int petTypeId) {
+        String query = "INSERT INTO products (name, image, price, discount, description, stock, weight, category, pet_type_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
+        try (Connection conn = DBContext.getConnection();
+             PreparedStatement ps = conn.prepareStatement(query, Statement.RETURN_GENERATED_KEYS)) {
+            ps.setString(1, name);
+            ps.setString(2, image);
+            ps.setBigDecimal(3, price);
+            ps.setInt(4, discount);
+            ps.setString(5, description);
+            ps.setInt(6, stock);
+            ps.setInt(7, weight);
+            ps.setString(8, category);
+            ps.setInt(9, petTypeId);
+            if (ps.executeUpdate() == 0) {
+                return 0;
+            }
+            try (ResultSet keys = ps.getGeneratedKeys()) {
+                if (keys.next()) {
+                    return keys.getInt(1);
+                }
+            }
+        } catch (Exception e) { log.error("Error adding product and returning id name={}", name, e); }
+        return 0;
     }
 
     public boolean updateProduct(int id, String name, String image, BigDecimal price, int discount, String description) {

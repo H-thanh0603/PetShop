@@ -401,6 +401,9 @@ public class UserDAO {
     
     // Reset mật khẩu (hash với BCrypt)
     public boolean resetUserPassword(int userId, String newPassword) {
+        if (!PasswordUtil.isStrongPassword(newPassword)) {
+            return false;
+        }
         String hashedPassword = PasswordUtil.hashPassword(newPassword);
         String query = "UPDATE users SET password = ? WHERE id = ?";
         try (Connection conn = DBContext.getConnection();
@@ -413,6 +416,9 @@ public class UserDAO {
     
     // Thêm user mới (admin tạo - hash password)
     public boolean addUser(String username, String password, String fullname, String email, String phone, String role) {
+        if (!PasswordUtil.isStrongPassword(password)) {
+            return false;
+        }
         String hashedPassword = PasswordUtil.hashPassword(password);
         String query = "INSERT INTO users (username, password, fullname, email, phone, role, status) VALUES (?, ?, ?, ?, ?, ?, 1)";
         try (Connection conn = DBContext.getConnection();

@@ -6,6 +6,8 @@ import com.zaxxer.hikari.HikariConfig;
 import com.zaxxer.hikari.HikariDataSource;
 
 import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 
@@ -66,11 +68,20 @@ public class DBContext {
     private static void runMigrations() {
         try (Connection conn = getConnection();
              Statement stmt = conn.createStatement()) {
-            stmt.execute("ALTER TABLE products ADD COLUMN IF NOT EXISTS weight int DEFAULT 0");
-            stmt.execute("ALTER TABLE products ADD COLUMN IF NOT EXISTS is_active TINYINT(1) NOT NULL DEFAULT 1");
-            stmt.execute("ALTER TABLE users ADD COLUMN IF NOT EXISTS email_verified BOOLEAN NOT NULL DEFAULT FALSE");
-            stmt.execute("ALTER TABLE users ADD COLUMN IF NOT EXISTS verification_token VARCHAR(255) NULL");
-            stmt.execute("ALTER TABLE users ADD COLUMN IF NOT EXISTS verification_token_expiry TIMESTAMP NULL");
+            addColumnIfMissing(conn, stmt, "products", "weight", "INT NOT NULL DEFAULT 0");
+            addColumnIfMissing(conn, stmt, "products", "is_active", "TINYINT(1) NOT NULL DEFAULT 1");
+            addColumnIfMissing(conn, stmt, "products", "stock", "INT NOT NULL DEFAULT 0");
+            addColumnIfMissing(conn, stmt, "products", "category", "VARCHAR(255) NULL");
+            addColumnIfMissing(conn, stmt, "products", "pet_type_id", "INT NULL");
+            addColumnIfMissing(conn, stmt, "users", "email_verified", "BOOLEAN NOT NULL DEFAULT FALSE");
+            addColumnIfMissing(conn, stmt, "users", "verification_token", "VARCHAR(255) NULL");
+            addColumnIfMissing(conn, stmt, "users", "verification_token_expiry", "TIMESTAMP NULL");
+            addColumnIfMissing(conn, stmt, "users", "failed_login_attempts", "INT NOT NULL DEFAULT 0");
+            addColumnIfMissing(conn, stmt, "users", "locked_until", "DATETIME NULL DEFAULT NULL");
+            addColumnIfMissing(conn, stmt, "orders", "payment_method", "VARCHAR(50) DEFAULT 'COD'");
+            addColumnIfMissing(conn, stmt, "orders", "payment_status", "TINYINT(1) NOT NULL DEFAULT 0");
+            addColumnIfMissing(conn, stmt, "orders", "createdAt", "TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP");
+            executeIgnore(stmt, "UPDATE orders SET createdAt = created_at WHERE createdAt IS NULL AND created_at IS NOT NULL");
             stmt.execute("CREATE TABLE IF NOT EXISTS payment_transactions (" +
                     "id INT AUTO_INCREMENT PRIMARY KEY," +
                     "order_id INT NOT NULL," +
@@ -172,15 +183,41 @@ public class DBContext {
             executeIgnore(stmt, "CREATE INDEX idx_products_active_category_pet_price ON products (is_active, category(100), pet_type_id, price, discount, id)");
             executeIgnore(stmt, "CREATE INDEX idx_orders_status_created_user ON orders (status, createdAt, user_id)");
             executeIgnore(stmt, "CREATE INDEX idx_users_email_username_locked ON users (email, username, locked_until)");
+            addColumnIfMissing(conn, stmt, "addresses", "is_default", "TINYINT(1) NOT NULL DEFAULT 0");
             // Mark all existing users as verified (they registered before email verification was added)
             stmt.execute("UPDATE users SET email_verified = TRUE WHERE email_verified = FALSE AND verification_token IS NULL");
             int pendingHours = AppConfig.getInt("payment.bank.pending-hours", 2);
-            stmt.execute("UPDATE payment_transactions " +
+            executeIgnore(stmt, "UPDATE payment_transactions " +
                     "SET expires_at = DATE_ADD(created_at, INTERVAL " + pendingHours + " HOUR) " +
                     "WHERE expires_at IS NULL AND status = 'PENDING_VERIFICATION'");
             System.out.println("[DBContext] Migrations applied.");
         } catch (Exception e) {
             System.err.println("[DBContext] Migration warning: " + e.getMessage());
+        }
+    }
+
+    private static void addColumnIfMissing(Connection conn, Statement stmt,
+                                           String tableName, String columnName,
+                                           String columnDefinition) {
+        try {
+            if (!columnExists(conn, tableName, columnName)) {
+                stmt.execute("ALTER TABLE " + tableName + " ADD COLUMN " + columnName + " " + columnDefinition);
+            }
+        } catch (Exception e) {
+            System.err.println("[DBContext] Migration warning for "
+                    + tableName + "." + columnName + ": " + e.getMessage());
+        }
+    }
+
+    private static boolean columnExists(Connection conn, String tableName, String columnName) throws SQLException {
+        String sql = "SELECT 1 FROM information_schema.COLUMNS "
+                + "WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = ? AND COLUMN_NAME = ? LIMIT 1";
+        try (PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setString(1, tableName);
+            ps.setString(2, columnName);
+            try (ResultSet rs = ps.executeQuery()) {
+                return rs.next();
+            }
         }
     }
 

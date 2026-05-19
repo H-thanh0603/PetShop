@@ -229,6 +229,7 @@
             .search-box { min-width: 100%; }
         }
     </style>
+    <link href="${pageContext.request.contextPath}/assets/css/storefront-polish.css" rel="stylesheet">
 </head>
 <body>
 <jsp:include page="/components/navbar.jsp" />
@@ -341,6 +342,7 @@
                                     </a>
                                     <c:if test="${o.cancelableByUser}">
                                         <form action="${pageContext.request.contextPath}/my-orders" method="post" onsubmit="return confirm('Bạn chắc chắn muốn hủy đơn hàng này?');">
+                                            <input type="hidden" name="csrfToken" value="${csrfToken}" />
                                             <input type="hidden" name="action" value="cancel">
                                             <input type="hidden" name="orderId" value="${o.id}">
                                             <button type="submit" class="btn btn-outline-danger btn-soft-dark">
@@ -380,7 +382,7 @@
                                             <c:forEach items="${o.items}" var="item">
                                                 <div class="product-row">
                                                     <div class="product-thumb">
-                                                        <img src="${pageContext.request.contextPath}/assets/images/shop_pic/${fn:escapeXml(item.product.image)}"
+                                                        <img loading="lazy" src="${fn:startsWith(item.product.image, 'http') ? fn:escapeXml(item.product.image) : pageContext.request.contextPath += '/assets/images/shop_pic/' += fn:escapeXml(item.product.image)}"
                                                              onerror="this.src='https://placehold.co/120x120/e2e8f0/1e293b?text=PetShop'">
                                                     </div>
                                                     <div>

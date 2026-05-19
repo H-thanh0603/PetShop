@@ -81,6 +81,7 @@
         .shop-pagination .active { background: #00bfa5; color: #fff; border-color: #00bfa5; }
         .shop-pagination .disabled { opacity: 0.4; pointer-events: none; }
     </style>
+    <link href="${pageContext.request.contextPath}/assets/css/storefront-polish.css" rel="stylesheet">
 </head>
 <body>
     <jsp:include page="/components/navbar.jsp" />
@@ -117,8 +118,8 @@
                 </div>
                 <div class="col-lg-4 text-end d-none d-lg-block">
                     <c:choose>
-                        <c:when test="${selectedPet == 'dog'}"><img src="https://placehold.co/300x180/e0f7f5/00bfa5?text=🐕" class="header-img" alt="Dog"></c:when>
-                        <c:when test="${selectedPet == 'cat'}"><img src="https://placehold.co/300x180/e8f5e9/4caf50?text=🐈" class="header-img" alt="Cat"></c:when>
+                        <c:when test="${selectedPet == 'dog'}"><img loading="lazy" src="https://placehold.co/300x180/e0f7f5/00bfa5?text=🐕" class="header-img" alt="Dog"></c:when>
+                        <c:when test="${selectedPet == 'cat'}"><img loading="lazy" src="https://placehold.co/300x180/e8f5e9/4caf50?text=🐈" class="header-img" alt="Cat"></c:when>
                     </c:choose>
                 </div>
             </div>
@@ -188,7 +189,7 @@
                                 <div class="img-wrap">
                                     <c:if test="${p.discount > 0}"><span class="badge-sale">-${p.discount}%</span></c:if>
                                     <a href="${pageContext.request.contextPath}/product-detail?id=${p.id}">
-                                        <img src="${pageContext.request.contextPath}/assets/images/shop_pic/${fn:escapeXml(p.image)}" alt="${fn:escapeXml(p.name)}" onerror="this.src='https://placehold.co/200x200/f9f9f9/999?text=PetShop'">
+                                        <img loading="lazy" src="${fn:startsWith(p.image, 'http') ? fn:escapeXml(p.image) : pageContext.request.contextPath += '/assets/images/shop_pic/' += fn:escapeXml(p.image)}" alt="${fn:escapeXml(p.name)}" onerror="this.src='https://placehold.co/200x200/f9f9f9/999?text=PetShop'">
                                     </a>
                                 </div>
                                 <div class="info">

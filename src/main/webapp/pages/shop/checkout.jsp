@@ -2,8 +2,9 @@
 <%@ taglib uri="jakarta.tags.core" prefix="c" %>
 <%@ taglib uri="jakarta.tags.functions" prefix="fn" %>
 <!DOCTYPE html>
-<html>
+<html lang="vi">
 <head>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Thanh toán | PetShop</title>
 
     <!-- FONT -->
@@ -13,6 +14,7 @@
     <!-- BOOTSTRAP -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="${pageContext.request.contextPath}/assets/css/checkout.css" rel="stylesheet">
+    <link href="${pageContext.request.contextPath}/assets/css/storefront-polish.css" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 </head>
 <body>
@@ -28,23 +30,33 @@
             ← Quay lại giỏ hàng
         </a>
     </div>
+    <div class="checkout-steps" aria-label="Tiến trình thanh toán">
+        <div class="checkout-step is-done"><span>1</span><strong>Giỏ hàng</strong></div>
+        <div class="checkout-step is-active"><span>2</span><strong>Nhận hàng</strong></div>
+        <div class="checkout-step"><span>3</span><strong>Thanh toán</strong></div>
+        <div class="checkout-step"><span>4</span><strong>Hoàn tất</strong></div>
+    </div>
     <div class="row g-4">
 
         <!-- LEFT PRODUCT LIST -->
         <div class="col-lg-7">
-            <div class="card-modern">
+            <div class="card-modern checkout-summary-card">
 
                 <div class="d-flex justify-content-between align-items-center mb-3">
-                    <h4>🛒 Sản phẩm thanh toán</h4>
+                    <h4>Sản phẩm thanh toán</h4>
                     <div class="countdown">
-                        ⏳ <span id="timer">15:00</span>
+                        Giữ giá <span id="timer">15:00</span>
                     </div>
+                </div>
+                <div id="checkoutTimerWarning" class="checkout-timer-warning" role="status" aria-live="polite" hidden>
+                    Thời gian giữ giỏ đã hết. Vui lòng kiểm tra lại giỏ hàng trước khi đặt đơn.
+                    <a href="${pageContext.request.contextPath}/cart">Quay lại giỏ hàng</a>
                 </div>
 
                 <c:forEach var="item" items="${cartItems}">
                     <div class="product-item" data-product-id="${item.product.id}" data-quantity="${item.quantity}">
-                        <img class="product-img"
-                             src="${pageContext.request.contextPath}/assets/images/shop_pic/${fn:escapeXml(item.product.image)}">
+                        <img loading="lazy" class="product-img"
+                             src="${fn:startsWith(item.product.image, 'http') ? fn:escapeXml(item.product.image) : pageContext.request.contextPath += '/assets/images/shop_pic/' += fn:escapeXml(item.product.image)}">
                         <div class="flex-grow-1">
                             <div class="fw-semibold">${fn:escapeXml(item.product.name)}</div>
                             <div class="text-muted">${fn:escapeXml(item.product.price)}₫</div>
@@ -62,6 +74,7 @@
 
                 <hr>
 
+                <div class="checkout-total-box">
                 <div class="info-row">
                     <span>Tổng tiền hàng</span>
                     <span>${totalAmount} ₫</span>
@@ -92,6 +105,7 @@
                     <span>Tổng thanh toán</span>
                     <span>${finalTotal} ₫</span>
                 </div>
+                </div>
                 <c:if test="${not empty shippingMessage}">
                     <div class="alert alert-warning mt-2">${fn:escapeXml(shippingMessage)}</div>
                 </c:if>
@@ -101,8 +115,11 @@
 
         <!-- RIGHT USER INFO -->
         <div class="col-lg-5">
-            <div class="card-modern">
-                <h4 class="mb-3">👤 Thông tin nhận hàng</h4>
+            <div class="card-modern checkout-action-card">
+                <h4 class="mb-3">Thông tin nhận hàng</h4>
+                <div class="checkout-section-intro">
+                    Hoàn tất địa chỉ và phương thức thanh toán để shop xử lý đơn nhanh hơn.
+                </div>
                 <div class="info-row">
                     <span>Họ tên</span>
                     <span>
@@ -141,144 +158,66 @@
 
 
 
-                <div class="info-row">
-                    <span>Địa chỉ giao hàng (Mặc định)</span>
-                </div>
-                <div class="mb-3 px-2">
+                <div class="checkout-address-current">
+                    <div class="section-label">Vị trí giao hàng</div>
                     <c:choose>
                         <c:when test="${not empty defaultAddress}">
-                            <strong>${fn:escapeXml(defaultAddress.address)}, ${fn:escapeXml(defaultAddress.ward)}, ${fn:escapeXml(defaultAddress.district)}, ${fn:escapeXml(defaultAddress.province)}</strong>
+                            <div class="current-address-card">
+                                <div class="current-address-badge">Đang giao đến</div>
+                                <strong>${fn:escapeXml(defaultAddress.address)}, ${fn:escapeXml(defaultAddress.ward)}, ${fn:escapeXml(defaultAddress.district)}, ${fn:escapeXml(defaultAddress.province)}</strong>
+                            </div>
                         </c:when>
                         <c:otherwise>
-                            <span class="text-danger">Bạn chưa có địa chỉ mặc định.</span>
+                            <div class="current-address-card is-empty">
+                                <strong>Chưa có vị trí giao hàng.</strong>
+                                <span>Hãy thêm địa chỉ mới hoặc chọn một địa chỉ bên dưới.</span>
+                            </div>
                         </c:otherwise>
                     </c:choose>
                 </div>
 
-                <div class="info-row mt-4">
-                    <span><strong>Danh sách địa chỉ</strong></span>
-                    <button type="button" class="btn-add" onclick="toggleForm()">+ Thêm địa chỉ mới</button>
-                </div>
-
-                <div class="right">
-                    <form id="editAddressForm"
-                          class="address-form"
-                          method="post"
-                          action="${pageContext.request.contextPath}/addresses"
-                          style="display:none;"
-                          onsubmit="return validateEditAddressForm();">
-
-                        <input type="hidden" name="csrfToken" value="${csrfToken}" />
-                        <input type="hidden" name="_method" value="put">
-                        <input type="hidden" id="editAddressId" name="id">
-                        <span>
-                            <strong>Sửa Thông Tin</strong>
-                        </span>
-                        <div class="mb-3">
-                            <label for="editProvince" class="form-label">Tỉnh/Thành:</label>
-                            <select id="editProvince" name="province" class="form-select" required>
-                                <option value="">-- Chọn tỉnh/thành --</option>
-                            </select>
-                            <div class="text-danger small mt-1" id="editProvinceError"></div>
-                        </div>
-
-                        <div class="mb-3">
-                            <label for="editDistrict" class="form-label">Quận/Huyện:</label>
-                            <select id="editDistrict" name="district" class="form-select" required disabled>
-                                <option value="">-- Chọn quận/huyện --</option>
-                            </select>
-                            <div class="text-danger small mt-1" id="editDistrictError"></div>
-                        </div>
-
-                        <div class="mb-3">
-                            <label for="editWard" class="form-label">Phường/Xã:</label>
-                            <select id="editWard" name="ward" class="form-select" required disabled>
-                                <option value="">-- Chọn phường/xã --</option>
-                            </select>
-                            <div class="text-danger small mt-1" id="editWardError"></div>
-                        </div>
-                        <div class="mb-3">
-                            <label for="editAddressDetail" class="form-label">Chi tiết:</label>
-                            <input type="text"
-                                   id="editAddressDetail"
-                                   name="addressDetail"
-                                   class="form-control"
-                                   maxlength="255"
-                                   placeholder="Số nhà, tên đường..."
-                                   autocomplete="address-line1"
-                                   required
-                                   title="Địa chỉ chỉ được chứa chữ, số, khoảng trắng, dấu phẩy, chấm, gạch ngang, gạch chéo và phải có ý nghĩa.">
-                            <div class="text-danger small mt-1" id="editAddressDetailError"></div>
-                        </div>
-                        <div class="form-check mb-3">
-                            <input type="checkbox" id="editIsDefault" name="isDefault" value="true" class="form-check-input">
-                            <label for="editIsDefault" class="form-check-label">Đặt làm mặc định</label>
-                        </div>
-
-                        <div class="d-flex gap-2">
-                            <button type="submit" class="btn btn-primary">Cập nhật</button>
-                            <button type="button" class="btn btn-danger" onclick="confirmDeleteAddress()">Xóa</button>
-                            <button type="button" class="btn btn-secondary" onclick="toggleEditForm(false)">Đóng</button>
-                        </div>
-                    </form>
-
-                    <form id="deleteAddressForm"
-                          method="post"
-                          action="${pageContext.request.contextPath}/addresses"
-                          style="display:none;">
-                        <input type="hidden" name="csrfToken" value="${csrfToken}" />
-                        <input type="hidden" name="_method" value="delete">
-                        <input type="hidden" id="deleteAddressId" name="id">
-                    </form>
-
-                    <div id="deleteConfirmModal" class="delete-modal" style="display:none;">
-                        <div class="delete-modal-content">
-                            <h4>Xác nhận xóa</h4>
-                            <p>Bạn đã chắc chắn muốn xóa địa chỉ này chưa?</p>
-                            <div class="delete-modal-actions">
-                                <button type="button" class="btn btn-danger" onclick="deleteAddressNow()">Rồi</button>
-                                <button type="button" class="btn btn-secondary" onclick="closeDeleteConfirm()">Chưa</button>
-                            </div>
-                        </div>
+                <div class="address-toolbar mt-4">
+                    <div>
+                        <div class="section-label mb-1">Danh sách địa chỉ</div>
+                        <div class="section-hint">Chọn nhanh địa chỉ bạn muốn dùng cho đơn hàng này.</div>
+                        <div id="addressApiStatus" class="text-danger small mt-2" role="status" aria-live="polite"></div>
                     </div>
+                    <button type="button" class="btn-add" onclick="toggleForm()">+ Thêm địa chỉ mới</button>
                 </div>
 
                 <div id="addressList" class="address-list">
                     <c:choose>
                         <c:when test="${not empty addressList}">
                             <c:forEach var="addr" items="${addressList}">
-                                <div class="address-item" style="${addr.defaultt ? 'border: 2px solid #00bfa5;' : ''}">
-                                    <div style="flex:1;">
-                                        <c:if test="${addr.defaultt}">
-                                            <span class="badge bg-success mb-1">Mặc định</span><br>
+                                <div class="address-item ${selectedAddressId == addr.id ? 'is-selected' : ''}">
+                                    <div class="address-item-body">
+                                        <c:if test="${selectedAddressId == addr.id}">
+                                            <span class="badge bg-success mb-2">Đang dùng</span><br>
                                         </c:if>
-                                        <span>
+                                        <span class="address-text">
                                             ${fn:escapeXml(addr.address)}, ${fn:escapeXml(addr.ward)}, ${fn:escapeXml(addr.district)}, ${fn:escapeXml(addr.province)}
                                         </span>
                                     </div>
-                                    <div class="d-flex flex-column gap-1">
-                                        <button type="button"
-                                                class="btn btn-sm btn-secondary"
-                                                onclick="openEditAddress(
-                                                        '${addr.id}',
-                                                        '${addr.province}',
-                                                        '${addr.district}',
-                                                        '${addr.ward}',
-                                                        '${addr.address}',
-                                                        '${addr.defaultt}'
-                                                        )">
-                                            Sửa
-                                        </button>
-                                        <c:if test="${!addr.defaultt}">
-                                            <a href="${pageContext.request.contextPath}/addresses?defaultId=${addr.id}&redirect=checkout" class="btn btn-sm btn-outline-primary">Chọn</a>
+                                    <div class="address-actions">
+                                        <c:if test="${selectedAddressId != addr.id}">
+                                            <form action="${pageContext.request.contextPath}/addresses" method="post" class="d-inline">
+                                                <input type="hidden" name="csrfToken" value="${csrfToken}" />
+                                                <input type="hidden" name="_method" value="patch">
+                                                <input type="hidden" name="action" value="setDefault">
+                                                <input type="hidden" name="id" value="${addr.id}">
+                                                <input type="hidden" name="redirect" value="checkout">
+                                                <input type="hidden" name="source" value="checkout">
+                                                <button type="submit" class="btn btn-sm btn-outline-primary">Giao đến đây</button>
+                                            </form>
                                         </c:if>
+                                        <a class="btn btn-sm btn-light" href="${pageContext.request.contextPath}/my-account">Quản lý</a>
                                     </div>
                                 </div>
 
                             </c:forEach>
                         </c:when>
                         <c:otherwise>
-                            <p>Chưa có địa chỉ nào.</p>
+                            <p>Chưa có địa chỉ nào. Hãy thêm địa chỉ mới để tiếp tục thanh toán.</p>
                         </c:otherwise>
                     </c:choose>
                 </div>
@@ -290,6 +229,8 @@
                           style="display:none;"
                           onsubmit="return validateAddressForm();">
                         <input type="hidden" name="csrfToken" value="${csrfToken}" />
+                        <input type="hidden" name="source" value="checkout">
+                        <input type="hidden" name="redirect" value="checkout">
                         <span>
                         <strong>Thêm Địa Chỉ</strong>
                         </span>
@@ -331,10 +272,7 @@
                             <div class="text-danger small mt-1" id="addressDetailError"></div>
                         </div>
 
-                        <div class="form-check mb-3">
-                            <input type="checkbox" id="isDefault" name="isDefault" value="true" class="form-check-input">
-                            <label for="isDefault" class="form-check-label">Đặt làm mặc định</label>
-                        </div>
+                        <div class="text-muted small mb-3">Lưu xong sẽ dùng địa chỉ này cho checkout.</div>
 
                         <div class="d-flex gap-2">
                             <button type="submit" class="btn btn-primary">Lưu</button>
@@ -342,16 +280,15 @@
                         </div>
                     </form>
                 </div>
-
-
-
-
                 <hr>
 
-                <label>📦 Ghi chú</label>
+                <div class="checkout-field-group">
+                <label>Ghi chú</label>
                 <textarea id="note" name="note" class="form-control mb-3" rows="3" placeholder="Nhập ghi chú cho shop...">${fn:escapeXml(sessionScope.checkoutNote)}</textarea>
+                </div>
 
-                <label>🎟 Mã giảm giá</label>
+                <div class="checkout-field-group">
+                <label>Mã giảm giá</label>
                 <form action="${pageContext.request.contextPath}/checkout" method="post" id="couponForm">
                     <input type="hidden" name="csrfToken" value="${csrfToken}" />
                     <input type="hidden" name="action" value="applyCoupon">
@@ -365,32 +302,43 @@
                 <c:if test="${not empty couponMessage}">
                     <div class="alert alert-info">${fn:escapeXml(couponMessage)}</div>
                 </c:if>
+                </div>
 
-                <label class="mb-2 d-block">💳 Phương thức thanh toán</label>
+                <div class="checkout-field-group">
+                <label class="mb-2 d-block">Phương thức thanh toán</label>
 
                 <div class="payment-card mb-2">
                     <label>
                         <input type="radio" name="payment" value="cod" checked>
-                        Thanh toán khi nhận hàng (COD)
+                        <span>
+                            <strong>Thanh toán khi nhận hàng</strong>
+                            <small>Thanh toán trực tiếp cho đơn vị giao hàng.</small>
+                        </span>
                     </label>
                 </div>
 
                 <div class="payment-card mb-2">
                     <label>
                         <input type="radio" name="payment" value="momo">
-                        Ví điện tử MoMo <span style="font-size: 0.75rem; color: #94a3b8; font-style: italic;">(Demo)</span>
+                        <span>
+                            <strong>Ví điện tử MoMo</strong>
+                            <small>Demo thanh toán ví điện tử.</small>
+                        </span>
                     </label>
                 </div>
 
                 <div class="payment-card mb-3" id="bankCard">
                     <label style="width:100%; cursor:pointer;">
                         <input type="radio" name="payment" value="bank_transfer">
-                        🏦 Chuyển khoản ngân hàng
+                        <span>
+                            <strong>Chuyển khoản ngân hàng</strong>
+                            <small>Quét QR và chuyển khoản đúng nội dung.</small>
+                        </span>
                     </label>
                     <div id="bankInfo">
                         <div class="bank-qr-wrapper">
                             <img id="bankQrImg" src="" alt="QR Chuyển khoản">
-                            <div class="bank-qr-note">Quét mã QR để chuyển khoản</div>
+                            <div class="bank-qr-note" id="bankQrNote">QR chính thức sẽ xuất hiện sau khi đơn hàng được tạo.</div>
                         </div>
                         <div><b>Ngân hàng:</b> <span id="bankDisplayName">${fn:escapeXml(bankDisplayName)}</span></div>
                         <div><b>Số tài khoản:</b> <span id="bankAccountNumber" class="bank-account-number">${fn:escapeXml(bankAccountNumber)}</span></div>
@@ -402,9 +350,15 @@
                         </div>
                     </div>
                 </div>
+                </div>
 
                 <input type="hidden" id="checkoutCsrfToken" value="${fn:escapeXml(csrfToken)}">
-                <button type="button" id="btnCheckout" class="btn-checkout">Đặt hàng</button>
+                <div class="checkout-submit-box">
+                    <button type="button" id="btnCheckout" class="btn-checkout">Đặt hàng</button>
+                    <div class="checkout-safe-note">
+                        Shop chỉ xác nhận đơn khi thông tin nhận hàng hợp lệ. Bạn có thể theo dõi trạng thái trong “Đơn hàng của tôi”.
+                    </div>
+                </div>
 
                 <div id="paymentResult" class="mt-3"></div>
 

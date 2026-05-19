@@ -159,6 +159,7 @@
                 <button class="modal-close" onclick="closeModal()"><i class='bx bx-x'></i></button>
             </div>
             <form action="${pageContext.request.contextPath}/admin/orders" method="post">
+                <input type="hidden" name="csrfToken" value="${csrfToken}" />
                 <input type="hidden" name="action" value="updateStatus">
                 <input type="hidden" name="orderId" id="modalOrderId">
                 <div class="modal-body">
@@ -188,6 +189,7 @@
                 <button class="modal-close" onclick="closePaymentModal()"><i class='bx bx-x'></i></button>
             </div>
             <form action="${pageContext.request.contextPath}/admin/orders" method="post">
+                <input type="hidden" name="csrfToken" value="${csrfToken}" />
                 <input type="hidden" name="action" value="updatePaymentVerification">
                 <input type="hidden" name="orderId" id="paymentModalOrderId">
                 <div class="modal-body">

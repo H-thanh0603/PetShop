@@ -10,7 +10,7 @@ PetShop là đồ án web e-commerce bán sản phẩm cho thú cưng, tập tru
 
 ## Yêu cầu môi trường
 
-- JDK 17
+- JDK 21
 - Gradle Wrapper đi kèm project
 - MySQL 8+
 - Tomcat 10.x

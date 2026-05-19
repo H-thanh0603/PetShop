@@ -98,6 +98,7 @@
         </c:if>
         
         <form method="post" action="${pageContext.request.contextPath}/verify-otp">
+            <input type="hidden" name="csrfToken" value="${csrfToken}" />
             <div class="mb-4">
                 <label class="form-label fw-bold">Mã OTP (6 số)</label>
                 <input type="text" class="form-control otp-input" name="otp" 

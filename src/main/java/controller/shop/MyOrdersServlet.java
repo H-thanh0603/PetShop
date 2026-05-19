@@ -25,7 +25,7 @@ public class MyOrdersServlet extends HttpServlet {
         User user = (User) session.getAttribute("user");
 
         if (user == null) {
-            response.sendRedirect("login");
+            response.sendRedirect(request.getContextPath() + "/login");
             return;
         }
 
@@ -40,7 +40,7 @@ public class MyOrdersServlet extends HttpServlet {
                 orderId = Integer.parseInt(request.getParameter("id"));
             } catch (NumberFormatException e) {
                 session.setAttribute("error", "Mã đơn hàng không hợp lệ.");
-                response.sendRedirect("my-orders");
+                response.sendRedirect(request.getContextPath() + "/my-orders");
                 return;
             }
             Order order = dao.getOrderById(orderId);
@@ -51,7 +51,7 @@ public class MyOrdersServlet extends HttpServlet {
                 request.getRequestDispatcher("/pages/shop/order-detail.jsp").forward(request, response);
                 return;
             } else {
-                response.sendRedirect("my-orders");
+                response.sendRedirect(request.getContextPath() + "/my-orders");
                 return;
             }
         }
@@ -73,7 +73,7 @@ public class MyOrdersServlet extends HttpServlet {
         User user = (User) session.getAttribute("user");
 
         if (user == null) {
-            response.sendRedirect("login");
+            response.sendRedirect(request.getContextPath() + "/login");
             return;
         }
 

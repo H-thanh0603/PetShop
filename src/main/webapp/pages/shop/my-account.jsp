@@ -31,6 +31,7 @@
         .avatar-circle { width: 56px; height: 56px; border-radius: 50%; background: rgba(255,255,255,.2); border: 2px solid rgba(255,255,255,.4); display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
         .avatar-circle span { font-size: 1.5rem; font-weight: 800; color: #fff; text-transform: uppercase; }
     </style>
+    <link href="${pageContext.request.contextPath}/assets/css/storefront-polish.css" rel="stylesheet">
 </head>
 <body>
 <jsp:include page="/components/navbar.jsp" />
@@ -72,7 +73,14 @@
         <div class="col-lg-5">
             <div class="panel">
                 <div class="panel-title"><i class='bx bx-id-card'></i> Hồ sơ cá nhân</div>
+                <c:if test="${not empty error}">
+                    <div class="alert alert-danger mb-3" style="border-radius:10px;">${fn:escapeXml(error)}</div>
+                </c:if>
+                <c:if test="${not empty success}">
+                    <div class="alert alert-success mb-3" style="border-radius:10px;">${fn:escapeXml(success)}</div>
+                </c:if>
                 <form action="${pageContext.request.contextPath}/my-account" method="post" class="row g-3">
+                    <input type="hidden" name="csrfToken" value="${csrfToken}">
                     <div class="col-12">
                         <label class="form-label">Họ và tên</label>
                         <input class="form-control" name="fullname" value="${fn:escapeXml(sessionScope.user.fullname)}" required>
@@ -107,6 +115,7 @@
                 </c:if>
 
                 <form action="${pageContext.request.contextPath}/my-account" method="post" class="row g-3">
+                    <input type="hidden" name="csrfToken" value="${csrfToken}">
                     <input type="hidden" name="action" value="changePassword">
                     <div class="col-12">
                         <label class="form-label fw-semibold">Mật khẩu hiện tại</label>
@@ -153,16 +162,22 @@
                         </div>
                         <div class="d-flex gap-2 mt-3 flex-wrap">
                             <c:if test="${not addr.defaultt}">
-                                <form action="${pageContext.request.contextPath}/addresses" method="get">
-                                    <input type="hidden" name="defaultId" value="${addr.id}">
+                                <form action="${pageContext.request.contextPath}/addresses" method="post">
+                                    <input type="hidden" name="csrfToken" value="${csrfToken}">
+                                    <input type="hidden" name="_method" value="patch">
+                                    <input type="hidden" name="action" value="setDefault">
+                                    <input type="hidden" name="id" value="${addr.id}">
                                     <input type="hidden" name="redirect" value="account">
+                                    <input type="hidden" name="source" value="account">
                                     <button class="btn btn-sm btn-outline-primary" type="submit">Đặt mặc định</button>
                                 </form>
                             </c:if>
                             <form action="${pageContext.request.contextPath}/addresses" method="post" onsubmit="return confirm('Xóa địa chỉ này?');">
+                                <input type="hidden" name="csrfToken" value="${csrfToken}">
                                 <input type="hidden" name="_method" value="delete">
                                 <input type="hidden" name="id" value="${addr.id}">
                                 <input type="hidden" name="redirect" value="account">
+                                <input type="hidden" name="source" value="account">
                                 <button class="btn btn-sm btn-outline-danger" type="submit">Xóa</button>
                             </form>
                         </div>
@@ -171,8 +186,11 @@
 
                 <div class="border rounded-4 p-3 mt-3">
                     <div class="fw-bold mb-3">Thêm địa chỉ mới</div>
+                    <div id="addressApiStatus" class="alert alert-warning d-none py-2 px-3 mb-3" role="status" aria-live="polite"></div>
                     <form action="${pageContext.request.contextPath}/addresses" method="post" class="row g-3">
+                        <input type="hidden" name="csrfToken" value="${csrfToken}">
                         <input type="hidden" name="redirect" value="account">
+                        <input type="hidden" name="source" value="account">
                         <div class="col-md-6">
                             <label class="form-label">Tỉnh / Thành</label>
                             <select class="form-select" id="province" name="province" required>
@@ -195,9 +213,8 @@
                             <label class="form-label">Chi tiết địa chỉ</label>
                             <input class="form-control" name="addressDetail" required>
                         </div>
-                        <div class="col-12 form-check ms-1">
-                            <input class="form-check-input" type="checkbox" name="isDefault" id="isDefaultAccount">
-                            <label class="form-check-label" for="isDefaultAccount">Đặt làm địa chỉ mặc định</label>
+                        <div class="col-12 text-muted small">
+                            Lưu xong sẽ tự dùng địa chỉ này làm vị trí giao hàng hiện tại.
                         </div>
                         <div class="col-12 d-grid">
                             <button class="btn btn-primary" type="submit"><i class='bx bx-save'></i> Lưu địa chỉ</button>
@@ -243,11 +260,29 @@ document.addEventListener("DOMContentLoaded", function () {
     const provinceSelect = document.getElementById("province");
     const districtSelect = document.getElementById("district");
     const wardSelect = document.getElementById("ward");
+    const addressApiStatus = document.getElementById("addressApiStatus");
     const apiUrl = "https://provinces.open-api.vn/api/v1";
+
+    function showAddressApiStatus(message) {
+        if (!addressApiStatus) {
+            return;
+        }
+        addressApiStatus.textContent = message;
+        addressApiStatus.classList.remove("d-none");
+    }
+
+    function clearAddressApiStatus() {
+        if (!addressApiStatus) {
+            return;
+        }
+        addressApiStatus.textContent = "";
+        addressApiStatus.classList.add("d-none");
+    }
 
     fetch(apiUrl + "/p/")
         .then(res => res.json())
         .then(data => {
+            clearAddressApiStatus();
             data.forEach(p => {
                 const option = document.createElement("option");
                 option.value = p.name;
@@ -255,9 +290,17 @@ document.addEventListener("DOMContentLoaded", function () {
                 option.dataset.code = p.code;
                 provinceSelect.appendChild(option);
             });
+        })
+        .catch(() => {
+            provinceSelect.innerHTML = '<option value="">Không tải được tỉnh / thành</option>';
+            provinceSelect.disabled = true;
+            districtSelect.disabled = true;
+            wardSelect.disabled = true;
+            showAddressApiStatus("Không tải được danh sách tỉnh/thành. Vui lòng thử lại sau hoặc tải lại trang.");
         });
 
     provinceSelect.addEventListener("change", function () {
+        clearAddressApiStatus();
         districtSelect.innerHTML = '<option value="">-- Chọn Quận / Huyện --</option>';
         wardSelect.innerHTML = '<option value="">-- Chọn Phường / Xã --</option>';
         districtSelect.disabled = true;
@@ -271,6 +314,7 @@ document.addEventListener("DOMContentLoaded", function () {
         fetch(apiUrl + "/p/" + code + "?depth=2")
             .then(res => res.json())
             .then(data => {
+                clearAddressApiStatus();
                 data.districts.forEach(d => {
                     const option = document.createElement("option");
                     option.value = d.name;
@@ -278,10 +322,17 @@ document.addEventListener("DOMContentLoaded", function () {
                     option.dataset.code = d.code;
                     districtSelect.appendChild(option);
                 });
+            })
+            .catch(() => {
+                districtSelect.innerHTML = '<option value="">Không tải được quận / huyện</option>';
+                districtSelect.disabled = true;
+                wardSelect.disabled = true;
+                showAddressApiStatus("Không tải được quận/huyện. Vui lòng chọn lại tỉnh/thành hoặc thử lại sau.");
             });
     });
 
     districtSelect.addEventListener("change", function () {
+        clearAddressApiStatus();
         wardSelect.innerHTML = '<option value="">-- Chọn Phường / Xã --</option>';
         wardSelect.disabled = true;
 
@@ -293,6 +344,7 @@ document.addEventListener("DOMContentLoaded", function () {
         fetch(apiUrl + "/d/" + code + "?depth=2")
             .then(res => res.json())
             .then(data => {
+                clearAddressApiStatus();
                 data.wards.forEach(w => {
                     const option = document.createElement("option");
                     option.value = w.name;
@@ -300,6 +352,11 @@ document.addEventListener("DOMContentLoaded", function () {
                     option.dataset.code = w.code;
                     wardSelect.appendChild(option);
                 });
+            })
+            .catch(() => {
+                wardSelect.innerHTML = '<option value="">Không tải được phường / xã</option>';
+                wardSelect.disabled = true;
+                showAddressApiStatus("Không tải được phường/xã. Vui lòng chọn lại quận/huyện hoặc thử lại sau.");
             });
     });
 });

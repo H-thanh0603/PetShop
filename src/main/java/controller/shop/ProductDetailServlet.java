@@ -29,7 +29,7 @@ public class ProductDetailServlet extends HttpServlet {
             String idRaw = request.getParameter("id");
             
             if (idRaw == null || idRaw.isEmpty()) {
-                response.sendRedirect("shop");
+                response.sendRedirect(request.getContextPath() + "/shop");
                 return;
             }
 
@@ -40,7 +40,7 @@ public class ProductDetailServlet extends HttpServlet {
             
             if (p == null) {
                 request.getSession().setAttribute("error", "Sản phẩm không tồn tại hoặc đã bị xóa.");
-                response.sendRedirect("shop");
+                response.sendRedirect(request.getContextPath() + "/shop");
                 return;
             }
 
@@ -76,11 +76,11 @@ public class ProductDetailServlet extends HttpServlet {
         } catch (NumberFormatException e) {
             logger.warn("Invalid product id parameter: {}", request.getParameter("id"));
             request.getSession().setAttribute("error", "Mã sản phẩm không hợp lệ.");
-            response.sendRedirect("shop");
+            response.sendRedirect(request.getContextPath() + "/shop");
         } catch (Exception e) {
             logger.error("Error loading product detail for id={}", request.getParameter("id"), e);
             request.getSession().setAttribute("error", "Không thể tải thông tin sản phẩm. Vui lòng thử lại.");
-            response.sendRedirect("shop");
+            response.sendRedirect(request.getContextPath() + "/shop");
         }
     }
 }

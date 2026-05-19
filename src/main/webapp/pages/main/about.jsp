@@ -189,9 +189,9 @@
             <div class="row align-items-center g-5">
                 <div class="col-lg-6">
                     <div class="about-img-wrapper">
-                        <img src="${pageContext.request.contextPath}/assets/images/homepage_pic/webpic2.jpg" 
+                        <img loading="lazy" src="${pageContext.request.contextPath}/assets/images/homepage_pic/webpic2.jpg" 
                              class="about-img-main" alt="Animal Doctors Team">
-                        <img src="${pageContext.request.contextPath}/assets/images/homepage_pic/webpic6.jpg" 
+                        <img loading="lazy" src="${pageContext.request.contextPath}/assets/images/homepage_pic/webpic6.jpg" 
                              class="about-img-small" alt="Pet Care">
                     </div>
                 </div>
@@ -247,7 +247,7 @@
                 <div class="col-lg-4 col-md-6">
                     <div class="doctor-card">
                         <div class="doctor-img-box">
-                            <img src="${pageContext.request.contextPath}/assets/images/aboutUs_pic/webpic14.jpg" 
+                            <img loading="lazy" src="${pageContext.request.contextPath}/assets/images/aboutUs_pic/webpic14.jpg" 
                                  alt="Chuyên gia 1">
                         </div>
                         <div class="doctor-info">
@@ -258,7 +258,7 @@
                 <div class="col-lg-4 col-md-6">
                     <div class="doctor-card">
                         <div class="doctor-img-box">
-                            <img src="${pageContext.request.contextPath}/assets/images/aboutUs_pic/webpic15.jpg" 
+                            <img loading="lazy" src="${pageContext.request.contextPath}/assets/images/aboutUs_pic/webpic15.jpg" 
                                  alt="Chuyên gia 2">
                         </div>
                         <div class="doctor-info">
@@ -269,7 +269,7 @@
                 <div class="col-lg-4 col-md-6">
                     <div class="doctor-card">
                         <div class="doctor-img-box">
-                            <img src="${pageContext.request.contextPath}/assets/images/aboutUs_pic/webpic16.jpg" 
+                            <img loading="lazy" src="${pageContext.request.contextPath}/assets/images/aboutUs_pic/webpic16.jpg" 
                                  alt="Chuyên gia 3">
                         </div>
                         <div class="doctor-info">

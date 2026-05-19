@@ -640,7 +640,7 @@ document.addEventListener('DOMContentLoaded', function() {
                         } else {
                             var html = '';
                             products.forEach(function(p) {
-                                var imgSrc = p.image ? (contextPath + '/assets/images/shop_pic/' + p.image) : (contextPath + '/assets/images/no-image.png');
+                                var imgSrc = p.image ? (p.image.startsWith('http') ? p.image : (contextPath + '/assets/images/shop_pic/' + p.image)) : (contextPath + '/assets/images/no-image.png');
                                 var price = new Intl.NumberFormat('vi-VN').format(p.price) + 'đ';
                                 html += '<a href="' + contextPath + '/product-detail?id=' + p.id + '" class="autocomplete-item">';
                                 html += '<img src="' + imgSrc + '" alt="" onerror="this.src=\'' + contextPath + '/assets/images/no-image.png\'">';
