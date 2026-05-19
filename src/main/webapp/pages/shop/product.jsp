@@ -9,6 +9,7 @@
 <head>
 <meta charset="UTF-8">
 <title>${fn:escapeXml(detail.name)} | PetShop</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
 <link
     href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"
     rel="stylesheet">
@@ -160,12 +161,13 @@
     color: #ffc107;
 }
 </style>
+<link href="${pageContext.request.contextPath}/assets/css/storefront-polish.css" rel="stylesheet">
 </head>
 <body>
 
     <jsp:include page="/components/navbar.jsp" />
     <jsp:include page="/components/toast.jsp" />
-    <div class="bg-light py-3 mb-4">
+    <div class="bg-light py-3 mb-4 product-breadcrumb-band">
         <div class="container">
             <nav aria-label="breadcrumb">
                 <ol class="breadcrumb mb-0">
@@ -181,38 +183,41 @@
         </div>
     </div>
 
-    <div class="container mb-5">
+    <div class="container mb-5 product-detail-page">
         <c:set var="productRedirect"
             value="${pageContext.request.contextPath}/product-detail?id=${detail.id}" />
 
-        <div class="row g-5">
+        <div class="row g-5 product-top-grid">
             <div class="col-lg-5">
+                <div class="product-media-panel">
                 <div class="product-img-main text-center mb-3">
                     <img id="mainImage"
-                        src="${pageContext.request.contextPath}/assets/images/shop_pic/${fn:escapeXml(detail.image)}"
+                        src="${fn:startsWith(detail.image, 'http') ? fn:escapeXml(detail.image) : pageContext.request.contextPath += '/assets/images/shop_pic/' += fn:escapeXml(detail.image)}"
                         class="img-fluid" alt="${fn:escapeXml(detail.name)}" style="max-height: 400px;"
                         onerror="this.src='https://placehold.co/400x400/e2e8f0/1e293b?text=PetShop'">
                 </div>
 
                 <div class="d-flex justify-content-center gap-2">
                     <img
-                        src="${pageContext.request.contextPath}/assets/images/shop_pic/${detail.image}"
+                        src="${fn:startsWith(detail.image, 'http') ? detail.image : pageContext.request.contextPath += '/assets/images/shop_pic/' += detail.image}"
                         class="thumb-img active" onclick="changeImage(this)"> <img
-                        src="${pageContext.request.contextPath}/assets/images/shop_pic/${detail.image}"
+                        src="${fn:startsWith(detail.image, 'http') ? detail.image : pageContext.request.contextPath += '/assets/images/shop_pic/' += detail.image}"
                         class="thumb-img" onclick="changeImage(this)"> <img
-                        src="${pageContext.request.contextPath}/assets/images/shop_pic/${detail.image}"
+                        src="${fn:startsWith(detail.image, 'http') ? detail.image : pageContext.request.contextPath += '/assets/images/shop_pic/' += detail.image}"
                         class="thumb-img" onclick="changeImage(this)">
+                </div>
                 </div>
             </div>
 
             <div class="col-lg-7">
+                <div class="product-purchase-panel">
                 <div class="d-flex flex-wrap gap-2 mb-2">
-                    <span class="badge bg-info text-dark">Chính hãng</span>
+                    <span class="badge product-badge">Chính hãng</span>
                     <c:if test="${detail.discount > 0}">
-                        <span class="badge bg-danger">Giảm ${detail.discount}%</span>
+                        <span class="badge product-badge product-badge-sale">Giảm ${detail.discount}%</span>
                     </c:if>
                     <c:if test="${detail.stock > 0 && detail.stock < 10}">
-                        <span class="badge bg-warning text-dark">Sắp hết hàng</span>
+                        <span class="badge product-badge product-badge-warn">Sắp hết hàng</span>
                     </c:if>
                 </div>
                 <h2 class="fw-bold text-dark mb-2">${fn:escapeXml(detail.name)}</h2>
@@ -227,7 +232,7 @@
                     <span class="text-muted border-start ps-3">Danh mục: <strong>${fn:escapeXml(detail.category)}</strong></span>
                 </div>
 
-                <div class="mb-4 bg-light p-3 rounded">
+                <div class="price-panel mb-4">
                     <div class="d-flex flex-wrap align-items-end gap-3">
                         <span class="price-tag"> <fmt:formatNumber
                                 value="${detail.price}" type="currency" currencySymbol="₫" />
@@ -260,7 +265,7 @@
                     </div>
                 </div>
 
-                <div class="rating-summary mb-4">
+                <div class="rating-summary product-rating-summary mb-4">
                     <div class="d-flex flex-wrap justify-content-between align-items-center gap-3">
                         <div>
                             <div class="text-uppercase text-muted small fw-semibold">Đánh giá khách hàng</div>
@@ -286,14 +291,14 @@
 
                 <form id="addToCartForm"
                     action="${pageContext.request.contextPath}/add-to-cart"
-                    method="post" class="pb-4 border-bottom">
+                    method="post" class="product-buy-box">
                     <input type="hidden" name="csrfToken" value="${csrfToken}">
                     <input type="hidden" name="id" value="${detail.id}"> <input
                         type="hidden" name="actionType" id="actionType" value="add">
 
                     <div class="row align-items-end">
                         <div class="col-md-3 mb-3">
-                            <label class="form-label fw-bold">Số lượng:</label>
+                            <label class="form-label fw-bold">Số lượng</label>
                             <div class="input-group">
                                 <input type="number" id="qtyInput" name="quantity"
                                     class="form-control text-center" value="1"
@@ -306,19 +311,22 @@
 
                         <div class="col-md-9 mb-3 d-flex gap-2 flex-wrap">
                             <button type="button" onclick="submitForm('add')"
-                                class="btn btn-primary btn-lg flex-grow-1 shadow-sm">
+                                class="btn btn-primary btn-lg flex-grow-1 product-action-btn shadow-sm">
                                 <i class='bx bx-cart-add'></i> Thêm vào giỏ
                             </button>
 
                             <button type="button" onclick="submitForm('buy')"
-                                class="btn btn-danger btn-lg flex-grow-1 shadow-sm">
-                                Mua ngay</button>
+                                class="btn btn-danger btn-lg flex-grow-1 product-action-btn shadow-sm">
+                                <i class='bx bx-bolt-circle'></i> Mua ngay</button>
                         </div>
+                    </div>
+                    <div class="purchase-note">
+                        Bạn có thể kiểm tra phí vận chuyển và mã giảm giá ở bước thanh toán.
                     </div>
                 </form>
 
                 <form action="${pageContext.request.contextPath}/toggle-wishlist" method="post"
-                    class="wishlist-form mt-3">
+                    class="wishlist-form mt-3 product-wishlist-row">
                     <input type="hidden" name="csrfToken" value="${csrfToken}">
                     <input type="hidden" name="productId" value="${detail.id}">
                     <input type="hidden" name="redirect" value="${productRedirect}">
@@ -330,21 +338,22 @@
                     </button>
                 </form>
 
-                <div class="row mt-4 small text-secondary">
-                    <div class="col-6 mb-2">
+                <div class="product-assurance small">
+                    <div class="product-assurance-item">
                         <i class='bx bx-shield-quarter text-primary me-2'></i> Hàng chính hãng
                     </div>
-                    <div class="col-6 mb-2">
+                    <div class="product-assurance-item">
                         <i class='bx bx-refresh text-primary me-2'></i> Đổi trả linh hoạt nếu lỗi
                     </div>
-                    <div class="col-6">
+                    <div class="product-assurance-item">
                         <i class='bx bxs-truck text-primary me-2'></i> Freeship đơn từ
                         500k
                     </div>
-                    <div class="col-6">
+                    <div class="product-assurance-item">
                         <i class='bx bx-support text-primary me-2'></i> Tư vấn chọn sản phẩm
                         phù hợp
                     </div>
+                </div>
                 </div>
             </div>
         </div>
@@ -478,6 +487,7 @@
                                     <c:otherwise>
                                         <form action="${pageContext.request.contextPath}/add-review"
                                             method="post">
+                                            <input type="hidden" name="csrfToken" value="${csrfToken}">
                                             <input type="hidden" name="productId" value="${detail.id}">
 
                                             <div class="mb-3">
@@ -534,7 +544,7 @@
                                     <a
                                         href="${pageContext.request.contextPath}/product-detail?id=${rp.id}">
                                         <img
-                                        src="${pageContext.request.contextPath}/assets/images/shop_pic/${fn:escapeXml(rp.image)}"
+                                        src="${fn:startsWith(rp.image, 'http') ? fn:escapeXml(rp.image) : pageContext.request.contextPath += '/assets/images/shop_pic/' += fn:escapeXml(rp.image)}"
                                         class="card-img-top" alt="${fn:escapeXml(rp.name)}"
                                         style="height: 200px; object-fit: cover;"
                                         onerror="this.src='https://placehold.co/200x200/e2e8f0/1e293b?text=PetShop'">

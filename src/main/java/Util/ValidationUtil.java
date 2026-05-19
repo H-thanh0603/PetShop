@@ -82,7 +82,7 @@ public class ValidationUtil {
     }
     
     public static boolean isValidPassword(String password) {
-        return isNotEmpty(password) && password.length() >= 6;
+        return PasswordUtil.isStrongPassword(password);
     }
     
     // ==================== NUMBER VALIDATION ====================

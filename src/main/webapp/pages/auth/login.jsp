@@ -161,6 +161,7 @@
                 <div>
                     Email chưa được xác thực.
                     <form action="${pageContext.request.contextPath}/verify-email" method="post" class="d-inline">
+                        <input type="hidden" name="csrfToken" value="${csrfToken}" />
                         <input type="hidden" name="email" value="${unverifiedEmail}">
                         <button type="submit" class="btn btn-sm btn-warning ms-2 fw-bold">Gửi lại email xác thực</button>
                     </form>

@@ -53,6 +53,10 @@ public class MyAccountServlet extends HttpServlet {
             recentOrders = recentOrders.subList(0, 3);
         }
         request.setAttribute("recentOrders", recentOrders);
+        moveFlashAttribute(session, request, "success");
+        moveFlashAttribute(session, request, "error");
+        moveFlashAttribute(session, request, "pwSuccess");
+        moveFlashAttribute(session, request, "pwError");
         request.getRequestDispatcher("/pages/shop/my-account.jsp").forward(request, response);
     }
 
@@ -183,5 +187,13 @@ public class MyAccountServlet extends HttpServlet {
             else hasSpecial = true;
         }
         return hasUpper && hasLower && hasDigit && hasSpecial;
+    }
+
+    private void moveFlashAttribute(HttpSession session, HttpServletRequest request, String attributeName) {
+        Object value = session.getAttribute(attributeName);
+        if (value != null) {
+            request.setAttribute(attributeName, value);
+            session.removeAttribute(attributeName);
+        }
     }
 }

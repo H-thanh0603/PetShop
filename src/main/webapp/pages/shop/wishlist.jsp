@@ -14,6 +14,8 @@
         .wishlist-image { width: 120px; height: 120px; object-fit: contain; background: #f8fafc; border-radius: 16px; padding: 12px; }
         .wishlist-empty { border: 2px dashed #cbd5e1; border-radius: 20px; padding: 48px 24px; text-align: center; background: #fff; }
     </style>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link href="${pageContext.request.contextPath}/assets/css/storefront-polish.css" rel="stylesheet">
 </head>
 <body class="bg-light">
     <jsp:include page="/components/navbar.jsp" />
@@ -55,7 +57,7 @@
                                     <div class="row align-items-center g-3">
                                         <div class="col-md-auto text-center">
                                             <a href="${pageContext.request.contextPath}/product-detail?id=${p.id}">
-                                                <img src="${pageContext.request.contextPath}/assets/images/shop_pic/${fn:escapeXml(p.image)}"
+                                                <img loading="lazy" src="${fn:startsWith(p.image, 'http') ? fn:escapeXml(p.image) : pageContext.request.contextPath += '/assets/images/shop_pic/' += fn:escapeXml(p.image)}"
                                                      alt="${fn:escapeXml(p.name)}" class="wishlist-image"
                                                      onerror="this.src='https://placehold.co/140x140/e2e8f0/1e293b?text=PetShop'">
                                             </a>

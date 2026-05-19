@@ -26,6 +26,7 @@
     <c:if test="${not empty expiredEmail}">
         <p class="mb-3">Bạn muốn nhận lại email xác thực?</p>
         <form action="${pageContext.request.contextPath}/verify-email" method="post">
+            <input type="hidden" name="csrfToken" value="${csrfToken}" />
             <input type="hidden" name="email" value="${expiredEmail}">
             <button type="submit" class="btn-primary mb-3">Gửi lại email xác thực</button>
         </form>

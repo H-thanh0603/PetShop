@@ -12,7 +12,7 @@
         /* Stats Grid Override - Giống Dashboard */
         .stats-grid {
             display: grid;
-            grid-template-columns: repeat(4, 1fr);
+            grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
             gap: 20px;
             margin-bottom: 28px;
         }
@@ -45,6 +45,9 @@
         .stat-card.green { background: linear-gradient(135deg, #059669 0%, #10b981 100%); }
         .stat-card.orange { background: linear-gradient(135deg, #ea580c 0%, #f97316 100%); }
         .stat-card.purple { background: linear-gradient(135deg, #7c3aed 0%, #a78bfa 100%); }
+        .stat-card.red { background: linear-gradient(135deg, #b91c1c 0%, #ef4444 100%); }
+        .stat-card.yellow { background: linear-gradient(135deg, #ca8a04 0%, #f59e0b 100%); }
+        .stat-card.slate { background: linear-gradient(135deg, #334155 0%, #64748b 100%); }
         
         /* Product Table Styles */
         .product-thumb {
@@ -79,6 +82,42 @@
             font-weight: 700;
         }
         .no-discount { color: #94a3b8; }
+        .stock-badge,
+        .expiry-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            padding: 5px 10px;
+            border-radius: 999px;
+            font-size: 0.78rem;
+            font-weight: 700;
+            white-space: nowrap;
+        }
+        .stock-badge.ok { background: #ecfdf5; color: #047857; }
+        .stock-badge.low { background: #fffbeb; color: #b45309; }
+        .stock-badge.out { background: #fef2f2; color: #dc2626; }
+        .expiry-badge.healthy { background: #ecfdf5; color: #047857; }
+        .expiry-badge.near-expiry { background: #fffbeb; color: #b45309; }
+        .expiry-badge.expired { background: #fef2f2; color: #dc2626; }
+        .expiry-badge.no-batch,
+        .expiry-badge.no-expiry { background: #f1f5f9; color: #475569; }
+        .batch-meta {
+            display: block;
+            margin-top: 4px;
+            color: #64748b;
+            font-size: 0.76rem;
+            line-height: 1.35;
+        }
+        .form-section-title {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin: 18px 0 12px;
+            padding-top: 16px;
+            border-top: 1px solid #e2e8f0;
+            color: #0f172a;
+            font-weight: 700;
+        }
 
         /* Image Upload Styles - Match blogs.jsp */
         .image-upload-wrapper {
@@ -224,8 +263,23 @@
                 <h3><i class='bx bx-store'></i> ${totalProducts}</h3>
                 <p>Đang bán</p>
             </div>
+            <div class="stat-card yellow" onclick="filterByInventory('low-stock')">
+                <h3><i class='bx bx-error'></i> ${lowStockProducts}</h3>
+                <p>Sắp hết hàng</p>
+            </div>
+            <div class="stat-card orange" onclick="filterByInventory('near-expiry')">
+                <h3><i class='bx bx-time-five'></i> ${nearExpiryProducts}</h3>
+                <p>Sắp hết hạn</p>
+            </div>
+            <div class="stat-card red" onclick="filterByInventory('expired')">
+                <h3><i class='bx bx-alarm-exclamation'></i> ${expiredProducts}</h3>
+                <p>Đã hết hạn</p>
+            </div>
+            <div class="stat-card slate" onclick="filterByInventory('missing-batch')">
+                <h3><i class='bx bx-barcode'></i> ${missingBatchProducts}</h3>
+                <p>Chưa có lô hàng</p>
+            </div>
         </div>
-
         <!-- Filter Section -->
         <div class="filter-section">
             <div class="search-box">
@@ -236,6 +290,14 @@
                 <option value="">Tất cả</option>
                 <option value="yes">Đang giảm giá</option>
                 <option value="no">Không giảm giá</option>
+            </select>
+            <select class="filter-select" id="filterInventory" onchange="applyFilters()">
+                <option value="">Tất cả tình trạng</option>
+                <option value="low-stock">Sắp hết hàng</option>
+                <option value="out-of-stock">Hết hàng</option>
+                <option value="near-expiry">Sắp hết hạn</option>
+                <option value="expired">Đã hết hạn</option>
+                <option value="missing-batch">Chưa có lô hàng</option>
             </select>
             <button class="btn-reset" id="resetBtn" onclick="resetFilters()">
                 <i class='bx bx-x'></i> Xóa bộ lọc
@@ -266,12 +328,13 @@
                         <th style="width: 90px;">Tồn kho</th>
                         <th style="width: 120px;">Danh mục</th>
                         <th style="width: 110px;">Thao tác</th>
+                        <th style="width: 150px;">Hạn dùng</th>
                     </tr>
                 </thead>
                 <tbody id="productsBody">
                     <c:if test="${empty products}">
                         <tr>
-                            <td colspan="9">
+                            <td colspan="10">
                                 <div class="empty-state">
                                     <i class='bx bx-package'></i>
                                     <p>Chưa có sản phẩm nào</p>
@@ -280,12 +343,15 @@
                         </tr>
                     </c:if>
                     <c:forEach items="${products}" var="p" varStatus="loop">
+                        <c:set var="inventory" value="${inventoryByProduct[p.id]}" />
                         <tr data-id="${p.id}" data-name="${fn:escapeXml(p.name)}" data-image="${fn:escapeXml(p.image)}" 
                             data-price="${p.price}" data-discount="${p.discount}" data-description="${fn:escapeXml(p.description)}"
-                            data-stock="${p.stock}" data-weight="${p.weight}" data-category="${fn:escapeXml(p.category)}" data-pet-type-id="${p.pet_type_id}">
+                            data-stock="${p.stock}" data-weight="${p.weight}" data-category="${fn:escapeXml(p.category)}" data-pet-type-id="${p.pet_type_id}"
+                            data-stock-status="${p.stock == 0 ? 'out-of-stock' : (p.stock < 10 ? 'low-stock' : 'ok')}"
+                            data-expiry-status="${empty inventory ? 'missing-batch' : inventory.expiryStatus}">
                             <td><strong>${loop.index + 1}</strong></td>
                             <td>
-                                <img src="${pageContext.request.contextPath}/assets/images/shop_pic/${fn:escapeXml(p.image)}" 
+                                <img loading="lazy" src="${fn:startsWith(p.image, 'http') ? fn:escapeXml(p.image) : pageContext.request.contextPath += '/assets/images/shop_pic/' += fn:escapeXml(p.image)}" 
                                      alt="" class="product-thumb"
                                      onerror="this.src='https://placehold.co/300x300/e2e8f0/1e293b?text=PetShop'" loading="lazy">
                             </td>
@@ -343,6 +409,27 @@
                                     </button>
                                 </div>
                             </td>
+                            <td>
+                                <c:choose>
+                                    <c:when test="${empty inventory}">
+                                        <span class="expiry-badge no-batch"><i class='bx bx-barcode'></i> Chưa có lô</span>
+                                    </c:when>
+                                    <c:otherwise>
+                                        <span class="expiry-badge ${inventory.expiryStatus}">
+                                            <i class='bx bx-calendar'></i> ${inventory.expiryStatusLabel}
+                                        </span>
+                                        <span class="batch-meta">
+                                            <c:choose>
+                                                <c:when test="${not empty inventory.formattedEarliestExpiryDate}">
+                                                    HSD gần nhất: ${inventory.formattedEarliestExpiryDate}
+                                                </c:when>
+                                                <c:otherwise>Chưa khai báo HSD</c:otherwise>
+                                            </c:choose>
+                                            <br>Lô: ${empty inventory.earliestBatchCode ? '—' : fn:escapeXml(inventory.earliestBatchCode)}
+                                        </span>
+                                    </c:otherwise>
+                                </c:choose>
+                            </td>
                         </tr>
                     </c:forEach>
                 </tbody>
@@ -395,7 +482,39 @@
                             <span class="input-hint">Chấp nhận: JPG, PNG, GIF, WebP. Tối đa 5MB</span>
                         </div>
                     </div>
-                    
+                    <div class="form-section-title">
+                        <i class='bx bx-barcode'></i> Nhập lô hàng / hạn sử dụng
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label">Mã lô</label>
+                            <input type="text" class="form-input" name="batchCode" id="formBatchCode"
+                                   placeholder="VD: LOT-CAT-2026-05">
+                            <div class="input-hint">Bỏ trống để hệ thống tự tạo mã lô.</div>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Số lượng nhập</label>
+                            <input type="number" class="form-input" name="batchQuantity" id="formBatchQuantity"
+                                   placeholder="VD: 50" min="0" value="0" step="1">
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label">Giá vốn / sản phẩm</label>
+                            <input type="number" class="form-input" name="batchUnitCost" id="formBatchUnitCost"
+                                   placeholder="VD: 85000" min="0" value="0" step="1000">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Hạn sử dụng</label>
+                            <input type="date" class="form-input" name="batchExpiryDate" id="formBatchExpiryDate">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Ghi chú lô hàng</label>
+                        <input type="text" class="form-input" name="batchNote" id="formBatchNote"
+                               placeholder="VD: Nhập từ nhà cung cấp A, ưu tiên bán trước...">
+                    </div>
+
                     <div class="form-row">
                         <div class="form-group">
                             <label class="form-label">Giá bán <span class="required">*</span></label>
@@ -539,19 +658,28 @@
         function applyFilters() {
             var search = document.getElementById('searchInput').value.toLowerCase();
             var discount = document.getElementById('filterDiscount').value;
+            var inventory = document.getElementById('filterInventory').value;
             var rows = document.querySelectorAll('#productsBody tr[data-id]');
-            var hasFilter = search || discount;
+            var hasFilter = search || discount || inventory;
             
             rows.forEach(function(row) {
                 var name = (row.dataset.name || '').toLowerCase();
                 var hasDiscount = parseInt(row.dataset.discount) > 0;
+                var stockStatus = row.dataset.stockStatus || 'ok';
+                var expiryStatus = row.dataset.expiryStatus || 'missing-batch';
                 
                 var matchSearch = !search || name.indexOf(search) > -1;
                 var matchDiscount = !discount || 
                     (discount === 'yes' && hasDiscount) || 
                     (discount === 'no' && !hasDiscount);
+                var matchInventory = !inventory ||
+                    (inventory === stockStatus) ||
+                    (inventory === 'missing-batch' && expiryStatus === 'no-batch') ||
+                    (inventory === 'missing-batch' && expiryStatus === 'missing-batch') ||
+                    (inventory === 'near-expiry' && expiryStatus === 'near-expiry') ||
+                    (inventory === 'expired' && expiryStatus === 'expired');
                 
-                row.style.display = (matchSearch && matchDiscount) ? '' : 'none';
+                row.style.display = (matchSearch && matchDiscount && matchInventory) ? '' : 'none';
             });
             
             var resetBtn = document.getElementById('resetBtn');
@@ -566,6 +694,14 @@
 
         function filterByDiscount(value) {
             document.getElementById('filterDiscount').value = value;
+            document.getElementById('filterInventory').value = '';
+            document.getElementById('searchInput').value = '';
+            applyFilters();
+        }
+
+        function filterByInventory(value) {
+            document.getElementById('filterInventory').value = value;
+            document.getElementById('filterDiscount').value = '';
             document.getElementById('searchInput').value = '';
             applyFilters();
         }
@@ -573,6 +709,7 @@
         function resetFilters() {
             document.getElementById('searchInput').value = '';
             document.getElementById('filterDiscount').value = '';
+            document.getElementById('filterInventory').value = '';
             applyFilters();
         }
 
@@ -591,6 +728,7 @@
             document.getElementById('formWeight').value = '0';
             document.getElementById('formCategory').value = '';
             document.getElementById('formPetTypeId').value = '0';
+            resetBatchFields();
             document.getElementById('pricePreview').textContent = '';
             resetImagePreview();
             document.getElementById('productModal').classList.add('show');
@@ -618,11 +756,12 @@
             document.getElementById('formWeight').value = row.dataset.weight || '0';
             document.getElementById('formCategory').value = row.dataset.category || '';
             document.getElementById('formPetTypeId').value = row.dataset.petTypeId || '0';
+            resetBatchFields();
             
             // Show existing image
             var existingImage = row.dataset.image;
             if (existingImage) {
-                var imgUrl = '${pageContext.request.contextPath}/assets/images/shop_pic/' + existingImage;
+                var imgUrl = existingImage.indexOf('http') === 0 ? existingImage : '${pageContext.request.contextPath}/assets/images/shop_pic/' + existingImage;
                 showImagePreview(imgUrl);
             } else {
                 resetImagePreview();
@@ -633,6 +772,14 @@
 
         function closeModal() {
             document.getElementById('productModal').classList.remove('show');
+        }
+
+        function resetBatchFields() {
+            document.getElementById('formBatchCode').value = '';
+            document.getElementById('formBatchQuantity').value = '0';
+            document.getElementById('formBatchUnitCost').value = '0';
+            document.getElementById('formBatchExpiryDate').value = '';
+            document.getElementById('formBatchNote').value = '';
         }
 
         function openDeleteModal(row) {

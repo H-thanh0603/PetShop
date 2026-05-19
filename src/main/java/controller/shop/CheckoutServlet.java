@@ -9,6 +9,7 @@ import org.slf4j.LoggerFactory;
 import DAO.AddressDao;
 import DAO.CartDAO;
 import DAO.CouponDao;
+import DAO.InventoryBatchDAO;
 import DAO.OrderDAO;
 import DAO.PaymentTransactionDAO;
 import DAO.ProductDAO;
@@ -66,6 +67,7 @@ public class CheckoutServlet extends HttpServlet {
     private final PaymentTransactionDAO paymentTransactionDAO = new PaymentTransactionDAO();
     private final UserDAO userDAO = new UserDAO();
     private final OrderEmailService orderEmailService = new OrderEmailService();
+    private final InventoryBatchDAO inventoryBatchDAO = new InventoryBatchDAO();
 
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
@@ -142,7 +144,7 @@ public class CheckoutServlet extends HttpServlet {
         }
 
         List<Address> addressList = addressDAO.getAddressesByUserId(user.getId());
-        Address defaultAddress = addressDAO.getDefaultAddressByUserId(user.getId());
+        Address defaultAddress = resolvePrimaryAddress(user.getId(), addressList);
         CouponValidationResult couponState = resolveAppliedCouponFromSession(session, user);
         CheckoutSummary summary = buildCheckoutSummary(cart, defaultAddress, couponState.getCoupon());
 
@@ -150,6 +152,7 @@ public class CheckoutServlet extends HttpServlet {
         request.setAttribute("cartItems", new ArrayList<>(cart.values()));
         request.setAttribute("user", user);
         request.setAttribute("defaultAddress", defaultAddress);
+        request.setAttribute("selectedAddressId", defaultAddress != null ? defaultAddress.getId() : null);
         request.setAttribute("totalAmount", summary.getTotalAmount());
         request.setAttribute("shippingFee", summary.getShippingFee());
         request.setAttribute("shippingMessage", summary.getShippingMessage());
@@ -237,7 +240,8 @@ public class CheckoutServlet extends HttpServlet {
                 return;
             }
 
-            Address defaultAddress = addressDAO.getDefaultAddressByUserId(user.getId());
+            List<Address> addressList = addressDAO.getAddressesByUserId(user.getId());
+            Address defaultAddress = resolvePrimaryAddress(user.getId(), addressList);
             if (isBlank(user.getFullname()) || isBlank(user.getPhone())) {
                 result.put("success", false);
                 result.put("message", "Thiếu thông tin người nhận.");
@@ -287,196 +291,22 @@ public class CheckoutServlet extends HttpServlet {
                     + defaultAddress.getDistrict() + ", "
                     + defaultAddress.getProvince();
 
-            try (Connection conn = DBContext.getConnection()) {
-                conn.setAutoCommit(false);
+            String paymentMethodKey = resolvePaymentMethodKey(request);
 
-                try {
-                    for (CartItem item : cart.values()) {
-                        Product latestProduct = productDAO.getProductByIdForUpdate(conn, item.getProduct().getId());
-                        if (latestProduct == null) {
-                            conn.rollback();
-                            result.put("success", false);
-                            result.put("message", "Có sản phẩm không còn tồn tại.");
-                            write(response, result);
-                            return;
-                        }
-                        if (latestProduct.getStock() < item.getQuantity()) {
-                            conn.rollback();
-                            result.put("success", false);
-                            result.put(
-                                    "message",
-                                    "Sản phẩm \"" + latestProduct.getName() + "\" chỉ còn "
-                                            + latestProduct.getStock() + " sản phẩm."
-                            );
-                            write(response, result);
-                            return;
-                        }
-                        item.setProduct(latestProduct);
-                    }
+            services.CheckoutResult checkoutResult = buildCheckoutService().processCheckout(
+                user, cart, fullAddress, note, couponState, paymentMethodKey, baseSummary.getShippingFee()
+            );
 
-                    BigDecimal discount = BigDecimal.ZERO;
-                    if (couponState.isValid()) {
-                        if (!userDAO.markDiscountAsUsed(conn, user.getId())) {
-                            conn.rollback();
-                            result.put("success", false);
-                            result.put("message", "Tài khoản này đã sử dụng mã giảm giá trước đó.");
-                            write(response, result);
-                            return;
-                        }
-
-                        Coupon latestCoupon = couponDao.getValidCouponByCode(conn, couponState.getCoupon().getCode());
-                        if (latestCoupon == null) {
-                            conn.rollback();
-                            result.put("success", false);
-                            result.put("message", "Mã giảm giá không hợp lệ hoặc đã hết hạn.");
-                            write(response, result);
-                            return;
-                        }
-                        // Atomic conditional increment — returns false if used >= quantity
-                        if (!couponDao.increaseUsedIfAvailable(conn, latestCoupon.getId())) {
-                            conn.rollback();
-                            result.put("success", false);
-                            result.put("message", "Mã giảm giá đã hết lượt sử dụng.");
-                            write(response, result);
-                            return;
-                        }
-                        discount = calculateDiscount(baseSummary.getTotalAmount(), latestCoupon);
-                    }
-
-                    BigDecimal finalTotal = baseSummary.getTotalAmount()
-                            .add(BigDecimal.valueOf(baseSummary.getShippingFee()))
-                            .subtract(discount);
-
-                    // Resolve payment via registry (extensible, no switch-case)
-                    String paymentMethodKey = resolvePaymentMethodKey(request);
-                    PaymentProvider provider = PaymentRegistry.getInstance().get(paymentMethodKey);
-                    if (provider == null) {
-                        conn.rollback();
-                        result.put("success", false);
-                        result.put("message", "Phương thức thanh toán không hợp lệ.");
-                        write(response, result);
-                        return;
-                    }
-                    PaymentResult paymentResult = provider.process(finalTotal.doubleValue());
-                    if (!paymentResult.isSuccess()) {
-                        conn.rollback();
-                        result.put("success", false);
-                        result.put("message", paymentResult.getMessage());
-                        write(response, result);
-                        return;
-                    }
-
-                    Order order = new Order();
-                    order.setUserId(user.getId());
-                    order.setFullname(user.getFullname());
-                    order.setPhone(user.getPhone());
-                    order.setAddress(fullAddress);
-                    order.setNote(note);
-                    order.setTotalAmount(finalTotal);
-                    order.setStatus("Pending");
-                    order.setCreatedAt(Timestamp.valueOf(LocalDateTime.now()));
-                    order.setPayment_method(paymentResult.getPaymentMethodDb());
-                    order.setPayment_status(paymentResult.isPaymentStatus());
-
-                    int orderId = orderDAO.saveOrder(conn, order);
-                    if (orderId <= 0) {
-                        conn.rollback();
-                        result.put("success", false);
-                        result.put("message", "Không tạo được đơn hàng.");
-                        write(response, result);
-                        return;
-                    }
-
-                    BankTransferDetails bankTransferDetails = BankTransferDetails.fromConfig();
-                    if ("BANK_TRANSFER".equalsIgnoreCase(paymentResult.getPaymentMethodDb())
-                            && !bankTransferDetails.isConfigured()) {
-                        conn.rollback();
-                        result.put("success", false);
-                        result.put("message", "Thiếu cấu hình chuyển khoản ngân hàng. Vui lòng liên hệ quản trị viên.");
-                        write(response, result);
-                        return;
-                    }
-
-                    for (CartItem ci : cart.values()) {
-                        if (!productDAO.decreaseStock(conn, ci.getProduct().getId(), ci.getQuantity())) {
-                            conn.rollback();
-                            result.put("success", false);
-                            result.put(
-                                    "message",
-                                    "Sản phẩm \"" + ci.getProduct().getName() + "\" đã hết hàng trong lúc thanh toán."
-                            );
-                            write(response, result);
-                            return;
-                        }
-
-                        OrderItem orderItem = new OrderItem();
-                        orderItem.setOrderId(orderId);
-                        orderItem.setProductId(ci.getProduct().getId());
-                        orderItem.setQuantity(ci.getQuantity());
-                        orderItem.setPrice(ci.getProduct().getPrice());
-
-                        if (!orderDAO.saveOrderItem(conn, orderItem)) {
-                            conn.rollback();
-                            result.put("success", false);
-                            result.put("message", "Không lưu được chi tiết đơn hàng.");
-                            write(response, result);
-                            return;
-                        }
-                    }
-
-                    PaymentTransaction paymentTransaction = buildPaymentTransaction(
-                            user,
-                            orderId,
-                            finalTotal,
-                            paymentResult,
-                            bankTransferDetails
-                    );
-                    int paymentTransactionId = paymentTransactionDAO.save(conn, paymentTransaction);
-                    if (paymentTransactionId <= 0) {
-                        conn.rollback();
-                        result.put("success", false);
-                        result.put("message", "Không tạo được giao dịch thanh toán.");
-                        write(response, result);
-                        return;
-                    }
-
-                    cartDAO.clearCart(conn, user.getId());
-                    conn.commit();
-                    completedPaymentMethod = paymentResult.getPaymentMethodDb();
-                    completedPaymentTransaction = paymentTransaction;
-                    completedOrderId = orderId;
-
-                    // Send order confirmation email asynchronously (after commit)
-                    final int confirmedOrderId = orderId;
-                    final List<OrderItem> confirmedItems = new ArrayList<>(cart.values().stream()
-                        .map(ci -> {
-                            OrderItem oi = new OrderItem();
-                            oi.setOrderId(confirmedOrderId);
-                            oi.setProductId(ci.getProduct().getId());
-                            oi.setQuantity(ci.getQuantity());
-                            oi.setPrice(ci.getProduct().getPrice());
-                            oi.setProduct(ci.getProduct());
-                            return oi;
-                        }).collect(java.util.stream.Collectors.toList()));
-                    final Order confirmedOrder = order;
-                    confirmedOrder.setId(confirmedOrderId);
-                    final String userEmail = user.getEmail();
-                    if (userEmail != null && !userEmail.isEmpty()) {
-                        orderEmailService.sendOrderConfirmationAsync(userEmail, confirmedOrder, confirmedItems);
-                    }
-                } catch (Exception e) {
-                    conn.rollback();
-                    throw e;
-                } finally {
-                    conn.setAutoCommit(true);
-                }
-            } catch (Exception e) {
-                logger.error("Unexpected error during checkout for user id={}", userSession.getId(), e);
+            if (!checkoutResult.isSuccess()) {
                 result.put("success", false);
-                result.put("message", "Đã có lỗi xảy ra. Vui lòng thử lại.");
+                result.put("message", checkoutResult.getMessage());
                 write(response, result);
                 return;
             }
+
+            completedPaymentMethod = checkoutResult.getPaymentMethodDb();
+            completedPaymentTransaction = checkoutResult.getPaymentTransaction();
+            completedOrderId = checkoutResult.getOrderId();
 
             session.removeAttribute("cart");
             session.setAttribute("totalQuantity", 0);
@@ -681,6 +511,24 @@ public class CheckoutServlet extends HttpServlet {
         return trimToEmpty(request.getParameter("payment"));
     }
 
+    private Address resolvePrimaryAddress(int userId, List<Address> addressList) {
+        Address defaultAddress = addressDAO.getDefaultAddressByUserId(userId);
+        if (defaultAddress != null) {
+            return defaultAddress;
+        }
+        if (addressList != null && !addressList.isEmpty()) {
+            return addressList.get(0);
+        }
+        return null;
+    }
+
+    private services.CheckoutService buildCheckoutService() {
+        return new services.CheckoutService(
+                productDAO, userDAO, couponDao, orderDAO, paymentTransactionDAO, cartDAO,
+                orderEmailService, inventoryBatchDAO
+        );
+    }
+
     private PaymentTransaction buildPaymentTransaction(User user, int orderId, BigDecimal finalTotal,
                                                        PaymentResult paymentResult,
                                                        BankTransferDetails bankTransferDetails) {
@@ -764,40 +612,5 @@ public class CheckoutServlet extends HttpServlet {
         }
     }
 
-    private static final class CouponValidationResult {
-        private final boolean valid;
-        private final Coupon coupon;
-        private final String message;
-
-        private CouponValidationResult(boolean valid, Coupon coupon, String message) {
-            this.valid = valid;
-            this.coupon = coupon;
-            this.message = message;
-        }
-
-        private static CouponValidationResult valid(Coupon coupon) {
-            return new CouponValidationResult(true, coupon, null);
-        }
-
-        private static CouponValidationResult invalid(String message) {
-            return new CouponValidationResult(false, null, message);
-        }
-
-        private static CouponValidationResult empty() {
-            return new CouponValidationResult(false, null, null);
-        }
-
-        private boolean isValid() {
-            return valid && coupon != null;
-        }
-
-        private Coupon getCoupon() {
-            return coupon;
-        }
-
-        private String getMessage() {
-            return message;
-        }
-    }
 
 }

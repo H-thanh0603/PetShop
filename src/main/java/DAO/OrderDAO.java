@@ -571,7 +571,7 @@ public class OrderDAO {
         ProductDAO productDAO = new ProductDAO();
         OrderStatusHistoryDAO historyDAO = new OrderStatusHistoryDAO();
         // Lock the row atomically to prevent concurrent cancellations / status changes
-        String lockQuery = "SELECT created_at, status FROM orders WHERE id = ? AND user_id = ? FOR UPDATE";
+        String lockQuery = "SELECT createdAt, status FROM orders WHERE id = ? AND user_id = ? FOR UPDATE";
         String updateQuery = "UPDATE orders SET status = 'Cancelled' WHERE id = ?";
 
         try (Connection conn = DBContext.getConnection()) {
@@ -590,7 +590,7 @@ public class OrderDAO {
                             return false;
                         }
                         currentStatus = rs.getString("status");
-                        createdAt = rs.getTimestamp("created_at");
+                        createdAt = rs.getTimestamp("createdAt");
                     }
                 }
 

@@ -6,7 +6,8 @@
 <html lang="vi">
 <head>
     <meta charset="UTF-8">
-    <title>Chi tiet don hang - PetShop</title>
+    <title>Chi tiết đơn hàng - PetShop</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
     <style>
@@ -33,6 +34,7 @@
         .timeline-step.active .timeline-dot { background: #dbeafe; color: #2563eb; }
         .timeline-step.done .timeline-dot { background: #dcfce7; color: #16a34a; }
     </style>
+    <link href="${pageContext.request.contextPath}/assets/css/storefront-polish.css" rel="stylesheet">
 </head>
 <body>
     <jsp:include page="/components/navbar.jsp" />
@@ -49,6 +51,7 @@
             <div class="d-flex gap-2 flex-wrap">
                 <c:if test="${order.cancelableByUser}">
                     <form action="${pageContext.request.contextPath}/my-orders" method="post" onsubmit="return confirm('Bạn chắc chắn muốn hủy đơn hàng này?');">
+                        <input type="hidden" name="csrfToken" value="${csrfToken}" />
                         <input type="hidden" name="action" value="cancel">
                         <input type="hidden" name="orderId" value="${order.id}">
                         <button type="submit" class="btn btn-outline-danger">
@@ -72,7 +75,7 @@
                     <div class="card-body">
                         <c:forEach var="item" items="${order.items}">
                             <div class="product-item d-flex align-items-center gap-3">
-                                <img src="${pageContext.request.contextPath}/assets/images/shop_pic/${fn:escapeXml(item.product.image)}"
+                                <img loading="lazy" src="${fn:startsWith(item.product.image, 'http') ? fn:escapeXml(item.product.image) : pageContext.request.contextPath += '/assets/images/shop_pic/' += fn:escapeXml(item.product.image)}"
                                      class="product-img"
                                      onerror="this.src='https://placehold.co/300x300/e2e8f0/1e293b?text=PetShop'">
                                 <div class="flex-grow-1">

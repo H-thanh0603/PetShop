@@ -122,7 +122,7 @@
                                 <c:forEach var="item" items="${order.items}">
                                     <tr>
                                         <td>
-                                            <img src="${pageContext.request.contextPath}/assets/images/shop_pic/${fn:escapeXml(item.product.image)}"
+                                            <img loading="lazy" src="${fn:startsWith(item.product.image, 'http') ? fn:escapeXml(item.product.image) : pageContext.request.contextPath += '/assets/images/shop_pic/' += fn:escapeXml(item.product.image)}"
                                                  class="product-img"
                                                  onerror="this.src='https://placehold.co/300x300/e2e8f0/1e293b?text=PetShop'">
                                         </td>
@@ -152,6 +152,7 @@
                 <div class="order-info-card">
                     <h5 class="mb-4 fw-bold">Cập nhật trạng thái</h5>
                     <form action="${pageContext.request.contextPath}/admin/orders" method="post" class="row g-3">
+                        <input type="hidden" name="csrfToken" value="${csrfToken}" />
                         <input type="hidden" name="action" value="updateStatus">
                         <input type="hidden" name="orderId" value="${order.id}">
                         <input type="hidden" name="returnTo" value="detail">
@@ -174,6 +175,7 @@
                     <div class="order-info-card">
                         <h5 class="mb-4 fw-bold">Duyệt thanh toán chuyển khoản</h5>
                         <form action="${pageContext.request.contextPath}/admin/orders" method="post" class="row g-3">
+                            <input type="hidden" name="csrfToken" value="${csrfToken}" />
                             <input type="hidden" name="action" value="updatePaymentVerification">
                             <input type="hidden" name="orderId" value="${order.id}">
                             <input type="hidden" name="returnTo" value="detail">

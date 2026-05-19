@@ -4,6 +4,7 @@ import Context.DBContext;
 import DAO.AddressDao;
 import DAO.CartDAO;
 import DAO.CouponDao;
+import DAO.InventoryBatchDAO;
 import DAO.OrderDAO;
 import DAO.PaymentTransactionDAO;
 import DAO.ProductDAO;
@@ -55,6 +56,7 @@ class CheckoutServletPaymentMethodFallbackTest {
         CouponDao mockCouponDAO = mock(CouponDao.class);
         InventoryService mockInventoryService = mock(InventoryService.class);
         OrderEmailService mockOrderEmailService = mock(OrderEmailService.class);
+        InventoryBatchDAO mockInventoryBatchDAO = mock(InventoryBatchDAO.class);
 
         User testUser = new User();
         testUser.setId(1);
@@ -97,6 +99,7 @@ class CheckoutServletPaymentMethodFallbackTest {
         when(mockOrderDAO.saveOrder(eq(mockConn), any(Order.class))).thenReturn(123);
         when(mockOrderDAO.saveOrderItem(eq(mockConn), any())).thenReturn(true);
         when(mockPaymentTransactionDAO.save(eq(mockConn), any())).thenReturn(321);
+        when(mockInventoryBatchDAO.hasTrackedBatchesForProduct(any(), eq(10))).thenReturn(false);
 
         CheckoutServlet servlet = new CheckoutServlet();
         injectField(servlet, "cartDAO", mockCartDAO);
@@ -108,6 +111,7 @@ class CheckoutServletPaymentMethodFallbackTest {
         injectField(servlet, "couponDao", mockCouponDAO);
         injectField(servlet, "inventoryService", mockInventoryService);
         injectField(servlet, "orderEmailService", mockOrderEmailService);
+        injectField(servlet, "inventoryBatchDAO", mockInventoryBatchDAO);
 
         HttpServletRequest request = mock(HttpServletRequest.class);
         HttpSession session = mock(HttpSession.class);

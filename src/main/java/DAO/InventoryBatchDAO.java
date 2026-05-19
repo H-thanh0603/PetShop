@@ -3,6 +3,7 @@ package DAO;
 import Context.DBContext;
 import Model.InventoryAgingSnapshot;
 import Model.InventoryBatch;
+import Model.ProductAdminInventoryView;
 import Model.ReorderRecommendation;
 
 import java.math.BigDecimal;
@@ -15,7 +16,9 @@ import java.sql.Statement;
 import java.sql.Timestamp;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public class InventoryBatchDAO {
 
@@ -95,6 +98,79 @@ public class InventoryBatchDAO {
             e.printStackTrace();
         }
         return batches;
+    }
+
+    public boolean hasTrackedBatchesForProduct(Connection conn, int productId) throws SQLException {
+        String query = "SELECT COUNT(*) FROM inventory_batches WHERE product_id = ? AND remaining_quantity > 0";
+        try (PreparedStatement ps = conn.prepareStatement(query)) {
+            ps.setInt(1, productId);
+            try (ResultSet rs = ps.executeQuery()) {
+                return rs.next() && rs.getInt(1) > 0;
+            }
+        }
+    }
+
+    public boolean consumeProductStock(Connection conn, int productId, int quantity, int orderId,
+                                       int actorUserId, String note) throws SQLException {
+        if (quantity <= 0) {
+            return false;
+        }
+
+        String selectBatches = "SELECT id, remaining_quantity FROM inventory_batches " +
+                "WHERE product_id = ? AND remaining_quantity > 0 " +
+                "AND (expiry_date IS NULL OR expiry_date > NOW()) " +
+                "ORDER BY CASE WHEN expiry_date IS NULL THEN 1 ELSE 0 END, expiry_date ASC, received_at ASC, id ASC " +
+                "FOR UPDATE";
+        String deductBatch = "UPDATE inventory_batches SET remaining_quantity = remaining_quantity - ? " +
+                "WHERE id = ? AND remaining_quantity >= ?";
+        String insertMovement = "INSERT INTO stock_movements " +
+                "(inventory_batch_id, product_id, movement_type, quantity, reference_code, note, created_by, order_id) " +
+                "VALUES (?, ?, 'SALE', ?, ?, ?, ?, ?)";
+
+        List<int[]> allocations = new ArrayList<>();
+        int remaining = quantity;
+        try (PreparedStatement ps = conn.prepareStatement(selectBatches)) {
+            ps.setInt(1, productId);
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next() && remaining > 0) {
+                    int batchId = rs.getInt("id");
+                    int available = rs.getInt("remaining_quantity");
+                    int allocated = Math.min(available, remaining);
+                    allocations.add(new int[] {batchId, allocated});
+                    remaining -= allocated;
+                }
+            }
+        }
+
+        if (remaining > 0) {
+            return false;
+        }
+
+        try (PreparedStatement deductPs = conn.prepareStatement(deductBatch);
+             PreparedStatement movementPs = conn.prepareStatement(insertMovement)) {
+            for (int[] allocation : allocations) {
+                int batchId = allocation[0];
+                int allocated = allocation[1];
+
+                deductPs.setInt(1, allocated);
+                deductPs.setInt(2, batchId);
+                deductPs.setInt(3, allocated);
+                if (deductPs.executeUpdate() == 0) {
+                    return false;
+                }
+
+                movementPs.setInt(1, batchId);
+                movementPs.setInt(2, productId);
+                movementPs.setInt(3, -allocated);
+                movementPs.setString(4, "ORDER-" + orderId);
+                movementPs.setString(5, note);
+                movementPs.setInt(6, actorUserId);
+                movementPs.setInt(7, orderId);
+                movementPs.addBatch();
+            }
+            movementPs.executeBatch();
+            return true;
+        }
     }
 
     public boolean consumeBatchStock(int batchId, int quantity, String referenceType, Integer referenceId,
@@ -178,7 +254,7 @@ public class InventoryBatchDAO {
                 "FROM inventory_batches ib " +
                 "JOIN products p ON p.id = ib.product_id " +
                 "WHERE ib.remaining_quantity > 0 " +
-                "GROUP BY p.product_id, p.name " +
+                "GROUP BY p.id, p.name " +
                 "ORDER BY four_month_quantity DESC, near_expiry_quantity DESC, p.name ASC";
         List<InventoryAgingSnapshot> snapshots = new ArrayList<>();
         try (Connection conn = DBContext.getConnection();
@@ -200,6 +276,42 @@ public class InventoryBatchDAO {
             e.printStackTrace();
         }
         return snapshots;
+    }
+
+    public Map<Integer, ProductAdminInventoryView> getProductAdminInventoryViews(int nearExpiryDays) {
+        String query = "SELECT p.id AS product_id, " +
+                "COUNT(CASE WHEN ib.remaining_quantity > 0 THEN ib.id END) AS active_batch_count, " +
+                "COALESCE(SUM(CASE WHEN ib.remaining_quantity > 0 THEN ib.remaining_quantity ELSE 0 END), 0) AS tracked_quantity, " +
+                "COALESCE(SUM(CASE WHEN ib.remaining_quantity > 0 AND ib.expiry_date IS NOT NULL AND ib.expiry_date <= CURDATE() THEN ib.remaining_quantity ELSE 0 END), 0) AS expired_quantity, " +
+                "COALESCE(SUM(CASE WHEN ib.remaining_quantity > 0 AND ib.expiry_date IS NOT NULL AND ib.expiry_date > CURDATE() AND ib.expiry_date <= DATE_ADD(CURDATE(), INTERVAL ? DAY) THEN ib.remaining_quantity ELSE 0 END), 0) AS near_expiry_quantity, " +
+                "MIN(CASE WHEN ib.remaining_quantity > 0 AND ib.expiry_date IS NOT NULL THEN ib.expiry_date END) AS earliest_expiry_date, " +
+                "SUBSTRING_INDEX(GROUP_CONCAT(CASE WHEN ib.remaining_quantity > 0 THEN ib.batch_code END " +
+                "ORDER BY CASE WHEN ib.expiry_date IS NULL THEN 1 ELSE 0 END, ib.expiry_date ASC, ib.received_at ASC, ib.id ASC SEPARATOR ','), ',', 1) AS earliest_batch_code " +
+                "FROM products p " +
+                "LEFT JOIN inventory_batches ib ON ib.product_id = p.id " +
+                "WHERE p.is_active = 1 " +
+                "GROUP BY p.id";
+        Map<Integer, ProductAdminInventoryView> views = new HashMap<>();
+        try (Connection conn = DBContext.getConnection();
+             PreparedStatement ps = conn.prepareStatement(query)) {
+            ps.setInt(1, nearExpiryDays);
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    ProductAdminInventoryView view = new ProductAdminInventoryView();
+                    view.setProductId(rs.getInt("product_id"));
+                    view.setActiveBatchCount(rs.getInt("active_batch_count"));
+                    view.setTrackedQuantity(rs.getInt("tracked_quantity"));
+                    view.setExpiredQuantity(rs.getInt("expired_quantity"));
+                    view.setNearExpiryQuantity(rs.getInt("near_expiry_quantity"));
+                    view.setEarliestExpiryDate(rs.getTimestamp("earliest_expiry_date"));
+                    view.setEarliestBatchCode(rs.getString("earliest_batch_code"));
+                    views.put(view.getProductId(), view);
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return views;
     }
 
     public List<ReorderRecommendation> getReorderRecommendations(int leadTimeDays, int safetyStock) {
