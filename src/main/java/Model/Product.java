@@ -33,9 +33,11 @@ public class Product {
     }
 
     // Constructor 7 tham số (có weight - từ main)
-    public Product(int id, String name, String image, double price, int discount, String description, int weight) {
+    public Product(int id, String name, String image, double price, int discount, String description, int weight, int stock, int pet_type_id) {
         this(id, name, image, price, discount, description);
         this.weight = weight;
+        this.stock = stock;
+        this.pet_type_id = pet_type_id;
     }
 
     // Getters & Setters

@@ -667,9 +667,13 @@ document.addEventListener('DOMContentLoaded', function() {
                             price.className = 'autocomplete-item-price';
                             price.textContent = new Intl.NumberFormat('vi-VN').format(p.price || 0) + 'đ';
 
+                            var quantity = document.createElement('div');
+                            quantity.className = 'autocomplete-item-quantity';
+                            quantity.textContent = 'Số lượng: ' + (p.stock || 0);
+
                             info.appendChild(name);
                             info.appendChild(price);
-
+                            info.appendChild(quantity);
                             item.appendChild(img);
                             item.appendChild(info);
 
