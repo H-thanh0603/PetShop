@@ -115,8 +115,8 @@
                     </div>
                 </div>
                 <div class="col-lg-6 text-center position-relative">
-                    <img src="https://placehold.co/500x350/e0f7f5/00bfa5?text=🐕+🐈+PetShop" alt="PetShop Banner" class="hero-img">
-                    <div class="hero-stats position-absolute" style="bottom: 20px; right: 10%;">
+                    <img src="https://img.freepik.com/vector-cao-cap/logo-cua-hang-thu-cung-voi-linh-vat-meo-va-cho-hoat-hinh_513640-2728.jpg" alt="PetShop Banner" class="hero-img">
+                    <div class="hero-stats position-absolute" style="bottom: 5px; right: 5px;">
                         <div class="num">${totalProducts}+</div>
                         <div class="label">sản phẩm đa dạng</div>
                     </div>
