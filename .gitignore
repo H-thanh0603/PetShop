@@ -8,7 +8,6 @@ gradle.properties
 
 ### Sensitive Files ###
 .env
-src/main/java/Context/DBContext.java
 src/main/java/Util/EmailConfig.java
 
 ### IntelliJ IDEA ###

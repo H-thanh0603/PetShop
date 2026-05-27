@@ -44,7 +44,11 @@ public class LoginByFacebookServlet extends HttpServlet {
         if(!isEmailAvailable){
             user = userDao.getUserByEmail(acc.getEmail());
         }else{
-            userDao.insertUser(acc.getName(), acc.getEmail());
+            try {
+                userDao.insertUser(acc.getName(), acc.getEmail());
+            } catch (Exception e) {
+                throw new RuntimeException(e);
+            }
             user = userDao.getUserByEmail(acc.getEmail());
         }
         HttpSession session = request.getSession();
