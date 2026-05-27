@@ -48,11 +48,7 @@ public class BankWebhookServlet extends HttpServlet {
             BankWebhookPayload payload = parsePayload(rawPayload);
             BankWebhookReconciliationResult result = reconciliationService.reconcile(payload);
             response.setStatus(HttpServletResponse.SC_OK);
-            Map<String, Object> extra = new HashMap<>();
-            extra.put("status", result.getStatus().name());
-            extra.put("orderId", result.getOrderId());
-            extra.put("paymentTransactionId", result.getPaymentTransactionId());
-            write(response, true, result.getMessage(), extra);
+            writeSuccess(response);
         } catch (IllegalArgumentException e) {
             response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
             write(response, false, e.getMessage(), null);
@@ -70,6 +66,12 @@ public class BankWebhookServlet extends HttpServlet {
 
         String submittedSecret = request.getHeader("X-Bank-Webhook-Secret");
         if (submittedSecret == null || submittedSecret.isBlank()) {
+            submittedSecret = request.getHeader("X-Secret-Key");
+        }
+        if (submittedSecret == null || submittedSecret.isBlank()) {
+            submittedSecret = bearerToken(request.getHeader("Authorization"));
+        }
+        if (submittedSecret == null || submittedSecret.isBlank()) {
             return false;
         }
 
@@ -81,12 +83,35 @@ public class BankWebhookServlet extends HttpServlet {
 
     private BankWebhookPayload parsePayload(String rawPayload) {
         JsonObject json = JsonParser.parseString(rawPayload).getAsJsonObject();
-        String transactionId = getRequiredString(json, "transaction_id");
-        BigDecimal amount = new BigDecimal(getRequiredString(json, "amount"));
+        String transferType = getOptionalString(json, "transferType");
+        if (transferType != null && !"in".equalsIgnoreCase(transferType.trim())) {
+            throw new IllegalArgumentException("Webhook không phải giao dịch tiền vào.");
+        }
+
+        String transactionId = firstRequiredString(json, "transaction_id", "id", "referenceCode");
+        BigDecimal amount = new BigDecimal(firstRequiredString(json, "amount", "transferAmount"));
         String content = getRequiredString(json, "content");
-        String bankAccount = getOptionalString(json, "bank_account");
-        LocalDateTime paidAt = parseTime(getOptionalString(json, "time"));
+        String bankAccount = firstOptionalString(json, "bank_account", "accountNumber");
+        LocalDateTime paidAt = parseTime(firstOptionalString(json, "time", "transactionDate"));
         return new BankWebhookPayload(transactionId, amount, content, bankAccount, rawPayload, paidAt);
+    }
+
+    private String firstRequiredString(JsonObject json, String... fieldNames) {
+        String value = firstOptionalString(json, fieldNames);
+        if (value == null || value.isBlank()) {
+            throw new IllegalArgumentException("Webhook thiếu trường " + String.join("/", fieldNames) + ".");
+        }
+        return value.trim();
+    }
+
+    private String firstOptionalString(JsonObject json, String... fieldNames) {
+        for (String fieldName : fieldNames) {
+            String value = getOptionalString(json, fieldName);
+            if (value != null && !value.isBlank()) {
+                return value;
+            }
+        }
+        return null;
     }
 
     private String getRequiredString(JsonObject json, String fieldName) {
@@ -109,6 +134,23 @@ public class BankWebhookServlet extends HttpServlet {
             return null;
         }
         return LocalDateTime.parse(value.trim(), DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
+    }
+
+    private String bearerToken(String authorizationHeader) {
+        if (authorizationHeader == null) {
+            return null;
+        }
+        String prefix = "Bearer ";
+        if (authorizationHeader.regionMatches(true, 0, prefix, 0, prefix.length())) {
+            return authorizationHeader.substring(prefix.length()).trim();
+        }
+        return null;
+    }
+
+    private void writeSuccess(HttpServletResponse response) throws IOException {
+        Map<String, Object> body = new HashMap<>();
+        body.put("success", true);
+        response.getWriter().write(gson.toJson(body));
     }
 
     private void write(HttpServletResponse response, boolean success, String message, Map<String, Object> extra)
