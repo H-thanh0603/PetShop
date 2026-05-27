@@ -3,6 +3,7 @@ package DAO;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -46,6 +47,10 @@ public class ProductDAO {
         }
         try {
             product.setPet_type_id(rs.getInt("pet_type_id"));
+        } catch (Exception ignored) {
+        }
+        try {
+            product.setBrand(rs.getString("brand"));
         } catch (Exception ignored) {
         }
 
@@ -388,4 +393,26 @@ public class ProductDAO {
             while (rs.next()) { list.add(mapProduct(rs)); }
         } catch (Exception e) { e.printStackTrace(); } return list;
     }
+    // lay tat ca cac brand dang hoat dong ra lam filter
+        public List<String> getAllBrands() {
+            List<String> brands = new ArrayList<>();
+            String sql = "SELECT DISTINCT brand FROM products WHERE brand IS NOT NULL ORDER BY brand";
+
+            try (Connection conn = DBContext.getConnection();
+                 PreparedStatement ps = conn.prepareStatement(sql);
+                 ResultSet rs = ps.executeQuery()) {
+
+                while (rs.next()) {
+                    brands.add(rs.getString("brand"));
+                }
+
+            } catch (SQLException e) {
+                e.printStackTrace();
+            } catch (Exception e) {
+                throw new RuntimeException(e);
+            }
+
+            return brands;
+        }
+
 }

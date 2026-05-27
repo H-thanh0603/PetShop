@@ -1,6 +1,7 @@
 package controller.shop;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 
@@ -88,6 +89,12 @@ public class ShopServlet extends HttpServlet {
                 case "above500": products.removeIf(p -> p.getPrice() <= 500000); break;
             }
         }
+        // loc theo brand
+        String[] selectedBrands = request.getParameterValues("brand");
+        if (selectedBrands != null && selectedBrands.length > 0) {
+            List<String> brandList = List.of(selectedBrands);
+            products.removeIf(p -> p.getBrand() == null || !brandList.contains(p.getBrand()));
+        }
 
         // Sắp xếp
         if (sort != null) {
@@ -98,8 +105,6 @@ public class ShopServlet extends HttpServlet {
                 case "name": products.sort(Comparator.comparing(Product::getName)); break;
             }
         }
-
-        // Đẩy dữ liệu chung
         request.setAttribute("categories", categories);
         request.setAttribute("selectedCategory", category);
         request.setAttribute("searchKeyword", search);
@@ -110,7 +115,7 @@ public class ShopServlet extends HttpServlet {
         request.setAttribute("selectedPetType", selectedPetType);
         request.setAttribute("totalProducts", products.size());
             request.setAttribute("buildBaseQuery", buildBaseQuery(request));
-        boolean isFiltered = (pet != null || category != null || search != null || priceRange != null || discountOnly != null);
+        boolean isFiltered = (pet != null || category != null || search != null || priceRange != null || discountOnly != null || (request.getParameterValues("brand") != null));
 
         if (!isFiltered) {
             // Trang shop chính - có sections riêng
@@ -143,7 +148,8 @@ public class ShopServlet extends HttpServlet {
             List<Product> pagedProducts = (fromIndex < totalFiltered) 
                 ? products.subList(fromIndex, toIndex) 
                 : List.of();
-
+            List<String> brand = productDao.getAllBrands();
+            request.setAttribute("brand", brand);
             request.setAttribute("products", pagedProducts);
             request.setAttribute("currentPage", page);
             request.setAttribute("totalPages", totalPages);
@@ -186,6 +192,21 @@ public class ShopServlet extends HttpServlet {
                 }
             }
         }
+        String[] selectedBrands = request.getParameterValues("brand");
+        if (selectedBrands != null) {
+            for (String brand : selectedBrands) {
+                if (brand != null && !brand.trim().isEmpty()) {
+                    if (sb.length() > 0) sb.append("&");
+                    try {
+                        sb.append("brand=")
+                                .append(java.net.URLEncoder.encode(brand, "UTF-8"));
+                    } catch (Exception e) {
+                        sb.append("brand=").append(brand);
+                    }
+                }
+            }
+        }
+
         return sb.toString();
     }
 }
