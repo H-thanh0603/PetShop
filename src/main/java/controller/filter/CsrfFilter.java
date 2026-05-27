@@ -21,7 +21,7 @@ public class CsrfFilter implements Filter {
         HttpServletResponse response = (HttpServletResponse) res;
         String uri = request.getRequestURI();
         
-        if (isStaticResource(uri)) {
+        if (isStaticResource(uri) || isServerToServerWebhook(uri)) {
             chain.doFilter(req, res);
             return;
         }
@@ -74,5 +74,9 @@ public class CsrfFilter implements Filter {
             if (lower.endsWith(ext)) return true;
         }
         return false;
+    }
+
+    private boolean isServerToServerWebhook(String uri) {
+        return uri != null && uri.endsWith("/api/payment/bank-webhook");
     }
 }

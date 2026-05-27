@@ -682,14 +682,74 @@ public class ProductDAO {
     }
 
     public boolean decreaseStock(Connection conn, int productId, int quantity) {
-        String query = "UPDATE products SET stock = stock - ? WHERE id = ? AND stock >= ?";
+        String query = "UPDATE products SET stock = stock - ?, stock_quantity = stock_quantity - ? WHERE id = ? AND stock >= ?";
         try (PreparedStatement ps = conn.prepareStatement(query)) {
             ps.setInt(1, quantity);
-            ps.setInt(2, productId);
-            ps.setInt(3, quantity);
+            ps.setInt(2, quantity);
+            ps.setInt(3, productId);
+            ps.setInt(4, quantity);
             return ps.executeUpdate() > 0;
         } catch (Exception e) {
             log.error("Error decreasing stock for product id={}", productId, e);
+        }
+        return false;
+    }
+
+    public boolean reserveStock(Connection conn, int productId, int quantity) {
+        if (quantity <= 0) {
+            return false;
+        }
+        String query = "UPDATE products " +
+                "SET stock = stock - ?, stock_quantity = stock_quantity - ?, reserved_quantity = reserved_quantity + ? " +
+                "WHERE id = ? AND stock >= ?";
+        try (PreparedStatement ps = conn.prepareStatement(query)) {
+            ps.setInt(1, quantity);
+            ps.setInt(2, quantity);
+            ps.setInt(3, quantity);
+            ps.setInt(4, productId);
+            ps.setInt(5, quantity);
+            return ps.executeUpdate() > 0;
+        } catch (Exception e) {
+            log.error("Error reserving stock for product id={}", productId, e);
+        }
+        return false;
+    }
+
+    public boolean releaseReservedStock(Connection conn, int productId, int quantity) {
+        if (quantity <= 0) {
+            return false;
+        }
+        String query = "UPDATE products " +
+                "SET stock = stock + ?, stock_quantity = stock_quantity + ?, reserved_quantity = reserved_quantity - ? " +
+                "WHERE id = ? AND reserved_quantity >= ?";
+        try (PreparedStatement ps = conn.prepareStatement(query)) {
+            ps.setInt(1, quantity);
+            ps.setInt(2, quantity);
+            ps.setInt(3, quantity);
+            ps.setInt(4, productId);
+            ps.setInt(5, quantity);
+            return ps.executeUpdate() > 0;
+        } catch (Exception e) {
+            log.error("Error releasing reserved stock for product id={}", productId, e);
+        }
+        return false;
+    }
+
+    public boolean finalizeReservedStock(Connection conn, int productId, int quantity) {
+        if (quantity <= 0) {
+            return false;
+        }
+        String query = "UPDATE products " +
+                "SET reserved_quantity = reserved_quantity - ?, sold_quantity = sold_quantity + ? " +
+                "WHERE id = ? AND reserved_quantity >= ?";
+        try (PreparedStatement ps = conn.prepareStatement(query)) {
+            ps.setInt(1, quantity);
+            ps.setInt(2, quantity);
+            ps.setInt(3, productId);
+            ps.setInt(4, quantity);
+            return ps.executeUpdate() > 0;
+        } catch (Exception e) {
+            log.error("Error finalizing reserved stock for product id={}", productId, e);
         }
         return false;
     }
@@ -704,10 +764,11 @@ public class ProductDAO {
     }
 
     public boolean increaseStock(Connection conn, int productId, int quantity) {
-        String query = "UPDATE products SET stock = stock + ? WHERE id = ?";
+        String query = "UPDATE products SET stock = stock + ?, stock_quantity = stock_quantity + ? WHERE id = ?";
         try (PreparedStatement ps = conn.prepareStatement(query)) {
             ps.setInt(1, quantity);
-            ps.setInt(2, productId);
+            ps.setInt(2, quantity);
+            ps.setInt(3, productId);
             return ps.executeUpdate() > 0;
         } catch (Exception e) {
             log.error("Error increasing stock for product id={}", productId, e);
@@ -722,9 +783,9 @@ public class ProductDAO {
         } catch (Exception e) { log.error("Error fetching stock for product id={}", productId, e); } return 0;
     }
     public boolean updateStock(int productId, int newStock) {
-        String query = "UPDATE products SET stock = ? WHERE id = ?";
+        String query = "UPDATE products SET stock = ?, stock_quantity = ? WHERE id = ?";
         try (Connection conn = DBContext.getConnection(); PreparedStatement ps = conn.prepareStatement(query)) {
-            ps.setInt(1, newStock); ps.setInt(2, productId);
+            ps.setInt(1, newStock); ps.setInt(2, newStock); ps.setInt(3, productId);
             return ps.executeUpdate() > 0;
         } catch (Exception e) { log.error("Error updating stock for product id={}", productId, e); } return false;
     }

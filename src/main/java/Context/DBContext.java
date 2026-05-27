@@ -178,17 +178,36 @@ public class DBContext {
                     "CONSTRAINT fk_stock_movements_created_by FOREIGN KEY (created_by) REFERENCES users(id) ON DELETE SET NULL" +
                     ")");
             executeIgnore(stmt, "ALTER TABLE payment_transactions ADD COLUMN expires_at TIMESTAMP NULL");
+            executeIgnore(stmt, "ALTER TABLE payment_transactions ADD COLUMN amount_received DECIMAL(15,2) NULL");
+            executeIgnore(stmt, "ALTER TABLE payment_transactions ADD COLUMN bank_content VARCHAR(500) NULL");
+            executeIgnore(stmt, "CREATE UNIQUE INDEX uk_payment_transactions_provider_transaction_id ON payment_transactions (provider_transaction_id)");
             executeIgnore(stmt, "CREATE INDEX idx_payment_transactions_verification_status ON payment_transactions (verification_status)");
             executeIgnore(stmt, "CREATE INDEX idx_payment_transactions_transfer_reference ON payment_transactions (transfer_reference)");
+            stmt.execute("CREATE TABLE IF NOT EXISTS bank_webhook_events (" +
+                    "id INT AUTO_INCREMENT PRIMARY KEY," +
+                    "provider_transaction_id VARCHAR(255) NOT NULL," +
+                    "amount DECIMAL(15,2) NOT NULL," +
+                    "bank_content VARCHAR(500) NULL," +
+                    "bank_account VARCHAR(100) NULL," +
+                    "payment_transaction_id INT NULL," +
+                    "status VARCHAR(50) NOT NULL," +
+                    "raw_payload TEXT NULL," +
+                    "received_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP," +
+                    "UNIQUE KEY uk_bank_webhook_events_provider_transaction_id (provider_transaction_id)," +
+                    "INDEX idx_bank_webhook_events_status_received (status, received_at)," +
+                    "INDEX idx_bank_webhook_events_payment_transaction (payment_transaction_id)," +
+                    "CONSTRAINT fk_bank_webhook_events_payment_transaction " +
+                    "FOREIGN KEY (payment_transaction_id) REFERENCES payment_transactions(id) ON DELETE SET NULL" +
+                    ")");
             executeIgnore(stmt, "CREATE INDEX idx_products_active_category_pet_price ON products (is_active, category(100), pet_type_id, price, discount, id)");
             executeIgnore(stmt, "CREATE INDEX idx_orders_status_created_user ON orders (status, createdAt, user_id)");
             executeIgnore(stmt, "CREATE INDEX idx_users_email_username_locked ON users (email, username, locked_until)");
             addColumnIfMissing(conn, stmt, "addresses", "is_default", "TINYINT(1) NOT NULL DEFAULT 0");
             // Mark all existing users as verified (they registered before email verification was added)
             stmt.execute("UPDATE users SET email_verified = TRUE WHERE email_verified = FALSE AND verification_token IS NULL");
-            int pendingHours = AppConfig.getInt("payment.bank.pending-hours", 2);
+            int pendingMinutes = AppConfig.getInt("payment.bank.pending-minutes", 10);
             executeIgnore(stmt, "UPDATE payment_transactions " +
-                    "SET expires_at = DATE_ADD(created_at, INTERVAL " + pendingHours + " HOUR) " +
+                    "SET expires_at = DATE_ADD(created_at, INTERVAL " + pendingMinutes + " MINUTE) " +
                     "WHERE expires_at IS NULL AND status = 'PENDING_VERIFICATION'");
             System.out.println("[DBContext] Migrations applied.");
         } catch (Exception e) {

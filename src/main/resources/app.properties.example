@@ -8,7 +8,7 @@ app.static.cache.max-age-seconds=86400
 
 # Checkout client config
 api.provinces.base-url=https://provinces.open-api.vn/api/v1
-payment.bank.pending-hours=2
+payment.bank.pending-minutes=10
 
 # Bank transfer display config
 payment.bank.id=VPB
@@ -23,6 +23,7 @@ payment.bank.verification-mode=stub
 payment.bank.api-base-url=
 payment.bank.api-key=
 payment.bank.api-secret=
+payment.bank.webhook-secret=change-me-in-production
 
 # MoMo placeholders
 payment.momo.mode=demo
@@ -35,5 +36,6 @@ ratelimit.login=10
 ratelimit.register=6
 ratelimit.forgot-password=6
 ratelimit.checkout=8
+ratelimit.bank-webhook=60
 ratelimit.add-review=5
 ratelimit.search-autocomplete=8

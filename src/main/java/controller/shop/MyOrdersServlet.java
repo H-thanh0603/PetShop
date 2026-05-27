@@ -1,8 +1,10 @@
 package controller.shop;
 
 import DAO.OrderDAO;
+import Model.CustomerRepurchaseSuggestion;
 import Model.Order;
 import Model.User;
+import services.ReorderService;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -17,7 +19,8 @@ import jakarta.servlet.http.HttpSession;
 
 @WebServlet("/my-orders")
 public class MyOrdersServlet extends HttpServlet {
-    private final OrderDAO orderDAO = new OrderDAO();
+    private OrderDAO orderDAO = new OrderDAO();
+    private ReorderService reorderService = new ReorderService();
     private static final long serialVersionUID = 1L;
 
     protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
@@ -60,9 +63,12 @@ public class MyOrdersServlet extends HttpServlet {
         int countCompleted = orderDAO.countCompletedOrdersByUserId(user.getId());
         List<Order> allOrders = dao.getOrdersByUserId(user.getId());
         List<Order> list = filterOrders(allOrders, statusFilter, keyword);
+        List<CustomerRepurchaseSuggestion> repurchaseSuggestions =
+                dao.getRepurchaseSuggestions(user.getId(), 30, 5);
         request.setAttribute("countPending", countPending);
         request.setAttribute("countCompleted", countCompleted);
         request.setAttribute("orders", list);
+        request.setAttribute("repurchaseSuggestions", repurchaseSuggestions);
         request.setAttribute("totalOrders", allOrders.size());
         request.setAttribute("selectedStatus", statusFilter);
         request.setAttribute("keyword", keyword);
@@ -92,6 +98,18 @@ public class MyOrdersServlet extends HttpServlet {
                 }
             } catch (Exception e) {
                 session.setAttribute("error", "Có lỗi xảy ra khi hủy đơn hàng.");
+            }
+        } else if ("reorder".equals(action)) {
+            try {
+                int orderId = Integer.parseInt(request.getParameter("orderId"));
+                if (reorderService.reorderToCart(user.getId(), orderId)) {
+                    session.setAttribute("success", "Đã thêm lại sản phẩm từ đơn cũ vào giỏ hàng.");
+                    response.sendRedirect(request.getContextPath() + "/cart");
+                    return;
+                }
+                session.setAttribute("error", "Không thể mua lại đơn hàng này.");
+            } catch (Exception e) {
+                session.setAttribute("error", "Có lỗi xảy ra khi mua lại đơn hàng.");
             }
         }
         response.sendRedirect(request.getContextPath() + "/my-orders");

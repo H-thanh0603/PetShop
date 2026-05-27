@@ -57,6 +57,7 @@ public class CheckoutServlet extends HttpServlet {
     private static final int DEFAULT_PRODUCT_WEIGHT = 200;
     private static final int DEFAULT_SHIPPING_FEE = 30000;
     private static final int DEFAULT_PRICE = 500000;
+    private static final String BANK_TRANSFER_REFERENCE_SESSION_KEY = "bankTransferReference";
 
     private final CouponDao couponDao = new CouponDao();
     private final AddressDao addressDAO = new AddressDao();
@@ -161,11 +162,14 @@ public class CheckoutServlet extends HttpServlet {
         request.setAttribute("appliedCouponCode",
                 couponState.getCoupon() != null ? couponState.getCoupon().getCode() : "");
         BankTransferDetails bankTransferDetails = BankTransferDetails.fromConfig();
+        String bankTransferReference = ensureBankTransferReference(session, user.getId(), bankTransferDetails);
         request.setAttribute("bankDisplayName", bankTransferDetails.getDisplayName());
         request.setAttribute("bankId", bankTransferDetails.getBankId());
         request.setAttribute("bankAccountNumber", bankTransferDetails.getAccountNumber());
         request.setAttribute("bankAccountName", bankTransferDetails.getAccountName());
         request.setAttribute("bankTransferPrefix", bankTransferDetails.getTransferPrefix());
+        request.setAttribute("bankTransferReference", bankTransferReference);
+        request.setAttribute("bankPaymentTtlSeconds", AppConfig.getInt("payment.bank.pending-minutes", 10) * 60);
         request.setAttribute("provincesApiBaseUrl",
                 AppConfig.getOrDefault("api.provinces.base-url", "https://provinces.open-api.vn/api/v1"));
 
@@ -292,9 +296,18 @@ public class CheckoutServlet extends HttpServlet {
                     + defaultAddress.getProvince();
 
             String paymentMethodKey = resolvePaymentMethodKey(request);
+            String reservedTransferReference = null;
+            if ("bank_transfer".equalsIgnoreCase(paymentMethodKey)) {
+                reservedTransferReference = ensureBankTransferReference(
+                        session,
+                        user.getId(),
+                        BankTransferDetails.fromConfig()
+                );
+            }
 
             services.CheckoutResult checkoutResult = buildCheckoutService().processCheckout(
-                user, cart, fullAddress, note, couponState, paymentMethodKey, baseSummary.getShippingFee()
+                user, cart, fullAddress, note, couponState, paymentMethodKey, baseSummary.getShippingFee(),
+                reservedTransferReference
             );
 
             if (!checkoutResult.isSuccess()) {
@@ -325,9 +338,12 @@ public class CheckoutServlet extends HttpServlet {
                 result.put("bankAccountNumber", bankTransferDetails.getAccountNumber());
                 result.put("bankAccountName", bankTransferDetails.getAccountName());
                 result.put("transferReference", completedPaymentTransaction.getTransferReference());
+                result.put("paymentExpiresAt", completedPaymentTransaction.getExpiresAt());
+                result.put("paymentTtlSeconds", AppConfig.getInt("payment.bank.pending-minutes", 10) * 60);
             } else {
                 result.put("message", "Đặt hàng thành công!");
             }
+            session.removeAttribute(BANK_TRANSFER_REFERENCE_SESSION_KEY);
             write(response, result);
         } catch (Throwable t) {
             // Top-level safety net: catches Error subclasses (e.g. AssertionError) and any
@@ -511,6 +527,16 @@ public class CheckoutServlet extends HttpServlet {
         return trimToEmpty(request.getParameter("payment"));
     }
 
+    private String ensureBankTransferReference(HttpSession session, int userId, BankTransferDetails bankTransferDetails) {
+        Object existing = session.getAttribute(BANK_TRANSFER_REFERENCE_SESSION_KEY);
+        if (existing instanceof String && !((String) existing).trim().isEmpty()) {
+            return ((String) existing).trim();
+        }
+        String reference = bankTransferDetails.buildReservedTransferReference(userId);
+        session.setAttribute(BANK_TRANSFER_REFERENCE_SESSION_KEY, reference);
+        return reference;
+    }
+
     private Address resolvePrimaryAddress(int userId, List<Address> addressList) {
         Address defaultAddress = addressDAO.getDefaultAddressByUserId(userId);
         if (defaultAddress != null) {
@@ -547,8 +573,8 @@ public class CheckoutServlet extends HttpServlet {
         transaction.setUpdatedAt(now);
         if (paymentResult.isPendingVerification()) {
             transaction.setTransferReference(bankTransferDetails.buildTransferReference(orderId));
-            int pendingHours = AppConfig.getInt("payment.bank.pending-hours", 2);
-            transaction.setExpiresAt(Timestamp.valueOf(LocalDateTime.now().plus(pendingHours, ChronoUnit.HOURS)));
+            int pendingMinutes = AppConfig.getInt("payment.bank.pending-minutes", 10);
+            transaction.setExpiresAt(Timestamp.valueOf(LocalDateTime.now().plus(pendingMinutes, ChronoUnit.MINUTES)));
         }
         return transaction;
     }

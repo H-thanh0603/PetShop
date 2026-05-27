@@ -45,7 +45,7 @@
                 <div class="d-flex justify-content-between align-items-center mb-3">
                     <h4>Sản phẩm thanh toán</h4>
                     <div class="countdown">
-                        Giữ giá <span id="timer">15:00</span>
+                        Giữ giá <span id="timer">10:00</span>
                     </div>
                 </div>
                 <div id="checkoutTimerWarning" class="checkout-timer-warning" role="status" aria-live="polite" hidden>
@@ -338,8 +338,8 @@
                     </label>
                     <div id="bankInfo">
                         <div class="bank-qr-wrapper">
-                            <img id="bankQrImg" src="" alt="QR Chuyển khoản">
-                            <div class="bank-qr-note" id="bankQrNote">QR chính thức sẽ xuất hiện sau khi đơn hàng được tạo.</div>
+                            <img id="bankQrImg" src="" alt="QR Chuyển khoản" hidden>
+                            <div class="bank-qr-note" id="bankQrNote">Chọn chuyển khoản để hiển thị mã QR thanh toán.</div>
                         </div>
                         <div><b>Ngân hàng:</b> <span id="bankDisplayName">${fn:escapeXml(bankDisplayName)}</span></div>
                         <div><b>Số tài khoản:</b> <span id="bankAccountNumber" class="bank-account-number">${fn:escapeXml(bankAccountNumber)}</span></div>
@@ -377,7 +377,9 @@
      data-bank-display-name="${fn:escapeXml(bankDisplayName)}"
      data-bank-account-number="${fn:escapeXml(bankAccountNumber)}"
      data-bank-account-name="${fn:escapeXml(bankAccountName)}"
-     data-bank-transfer-prefix="${fn:escapeXml(bankTransferPrefix)}"></div>
+     data-bank-transfer-prefix="${fn:escapeXml(bankTransferPrefix)}"
+     data-bank-transfer-reference="${fn:escapeXml(bankTransferReference)}"
+     data-bank-payment-ttl-seconds="${fn:escapeXml(bankPaymentTtlSeconds)}"></div>
 <script src="${pageContext.request.contextPath}/assets/js/checkout.js"></script>
 <jsp:include page="/components/footer.jsp"/>
 <%--        modal cập nhật thông tin--%>

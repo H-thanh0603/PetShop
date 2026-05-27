@@ -29,7 +29,7 @@ public class InventoryBatchDAO {
         String insertMovement = "INSERT INTO stock_movements " +
                 "(inventory_batch_id, product_id, movement_type, quantity, reference_code, note, created_by, order_id) " +
                 "VALUES (?, ?, 'IMPORT', ?, NULL, ?, ?, NULL)";
-        String updateProduct = "UPDATE products SET stock = stock + ? WHERE id = ?";
+        String updateProduct = "UPDATE products SET stock = stock + ?, stock_quantity = stock_quantity + ? WHERE id = ?";
 
         try (Connection conn = DBContext.getConnection()) {
             conn.setAutoCommit(false);
@@ -63,7 +63,8 @@ public class InventoryBatchDAO {
                 movementPs.executeUpdate();
 
                 productPs.setInt(1, batch.getReceivedQuantity());
-                productPs.setInt(2, batch.getProductId());
+                productPs.setInt(2, batch.getReceivedQuantity());
+                productPs.setInt(3, batch.getProductId());
                 productPs.executeUpdate();
 
                 conn.commit();

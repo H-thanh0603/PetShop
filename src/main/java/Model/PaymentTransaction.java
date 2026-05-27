@@ -17,6 +17,8 @@ public class PaymentTransaction {
     private String verificationStatus;
     private String verificationMessage;
     private String providerMetadata;
+    private BigDecimal amountReceived;
+    private String bankContent;
     private Timestamp createdAt;
     private Timestamp updatedAt;
     private Timestamp verifiedAt;
@@ -124,6 +126,22 @@ public class PaymentTransaction {
 
     public void setProviderMetadata(String providerMetadata) {
         this.providerMetadata = providerMetadata;
+    }
+
+    public BigDecimal getAmountReceived() {
+        return amountReceived;
+    }
+
+    public void setAmountReceived(BigDecimal amountReceived) {
+        this.amountReceived = amountReceived;
+    }
+
+    public String getBankContent() {
+        return bankContent;
+    }
+
+    public void setBankContent(String bankContent) {
+        this.bankContent = bankContent;
     }
 
     public Timestamp getCreatedAt() {

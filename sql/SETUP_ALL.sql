@@ -38,6 +38,15 @@ BEGIN
     IF NOT EXISTS (SELECT 1 FROM information_schema.COLUMNS WHERE TABLE_SCHEMA=DATABASE() AND TABLE_NAME='products' AND COLUMN_NAME='stock') THEN
         ALTER TABLE products ADD COLUMN stock INT NOT NULL DEFAULT 0;
     END IF;
+    IF NOT EXISTS (SELECT 1 FROM information_schema.COLUMNS WHERE TABLE_SCHEMA=DATABASE() AND TABLE_NAME='products' AND COLUMN_NAME='stock_quantity') THEN
+        ALTER TABLE products ADD COLUMN stock_quantity INT NOT NULL DEFAULT 0;
+    END IF;
+    IF NOT EXISTS (SELECT 1 FROM information_schema.COLUMNS WHERE TABLE_SCHEMA=DATABASE() AND TABLE_NAME='products' AND COLUMN_NAME='reserved_quantity') THEN
+        ALTER TABLE products ADD COLUMN reserved_quantity INT NOT NULL DEFAULT 0;
+    END IF;
+    IF NOT EXISTS (SELECT 1 FROM information_schema.COLUMNS WHERE TABLE_SCHEMA=DATABASE() AND TABLE_NAME='products' AND COLUMN_NAME='sold_quantity') THEN
+        ALTER TABLE products ADD COLUMN sold_quantity INT NOT NULL DEFAULT 0;
+    END IF;
     IF NOT EXISTS (SELECT 1 FROM information_schema.COLUMNS WHERE TABLE_SCHEMA=DATABASE() AND TABLE_NAME='products' AND COLUMN_NAME='weight') THEN
         ALTER TABLE products ADD COLUMN weight INT NOT NULL DEFAULT 0;
     END IF;
@@ -121,6 +130,9 @@ CREATE TABLE IF NOT EXISTS coupons (
     usage_limit INT NOT NULL DEFAULT 1,
     used INT NOT NULL DEFAULT 0,
     quantity INT NOT NULL DEFAULT 1,
+    status VARCHAR(20) NOT NULL DEFAULT 'available',
+    locked_count INT NOT NULL DEFAULT 0,
+    per_user_limit INT NOT NULL DEFAULT 1,
     start_date DATE NULL,
     end_date DATE NULL,
     is_active TINYINT(1) NOT NULL DEFAULT 1,
@@ -162,6 +174,44 @@ CREATE TABLE IF NOT EXISTS order_status_history (
     changed_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (order_id) REFERENCES orders(id) ON DELETE CASCADE,
     FOREIGN KEY (changed_by) REFERENCES users(id) ON DELETE RESTRICT
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS order_logs (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    order_id INT NOT NULL,
+    actor_type VARCHAR(30) NOT NULL,
+    actor_id INT NULL,
+    action VARCHAR(100) NOT NULL,
+    old_status VARCHAR(50) NULL,
+    new_status VARCHAR(50) NULL,
+    note TEXT NULL,
+    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    INDEX idx_order_logs_order_created (order_id, created_at),
+    FOREIGN KEY (order_id) REFERENCES orders(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS coupon_products (
+    coupon_id INT NOT NULL,
+    product_id INT NOT NULL,
+    PRIMARY KEY (coupon_id, product_id),
+    FOREIGN KEY (coupon_id) REFERENCES coupons(id) ON DELETE CASCADE,
+    FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS coupon_locks (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    coupon_id INT NOT NULL,
+    user_id INT NOT NULL,
+    order_id INT NULL,
+    status VARCHAR(20) NOT NULL DEFAULT 'locked',
+    locked_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    expires_at DATETIME NOT NULL,
+    released_at DATETIME NULL,
+    INDEX idx_coupon_locks_coupon_user_status (coupon_id, user_id, status),
+    INDEX idx_coupon_locks_expires_status (expires_at, status),
+    FOREIGN KEY (coupon_id) REFERENCES coupons(id) ON DELETE CASCADE,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+    FOREIGN KEY (order_id) REFERENCES orders(id) ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 CREATE TABLE IF NOT EXISTS admin_action_log (

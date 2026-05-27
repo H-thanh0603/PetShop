@@ -14,10 +14,12 @@ import java.util.List;
 import Context.DBContext;
 import Model.Order;
 import Model.OrderItem;
+import Model.OrderLog;
 import Model.OrderStatus;
 import Model.OrderStatusHistory;
 import Model.PaymentTransaction;
 import Model.Product;
+import Model.CustomerRepurchaseSuggestion;
 
 public class OrderDAO {
 
@@ -69,7 +71,10 @@ public class OrderDAO {
             ps.executeUpdate();
             try (ResultSet rs = ps.getGeneratedKeys()) {
                 if (rs.next()) {
-                    return rs.getInt(1);
+                    int orderId = rs.getInt(1);
+                    new OrderLogDAO().insert(conn, orderId, "CUSTOMER", order.getUserId(),
+                            "CREATE_ORDER", null, "Pending", "Khách tạo đơn");
+                    return orderId;
                 }
             }
         }
@@ -339,24 +344,27 @@ public class OrderDAO {
 
                 boolean wasCancelled = "Cancelled".equalsIgnoreCase(currentStatus);
                 boolean willBeCancelled = "Cancelled".equalsIgnoreCase(status);
+                boolean willBeCompleted = "Completed".equalsIgnoreCase(status);
 
                 // Keep stock and status updates in one transaction so admin actions
                 // cannot leave inventory out of sync with the order state.
                 if (!wasCancelled && willBeCancelled) {
-                    // Restore stock only when the order is moved into Cancelled.
-                    for (OrderItem item : getOrderItems(conn, orderId)) {
-                        if (!productDAO.increaseStock(conn, item.getProductId(), item.getQuantity())) {
-                            conn.rollback();
-                            return false;
-                        }
+                    if (!releaseReservedStockForOrder(conn, orderId)) {
+                        conn.rollback();
+                        return false;
                     }
                 } else if (wasCancelled && !willBeCancelled) {
                     // Re-reserve stock when a cancelled order is opened again.
                     for (OrderItem item : getOrderItems(conn, orderId)) {
-                        if (!productDAO.decreaseStock(conn, item.getProductId(), item.getQuantity())) {
+                        if (!productDAO.reserveStock(conn, item.getProductId(), item.getQuantity())) {
                             conn.rollback();
                             return false;
                         }
+                    }
+                } else if (willBeCompleted) {
+                    if (!finalizeReservedStockForOrder(conn, orderId)) {
+                        conn.rollback();
+                        return false;
                     }
                 }
 
@@ -372,6 +380,11 @@ public class OrderDAO {
                 // Record audit trail
                 int actor = changedByUserId > 0 ? changedByUserId : 1; // fallback to system user
                 if (!historyDAO.insertHistory(conn, orderId, currentStatus, status, actor)) {
+                    conn.rollback();
+                    return false;
+                }
+                if (!new OrderLogDAO().insert(conn, orderId, changedByUserId > 0 ? "ADMIN" : "SYSTEM",
+                        actor, "UPDATE_STATUS", currentStatus, status, "Cập nhật trạng thái đơn hàng")) {
                     conn.rollback();
                     return false;
                 }
@@ -488,6 +501,11 @@ public class OrderDAO {
     }
 
     public boolean updatePaymentVerification(int orderId, String verificationStatus, String verificationMessage) {
+        return updatePaymentVerification(orderId, verificationStatus, verificationMessage, 1);
+    }
+
+    public boolean updatePaymentVerification(int orderId, String verificationStatus,
+                                             String verificationMessage, int actorUserId) {
         String normalizedStatus = normalizeVerificationStatus(verificationStatus);
         if (normalizedStatus == null) {
             return false;
@@ -501,6 +519,7 @@ public class OrderDAO {
                     conn.rollback();
                     return false;
                 }
+                String oldVerificationStatus = transaction.getVerificationStatus();
 
                 String transactionStatus = mapTransactionStatus(normalizedStatus);
                 boolean paid = "VERIFIED".equals(normalizedStatus);
@@ -520,14 +539,27 @@ public class OrderDAO {
                     return false;
                 }
 
-                try (PreparedStatement ps = conn.prepareStatement(
-                        "UPDATE orders SET payment_status = ? WHERE id = ?")) {
-                    ps.setBoolean(1, paid);
-                    ps.setInt(2, orderId);
-                    if (ps.executeUpdate() <= 0) {
+                if (!updatePaymentStatus(conn, orderId, paid)) {
+                    conn.rollback();
+                    return false;
+                }
+
+                if (paid) {
+                    if (!finalizeReservedStockForOrder(conn, orderId)) {
                         conn.rollback();
                         return false;
                     }
+                } else if ("FAILED".equals(normalizedStatus) || "EXPIRED".equals(normalizedStatus)) {
+                    if (!releaseReservedStockForOrder(conn, orderId)) {
+                        conn.rollback();
+                        return false;
+                    }
+                }
+                if (!new OrderLogDAO().insert(conn, orderId, "ADMIN", actorUserId,
+                        "UPDATE_PAYMENT_VERIFICATION", oldVerificationStatus, normalizedStatus,
+                        normalizeVerificationMessage(verificationMessage, normalizedStatus))) {
+                    conn.rollback();
+                    return false;
                 }
 
                 conn.commit();
@@ -542,6 +574,62 @@ public class OrderDAO {
             log.error("DB error", e);
         }
         return false;
+    }
+
+    public boolean updatePaymentStatus(Connection conn, int orderId, boolean paid) throws Exception {
+        try (PreparedStatement ps = conn.prepareStatement(
+                "UPDATE orders SET payment_status = ? WHERE id = ?")) {
+            ps.setBoolean(1, paid);
+            ps.setInt(2, orderId);
+            return ps.executeUpdate() > 0;
+        }
+    }
+
+    public boolean releaseReservedStockForOrder(Connection conn, int orderId) throws Exception {
+        ProductDAO productDAO = new ProductDAO();
+        for (OrderItem item : getOrderItems(conn, orderId)) {
+            if (!productDAO.releaseReservedStock(conn, item.getProductId(), item.getQuantity())) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    public boolean finalizeReservedStockForOrder(Connection conn, int orderId) throws Exception {
+        ProductDAO productDAO = new ProductDAO();
+        InventoryBatchDAO inventoryBatchDAO = new InventoryBatchDAO();
+        Order order = getOrderByIdForUpdate(conn, orderId);
+        int actorUserId = order == null ? 1 : order.getUserId();
+        for (OrderItem item : getOrderItems(conn, orderId)) {
+            if (!productDAO.finalizeReservedStock(conn, item.getProductId(), item.getQuantity())) {
+                return false;
+            }
+            if (inventoryBatchDAO.hasTrackedBatchesForProduct(conn, item.getProductId())
+                    && !inventoryBatchDAO.consumeProductStock(
+                    conn,
+                    item.getProductId(),
+                    item.getQuantity(),
+                    orderId,
+                    actorUserId,
+                    "Finalize reserved stock for order #" + orderId
+            )) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    private Order getOrderByIdForUpdate(Connection conn, int orderId) throws Exception {
+        String query = "SELECT * FROM orders WHERE id = ? FOR UPDATE";
+        try (PreparedStatement ps = conn.prepareStatement(query)) {
+            ps.setInt(1, orderId);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    return mapOrder(rs);
+                }
+            }
+        }
+        return null;
     }
 
     public List<Order> getOrdersByUserId(int userId) {
@@ -610,12 +698,10 @@ public class OrderDAO {
                     }
                 }
 
-                // 4. Restore stock for each cancelled item
-                for (OrderItem item : getOrderItems(conn, orderId)) {
-                    if (!productDAO.increaseStock(conn, item.getProductId(), item.getQuantity())) {
-                        conn.rollback();
-                        return false;
-                    }
+                // 4. Release reserved stock for each cancelled item
+                if (!releaseReservedStockForOrder(conn, orderId)) {
+                    conn.rollback();
+                    return false;
                 }
 
                 // 5. Update the order status to Cancelled
@@ -629,6 +715,11 @@ public class OrderDAO {
 
                 // 6. Record status history
                 if (!historyDAO.insertHistory(conn, orderId, currentStatus, "Cancelled", userId)) {
+                    conn.rollback();
+                    return false;
+                }
+                if (!new OrderLogDAO().insert(conn, orderId, "CUSTOMER", userId,
+                        "CANCEL_ORDER", currentStatus, "Cancelled", "Khách hủy đơn")) {
                     conn.rollback();
                     return false;
                 }
@@ -672,6 +763,50 @@ public class OrderDAO {
 
     public List<OrderStatusHistory> getStatusHistory(int orderId) {
         return new OrderStatusHistoryDAO().getHistoryByOrderId(orderId);
+    }
+
+    public List<OrderLog> getOrderLogs(int orderId) {
+        return new OrderLogDAO().getByOrderId(orderId);
+    }
+
+    public List<CustomerRepurchaseSuggestion> getRepurchaseSuggestions(int userId, int minDaysSincePurchase, int limit) {
+        List<CustomerRepurchaseSuggestion> suggestions = new ArrayList<>();
+        String sql = "SELECT o.id AS order_id, oi.product_id, p.name AS product_name, oi.quantity, " +
+                "DATEDIFF(NOW(), o.createdAt) AS days_since_purchase " +
+                "FROM orders o " +
+                "JOIN order_items oi ON oi.order_id = o.id " +
+                "JOIN products p ON p.id = oi.product_id " +
+                "WHERE o.user_id = ? AND o.status = 'Completed' " +
+                "AND o.createdAt <= DATE_SUB(NOW(), INTERVAL ? DAY) " +
+                "AND p.is_active = 1 AND p.stock > 0 " +
+                "AND (" +
+                "LOWER(p.name) LIKE '%cát%' OR LOWER(p.name) LIKE '%cat vệ sinh%' " +
+                "OR LOWER(p.name) LIKE '%hạt%' OR LOWER(p.name) LIKE '%pate%' " +
+                "OR LOWER(p.name) LIKE '%bánh thưởng%' OR LOWER(p.name) LIKE '%snack%' " +
+                "OR LOWER(p.name) LIKE '%sữa tắm%' OR LOWER(p.category) LIKE '%thức ăn%' " +
+                "OR LOWER(p.category) LIKE '%cát vệ sinh%'" +
+                ") " +
+                "ORDER BY o.createdAt DESC, oi.id ASC LIMIT ?";
+        try (Connection conn = DBContext.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setInt(1, userId);
+            ps.setInt(2, minDaysSincePurchase);
+            ps.setInt(3, limit);
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    CustomerRepurchaseSuggestion suggestion = new CustomerRepurchaseSuggestion();
+                    suggestion.setOrderId(rs.getInt("order_id"));
+                    suggestion.setProductId(rs.getInt("product_id"));
+                    suggestion.setProductName(rs.getString("product_name"));
+                    suggestion.setQuantity(rs.getInt("quantity"));
+                    suggestion.setDaysSincePurchase(rs.getInt("days_since_purchase"));
+                    suggestions.add(suggestion);
+                }
+            }
+        } catch (Exception e) {
+            log.error("DB error", e);
+        }
+        return suggestions;
     }
 
     public BigDecimal getTodayRevenue() {

@@ -12,11 +12,13 @@
         bankDisplayName: configEl.dataset.bankDisplayName || "VP Bank",
         bankAccountNumber: configEl.dataset.bankAccountNumber || "0368600557",
         bankAccountName: configEl.dataset.bankAccountName || "NGUYEN HUU THANH",
-        bankTransferPrefix: configEl.dataset.bankTransferPrefix || "PETSHOP"
+        bankTransferPrefix: configEl.dataset.bankTransferPrefix || "PETSHOP",
+        bankTransferReference: configEl.dataset.bankTransferReference || "",
+        bankPaymentTtlSeconds: parseInt(configEl.dataset.bankPaymentTtlSeconds || "600", 10) || 600
     };
 
     let provincesLoaded = false;
-    let currentTransferReference = "";
+    let currentTransferReference = checkoutConfig.bankTransferReference;
 
     document.addEventListener("DOMContentLoaded", function () {
         bindPrimaryAddressDetailValidation();
@@ -159,7 +161,7 @@
         const amount = getFinalTotal();
         const content = referenceOverride || currentTransferReference;
         if (!content) {
-            showBankTransferPreview();
+            setBankTransferQrNote("Không tạo được nội dung chuyển khoản. Vui lòng tải lại trang.");
             return;
         }
         currentTransferReference = content;
@@ -185,6 +187,11 @@
     }
 
     function showBankTransferPreview() {
+        if (currentTransferReference) {
+            updateBankQR(currentTransferReference);
+            return;
+        }
+
         const bankAmount = document.getElementById("bankAmount");
         const bankContent = document.getElementById("bankContent");
         const bankQrImg = document.getElementById("bankQrImg");
@@ -202,7 +209,14 @@
             bankQrImg.removeAttribute("src");
         }
         if (bankQrNote) {
-            bankQrNote.textContent = "QR chính thức sẽ xuất hiện sau khi đơn hàng được tạo.";
+            bankQrNote.textContent = "Không tạo được nội dung chuyển khoản. Vui lòng tải lại trang.";
+        }
+    }
+
+    function setBankTransferQrNote(message) {
+        const bankQrNote = document.getElementById("bankQrNote");
+        if (bankQrNote) {
+            bankQrNote.textContent = message;
         }
     }
 
@@ -265,6 +279,9 @@
                     if (data.success) {
                         if (selectedPayment === "bank_transfer") {
                             applyServerBankTransferData(data);
+                            checkoutButton.dataset.keepDisabled = "true";
+                            paymentResult.innerHTML = '<div class="alert alert-success">Đơn hàng đã được tạo. QR bên trên có hiệu lực trong 10 phút, vui lòng hoàn tất chuyển khoản đúng nội dung. <a class="alert-link" href="' + checkoutConfig.contextPath + '/my-orders">Xem đơn hàng</a></div>';
+                            return;
                             paymentResult.innerHTML = '<div class="alert alert-success">Đơn hàng đã được tạo. Vui lòng hoàn tất chuyển khoản theo đúng nội dung để hệ thống tự đối soát.</div>';
                             setTimeout(() => {
                                 window.location.href = checkoutConfig.contextPath + "/my-orders";
@@ -283,7 +300,7 @@
                     paymentResult.innerHTML = '<div class="alert alert-danger">Có lỗi xảy ra: ' + escapeHtml(String(error)) + "</div>";
                 })
                 .finally(() => {
-                    checkoutButton.disabled = false;
+                    checkoutButton.disabled = checkoutButton.dataset.keepDisabled === "true";
                 });
         });
     }
@@ -549,7 +566,7 @@
     }
 
     function startCheckoutTimer() {
-        let time = 15 * 60;
+        let time = checkoutConfig.bankPaymentTtlSeconds;
         const timer = document.getElementById("timer");
         if (!timer) {
             return;

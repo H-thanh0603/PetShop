@@ -229,6 +229,40 @@
                     </div>
                 </div>
                 </c:if>
+
+                <c:if test="${not empty orderLogs}">
+                <div class="order-info-card">
+                    <h5 class="mb-4 fw-bold"><i class='bx bx-list-check'></i> Nhật ký hoạt động</h5>
+                    <div class="table-responsive">
+                        <table class="table table-sm table-hover">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Thời gian</th>
+                                    <th>Actor</th>
+                                    <th>Hành động</th>
+                                    <th>Trạng thái</th>
+                                    <th>Ghi chú</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <c:forEach var="l" items="${orderLogs}">
+                                    <tr>
+                                        <td><fmt:formatDate value="${l.createdAt}" pattern="dd/MM/yyyy HH:mm:ss"/></td>
+                                        <td>${fn:escapeXml(l.actorType)}<c:if test="${not empty l.actorId}"> #${l.actorId}</c:if></td>
+                                        <td>${fn:escapeXml(l.action)}</td>
+                                        <td>
+                                            <span class="badge bg-secondary">${fn:escapeXml(l.oldStatus)}</span>
+                                            <i class='bx bx-right-arrow-alt'></i>
+                                            <span class="badge bg-primary">${fn:escapeXml(l.newStatus)}</span>
+                                        </td>
+                                        <td>${fn:escapeXml(l.note)}</td>
+                                    </tr>
+                                </c:forEach>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                </c:if>
             </div>
         </div>
     </main>

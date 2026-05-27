@@ -1,6 +1,18 @@
 ALTER TABLE payment_transactions
     ADD COLUMN expires_at DATETIME NULL;
 
+ALTER TABLE products
+    ADD COLUMN IF NOT EXISTS stock_quantity INT NOT NULL DEFAULT 0,
+    ADD COLUMN IF NOT EXISTS reserved_quantity INT NOT NULL DEFAULT 0,
+    ADD COLUMN IF NOT EXISTS sold_quantity INT NOT NULL DEFAULT 0;
+
+UPDATE products SET stock_quantity = stock WHERE stock_quantity = 0 AND stock > 0;
+
+ALTER TABLE coupons
+    ADD COLUMN IF NOT EXISTS status VARCHAR(20) NOT NULL DEFAULT 'available',
+    ADD COLUMN IF NOT EXISTS locked_count INT NOT NULL DEFAULT 0,
+    ADD COLUMN IF NOT EXISTS per_user_limit INT NOT NULL DEFAULT 1;
+
 CREATE TABLE IF NOT EXISTS security_events (
     id INT AUTO_INCREMENT PRIMARY KEY,
     event_type VARCHAR(100) NOT NULL,
@@ -76,6 +88,45 @@ CREATE TABLE IF NOT EXISTS stock_movements (
     CONSTRAINT fk_stock_movements_batch FOREIGN KEY (inventory_batch_id) REFERENCES inventory_batches(id),
     CONSTRAINT fk_stock_movements_order FOREIGN KEY (order_id) REFERENCES orders(id),
     CONSTRAINT fk_stock_movements_created_by FOREIGN KEY (created_by) REFERENCES users(id)
+);
+
+CREATE TABLE IF NOT EXISTS order_logs (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    order_id INT NOT NULL,
+    actor_type VARCHAR(30) NOT NULL,
+    actor_id INT NULL,
+    action VARCHAR(100) NOT NULL,
+    old_status VARCHAR(50) NULL,
+    new_status VARCHAR(50) NULL,
+    note TEXT NULL,
+    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    INDEX idx_order_logs_order_created (order_id, created_at),
+    INDEX idx_order_logs_actor_created (actor_type, actor_id, created_at),
+    CONSTRAINT fk_order_logs_order FOREIGN KEY (order_id) REFERENCES orders(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS coupon_products (
+    coupon_id INT NOT NULL,
+    product_id INT NOT NULL,
+    PRIMARY KEY (coupon_id, product_id),
+    CONSTRAINT fk_coupon_products_coupon FOREIGN KEY (coupon_id) REFERENCES coupons(id) ON DELETE CASCADE,
+    CONSTRAINT fk_coupon_products_product FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS coupon_locks (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    coupon_id INT NOT NULL,
+    user_id INT NOT NULL,
+    order_id INT NULL,
+    status VARCHAR(20) NOT NULL DEFAULT 'locked',
+    locked_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    expires_at DATETIME NOT NULL,
+    released_at DATETIME NULL,
+    INDEX idx_coupon_locks_coupon_user_status (coupon_id, user_id, status),
+    INDEX idx_coupon_locks_expires_status (expires_at, status),
+    CONSTRAINT fk_coupon_locks_coupon FOREIGN KEY (coupon_id) REFERENCES coupons(id) ON DELETE CASCADE,
+    CONSTRAINT fk_coupon_locks_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+    CONSTRAINT fk_coupon_locks_order FOREIGN KEY (order_id) REFERENCES orders(id) ON DELETE SET NULL
 );
 
 CREATE INDEX idx_payment_transactions_verification_status

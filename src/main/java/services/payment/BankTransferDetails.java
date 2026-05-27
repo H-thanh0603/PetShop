@@ -40,6 +40,11 @@ public class BankTransferDetails {
         return transferPrefix + "-" + orderId + "-" + suffix;
     }
 
+    public String buildReservedTransferReference(int userId) {
+        long suffix = System.currentTimeMillis() % 1_000_000L;
+        return transferPrefix + "-U" + userId + "-" + suffix;
+    }
+
     public String getBankId() {
         return bankId;
     }
