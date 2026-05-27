@@ -80,6 +80,25 @@ public class PaymentTransactionDAO {
         return null;
     }
 
+    public PaymentTransaction findPendingByTransferReferenceInContentForUpdate(Connection conn, String content) throws Exception {
+        String sql = "SELECT * FROM payment_transactions " +
+                "WHERE provider_key = 'BANK_TRANSFER' " +
+                "AND status = 'PENDING_VERIFICATION' " +
+                "AND transfer_reference IS NOT NULL " +
+                "AND ? LIKE CONCAT('%', transfer_reference, '%') " +
+                "ORDER BY LENGTH(transfer_reference) DESC, created_at ASC, id ASC " +
+                "LIMIT 1 FOR UPDATE";
+        try (PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setString(1, content);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    return map(rs);
+                }
+            }
+        }
+        return null;
+    }
+
     public boolean updateVerificationStatus(Connection conn, int transactionId, String transactionStatus,
                                             String verificationStatus, String verificationMessage,
                                             Timestamp updatedAt, Timestamp verifiedAt) throws Exception {
@@ -97,18 +116,100 @@ public class PaymentTransactionDAO {
         }
     }
 
+    public boolean applyWebhookResult(Connection conn, int transactionId, String providerTransactionId,
+                                      java.math.BigDecimal amountReceived, String bankContent,
+                                      String providerMetadata, String transactionStatus,
+                                      String verificationStatus, String verificationMessage,
+                                      Timestamp verifiedAt) throws Exception {
+        String sql = "UPDATE payment_transactions " +
+                "SET provider_transaction_id = ?, amount_received = ?, bank_content = ?, " +
+                "provider_metadata = ?, status = ?, verification_status = ?, " +
+                "verification_message = ?, updated_at = CURRENT_TIMESTAMP, verified_at = ? " +
+                "WHERE id = ?";
+        try (PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setString(1, providerTransactionId);
+            ps.setBigDecimal(2, amountReceived);
+            ps.setString(3, bankContent);
+            ps.setString(4, providerMetadata);
+            ps.setString(5, transactionStatus);
+            ps.setString(6, verificationStatus);
+            ps.setString(7, verificationMessage);
+            ps.setTimestamp(8, verifiedAt);
+            ps.setInt(9, transactionId);
+            return ps.executeUpdate() > 0;
+        }
+    }
+
     public int expirePendingTransactions() {
-        int pendingHours = AppConfig.getInt("payment.bank.pending-hours", 2);
+        if (Boolean.parseBoolean("true")) {
+            return expirePendingTransactionsAndReleaseReservations();
+        }
+        int pendingMinutes = AppConfig.getInt("payment.bank.pending-minutes", 10);
         String sql = "UPDATE payment_transactions " +
                 "SET status = 'EXPIRED', verification_status = 'EXPIRED', " +
                 "verification_message = COALESCE(NULLIF(verification_message, ''), 'Quá thời gian chờ thanh toán chuyển khoản.'), " +
                 "updated_at = CURRENT_TIMESTAMP " +
                 "WHERE status = 'PENDING_VERIFICATION' " +
-                "AND created_at <= DATE_SUB(NOW(), INTERVAL ? HOUR)";
+                "AND COALESCE(expires_at, DATE_ADD(created_at, INTERVAL ? MINUTE)) <= NOW()";
         try (Connection conn = DBContext.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
-            ps.setInt(1, pendingHours);
+            ps.setInt(1, pendingMinutes);
             return ps.executeUpdate();
+        } catch (Exception e) {
+            log.error("Failed to expire pending payment transactions", e);
+            return 0;
+        }
+    }
+
+    private int expirePendingTransactionsAndReleaseReservations() {
+        int pendingMinutes = AppConfig.getInt("payment.bank.pending-minutes", 10);
+        String selectSql = "SELECT id, order_id FROM payment_transactions " +
+                "WHERE status = 'PENDING_VERIFICATION' " +
+                "AND COALESCE(expires_at, DATE_ADD(created_at, INTERVAL ? MINUTE)) <= NOW() " +
+                "FOR UPDATE";
+        String updateSql = "UPDATE payment_transactions " +
+                "SET status = 'EXPIRED', verification_status = 'EXPIRED', " +
+                "verification_message = COALESCE(NULLIF(verification_message, ''), 'Quá thời gian chờ thanh toán chuyển khoản.'), " +
+                "updated_at = CURRENT_TIMESTAMP WHERE id = ?";
+        try (Connection conn = DBContext.getConnection()) {
+            conn.setAutoCommit(false);
+            try {
+                java.util.List<int[]> expired = new java.util.ArrayList<>();
+                try (PreparedStatement ps = conn.prepareStatement(selectSql)) {
+                    ps.setInt(1, pendingMinutes);
+                    try (ResultSet rs = ps.executeQuery()) {
+                        while (rs.next()) {
+                            expired.add(new int[] {rs.getInt("id"), rs.getInt("order_id")});
+                        }
+                    }
+                }
+
+                OrderDAO orderDAO = new OrderDAO();
+                OrderLogDAO orderLogDAO = new OrderLogDAO();
+                int updated = 0;
+                try (PreparedStatement ps = conn.prepareStatement(updateSql)) {
+                    for (int[] row : expired) {
+                        ps.setInt(1, row[0]);
+                        updated += ps.executeUpdate();
+                        int orderId = row[1];
+                        if (!orderDAO.releaseReservedStockForOrder(conn, orderId)
+                                || !orderDAO.updatePaymentStatus(conn, orderId, false)
+                                || !orderLogDAO.insert(conn, orderId, "SYSTEM", null,
+                                "PAYMENT_EXPIRED", "PENDING_VERIFICATION", "EXPIRED",
+                                "Quá thời gian giữ thanh toán, trả lại tồn kho tạm giữ.")) {
+                            conn.rollback();
+                            return 0;
+                        }
+                    }
+                }
+                conn.commit();
+                return updated;
+            } catch (Exception e) {
+                conn.rollback();
+                throw e;
+            } finally {
+                conn.setAutoCommit(true);
+            }
         } catch (Exception e) {
             log.error("Failed to expire pending payment transactions", e);
             return 0;
@@ -187,6 +288,11 @@ public class PaymentTransactionDAO {
         transaction.setVerificationStatus(rs.getString("verification_status"));
         transaction.setVerificationMessage(rs.getString("verification_message"));
         transaction.setProviderMetadata(rs.getString("provider_metadata"));
+        try {
+            transaction.setAmountReceived(rs.getBigDecimal("amount_received"));
+            transaction.setBankContent(rs.getString("bank_content"));
+        } catch (Exception ignored) {
+        }
         transaction.setCreatedAt(rs.getTimestamp("created_at"));
         transaction.setUpdatedAt(rs.getTimestamp("updated_at"));
         transaction.setVerifiedAt(rs.getTimestamp("verified_at"));

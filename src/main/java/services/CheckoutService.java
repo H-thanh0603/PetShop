@@ -3,6 +3,7 @@ package services;
 import Context.DBContext;
 import DAO.*;
 import Model.*;
+import Util.AppConfig;
 import services.payment.BankTransferDetails;
 import services.payment.PaymentProvider;
 import services.payment.PaymentRegistry;
@@ -61,6 +62,15 @@ public class CheckoutService {
                                           CouponValidationResult couponState,
                                           String paymentMethodKey,
                                           int shippingFee) throws Exception {
+        return processCheckout(user, cart, fullAddress, note, couponState, paymentMethodKey, shippingFee, null);
+    }
+
+    public CheckoutResult processCheckout(User user, Map<Integer, CartItem> cart,
+                                          String fullAddress, String note,
+                                          CouponValidationResult couponState,
+                                          String paymentMethodKey,
+                                          int shippingFee,
+                                          String reservedTransferReference) throws Exception {
         BigDecimal totalAmount = calculateCartTotal(cart);
 
         try (Connection conn = DBContext.getConnection()) {
@@ -84,15 +94,19 @@ public class CheckoutService {
                 // 2. Process Coupon
                 BigDecimal discount = BigDecimal.ZERO;
                 if (couponState != null && couponState.isValid()) {
-                    if (!userDAO.markDiscountAsUsed(conn, user.getId())) {
-                        conn.rollback();
-                        return new CheckoutResult(false, "Tài khoản này đã sử dụng mã giảm giá trước đó.");
-                    }
-
                     Coupon latestCoupon = couponDao.getValidCouponByCode(conn, couponState.getCoupon().getCode());
                     if (latestCoupon == null) {
                         conn.rollback();
                         return new CheckoutResult(false, "Mã giảm giá không hợp lệ hoặc đã hết hạn.");
+                    }
+                    if (latestCoupon.getMinOrder() != null
+                            && totalAmount.compareTo(latestCoupon.getMinOrder()) < 0) {
+                        conn.rollback();
+                        return new CheckoutResult(false, "Đơn hàng chưa đạt giá trị tối thiểu để dùng mã giảm giá.");
+                    }
+                    if (!userDAO.markDiscountAsUsed(conn, user.getId())) {
+                        conn.rollback();
+                        return new CheckoutResult(false, "Tài khoản này đã sử dụng mã giảm giá trước đó.");
                     }
                     if (!couponDao.increaseUsedIfAvailable(conn, latestCoupon.getId())) {
                         conn.rollback();
@@ -141,24 +155,9 @@ public class CheckoutService {
                     return new CheckoutResult(false, "Thiếu cấu hình chuyển khoản ngân hàng. Vui lòng liên hệ quản trị viên.");
                 }
 
-                // 5. Update Stock and save Order Items
+                // 5. Reserve Stock and save Order Items
                 for (CartItem ci : cart.values()) {
-                    boolean hasTrackedBatches = inventoryBatchDAO.hasTrackedBatchesForProduct(
-                            conn, ci.getProduct().getId()
-                    );
-                    if (hasTrackedBatches && !inventoryBatchDAO.consumeProductStock(
-                            conn,
-                            ci.getProduct().getId(),
-                            ci.getQuantity(),
-                            orderId,
-                            user.getId(),
-                            "Checkout order #" + orderId
-                    )) {
-                        conn.rollback();
-                        return new CheckoutResult(false, "Sản phẩm \"" + ci.getProduct().getName() + "\" không còn lô hàng hợp lệ để bán.");
-                    }
-
-                    if (!productDAO.decreaseStock(conn, ci.getProduct().getId(), ci.getQuantity())) {
+                    if (!productDAO.reserveStock(conn, ci.getProduct().getId(), ci.getQuantity())) {
                         conn.rollback();
                         return new CheckoutResult(false, "Sản phẩm \"" + ci.getProduct().getName() + "\" đã hết hàng trong lúc thanh toán.");
                     }
@@ -177,7 +176,7 @@ public class CheckoutService {
 
                 // 6. Save Payment Transaction
                 PaymentTransaction paymentTransaction = buildPaymentTransaction(
-                        user, orderId, finalTotal, paymentResult, bankTransferDetails
+                        user, orderId, finalTotal, paymentResult, bankTransferDetails, reservedTransferReference
                 );
                 int paymentTransactionId = paymentTransactionDAO.save(conn, paymentTransaction);
                 if (paymentTransactionId <= 0) {
@@ -214,17 +213,29 @@ public class CheckoutService {
     }
 
     private BigDecimal calculateDiscount(BigDecimal cartTotal, Coupon coupon) {
-        if (coupon == null || coupon.getDiscountPercent() <= 0) {
+        if (coupon == null) {
             return BigDecimal.ZERO;
         }
-        return cartTotal
-                .multiply(BigDecimal.valueOf(coupon.getDiscountPercent()))
-                .divide(BigDecimal.valueOf(100), 2, RoundingMode.HALF_UP);
+        BigDecimal discount;
+        if ("fixed".equalsIgnoreCase(coupon.getDiscountType())) {
+            discount = coupon.getDiscountValue() == null ? BigDecimal.ZERO : coupon.getDiscountValue();
+        } else if (coupon.getDiscountPercent() > 0) {
+            discount = cartTotal
+                    .multiply(BigDecimal.valueOf(coupon.getDiscountPercent()))
+                    .divide(BigDecimal.valueOf(100), 2, RoundingMode.HALF_UP);
+        } else {
+            discount = BigDecimal.ZERO;
+        }
+        if (coupon.getMaxDiscount() != null && coupon.getMaxDiscount().compareTo(BigDecimal.ZERO) > 0) {
+            discount = discount.min(coupon.getMaxDiscount());
+        }
+        return discount.min(cartTotal);
     }
 
     private PaymentTransaction buildPaymentTransaction(User user, int orderId, BigDecimal finalTotal,
                                                        PaymentResult paymentResult,
-                                                       BankTransferDetails bankTransferDetails) {
+                                                       BankTransferDetails bankTransferDetails,
+                                                       String reservedTransferReference) {
         PaymentTransaction transaction = new PaymentTransaction();
         transaction.setOrderId(orderId);
         transaction.setUserId(user.getId());
@@ -239,11 +250,18 @@ public class CheckoutService {
         transaction.setCreatedAt(now);
         transaction.setUpdatedAt(now);
         if (paymentResult.isPendingVerification()) {
-            transaction.setTransferReference(bankTransferDetails.buildTransferReference(orderId));
-            int pendingHours = 2; // Default or from AppConfig
-            transaction.setExpiresAt(Timestamp.valueOf(LocalDateTime.now().plusHours(pendingHours)));
+            String transferReference = hasText(reservedTransferReference)
+                    ? reservedTransferReference.trim()
+                    : bankTransferDetails.buildTransferReference(orderId);
+            transaction.setTransferReference(transferReference);
+            int pendingMinutes = AppConfig.getInt("payment.bank.pending-minutes", 10);
+            transaction.setExpiresAt(Timestamp.valueOf(LocalDateTime.now().plusMinutes(pendingMinutes)));
         }
         return transaction;
+    }
+
+    private boolean hasText(String value) {
+        return value != null && !value.trim().isEmpty();
     }
 
     private String resolveProviderDisplayName(String paymentMethodDb) {

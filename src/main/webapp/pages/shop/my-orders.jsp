@@ -261,6 +261,31 @@
         </div>
     </div>
 
+    <c:if test="${not empty repurchaseSuggestions}">
+        <div class="order-stack mb-4">
+            <c:forEach var="s" items="${repurchaseSuggestions}">
+                <div class="order-shell">
+                    <div class="order-main">
+                        <div class="order-actions mt-0">
+                            <div>
+                                <div class="order-code"><i class='bx bx-refresh'></i> Gợi ý mua lại</div>
+                                <div class="mini-hint">${fn:escapeXml(s.message)}</div>
+                            </div>
+                            <form action="${pageContext.request.contextPath}/my-orders" method="post">
+                                <input type="hidden" name="csrfToken" value="${csrfToken}" />
+                                <input type="hidden" name="action" value="reorder">
+                                <input type="hidden" name="orderId" value="${s.orderId}">
+                                <button type="submit" class="btn btn-primary rounded-4">
+                                    <i class='bx bx-cart-add'></i> Mua lại
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </c:forEach>
+        </div>
+    </c:if>
+
     <div class="toolbar">
         <form action="${pageContext.request.contextPath}/my-orders" method="get">
             <div class="toolbar-left">
@@ -340,6 +365,14 @@
                                     <a href="${pageContext.request.contextPath}/my-orders?action=view&id=${o.id}" class="btn btn-outline-dark btn-soft-dark">
                                         <i class='bx bx-link-external'></i> Trang riêng
                                     </a>
+                                    <form action="${pageContext.request.contextPath}/my-orders" method="post">
+                                        <input type="hidden" name="csrfToken" value="${csrfToken}" />
+                                        <input type="hidden" name="action" value="reorder">
+                                        <input type="hidden" name="orderId" value="${o.id}">
+                                        <button type="submit" class="btn btn-glass">
+                                            <i class='bx bx-cart-add'></i> Mua lại
+                                        </button>
+                                    </form>
                                     <c:if test="${o.cancelableByUser}">
                                         <form action="${pageContext.request.contextPath}/my-orders" method="post" onsubmit="return confirm('Bạn chắc chắn muốn hủy đơn hàng này?');">
                                             <input type="hidden" name="csrfToken" value="${csrfToken}" />

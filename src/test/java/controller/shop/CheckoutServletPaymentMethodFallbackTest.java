@@ -95,7 +95,7 @@ class CheckoutServletPaymentMethodFallbackTest {
 
         Connection mockConn = mock(Connection.class);
         when(mockProductDAO.getProductByIdForUpdate(eq(mockConn), eq(10))).thenReturn(lockedProduct);
-        when(mockProductDAO.decreaseStock(eq(mockConn), eq(10), eq(1))).thenReturn(true);
+        when(mockProductDAO.reserveStock(eq(mockConn), eq(10), eq(1))).thenReturn(true);
         when(mockOrderDAO.saveOrder(eq(mockConn), any(Order.class))).thenReturn(123);
         when(mockOrderDAO.saveOrderItem(eq(mockConn), any())).thenReturn(true);
         when(mockPaymentTransactionDAO.save(eq(mockConn), any())).thenReturn(321);

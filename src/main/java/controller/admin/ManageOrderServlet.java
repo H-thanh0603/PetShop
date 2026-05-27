@@ -11,6 +11,7 @@ import jakarta.servlet.http.HttpSession;
 import DAO.AdminActionLogDAO;
 import DAO.OrderDAO;
 import Model.Order;
+import Model.OrderLog;
 import Model.OrderStatusHistory;
 import Model.User;
 
@@ -39,8 +40,10 @@ public class ManageOrderServlet extends HttpServlet {
             }
             Order order = orderDAO.getOrderById(orderId);
             List<OrderStatusHistory> statusHistory = orderDAO.getStatusHistory(orderId);
+            List<OrderLog> orderLogs = orderDAO.getOrderLogs(orderId);
             request.setAttribute("order", order);
             request.setAttribute("statusHistory", statusHistory);
+            request.setAttribute("orderLogs", orderLogs);
             request.getRequestDispatcher("/pages/admin/order-detail.jsp").forward(request, response);
             return;
         }
