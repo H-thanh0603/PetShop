@@ -1,0 +1,26 @@
+app.base-url=https://melipet.shop/PetShop
+app.context-path=/PetShop
+app.cookies.secure=true
+app.static.cache.max-age-seconds=86400
+
+api.provinces.base-url=https://provinces.open-api.vn/api/v1
+
+payment.bank.pending-minutes=10
+payment.bank.id=VPB
+payment.bank.account-number=0368600557
+payment.bank.account-name=NGUYEN HUU THANH
+payment.bank.display-name=VP Bank
+payment.bank.transfer-prefix=PETSHOP
+payment.bank.currency=VND
+payment.bank.verification-mode=webhook
+payment.bank.webhook-secret=CHANGE_THIS_TO_THE_SEPAY_SECRET
+
+payment.momo.mode=demo
+
+ratelimit.login=10
+ratelimit.register=6
+ratelimit.forgot-password=6
+ratelimit.checkout=8
+ratelimit.bank-webhook=60
+ratelimit.add-review=5
+ratelimit.search-autocomplete=8
