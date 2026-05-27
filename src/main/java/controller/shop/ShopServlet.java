@@ -109,7 +109,7 @@ public class ShopServlet extends HttpServlet {
         request.setAttribute("selectedPet", pet);
         request.setAttribute("selectedPetType", selectedPetType);
         request.setAttribute("totalProducts", products.size());
-
+            request.setAttribute("buildBaseQuery", buildBaseQuery(request));
         boolean isFiltered = (pet != null || category != null || search != null || priceRange != null || discountOnly != null);
 
         if (!isFiltered) {
@@ -170,5 +170,22 @@ public class ShopServlet extends HttpServlet {
     private int getTotalPages(int totalItems, int pageSize) {
         if (totalItems <= 0) return 1;
         return (int) Math.ceil((double) totalItems / pageSize);
+    }
+    private String buildBaseQuery(HttpServletRequest request) {
+        StringBuilder sb = new StringBuilder();
+        String[] keepParams = {"pet", "category", "search", "priceRange", "discountOnly", "sort"};
+        for (String param : keepParams) {
+            String val = request.getParameter(param);
+            if (val != null && !val.trim().isEmpty()) {
+                if (sb.length() > 0) sb.append("&");
+                try {
+                    sb.append(param).append("=")
+                            .append(java.net.URLEncoder.encode(val, "UTF-8"));
+                } catch (Exception e) {
+                    sb.append(param).append("=").append(val);
+                }
+            }
+        }
+        return sb.toString();
     }
 }

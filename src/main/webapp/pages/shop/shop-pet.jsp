@@ -125,37 +125,53 @@
             </div>
         </div>
 
-        <div class="pet-nav">
-            <a href="${pageContext.request.contextPath}/shop?pet=dog" class="${selectedPet == 'dog' ? 'active' : ''}">🐶 Chó</a>
-            <a href="${pageContext.request.contextPath}/shop?pet=cat" class="${selectedPet == 'cat' ? 'active' : ''}">🐱 Mèo</a>
-            <a href="${pageContext.request.contextPath}/shop?discountOnly=true" class="${selectedDiscountOnly == 'true' ? 'active' : ''}">🔥 Khuyến mãi</a>
-            <a href="${pageContext.request.contextPath}/shop" class="${empty selectedPet && empty selectedCategory && empty searchKeyword && empty selectedDiscountOnly ? 'active' : ''}">Tất cả</a>
-        </div>
-
         <div class="row">
             <!-- SIDEBAR -->
             <div class="col-lg-3 mb-4">
                 <div class="sidebar-section"><div class="sidebar-title"><i class='bx bx-filter-alt'></i> Bộ lọc tìm kiếm</div></div>
                 <div class="sidebar-section">
                     <div class="sidebar-title">Loại thú cưng</div>
-                    <a href="${pageContext.request.contextPath}/shop" class="filter-link ${empty selectedPet && empty selectedCategory ? 'active' : ''}">Tất cả thú cưng</a>
-                    <a href="${pageContext.request.contextPath}/shop?pet=dog" class="filter-link ${selectedPet == 'dog' ? 'active' : ''}">🐶 Chó</a>
-                    <a href="${pageContext.request.contextPath}/shop?pet=cat" class="filter-link ${selectedPet == 'cat' ? 'active' : ''}">🐱 Mèo</a>
+                    <a href="${pageContext.request.contextPath}/shop"
+                       class="filter-link ${empty selectedPet && empty selectedCategory ? 'active' : ''}">Tất cả thú cưng</a>
+                    <a href="javascript:void(0)" onclick="navigateWithFilters({pet: 'dog', category: null})"
+                       class="filter-link ${selectedPet == 'dog' ? 'active' : ''}">🐶 Chó</a>
+                    <a href="javascript:void(0)" onclick="navigateWithFilters({pet: 'cat', category: null})"
+                       class="filter-link ${selectedPet == 'cat' ? 'active' : ''}">🐱 Mèo</a>
+                    <a href="javascript:void(0)" onclick="navigateWithFilters({discountOnly: 'true'})"
+                       class="filter-link ${selectedDiscountOnly == 'true' ? ' active' : ''}">🔥 Khuyến mãi</a>
+                </div>
+                <div class="sidebar-section">
+                    <div class="sidebar-title">Thương hiệu</div>
+
+                </div>
+                <div class="sidebar-section">
+                    <div class="sidebar-title">Tình trạng</div>
+
+                </div>
+                <div class="sidebar-section">
+                    <div class="sidebar-title">Đánh giá</div>
+
                 </div>
                 <div class="sidebar-section">
                     <div class="sidebar-title">Danh mục</div>
                     <c:forEach items="${categories}" var="cat">
                         <c:if test="${(selectedPet == 'dog' && cat.contains('Chó')) || (selectedPet == 'cat' && cat.contains('Mèo')) || (empty selectedPet)}">
-                            <a href="${pageContext.request.contextPath}/shop?category=${cat}" class="filter-link ${selectedCategory == cat ? 'active' : ''}">${cat}</a>
+                            <a href="javascript:void(0)"
+                               onclick="navigateWithFilters({category: '${cat}'})"
+                               class="filter-link ${selectedCategory == cat ? 'active' : ''}">${cat}</a>
                         </c:if>
                     </c:forEach>
                 </div>
                 <div class="sidebar-section">
                     <div class="sidebar-title">Khoảng giá</div>
-                    <a href="${pageContext.request.contextPath}/shop?priceRange=under100${not empty selectedPet ? '&pet='.concat(selectedPet) : ''}" class="filter-link ${selectedPriceRange == 'under100' ? 'active' : ''}">Dưới 100.000đ</a>
-                    <a href="${pageContext.request.contextPath}/shop?priceRange=100to300${not empty selectedPet ? '&pet='.concat(selectedPet) : ''}" class="filter-link ${selectedPriceRange == '100to300' ? 'active' : ''}">100.000đ - 300.000đ</a>
-                    <a href="${pageContext.request.contextPath}/shop?priceRange=300to500${not empty selectedPet ? '&pet='.concat(selectedPet) : ''}" class="filter-link ${selectedPriceRange == '300to500' ? 'active' : ''}">300.000đ - 500.000đ</a>
-                    <a href="${pageContext.request.contextPath}/shop?priceRange=above500${not empty selectedPet ? '&pet='.concat(selectedPet) : ''}" class="filter-link ${selectedPriceRange == 'above500' ? 'active' : ''}">Trên 500.000đ</a>
+                    <a href="javascript:void(0)" onclick="navigateWithFilters({priceRange: 'under100'})"
+                       class="filter-link ${selectedPriceRange == 'under100' ? 'active' : ''}">Dưới 100.000đ</a>
+                    <a href="javascript:void(0)" onclick="navigateWithFilters({priceRange: '100to300'})"
+                       class="filter-link ${selectedPriceRange == '100to300' ? 'active' : ''}">100.000đ - 300.000đ</a>
+                    <a href="javascript:void(0)" onclick="navigateWithFilters({priceRange: '300to500'})"
+                       class="filter-link ${selectedPriceRange == '300to500' ? 'active' : ''}">300.000đ - 500.000đ</a>
+                    <a href="javascript:void(0)" onclick="navigateWithFilters({priceRange: 'above500'})"
+                       class="filter-link ${selectedPriceRange == 'above500' ? 'active' : ''}">Trên 500.000đ</a>
                 </div>
                 <div class="member-banner mt-3">
                     <h5>🎁 Ưu đãi Thành viên</h5>
@@ -261,11 +277,21 @@
     <jsp:include page="/components/back-button.jsp" />
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script>
-        function applySort(value) {
+        function navigateWithFilters(overrides) {
             const url = new URL(window.location.href);
-            if (value) { url.searchParams.set('sort', value); } else { url.searchParams.delete('sort'); }
             url.searchParams.delete('page');
+            for (const [key, value] of Object.entries(overrides)) {
+                if (value === null || value === '') {
+                    url.searchParams.delete(key);
+                } else {
+                    url.searchParams.set(key, value);
+                }
+            }
             window.location.href = url.toString();
+        }
+
+        function applySort(value) {
+            navigateWithFilters({ sort: value || null });
         }
     </script>
 </body>

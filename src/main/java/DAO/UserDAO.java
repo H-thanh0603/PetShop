@@ -422,7 +422,7 @@ public class UserDAO {
         return false;
     }
     
-    public void insertUser(String name, String email) {
+    public void insertUser(String name, String email) throws Exception {
         String query = "INSERT INTO users (username, email, role, status, password) VALUES (?, ?, 'user', 1, 'null')";
         try (Connection conn = DBContext.getConnection();
              PreparedStatement ps = conn.prepareStatement(query)) {
