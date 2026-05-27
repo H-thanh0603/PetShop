@@ -206,10 +206,6 @@
                     </div>
                 </div>
                 <div class="sidebar-section">
-                    <div class="sidebar-title">Tình trạng</div>
-
-                </div>
-                <div class="sidebar-section">
                     <div class="sidebar-title">Đánh giá</div>
 
                 </div>
@@ -252,6 +248,7 @@
                             <option value="price-asc" ${selectedSort == 'price-asc' ? 'selected' : ''}>Giá tăng dần</option>
                             <option value="price-desc" ${selectedSort == 'price-desc' ? 'selected' : ''}>Giá giảm dần</option>
                             <option value="discount" ${selectedSort == 'discount' ? 'selected' : ''}>Giảm giá nhiều</option>
+                            <option value="availability" ${selectedSort == 'availability' ? 'selected' : ''}>Còn hàng</option>
                             <option value="name" ${selectedSort == 'name' ? 'selected' : ''}>Tên A-Z</option>
                         </select>
                     </div>

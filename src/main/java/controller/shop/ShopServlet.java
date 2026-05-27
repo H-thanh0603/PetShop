@@ -103,6 +103,7 @@ public class ShopServlet extends HttpServlet {
                 case "price-desc": products.sort(Comparator.comparingDouble(Product::getPrice).reversed()); break;
                 case "discount": products.sort(Comparator.comparingInt(Product::getDiscount).reversed()); break;
                 case "name": products.sort(Comparator.comparing(Product::getName)); break;
+                case "availability": products.removeIf(p -> p.getStock() <= 0); break;
             }
         }
         request.setAttribute("categories", categories);
