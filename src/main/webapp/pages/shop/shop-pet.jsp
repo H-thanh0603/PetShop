@@ -141,6 +141,18 @@
                        class="filter-link ${selectedDiscountOnly == 'true' ? ' active' : ''}">🔥 Khuyến mãi</a>
                 </div>
                 <div class="sidebar-section">
+                    <div class="sidebar-title">Thương hiệu</div>
+
+                </div>
+                <div class="sidebar-section">
+                    <div class="sidebar-title">Tình trạng</div>
+
+                </div>
+                <div class="sidebar-section">
+                    <div class="sidebar-title">Đánh giá</div>
+
+                </div>
+                <div class="sidebar-section">
                     <div class="sidebar-title">Danh mục</div>
                     <c:forEach items="${categories}" var="cat">
                         <c:if test="${(selectedPet == 'dog' && cat.contains('Chó')) || (selectedPet == 'cat' && cat.contains('Mèo')) || (empty selectedPet)}">
