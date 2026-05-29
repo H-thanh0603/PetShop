@@ -46,6 +46,7 @@ public class ProductDetailServlet extends HttpServlet {
 
             ReviewDAO rDao = new ReviewDAO();
             List<Review> listReviews = rDao.getReviewsByProductId(id);
+            int lengthReviews = listReviews.size();
 
             User user = (User) request.getSession().getAttribute("user");
             boolean hasReviewed = user != null && rDao.hasUserReviewedProduct(user.getId(), id);
@@ -59,6 +60,7 @@ public class ProductDetailServlet extends HttpServlet {
             
             request.setAttribute("detail", p);
             request.setAttribute("listReviews", listReviews);
+            request.setAttribute("lengthReviews", lengthReviews);
             request.setAttribute("hasReviewed", hasReviewed);
             request.setAttribute("hasPurchased", hasPurchased);
             request.setAttribute("wishlistProductIds", wishlistIds);

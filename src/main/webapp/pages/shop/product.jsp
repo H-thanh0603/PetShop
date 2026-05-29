@@ -92,20 +92,30 @@
 .star-icon {
     display: flex;
     flex-direction: row-reverse;
-    justify-content: start;
+    justify-content: flex-end;
     gap: 5px;
+}
+.star-icon input[type="radio"] {
+    display: none;
 }
 
 .star-icon label {
+    color: #ddd;
+    cursor: pointer;
+    transition: color 0.15s;
+}
+
+.star-icon input[type="radio"]:checked ~ label {
     color: #ffc107;
 }
 
-.star-icon input:checked ~ label {
-    color: #ffc107;
+.star-icon:has(label:hover) label {
+    color: #ddd;
 }
 
-.star-icon label:hover, .star-icon label:hover ~ label {
-    color: #ffdb58;
+.star-icon label:hover,
+.star-icon label:hover ~ label {
+    color: #ffc107;
 }
 
 .rating-summary {
