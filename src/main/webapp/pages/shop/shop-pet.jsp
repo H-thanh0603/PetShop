@@ -80,6 +80,35 @@
         .shop-pagination a:hover { border-color: #00bfa5; color: #00bfa5; background: #e0f7f5; }
         .shop-pagination .active { background: #00bfa5; color: #fff; border-color: #00bfa5; }
         .shop-pagination .disabled { opacity: 0.4; pointer-events: none; }
+
+        .brand-list {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            max-height: 220px;
+            overflow-y: auto;
+        }
+        .brand-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 6px 8px;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: background 0.15s;
+        }
+        .brand-item:hover { background: #f5f5f5; }
+        .brand-item input[type="checkbox"] {
+            width: 16px;
+            height: 16px;
+            accent-color: #00bfa5;
+            cursor: pointer;
+            flex-shrink: 0;
+        }
+        .brand-name { font-size: 14px; color: #333; user-select: none; }
+        .brand-list::-webkit-scrollbar { width: 4px; }
+        .brand-list::-webkit-scrollbar-track { background: #f0f0f0; border-radius: 4px; }
+        .brand-list::-webkit-scrollbar-thumb { background: #ccc; border-radius: 4px; }
     </style>
     <link href="${pageContext.request.contextPath}/assets/css/storefront-polish.css" rel="stylesheet">
 </head>
@@ -158,6 +187,21 @@
                     <a href="${pageContext.request.contextPath}/shop?priceRange=300to500${not empty selectedPet ? '&pet='.concat(selectedPet) : ''}" class="filter-link ${selectedPriceRange == '300to500' ? 'active' : ''}">300.000đ - 500.000đ</a>
                     <a href="${pageContext.request.contextPath}/shop?priceRange=above500${not empty selectedPet ? '&pet='.concat(selectedPet) : ''}" class="filter-link ${selectedPriceRange == 'above500' ? 'active' : ''}">Trên 500.000đ</a>
                 </div>
+                <div class="sidebar-section">
+                    <div class="sidebar-title">Thương hiệu</div>
+                    <div class="brand-list">
+                        <c:forEach var="b" items="${brands}">
+                            <label class="brand-item">
+                                <input type="checkbox" name="brand" value="${b}" onchange="applyBrand()"
+                                <c:forEach var="selected" items="${paramValues.brand}">
+                                    <c:if test="${selected == b}">checked</c:if>
+                                </c:forEach>
+                                >
+                                <span class="brand-name">${b}</span>
+                            </label>
+                        </c:forEach>
+                    </div>
+                </div>
                 <div class="member-banner mt-3">
                     <h5>🎁 Ưu đãi Thành viên</h5>
                     <p>Giảm thêm 10% cho tất cả các loại thức ăn hạt</p>
@@ -177,6 +221,7 @@
                             <option value="price-desc" ${selectedSort == 'price-desc' ? 'selected' : ''}>Giá giảm dần</option>
                             <option value="rating" ${selectedSort == 'rating' ? 'selected' : ''}>Đánh giá cao</option>
                             <option value="discount" ${selectedSort == 'discount' ? 'selected' : ''}>Giảm giá nhiều</option>
+                            <option value="availability" ${selectedSort == 'availability' ? 'selected' : ''}>Còn hàng</option>
                             <option value="name" ${selectedSort == 'name' ? 'selected' : ''}>Tên A-Z</option>
                         </select>
                     </div>
@@ -277,6 +322,15 @@
             const url = new URL(window.location.href);
             if (value) { url.searchParams.set('sort', value); } else { url.searchParams.delete('sort'); }
             url.searchParams.delete('page');
+            window.location.href = url.toString();
+        }
+        function applyBrand() {
+            const url = new URL(window.location.href);
+            url.searchParams.delete('brand');
+            url.searchParams.delete('page');
+            document.querySelectorAll('input[name="brand"]:checked').forEach(cb => {
+                url.searchParams.append('brand', cb.value);
+            });
             window.location.href = url.toString();
         }
     </script>

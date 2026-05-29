@@ -75,6 +75,10 @@ public class ProductDAO {
         } catch (Exception ignored) {
             product.setActive(true);
         }
+        try {
+            product.setBrand(rs.getString("brand"));
+        } catch (Exception ignored) {
+        }
 
         return product;
     }
@@ -131,6 +135,19 @@ public class ProductDAO {
             while (rs.next()) { list.add(rs.getString("category")); }
         } catch (Exception e) { log.error("Error fetching all categories", e); }
         return list;
+    }
+
+    public List<String> getAllBrands() {
+        List<String> brands = new ArrayList<>();
+        String sql = "SELECT DISTINCT brand FROM products WHERE brand IS NOT NULL AND brand != '' AND is_active = 1 ORDER BY brand";
+        try (Connection conn = DBContext.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql);
+             ResultSet rs = ps.executeQuery()) {
+            while (rs.next()) {
+                brands.add(rs.getString("brand"));
+            }
+        } catch (Exception e) { log.error("Error fetching all brands", e); }
+        return brands;
     }
 
     public List<String> getPopularCategories(int limit) {
@@ -356,6 +373,11 @@ public class ProductDAO {
                     break;
             }
         }
+        if (criteria.getBrands() != null && !criteria.getBrands().isEmpty()) {
+            for (String brand : criteria.getBrands()) {
+                ps.setString(idx++, brand);
+            }
+        }
         return idx;
     }
 
@@ -392,6 +414,17 @@ public class ProductDAO {
                     break;
             }
         }
+        if (criteria.getBrands() != null && !criteria.getBrands().isEmpty()) {
+            StringBuilder placeholders = new StringBuilder();
+            for (int i = 0; i < criteria.getBrands().size(); i++) {
+                if (i > 0) placeholders.append(",");
+                placeholders.append("?");
+            }
+            where.append(" AND p.brand IN (").append(placeholders).append(")");
+        }
+        if (criteria.isAvailabilityOnly()) {
+            where.append(" AND p.stock > 0");
+        }
 
         String orderBy = countOnly ? "" : resolveOrderBy(criteria.getSort());
         return new FilterQueryParts(where.toString(), orderBy);
@@ -414,6 +447,8 @@ public class ProductDAO {
                 return "average_rating DESC, review_count DESC, p.id DESC";
             case "best-selling":
                 return "total_sold DESC, p.id DESC";
+            case "availability":
+                return "p.stock DESC, p.id DESC";
             case "newest":
             default:
                 return "p.id DESC";
