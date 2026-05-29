@@ -4,153 +4,164 @@ import { fileURLToPath } from "node:url";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const rootDir = path.resolve(__dirname, "..");
-const imageDir = path.join(rootDir, "src", "main", "webapp", "assets", "images", "shop_pic", "products");
+const catalogFile = path.join(rootDir, "data", "real-products", "paddy-products.json");
 const outputFile = path.join(rootDir, "deploy", "seed-melipet-200-products.sql");
 
-const productImages = fs
-  .readdirSync(imageDir)
-  .filter((name) => /\.(jpg|jpeg|png|webp)$/i.test(name))
-  .sort();
+const windows1252 = new Map([
+  [0x20ac, 0x80],
+  [0x201a, 0x82],
+  [0x0192, 0x83],
+  [0x201e, 0x84],
+  [0x2026, 0x85],
+  [0x2020, 0x86],
+  [0x2021, 0x87],
+  [0x02c6, 0x88],
+  [0x2030, 0x89],
+  [0x0160, 0x8a],
+  [0x2039, 0x8b],
+  [0x0152, 0x8c],
+  [0x017d, 0x8e],
+  [0x2018, 0x91],
+  [0x2019, 0x92],
+  [0x201c, 0x93],
+  [0x201d, 0x94],
+  [0x2022, 0x95],
+  [0x2013, 0x96],
+  [0x2014, 0x97],
+  [0x02dc, 0x98],
+  [0x2122, 0x99],
+  [0x0161, 0x9a],
+  [0x203a, 0x9b],
+  [0x0153, 0x9c],
+  [0x017e, 0x9e],
+  [0x0178, 0x9f]
+]);
 
-if (productImages.length === 0) {
-  throw new Error(`No product images found in ${imageDir}`);
+function encodeWindows1252(value) {
+  const bytes = [];
+  for (const char of value) {
+    const codePoint = char.codePointAt(0);
+    if (windows1252.has(codePoint)) {
+      bytes.push(windows1252.get(codePoint));
+    } else if (codePoint <= 0xff) {
+      bytes.push(codePoint);
+    } else {
+      return null;
+    }
+  }
+  return Buffer.from(bytes);
 }
 
-const brands = [
-  "Royal Canin",
-  "Whiskas",
-  "Pedigree",
-  "SmartHeart",
-  "Monge",
-  "Ganador",
-  "Me-O",
-  "Kit Cat",
-  "Ciao",
-  "Trixie",
-  "FOFOS",
-  "Doggyman",
-  "Natural Core",
-  "Joycat",
-  "Melipet"
-];
+function repairMojibake(value) {
+  let repaired = value;
+  for (let i = 0; i < 2 && /(Ã|Â|Ä|Æ|áº|á»|â€)/.test(repaired); i += 1) {
+    const encoded = encodeWindows1252(repaired);
+    if (!encoded) {
+      break;
+    }
+    const decoded = encoded.toString("utf8");
+    if (decoded === repaired || decoded.includes("\uFFFD")) {
+      break;
+    }
+    repaired = decoded;
+  }
+  return repaired;
+}
 
-const productTemplates = [
-  { pet: "cat", category: "Thức Ăn Cho Mèo", name: "Hạt dinh dưỡng cho mèo trưởng thành", price: 145000, weight: 1500 },
-  { pet: "cat", category: "Thức Ăn Cho Mèo", name: "Hạt cho mèo con vị cá hồi", price: 132000, weight: 1200 },
-  { pet: "cat", category: "Thức Ăn Cho Mèo", name: "Pate mèo vị cá ngừ", price: 25000, weight: 85 },
-  { pet: "cat", category: "Thức Ăn Cho Mèo", name: "Súp thưởng cho mèo vị gà", price: 39000, weight: 60 },
-  { pet: "cat", category: "Thức Ăn Cho Mèo", name: "Snack thưởng mềm cho mèo", price: 49000, weight: 75 },
-  { pet: "cat", category: "Thức Ăn Cho Mèo", name: "Sữa không lactose cho mèo", price: 42000, weight: 200 },
-  { pet: "cat", category: "Vệ Sinh Cho Mèo", name: "Cát vệ sinh đậu nành khử mùi", price: 125000, weight: 2500 },
-  { pet: "cat", category: "Vệ Sinh Cho Mèo", name: "Cát vệ sinh bentonite vón cục", price: 89000, weight: 5000 },
-  { pet: "cat", category: "Vệ Sinh Cho Mèo", name: "Xịt khử mùi khu vực vệ sinh mèo", price: 99000, weight: 450 },
-  { pet: "cat", category: "Vệ Sinh Cho Mèo", name: "Khay vệ sinh mèo thành cao", price: 185000, weight: 1000 },
-  { pet: "cat", category: "Đồ Chơi Cho Mèo", name: "Cần câu lông vũ cho mèo", price: 35000, weight: 80 },
-  { pet: "cat", category: "Đồ Chơi Cho Mèo", name: "Bàn cào móng giấy cho mèo", price: 149000, weight: 600 },
-  { pet: "cat", category: "Đồ Chơi Cho Mèo", name: "Bóng chuông tương tác cho mèo", price: 29000, weight: 60 },
-  { pet: "cat", category: "Đồ Chơi Cho Mèo", name: "Trụ cào móng dây thừng", price: 235000, weight: 900 },
-  { pet: "cat", category: "Phụ Kiện Cho Mèo", name: "Bát ăn inox chống trượt cho mèo", price: 55000, weight: 250 },
-  { pet: "cat", category: "Phụ Kiện Cho Mèo", name: "Nệm nằm êm ái cho mèo", price: 189000, weight: 800 },
-  { pet: "cat", category: "Phụ Kiện Cho Mèo", name: "Balo vận chuyển mèo thoáng khí", price: 385000, weight: 1200 },
-  { pet: "cat", category: "Phụ Kiện Cho Mèo", name: "Vòng cổ mèo có chuông an toàn", price: 45000, weight: 90 },
-  { pet: "cat", category: "Chăm Sóc Sức Khỏe Cho Mèo", name: "Gel dinh dưỡng hỗ trợ búi lông", price: 115000, weight: 120 },
-  { pet: "cat", category: "Chăm Sóc Sức Khỏe Cho Mèo", name: "Viên dầu cá hồi omega cho mèo", price: 89000, weight: 200 },
-  { pet: "dog", category: "Thức Ăn Cho Chó", name: "Hạt dinh dưỡng cho chó trưởng thành", price: 165000, weight: 1500 },
-  { pet: "dog", category: "Thức Ăn Cho Chó", name: "Hạt cho chó con giống nhỏ", price: 158000, weight: 1300 },
-  { pet: "dog", category: "Thức Ăn Cho Chó", name: "Pate chó vị bò và rau củ", price: 28000, weight: 130 },
-  { pet: "dog", category: "Thức Ăn Cho Chó", name: "Snack que gặm sạch răng cho chó", price: 59000, weight: 120 },
-  { pet: "dog", category: "Thức Ăn Cho Chó", name: "Xúc xích thưởng vị gà cho chó", price: 36000, weight: 100 },
-  { pet: "dog", category: "Thức Ăn Cho Chó", name: "Thịt sấy thưởng huấn luyện cho chó", price: 78000, weight: 100 },
-  { pet: "dog", category: "Vệ Sinh Cho Chó", name: "Sữa tắm dưỡng lông cho chó", price: 135000, weight: 355 },
-  { pet: "dog", category: "Vệ Sinh Cho Chó", name: "Xịt khử mùi lông chó", price: 99000, weight: 450 },
-  { pet: "dog", category: "Vệ Sinh Cho Chó", name: "Dung dịch vệ sinh tai cho chó", price: 85000, weight: 120 },
-  { pet: "dog", category: "Vệ Sinh Cho Chó", name: "Tã lót vệ sinh cho chó cái", price: 115000, weight: 300 },
-  { pet: "dog", category: "Đồ Chơi Cho Chó", name: "Bóng cao su luyện vận động cho chó", price: 45000, weight: 180 },
-  { pet: "dog", category: "Đồ Chơi Cho Chó", name: "Dây thừng gặm nhai cho chó", price: 65000, weight: 250 },
-  { pet: "dog", category: "Đồ Chơi Cho Chó", name: "Thú bông có chuông cho chó", price: 89000, weight: 300 },
-  { pet: "dog", category: "Đồ Chơi Cho Chó", name: "Xương gặm đồ chơi cao su", price: 72000, weight: 220 },
-  { pet: "dog", category: "Phụ Kiện Cho Chó", name: "Vòng cổ và dây dắt cho chó", price: 85000, weight: 250 },
-  { pet: "dog", category: "Phụ Kiện Cho Chó", name: "Dây dắt tự động cho chó", price: 195000, weight: 450 },
-  { pet: "dog", category: "Phụ Kiện Cho Chó", name: "Bát ăn inox chống trượt cho chó", price: 69000, weight: 300 },
-  { pet: "dog", category: "Phụ Kiện Cho Chó", name: "Lồng vận chuyển chó mèo", price: 520000, weight: 1800 },
-  { pet: "dog", category: "Chăm Sóc Sức Khỏe Cho Chó", name: "Viên bổ sung canxi cho chó", price: 125000, weight: 180 },
-  { pet: "dog", category: "Chăm Sóc Sức Khỏe Cho Chó", name: "Dầu cá hồi omega cho chó", price: 99000, weight: 200 }
-];
+function normalizeValue(value) {
+  if (typeof value === "string") {
+    return repairMojibake(value);
+  }
+  if (Array.isArray(value)) {
+    return value.map(normalizeValue);
+  }
+  if (value && typeof value === "object") {
+    return Object.fromEntries(Object.entries(value).map(([key, child]) => [key, normalizeValue(child)]));
+  }
+  return value;
+}
 
-const variants = [
-  "gói tiêu chuẩn",
-  "combo tiết kiệm",
-  "size mini",
-  "size lớn",
-  "hương vị mới"
-];
+function truncate(value, maxLength) {
+  if (!value) {
+    return "";
+  }
+  return value.length <= maxLength ? value : `${value.slice(0, maxLength - 3).trim()}...`;
+}
 
 function sqlString(value) {
-  return `'${String(value).replace(/\\/g, "\\\\").replace(/'/g, "''")}'`;
+  return `'${String(value ?? "").replace(/\\/g, "\\\\").replace(/'/g, "''")}'`;
 }
 
-function productName(template, index) {
-  const brand = brands[index % brands.length];
-  const variant = variants[Math.floor(index / productTemplates.length) % variants.length];
-  return `${brand} ${template.name} - ${variant}`;
+function sqlNumber(value, fallback = 0) {
+  const number = Number(value);
+  return Number.isFinite(number) ? Math.max(0, Math.round(number)) : fallback;
 }
 
-function productDescription(template, index) {
-  const petLabel = template.pet === "cat" ? "mèo" : "chó";
-  const variant = variants[Math.floor(index / productTemplates.length) % variants.length];
-  return [
-    `${template.name} thuộc nhóm ${template.category.toLowerCase()}, phù hợp cho ${petLabel} dùng hằng ngày.`,
-    `Phiên bản ${variant} được chọn để đa dạng danh mục sản phẩm Melipet, giúp khách dễ tìm đúng nhu cầu chăm sóc thú cưng.`,
-    "Thông tin sản phẩm có thể dùng cho đồ án/thực tế MVP; khi kinh doanh thật nên cập nhật tồn kho, giá bán và mô tả theo nhà cung cấp chính thức."
-  ].join(" ");
+function productDescription(product) {
+  const chunks = [
+    truncate(product.description || product.name, 260),
+    product.brand ? `Thương hiệu: ${product.brand}.` : "",
+    product.source_url ? `Nguồn tham khảo: ${product.source_url}` : ""
+  ].filter(Boolean);
+  return chunks.join("\n\n");
 }
 
-function buildProduct(index) {
-  const template = productTemplates[index % productTemplates.length];
-  const name = productName(template, index);
-  const priceStep = (index % 7) * 7000;
-  const discount = [0, 0, 5, 10, 12, 15, 20][index % 7];
-  const stock = 25 + ((index * 13) % 116);
-  const weight = template.weight + ((index % 5) * Math.max(10, Math.round(template.weight * 0.08)));
-  const image = `products/${productImages[index % productImages.length]}`;
+function buildSql(products) {
+  const statements = [
+    "-- Melipet product restore seed generated from real Paddy catalog data.",
+    "-- Repairs existing Paddy rows by image path so names/descriptions match their product photos.",
+    "SET NAMES utf8mb4;",
+    "",
+    "INSERT INTO pet_types (code, name, icon, display_order, is_active) VALUES",
+    "('dog', 'Chó', 'bxs-dog', 1, 1),",
+    "('cat', 'Mèo', 'bxs-cat', 2, 1)",
+    "ON DUPLICATE KEY UPDATE name = VALUES(name), icon = VALUES(icon), display_order = VALUES(display_order), is_active = 1;",
+    "",
+    "UPDATE products",
+    "SET is_active = 0",
+    "WHERE image LIKE 'products/paddy_%';"
+  ];
 
-  return {
-    name,
-    image,
-    price: template.price + priceStep,
-    discount,
-    description: productDescription(template, index),
-    stock,
-    weight,
-    category: template.category,
-    pet: template.pet
-  };
-}
+  for (const product of products) {
+    const localImage = product.image;
+    const sourceImage = product.image_url || product.image;
+    const name = truncate(product.name, 255);
+    const description = productDescription(product);
+    const price = sqlNumber(product.price);
+    const discount = sqlNumber(product.discount);
+    const stock = sqlNumber(product.stock, 8);
+    const weight = Math.max(sqlNumber(product.weight, 100), 1);
+    const category = truncate(product.category, 100);
+    const petType = product.pet_type_code === "dog" ? "dog" : "cat";
+    const matchByImage = `image IN (${sqlString(localImage)}, ${sqlString(sourceImage)})`;
 
-const products = Array.from({ length: 200 }, (_, index) => buildProduct(index));
+    statements.push(`
+UPDATE products
+SET name = ${sqlString(name)},
+    image = ${sqlString(localImage)},
+    price = ${price},
+    discount = ${discount},
+    description = ${sqlString(description)},
+    stock = ${stock},
+    weight = ${weight},
+    category = ${sqlString(category)},
+    pet_type_id = (SELECT id FROM pet_types WHERE code = ${sqlString(petType)} LIMIT 1),
+    is_active = 1
+WHERE ${matchByImage};
 
-const statements = [
-  "-- Melipet product restore seed: 200 UTF-8 products with local images.",
-  "-- Safe to run multiple times because every insert checks product name first.",
-  "SET NAMES utf8mb4;",
-  "",
-  "INSERT INTO pet_types (code, name, icon, display_order, is_active) VALUES",
-  "('dog', 'Chó', 'bxs-dog', 1, 1),",
-  "('cat', 'Mèo', 'bxs-cat', 2, 1)",
-  "ON DUPLICATE KEY UPDATE name = VALUES(name), icon = VALUES(icon), display_order = VALUES(display_order), is_active = 1;",
-  ""
-];
-
-for (const product of products) {
-  statements.push(`
 INSERT INTO products (name, image, price, discount, description, stock, weight, category, pet_type_id, is_active)
-SELECT ${sqlString(product.name)}, ${sqlString(product.image)}, ${product.price}, ${product.discount},
-       ${sqlString(product.description)}, ${product.stock}, ${product.weight}, ${sqlString(product.category)},
-       (SELECT id FROM pet_types WHERE code = ${sqlString(product.pet)} LIMIT 1), 1
-WHERE NOT EXISTS (SELECT 1 FROM products WHERE name = ${sqlString(product.name)});
-`.trim());
+SELECT ${sqlString(name)}, ${sqlString(localImage)}, ${price}, ${discount},
+       ${sqlString(description)}, ${stock}, ${weight}, ${sqlString(category)},
+       (SELECT id FROM pet_types WHERE code = ${sqlString(petType)} LIMIT 1), 1
+WHERE NOT EXISTS (SELECT 1 FROM products WHERE ${matchByImage});`.trim());
+  }
+
+  return `${statements.join("\n\n")}\n`;
 }
 
-fs.mkdirSync(path.dirname(outputFile), { recursive: true });
-fs.writeFileSync(outputFile, `${statements.join("\n\n")}\n`, "utf8");
-console.log(`Wrote ${products.length} products to ${path.relative(rootDir, outputFile)}`);
+const products = normalizeValue(JSON.parse(fs.readFileSync(catalogFile, "utf8")))
+  .filter((product) => product.image && product.name)
+  .sort((left, right) => left.image.localeCompare(right.image));
+
+fs.writeFileSync(outputFile, buildSql(products), "utf8");
+console.log(`Wrote ${products.length} real products to ${path.relative(rootDir, outputFile)}`);
