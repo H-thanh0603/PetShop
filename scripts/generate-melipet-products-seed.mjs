@@ -156,6 +156,17 @@ SELECT ${sqlString(name)}, ${sqlString(localImage)}, ${price}, ${discount},
 WHERE NOT EXISTS (SELECT 1 FROM products WHERE ${matchByImage});`.trim());
   }
 
+  statements.push(`
+UPDATE products p
+JOIN (
+    SELECT image, MIN(id) AS keep_id
+    FROM products
+    WHERE image LIKE 'products/paddy_%'
+    GROUP BY image
+) keepers ON keepers.image = p.image
+SET p.is_active = CASE WHEN p.id = keepers.keep_id THEN 1 ELSE 0 END
+WHERE p.image LIKE 'products/paddy_%';`.trim());
+
   return `${statements.join("\n\n")}\n`;
 }
 

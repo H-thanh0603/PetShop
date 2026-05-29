@@ -2721,3 +2721,13 @@ Thương hiệu: Miratorg.
 Nguồn tham khảo: https://paddy.vn/products/hat-cho-meo-truong-thanh-miratorg-nhieu-thit-thom-ngon', 8, 100, 'Thức Ăn Cho Mèo',
        (SELECT id FROM pet_types WHERE code = 'cat' LIMIT 1), 1
 WHERE NOT EXISTS (SELECT 1 FROM products WHERE image IN ('products/paddy_100_hat-cho-meo-truong-thanh-miratorg-nhieu-thit-thom-ngon.jpg', 'https://cdn.shopify.com/s/files/1/0624/1746/9697/files/miratorg-cho-meo_3.jpg?v=1752637891'));
+
+UPDATE products p
+JOIN (
+    SELECT image, MIN(id) AS keep_id
+    FROM products
+    WHERE image LIKE 'products/paddy_%'
+    GROUP BY image
+) keepers ON keepers.image = p.image
+SET p.is_active = CASE WHEN p.id = keepers.keep_id THEN 1 ELSE 0 END
+WHERE p.image LIKE 'products/paddy_%';
