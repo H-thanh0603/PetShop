@@ -13,7 +13,7 @@ public class Product {
     private int weight;
     private int stock;
     private int pet_type_id;
-    
+    private String brand;
     public Product() {}
 
     // Constructor 6 tham số
@@ -30,14 +30,6 @@ public class Product {
     public Product(int id, String name, String image, double price, int discount, String description, String category) {
         this(id, name, image, price, discount, description);
         this.category = category;
-    }
-
-    // Constructor 7 tham số (có weight - từ main)
-    public Product(int id, String name, String image, double price, int discount, String description, int weight, int stock, int pet_type_id) {
-        this(id, name, image, price, discount, description);
-        this.weight = weight;
-        this.stock = stock;
-        this.pet_type_id = pet_type_id;
     }
 
     // Getters & Setters
@@ -90,4 +82,6 @@ public class Product {
     public void setPet_type_id(int pet_type_id) {
         this.pet_type_id = pet_type_id;
     }
+    public String getBrand() { return brand; }
+    public void setBrand(String brand) { this.brand = brand; }
 }

@@ -82,6 +82,56 @@
         .shop-pagination a:hover { border-color: #00bfa5; color: #00bfa5; background: #e0f7f5; }
         .shop-pagination .active { background: #00bfa5; color: #fff; border-color: #00bfa5; }
         .shop-pagination .disabled { opacity: 0.4; pointer-events: none; }
+
+    /*    filter*/
+        .brand-list {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            max-height: 220px;
+            overflow-y: auto;
+        }
+
+        .brand-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 6px 8px;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: background 0.15s;
+        }
+
+        .brand-item:hover {
+            background: #f5f5f5;
+        }
+
+        .brand-item input[type="checkbox"] {
+            width: 16px;
+            height: 16px;
+            accent-color: #00bfa5;
+            cursor: pointer;
+            flex-shrink: 0;
+        }
+
+        .brand-name {
+            font-size: 14px;
+            color: #333;
+            user-select: none;
+        }
+
+        /* Scrollbar đẹp hơn */
+        .brand-list::-webkit-scrollbar {
+            width: 4px;
+        }
+        .brand-list::-webkit-scrollbar-track {
+            background: #f0f0f0;
+            border-radius: 4px;
+        }
+        .brand-list::-webkit-scrollbar-thumb {
+            background: #ccc;
+            border-radius: 4px;
+        }
     </style>
 </head>
 <body>
@@ -142,11 +192,18 @@
                 </div>
                 <div class="sidebar-section">
                     <div class="sidebar-title">Thương hiệu</div>
-
-                </div>
-                <div class="sidebar-section">
-                    <div class="sidebar-title">Tình trạng</div>
-
+                    <div class="brand-list">
+                        <c:forEach var="b" items="${brand}">
+                            <label class="brand-item">
+                                <input type="checkbox" name="brand" value="${b}" onchange="applyBrand()"
+                                <c:forEach var="selected" items="${paramValues.brand}">
+                                       <c:if test="${selected == b}">checked</c:if>
+                                </c:forEach>
+                                >
+                                <span class="brand-name">${b}</span>
+                            </label>
+                        </c:forEach>
+                    </div>
                 </div>
                 <div class="sidebar-section">
                     <div class="sidebar-title">Đánh giá</div>
@@ -191,6 +248,7 @@
                             <option value="price-asc" ${selectedSort == 'price-asc' ? 'selected' : ''}>Giá tăng dần</option>
                             <option value="price-desc" ${selectedSort == 'price-desc' ? 'selected' : ''}>Giá giảm dần</option>
                             <option value="discount" ${selectedSort == 'discount' ? 'selected' : ''}>Giảm giá nhiều</option>
+                            <option value="availability" ${selectedSort == 'availability' ? 'selected' : ''}>Còn hàng</option>
                             <option value="name" ${selectedSort == 'name' ? 'selected' : ''}>Tên A-Z</option>
                         </select>
                     </div>
@@ -210,6 +268,7 @@
                                     <div class="cat-label">${p.category}</div>
                                     <div class="name"><a href="${pageContext.request.contextPath}/product-detail?id=${p.id}">${p.name}</a></div>
                                     <div class="rating"><i class='bx bxs-star'></i><i class='bx bxs-star'></i><i class='bx bxs-star'></i><i class='bx bxs-star'></i><i class='bx bxs-star-half'></i></div>
+                                    <span>Thương hiệu: ${p.brand}</span>
                                     <div class="d-flex justify-content-between align-items-center">
                                         <div>
                                             <span class="price">${p.formattedPrice}</span>
@@ -292,6 +351,16 @@
 
         function applySort(value) {
             navigateWithFilters({ sort: value || null });
+        }
+        function applyBrand() {
+            const url = new URL(window.location.href);
+            url.searchParams.delete('brand');
+            url.searchParams.delete('page');
+
+            document.querySelectorAll('input[name="brand"]:checked').forEach(cb => {
+                url.searchParams.append('brand', cb.value);
+            });
+            window.location.href = url.toString();
         }
     </script>
 </body>
