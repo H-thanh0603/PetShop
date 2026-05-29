@@ -6,54 +6,83 @@ echo   PetShop - Starting Tomcat 10 Server
 echo ========================================
 echo.
 
-:: 1. Cấu hình đường dẫn
-set "CATALINA_HOME=E:\apache-tomcat-10.1.49-windows-x64\apache-tomcat-10.1.49"
-set "PROJECT_ROOT=d:\PetShop2\PetShop"
-set "WAR_FILE=%PROJECT_ROOT%\target\PetShop.war"
+if defined PETSHOP_TOMCAT_HOME (
+    set "CATALINA_HOME=%PETSHOP_TOMCAT_HOME%"
+) else (
+    set "CATALINA_HOME=E:\apache-tomcat-10.1.49-windows-x64\apache-tomcat-10.1.49"
+)
 
-:: 2. Kiểm tra đường dẫn Tomcat
+set "PROJECT_ROOT=%~dp0"
+if "%PROJECT_ROOT:~-1%"=="\" set "PROJECT_ROOT=%PROJECT_ROOT:~0,-1%"
+set "WAR_FILE=%PROJECT_ROOT%\build\libs\PetShop.war"
+
+if defined PETSHOP_CONTEXT_PATH (
+    set "PETSHOP_CONTEXT_PATH_VALUE=%PETSHOP_CONTEXT_PATH%"
+) else (
+    set "PETSHOP_CONTEXT_PATH_VALUE=/PetShop"
+)
+
+if defined PETSHOP_BASE_URL (
+    set "PETSHOP_URL=%PETSHOP_BASE_URL%"
+) else (
+    set "PETSHOP_URL=http://localhost:8080%PETSHOP_CONTEXT_PATH_VALUE%/home"
+)
+
+if not defined PETSHOP_OPEN_BROWSER (
+    set "PETSHOP_OPEN_BROWSER=true"
+)
+
 if not exist "%CATALINA_HOME%\bin\startup.bat" (
     echo [ERROR] Khong tim thay Tomcat tai: %CATALINA_HOME%
-    echo Vui long kiem tra lai duong dan trong file bat nay.
+    echo [HINT] Hay set PETSHOP_TOMCAT_HOME truoc khi chay script.
     pause
-    exit /b
+    exit /b 1
 )
 
-:: 3. Build dự án bằng Maven
-echo Step 1: Building project with Maven...
+echo Step 1: Building project with Gradle...
 cd /d "%PROJECT_ROOT%"
-call mvn clean package -DskipTests
-if %ERRORLEVEL% NEQ 0 (
-    echo [ERROR] Build Maven that bai!
-    pause
-    exit /b
+if /I "%PETSHOP_SKIP_BUILD%"=="true" (
+    echo [INFO] Bo qua buoc build vi PETSHOP_SKIP_BUILD=true
+) else (
+    call gradlew.bat clean war
+    if %ERRORLEVEL% NEQ 0 (
+        echo [ERROR] Build Gradle that bai!
+        pause
+        exit /b 1
+    )
 )
 
-:: 4. Dọn dẹp và Deploy
+if not exist "%WAR_FILE%" (
+    echo [ERROR] Khong tim thay file WAR tai %WAR_FILE%
+    pause
+    exit /b 1
+)
+
 echo.
 echo Step 2: Cleaning old deployment...
+if exist "%CATALINA_HOME%\bin\shutdown.bat" (
+    call "%CATALINA_HOME%\bin\shutdown.bat" >nul 2>&1
+    timeout /t 3 /nobreak >nul
+)
 if exist "%CATALINA_HOME%\webapps\PetShop.war" del /f /q "%CATALINA_HOME%\webapps\PetShop.war"
 if exist "%CATALINA_HOME%\webapps\PetShop" rd /s /q "%CATALINA_HOME%\webapps\PetShop"
 
 echo Step 3: Deploying new WAR file...
-copy "%WAR_FILE%" "%CATALINA_HOME%\webapps\"
+copy /y "%WAR_FILE%" "%CATALINA_HOME%\webapps\"
 
-:: 5. Khởi động Tomcat
 echo Step 4: Starting Tomcat 10...
-cd /d "%CATALINA_HOME%\bin"
-taskkill /F /IM java.exe >nul 2>&1
-timeout /t 2 /nobreak >nul
-start startup.bat
+start "Tomcat PetShop" /D "%CATALINA_HOME%\bin" cmd /c "startup.bat && pause"
 
 echo.
 echo ========================================
 echo   Server dang duoc khoi dong!
-echo   Vui long doi khoang 10-15 giay...
-echo   URL: http://localhost:8080/PetShop/home
+echo   Vui long doi khoang 15 giay...
+echo   URL: %PETSHOP_URL%
 echo ========================================
-timeout /t 10 /nobreak >nul
+timeout /t 15 /nobreak >nul
 
-:: Mo trinh duyet
-start http://localhost:8080/PetShop/home
+if /I "%PETSHOP_OPEN_BROWSER%"=="true" (
+    start "" "%PETSHOP_URL%"
+)
 
 endlocal
