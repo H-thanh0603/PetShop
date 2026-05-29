@@ -159,8 +159,7 @@
 				<div class="d-flex align-items-center mb-3 text-warning small">
 					<i class="fas fa-star"></i> <i class="fas fa-star"></i> <i
 						class="fas fa-star"></i> <i class="fas fa-star"></i> <i
-						class="fas fa-star-half-alt"></i> <span class="text-muted ms-2">(Xem
-						24 đánh giá)</span> <span class="text-muted border-start ms-3 ps-3">Mã
+						class="fas fa-star-half-alt"></i> <span class="text-muted ms-2">(Xem ${lengthReviews} đánh giá)</span> <span class="text-muted border-start ms-3 ps-3">Mã
 						SP: <strong>SP00${detail.id}</strong>
 					</span>
 				</div>
@@ -263,7 +262,7 @@
 					</li>
 					<li class="nav-item" role="presentation">
 						<button class="nav-link" id="reviews-tab" data-bs-toggle="tab"
-							data-bs-target="#reviews" type="button">Đánh giá (24)</button>
+							data-bs-target="#reviews" type="button">Đánh giá (${lengthReviews})</button>
 					</li>
 				</ul>
 

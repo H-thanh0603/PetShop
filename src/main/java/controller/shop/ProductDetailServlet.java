@@ -38,9 +38,11 @@ public class ProductDetailServlet extends HttpServlet {
 
             ReviewDAO rDao = new ReviewDAO();
             List<Review> listReviews = rDao.getReviewsByProductId(id);
+            int lengthReviews = listReviews.size();
             
             request.setAttribute("detail", p);
             request.setAttribute("listReviews", listReviews);
+            request.setAttribute("lengthReviews", lengthReviews);
             
             List<Product> listRelated = pDao.getRelatedProducts(id); 
             request.setAttribute("relatedProducts", listRelated);
