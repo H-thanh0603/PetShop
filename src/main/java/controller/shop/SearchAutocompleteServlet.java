@@ -44,7 +44,7 @@ public class SearchAutocompleteServlet extends HttpServlet {
         // Giới hạn 8 kết quả cho autocomplete
         List<Product> products = productDAO.searchProductsLimit(keyword, 8);
         
-        // Chuyển đổi sang JSON đơn giản (chỉ lấy id, name, image, price)
+        // Chuyển đổi sang JSON đơn giản (chỉ lấy id, name, image, price, stock)
         List<Map<String, Object>> results = new ArrayList<>();
         for (Product p : products) {
             Map<String, Object> item = new HashMap<>();
@@ -52,6 +52,7 @@ public class SearchAutocompleteServlet extends HttpServlet {
             item.put("name", p.getName());
             item.put("image", p.getImage() != null ? p.getImage() : "");
             item.put("price", p.getPrice());
+            item.put("stock", p.getStock());
             results.add(item);
         }
         

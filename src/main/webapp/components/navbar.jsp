@@ -631,25 +631,12 @@ document.addEventListener('DOMContentLoaded', function() {
             autocompleteDropdown.classList.add('show');
             autocompleteDropdown.innerHTML = '<div class="autocomplete-loading"><i class="bx bx-loader-alt"></i> Đang tìm...</div>';
 
+            // Debounce 300ms
             searchTimeout = setTimeout(function() {
                 fetch(contextPath + '/api/search-autocomplete?q=' + encodeURIComponent(query))
-                    .then(function(response) { return response.json(); })
-                    .then(function(products) {
-                        if (products.length === 0) {
-                            autocompleteDropdown.innerHTML = '<div class="autocomplete-no-result">Không tìm thấy sản phẩm</div>';
-                        } else {
-                            var html = '';
-                            products.forEach(function(p) {
-                                var imgSrc = p.image ? (p.image.startsWith('http') ? p.image : (contextPath + '/assets/images/shop_pic/' + p.image)) : (contextPath + '/assets/images/no-image.png');
-                                var price = new Intl.NumberFormat('vi-VN').format(p.price) + 'đ';
-                                html += '<a href="' + contextPath + '/product-detail?id=' + p.id + '" class="autocomplete-item">';
-                                html += '<img src="' + imgSrc + '" alt="" onerror="this.src=\'' + contextPath + '/assets/images/no-image.png\'">';
-                                html += '<div class="autocomplete-item-info">';
-                                html += '<div class="autocomplete-item-name">' + p.name + '</div>';
-                                html += '<div class="autocomplete-item-price">' + price + '</div>';
-                                html += '</div></a>';
-                            });
-                            autocompleteDropdown.innerHTML = html;
+                    .then(function(response) {
+                        if (!response.ok) {
+                            throw new Error('API lỗi');
                         }
                         return response.json();
                     })
@@ -671,11 +658,9 @@ document.addEventListener('DOMContentLoaded', function() {
 
                             var img = document.createElement('img');
                             img.src = p.image
-                                ? contextPath + '/assets/images/shop_pic/' + p.image
+                                ? (p.image.startsWith('http') ? p.image : (contextPath + '/assets/images/shop_pic/' + p.image))
                                 : contextPath + '/assets/images/no-image.png';
-
                             img.alt = p.name || '';
-
                             img.onerror = function() {
                                 this.onerror = null;
                                 this.src = contextPath + '/assets/images/no-image.png';
@@ -699,6 +684,7 @@ document.addEventListener('DOMContentLoaded', function() {
                             info.appendChild(name);
                             info.appendChild(price);
                             info.appendChild(quantity);
+
                             item.appendChild(img);
                             item.appendChild(info);
 
