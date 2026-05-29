@@ -93,20 +93,34 @@
 .star-icon {
 	display: flex;
 	flex-direction: row-reverse;
-	justify-content: start;
+	justify-content: flex-end;
 	gap: 5px;
+}
+.star-icon input[type="radio"] {
+    display: none;
 }
 
 .star-icon label {
 	color: #ffc107;
+    color: #ddd;
+    cursor: pointer;
+    transition: color 0.15s;
 }
 
-.star-icon input:checked ~ label {
+.star-icon input[type="radio"]:checked ~ label {
 	color: #ffc107;
 }
 
 .star-icon label:hover, .star-icon label:hover ~ label {
 	color: #ffdb58;
+}
+.star-icon:has(label:hover) label {
+    color: #ddd;
+}
+
+.star-icon label:hover,
+.star-icon label:hover ~ label {
+    color: #ffc107;
 }
 </style>
 </head>
@@ -159,8 +173,7 @@
 				<div class="d-flex align-items-center mb-3 text-warning small">
 					<i class="fas fa-star"></i> <i class="fas fa-star"></i> <i
 						class="fas fa-star"></i> <i class="fas fa-star"></i> <i
-						class="fas fa-star-half-alt"></i> <span class="text-muted ms-2">(Xem
-						24 đánh giá)</span> <span class="text-muted border-start ms-3 ps-3">Mã
+						class="fas fa-star-half-alt"></i> <span class="text-muted ms-2">(Xem ${lengthReviews} đánh giá)</span> <span class="text-muted border-start ms-3 ps-3">Mã
 						SP: <strong>SP00${detail.id}</strong>
 					</span>
 				</div>
@@ -263,7 +276,7 @@
 					</li>
 					<li class="nav-item" role="presentation">
 						<button class="nav-link" id="reviews-tab" data-bs-toggle="tab"
-							data-bs-target="#reviews" type="button">Đánh giá (24)</button>
+							data-bs-target="#reviews" type="button">Đánh giá (${lengthReviews})</button>
 					</li>
 				</ul>
 
