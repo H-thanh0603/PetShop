@@ -58,7 +58,8 @@ public class ShopServlet extends HttpServlet {
         }
 
         boolean isFiltered = hasText(pet) || hasText(category) || hasText(search)
-                || hasText(priceRange) || hasText(discountOnly) || hasText(sort);
+                || hasText(priceRange) || hasText(discountOnly) || hasText(sort)
+                || request.getParameterValues("brand") != null;
 
         List<String> categories = hasText(pet)
                 ? productDao.getCategoriesByPetType(pet.trim())
@@ -101,6 +102,13 @@ public class ShopServlet extends HttpServlet {
         }
 
         ProductFilterCriteria criteria = buildFilterCriteria(category, search, sort, priceRange, discountOnly, pet, page);
+        String[] selectedBrands = request.getParameterValues("brand");
+        if (selectedBrands != null && selectedBrands.length > 0) {
+            criteria.setBrands(java.util.Arrays.asList(selectedBrands));
+        }
+        if ("availability".equals(sort)) {
+            criteria.setAvailabilityOnly(true);
+        }
         int totalFiltered = productDao.countFilteredProducts(criteria);
         int totalPages = getTotalPages(totalFiltered, PAGE_SIZE);
         if (page > totalPages) {
@@ -118,6 +126,8 @@ public class ShopServlet extends HttpServlet {
         List<Product> discountProducts = productDao.getDiscountedProductsList();
         markWishlisted(discountProducts, wishlistProductIds);
         request.setAttribute("discountProducts", discountProducts);
+        List<String> allBrands = productDao.getAllBrands();
+        request.setAttribute("brands", allBrands);
         request.getRequestDispatcher("/pages/shop/shop-pet.jsp").forward(request, response);
     }
 

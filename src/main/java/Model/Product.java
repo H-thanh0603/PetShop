@@ -16,6 +16,7 @@ public class Product {
     private int weight;
     private int stock;
     private int pet_type_id;
+    private String brand;
     private double averageRating;
     private int reviewCount;
     private boolean wishlisted;
@@ -107,6 +108,9 @@ public class Product {
     public void setPet_type_id(int pet_type_id) {
         this.pet_type_id = pet_type_id;
     }
+
+    public String getBrand() { return brand; }
+    public void setBrand(String brand) { this.brand = brand; }
 
     public double getAverageRating() {
         return averageRating;

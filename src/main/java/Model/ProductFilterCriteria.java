@@ -1,5 +1,7 @@
 package Model;
 
+import java.util.List;
+
 public class ProductFilterCriteria {
     private String category;
     private String searchKeyword;
@@ -7,6 +9,8 @@ public class ProductFilterCriteria {
     private String priceRange;
     private boolean discountOnly;
     private String petTypeCode;
+    private List<String> brands;
+    private boolean availabilityOnly;
     private int page = 1;
     private int pageSize = 12;
 
@@ -72,5 +76,21 @@ public class ProductFilterCriteria {
 
     public void setPageSize(int pageSize) {
         this.pageSize = pageSize;
+    }
+
+    public List<String> getBrands() {
+        return brands;
+    }
+
+    public void setBrands(List<String> brands) {
+        this.brands = brands;
+    }
+
+    public boolean isAvailabilityOnly() {
+        return availabilityOnly;
+    }
+
+    public void setAvailabilityOnly(boolean availabilityOnly) {
+        this.availabilityOnly = availabilityOnly;
     }
 }

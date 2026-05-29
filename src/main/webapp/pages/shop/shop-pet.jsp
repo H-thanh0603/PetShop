@@ -81,7 +81,6 @@
         .shop-pagination .active { background: #00bfa5; color: #fff; border-color: #00bfa5; }
         .shop-pagination .disabled { opacity: 0.4; pointer-events: none; }
 
-    /*    filter*/
         .brand-list {
             display: flex;
             flex-direction: column;
@@ -89,7 +88,6 @@
             max-height: 220px;
             overflow-y: auto;
         }
-
         .brand-item {
             display: flex;
             align-items: center;
@@ -99,11 +97,7 @@
             cursor: pointer;
             transition: background 0.15s;
         }
-
-        .brand-item:hover {
-            background: #f5f5f5;
-        }
-
+        .brand-item:hover { background: #f5f5f5; }
         .brand-item input[type="checkbox"] {
             width: 16px;
             height: 16px;
@@ -111,25 +105,10 @@
             cursor: pointer;
             flex-shrink: 0;
         }
-
-        .brand-name {
-            font-size: 14px;
-            color: #333;
-            user-select: none;
-        }
-
-        /* Scrollbar đẹp hơn */
-        .brand-list::-webkit-scrollbar {
-            width: 4px;
-        }
-        .brand-list::-webkit-scrollbar-track {
-            background: #f0f0f0;
-            border-radius: 4px;
-        }
-        .brand-list::-webkit-scrollbar-thumb {
-            background: #ccc;
-            border-radius: 4px;
-        }
+        .brand-name { font-size: 14px; color: #333; user-select: none; }
+        .brand-list::-webkit-scrollbar { width: 4px; }
+        .brand-list::-webkit-scrollbar-track { background: #f0f0f0; border-radius: 4px; }
+        .brand-list::-webkit-scrollbar-thumb { background: #ccc; border-radius: 4px; }
     </style>
     <link href="${pageContext.request.contextPath}/assets/css/storefront-polish.css" rel="stylesheet">
 </head>
@@ -213,6 +192,21 @@
                        class="filter-link ${selectedPriceRange == '300to500' ? 'active' : ''}">300.000đ - 500.000đ</a>
                     <a href="javascript:void(0)" onclick="navigateWithFilters({priceRange: 'above500'})"
                        class="filter-link ${selectedPriceRange == 'above500' ? 'active' : ''}">Trên 500.000đ</a>
+                </div>
+                <div class="sidebar-section">
+                    <div class="sidebar-title">Thương hiệu</div>
+                    <div class="brand-list">
+                        <c:forEach var="b" items="${brands}">
+                            <label class="brand-item">
+                                <input type="checkbox" name="brand" value="${b}" onchange="applyBrand()"
+                                <c:forEach var="selected" items="${paramValues.brand}">
+                                    <c:if test="${selected == b}">checked</c:if>
+                                </c:forEach>
+                                >
+                                <span class="brand-name">${b}</span>
+                            </label>
+                        </c:forEach>
+                    </div>
                 </div>
                 <div class="member-banner mt-3">
                     <h5>🎁 Ưu đãi Thành viên</h5>
@@ -351,6 +345,15 @@
             url.searchParams.delete('brand');
             url.searchParams.delete('page');
 
+            document.querySelectorAll('input[name="brand"]:checked').forEach(cb => {
+                url.searchParams.append('brand', cb.value);
+            });
+            window.location.href = url.toString();
+        }
+        function applyBrand() {
+            const url = new URL(window.location.href);
+            url.searchParams.delete('brand');
+            url.searchParams.delete('page');
             document.querySelectorAll('input[name="brand"]:checked').forEach(cb => {
                 url.searchParams.append('brand', cb.value);
             });
