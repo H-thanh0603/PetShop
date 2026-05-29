@@ -1,4 +1,5 @@
 <%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
+<%@ taglib prefix="fn" uri="jakarta.tags.functions" %>
 <%@ taglib prefix="c" uri="jakarta.tags.core" %>
 <!DOCTYPE html>
 <html lang="vi">
@@ -102,24 +103,25 @@
         
         <c:if test="${not empty error}">
             <div class="alert alert-danger alert-dismissible fade show" role="alert">
-                <i class='bx bx-error-circle me-2'></i>${error}
+                <i class='bx bx-error-circle me-2'></i>${fn:escapeXml(error)}
                 <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
             </div>
         </c:if>
         
         <form method="post" action="${pageContext.request.contextPath}/reset-password" id="resetForm">
+            <input type="hidden" name="csrfToken" value="${csrfToken}" />
             <div class="mb-3">
                 <label class="form-label fw-bold">Mật khẩu mới</label>
                 <div class="input-group">
                     <span class="input-group-text"><i class='bx bx-lock-alt'></i></span>
                     <input type="password" class="form-control" name="password" id="password"
-                           placeholder="Nhập mật khẩu mới" required minlength="6">
+                           placeholder="Nhập mật khẩu mới" required minlength="8">
                     <span class="password-toggle" onclick="togglePassword('password', this)">
                         <i class='bx bx-hide'></i>
                     </span>
                 </div>
                 <div class="password-strength" id="strengthBar"></div>
-                <small class="text-muted">Mật khẩu phải có ít nhất 6 ký tự</small>
+                <small class="text-muted">Ít nhất 8 ký tự, gồm chữ hoa, chữ thường, số và ký tự đặc biệt</small>
             </div>
             
             <div class="mb-4">
@@ -172,9 +174,9 @@
             
             if (val.length === 0) {
                 bar.style.width = '0';
-            } else if (val.length < 6) {
+            } else if (val.length < 8) {
                 bar.classList.add('strength-weak');
-            } else if (val.length < 10 || !/[A-Z]/.test(val) || !/[0-9]/.test(val)) {
+            } else if (val.length < 10 || !/[A-Z]/.test(val) || !/[a-z]/.test(val) || !/[0-9]/.test(val) || !/[^a-zA-Z0-9\s]/.test(val)) {
                 bar.classList.add('strength-medium');
             } else {
                 bar.classList.add('strength-strong');
@@ -205,6 +207,13 @@
             const pass = document.getElementById('password').value;
             const confirm = document.getElementById('confirmPassword').value;
             
+            const strongRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z0-9\s]).{8,}$/;
+            if (!strongRegex.test(pass)) {
+                e.preventDefault();
+                alert('Mật khẩu mới chưa đủ mạnh!');
+                return;
+            }
+
             if (pass !== confirm) {
                 e.preventDefault();
                 alert('Mật khẩu xác nhận không khớp!');

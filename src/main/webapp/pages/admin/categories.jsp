@@ -1,5 +1,6 @@
 <%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
 <%@ taglib prefix="c" uri="jakarta.tags.core" %>
+<%@ taglib prefix="fn" uri="jakarta.tags.functions" %>
 <!DOCTYPE html>
 <html lang="vi">
 <head>
@@ -45,10 +46,10 @@
                     <c:forEach items="${categories}" var="cat" varStatus="s">
                         <tr>
                             <td><strong>${s.index + 1}</strong></td>
-                            <td><strong>${cat[0]}</strong></td>
+                            <td><strong>${fn:escapeXml(cat[0])}</strong></td>
                             <td><span style="background:#dbeafe;color:#1d4ed8;padding:3px 10px;border-radius:20px;font-size:0.85rem;font-weight:600;">${cat[1]} sản phẩm</span></td>
                             <td>
-                                <span style="background:#f0fdf4;color:#16a34a;padding:3px 10px;border-radius:20px;font-size:0.85rem;">${cat[2]}</span>
+                                <span style="background:#f0fdf4;color:#16a34a;padding:3px 10px;border-radius:20px;font-size:0.85rem;">${fn:escapeXml(cat[2])}</span>
                             </td>
                             <td>
                                 <div class="table-actions">
@@ -71,6 +72,7 @@
                 <button class="modal-close" onclick="document.getElementById('renameModal').classList.remove('show')"><i class='bx bx-x'></i></button>
             </div>
             <form method="post">
+                <input type="hidden" name="csrfToken" value="${csrfToken}" />
                 <input type="hidden" name="action" value="rename">
                 <input type="hidden" name="oldName" id="renameOldName">
                 <div class="modal-body">
@@ -100,6 +102,7 @@
                 <button class="modal-close" onclick="document.getElementById('assignModal').classList.remove('show')"><i class='bx bx-x'></i></button>
             </div>
             <form method="post">
+                <input type="hidden" name="csrfToken" value="${csrfToken}" />
                 <input type="hidden" name="action" value="assign-pet-type">
                 <input type="hidden" name="category" id="assignCategory">
                 <div class="modal-body">

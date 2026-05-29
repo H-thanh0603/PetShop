@@ -7,6 +7,7 @@ public class Review {
     private int productId;
     private int userId;
     private String userName; // Tên người dùng (Lấy từ bảng Users)
+    private String productName;
     private int rating;
     private String comment;
     private Date createdAt;
@@ -33,6 +34,8 @@ public class Review {
     public void setUserId(int userId) { this.userId = userId; }
     public String getUserName() { return userName; }
     public void setUserName(String userName) { this.userName = userName; }
+    public String getProductName() { return productName; }
+    public void setProductName(String productName) { this.productName = productName; }
     public int getRating() { return rating; }
     public void setRating(int rating) { this.rating = rating; }
     public String getComment() { return comment; }

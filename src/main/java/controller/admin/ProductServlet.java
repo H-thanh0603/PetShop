@@ -2,8 +2,12 @@ package controller.admin;
 
 import java.io.File;
 import java.io.IOException;
+import java.math.BigDecimal;
+import java.sql.Timestamp;
+import java.time.LocalDate;
+import java.time.format.DateTimeParseException;
 import java.util.List;
-import java.util.UUID;
+import java.util.Map;
 
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.MultipartConfig;
@@ -14,9 +18,17 @@ import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
 import jakarta.servlet.http.Part;
 
+import DAO.InventoryBatchDAO;
 import DAO.ProductDAO;
+import DAO.PetTypeDAO;
+import DAO.AdminActionLogDAO;
+import Model.InventoryBatch;
 import Model.Product;
+import Model.ProductAdminInventoryView;
+import Model.PetType;
+import Model.User;
 import Util.ValidationUtil;
+import Util.FileUploadValidator;
 
 @WebServlet("/pages/admin/products")
 @MultipartConfig(
@@ -29,16 +41,47 @@ public class ProductServlet extends HttpServlet {
     
     // Đường dẫn upload ảnh - phải khớp với đường dẫn hiển thị trong JSP
     private static final String UPLOAD_DIR = "assets/images/shop_pic";
+    private final AdminActionLogDAO actionLog = new AdminActionLogDAO();
 
     protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
         ProductDAO dao = new ProductDAO();
+        InventoryBatchDAO inventoryBatchDAO = new InventoryBatchDAO();
         List<Product> products = dao.getAllProducts();
         int totalProducts = dao.getTotalProducts();
         int discountedProducts = dao.getDiscountedProducts();
+        Map<Integer, ProductAdminInventoryView> inventoryByProduct = inventoryBatchDAO.getProductAdminInventoryViews(30);
+        int lowStockProducts = 0;
+        int nearExpiryProducts = 0;
+        int expiredProducts = 0;
+        int missingBatchProducts = 0;
+
+        for (Product product : products) {
+            if (product.getStock() > 0 && product.getStock() < 10) {
+                lowStockProducts++;
+            }
+            ProductAdminInventoryView inventory = inventoryByProduct.get(product.getId());
+            if (inventory == null || inventory.getActiveBatchCount() == 0) {
+                missingBatchProducts++;
+                continue;
+            }
+            if (inventory.getExpiredQuantity() > 0) {
+                expiredProducts++;
+            } else if (inventory.getNearExpiryQuantity() > 0) {
+                nearExpiryProducts++;
+            }
+        }
         
         request.setAttribute("products", products);
         request.setAttribute("totalProducts", totalProducts);
         request.setAttribute("discountedProducts", discountedProducts);
+        request.setAttribute("lowStockProducts", lowStockProducts);
+        request.setAttribute("nearExpiryProducts", nearExpiryProducts);
+        request.setAttribute("expiredProducts", expiredProducts);
+        request.setAttribute("missingBatchProducts", missingBatchProducts);
+        request.setAttribute("inventoryByProduct", inventoryByProduct);
+        
+        List<PetType> petTypes = new PetTypeDAO().getAllPetTypes();
+        request.setAttribute("petTypes", petTypes);
         
         request.getRequestDispatcher("/pages/admin/products.jsp").forward(request, response);
     }
@@ -72,10 +115,10 @@ public class ProductServlet extends HttpServlet {
                 errors.append("Tên sản phẩm phải từ 2-200 ký tự. ");
             }
             
-            double price = 0;
+            BigDecimal price = BigDecimal.ZERO;
             try {
-                price = Double.parseDouble(priceStr);
-                if (price <= 0) {
+                price = new BigDecimal(priceStr);
+                if (price.compareTo(BigDecimal.ZERO) <= 0) {
                     valid = false;
                     errors.append("Giá bán phải lớn hơn 0. ");
                 }
@@ -107,41 +150,157 @@ public class ProductServlet extends HttpServlet {
                 return;
             }
             
+            // === VALIDATE STOCK ===
+            String stockStr = request.getParameter("stock");
+            int stock = 0;
+            if (stockStr != null && !stockStr.trim().isEmpty()) {
+                try {
+                    stock = Integer.parseInt(stockStr.trim());
+                    if (stock < 0) {
+                        session.setAttribute("message", "Tồn kho phải là số nguyên không âm.");
+                        session.setAttribute("messageType", "error");
+                        response.sendRedirect(request.getContextPath() + "/pages/admin/products");
+                        return;
+                    }
+                } catch (NumberFormatException e) {
+                    session.setAttribute("message", "Tồn kho phải là số nguyên không âm.");
+                    session.setAttribute("messageType", "error");
+                    response.sendRedirect(request.getContextPath() + "/pages/admin/products");
+                    return;
+                }
+            }
+            
+            // === VALIDATE WEIGHT ===
+            String weightStr = request.getParameter("weight");
+            int weight = 0;
+            if (weightStr != null && !weightStr.trim().isEmpty()) {
+                try {
+                    weight = Integer.parseInt(weightStr.trim());
+                    if (weight < 0) {
+                        session.setAttribute("message", "Trọng lượng phải là số nguyên không âm (gram).");
+                        session.setAttribute("messageType", "error");
+                        response.sendRedirect(request.getContextPath() + "/pages/admin/products");
+                        return;
+                    }
+                } catch (NumberFormatException e) {
+                    session.setAttribute("message", "Trọng lượng phải là số nguyên không âm (gram).");
+                    session.setAttribute("messageType", "error");
+                    response.sendRedirect(request.getContextPath() + "/pages/admin/products");
+                    return;
+                }
+            }
+            
+            // === PARSE CATEGORY & PET TYPE ===
+            String category = request.getParameter("category");
+            if (category == null) category = "";
+            
+            String petTypeIdStr = request.getParameter("petTypeId");
+            int petTypeId = 0;
+            if (petTypeIdStr != null && !petTypeIdStr.trim().isEmpty()) {
+                try {
+                    petTypeId = Integer.parseInt(petTypeIdStr.trim());
+                } catch (NumberFormatException e) {
+                    petTypeId = 0;
+                }
+            }
+
+            // === PARSE OPTIONAL IMPORT BATCH ===
+            String batchCode = trimToEmpty(request.getParameter("batchCode"));
+            String batchQuantityStr = request.getParameter("batchQuantity");
+            String batchUnitCostStr = request.getParameter("batchUnitCost");
+            String batchExpiryDateStr = trimToEmpty(request.getParameter("batchExpiryDate"));
+            String batchNote = trimToEmpty(request.getParameter("batchNote"));
+            int batchQuantity = 0;
+            BigDecimal batchUnitCost = BigDecimal.ZERO;
+            Timestamp batchExpiryDate = null;
+
+            if (batchQuantityStr != null && !batchQuantityStr.trim().isEmpty()) {
+                try {
+                    batchQuantity = Integer.parseInt(batchQuantityStr.trim());
+                    if (batchQuantity < 0) {
+                        session.setAttribute("message", "Số lượng nhập lô phải là số nguyên không âm.");
+                        session.setAttribute("messageType", "error");
+                        response.sendRedirect(request.getContextPath() + "/pages/admin/products");
+                        return;
+                    }
+                } catch (NumberFormatException e) {
+                    session.setAttribute("message", "Số lượng nhập lô phải là số nguyên không âm.");
+                    session.setAttribute("messageType", "error");
+                    response.sendRedirect(request.getContextPath() + "/pages/admin/products");
+                    return;
+                }
+            }
+
+            if (batchUnitCostStr != null && !batchUnitCostStr.trim().isEmpty()) {
+                try {
+                    batchUnitCost = new BigDecimal(batchUnitCostStr.trim());
+                    if (batchUnitCost.compareTo(BigDecimal.ZERO) < 0) {
+                        session.setAttribute("message", "Giá vốn lô hàng không được âm.");
+                        session.setAttribute("messageType", "error");
+                        response.sendRedirect(request.getContextPath() + "/pages/admin/products");
+                        return;
+                    }
+                } catch (Exception e) {
+                    session.setAttribute("message", "Giá vốn lô hàng không hợp lệ.");
+                    session.setAttribute("messageType", "error");
+                    response.sendRedirect(request.getContextPath() + "/pages/admin/products");
+                    return;
+                }
+            }
+
+            if (!batchExpiryDateStr.isEmpty()) {
+                try {
+                    LocalDate expiryDate = LocalDate.parse(batchExpiryDateStr);
+                    if (expiryDate.isBefore(LocalDate.now())) {
+                        session.setAttribute("message", "Hạn sử dụng của lô nhập mới không được là ngày đã qua.");
+                        session.setAttribute("messageType", "error");
+                        response.sendRedirect(request.getContextPath() + "/pages/admin/products");
+                        return;
+                    }
+                    batchExpiryDate = Timestamp.valueOf(expiryDate.atStartOfDay());
+                } catch (DateTimeParseException e) {
+                    session.setAttribute("message", "Hạn sử dụng lô hàng không hợp lệ.");
+                    session.setAttribute("messageType", "error");
+                    response.sendRedirect(request.getContextPath() + "/pages/admin/products");
+                    return;
+                }
+            }
+            
             // === HANDLE FILE UPLOAD (Servlet 3.0) ===
             String imageName = existingImage; // Giữ ảnh cũ nếu không upload mới
             
             Part filePart = request.getPart("imageFile");
             if (filePart != null && filePart.getSize() > 0) {
-                String fileName = getSubmittedFileName(filePart);
-                if (fileName != null && !fileName.isEmpty()) {
-                    // Validate file type
-                    String contentType = filePart.getContentType();
-                    if (!isValidImageType(contentType)) {
-                        message = "Chỉ chấp nhận file ảnh (JPG, PNG, GIF, WebP)!";
-                        messageType = "error";
-                        session.setAttribute("message", message);
-                        session.setAttribute("messageType", messageType);
-                        response.sendRedirect(request.getContextPath() + "/pages/admin/products");
-                        return;
-                    }
-                    
-                    // Generate unique filename
-                    String extension = getFileExtension(fileName);
-                    imageName = "product_" + UUID.randomUUID().toString().substring(0, 8) + "_" + System.currentTimeMillis() + extension;
-                    
-                    // Lưu ảnh vào webapp/assets/images/shop_pic (cùng nơi với FileUploadServlet)
-                    String uploadPath = getServletContext().getRealPath("") + File.separator + "assets" + File.separator + "images" + File.separator + "shop_pic";
-                    File uploadDir = new File(uploadPath);
-                    if (!uploadDir.exists()) uploadDir.mkdirs();
-                    
-                    String filePath = uploadPath + File.separator + imageName;
-                    filePart.write(filePath);
+                // Validate file using FileUploadValidator
+                FileUploadValidator.ValidationResult validationResult = FileUploadValidator.validate(filePart);
+                if (!validationResult.isValid()) {
+                    message = validationResult.getErrorMessage();
+                    messageType = "error";
+                    session.setAttribute("message", message);
+                    session.setAttribute("messageType", messageType);
+                    response.sendRedirect(request.getContextPath() + "/pages/admin/products");
+                    return;
                 }
+                
+                // Use secure filename from validator
+                imageName = validationResult.getSecureFileName();
+                
+                // Lưu ảnh vào webapp/assets/images/shop_pic
+                String uploadPath = getServletContext().getRealPath("") + File.separator + "assets" + File.separator + "images" + File.separator + "shop_pic";
+                File uploadDir = new File(uploadPath);
+                if (!uploadDir.exists()) uploadDir.mkdirs();
+                
+                String filePath = uploadPath + File.separator + imageName;
+                filePart.write(filePath);
             }
             
             // === BUSINESS LOGIC ===
+            Integer savedProductId = null;
             if ("add".equals(action)) {
-                if (dao.addProduct(name, imageName, price, discount, description)) {
+                int initialStock = batchQuantity > 0 ? 0 : stock;
+                int newProductId = dao.addProductAndReturnId(name, imageName, price, discount, description, initialStock, weight, category, petTypeId);
+                if (newProductId > 0) {
+                    savedProductId = newProductId;
                     message = "Thêm sản phẩm thành công!";
                 } else {
                     message = "Có lỗi xảy ra khi thêm sản phẩm!";
@@ -154,22 +313,51 @@ public class ProductServlet extends HttpServlet {
                 if (id == null) {
                     message = "ID sản phẩm không hợp lệ!";
                     messageType = "error";
-                } else if (dao.updateProduct(id, name, imageName, price, discount, description)) {
+                } else if (dao.updateProduct(id, name, imageName, price, discount, description, stock, weight, category, petTypeId)) {
+                    savedProductId = id;
                     message = "Cập nhật sản phẩm thành công!";
                 } else {
                     message = "Có lỗi xảy ra khi cập nhật!";
                     messageType = "error";
                 }
             }
+
+            if (savedProductId != null && batchQuantity > 0 && "success".equals(messageType)) {
+                if (batchCode.isEmpty()) {
+                    batchCode = "LOT-" + savedProductId + "-" + System.currentTimeMillis();
+                }
+
+                InventoryBatch batch = new InventoryBatch();
+                batch.setProductId(savedProductId);
+                batch.setBatchCode(batchCode);
+                batch.setReceivedQuantity(batchQuantity);
+                batch.setRemainingQuantity(batchQuantity);
+                batch.setUnitCost(batchUnitCost);
+                batch.setExpiryDate(batchExpiryDate);
+                batch.setNote(batchNote);
+
+                User admin = (User) session.getAttribute("user");
+                Integer adminId = admin != null ? admin.getId() : null;
+                if (new InventoryBatchDAO().recordImportBatch(batch, adminId)) {
+                    message += " Đã nhập thêm lô " + batchCode + " (" + batchQuantity + " sản phẩm).";
+                } else {
+                    message = "Sản phẩm đã lưu nhưng nhập lô hàng thất bại. Kiểm tra mã lô có bị trùng không.";
+                    messageType = "error";
+                }
+            }
         } else if ("delete".equals(action)) {
             String idStr = request.getParameter("id");
             Integer id = ValidationUtil.parseIntOrNull(idStr);
+            HttpSession session2 = request.getSession();
+            User admin = (User) session2.getAttribute("user");
+            int adminId = admin != null ? admin.getId() : 1;
             
             if (id == null) {
                 message = "ID sản phẩm không hợp lệ!";
                 messageType = "error";
-            } else if (dao.deleteProduct(id)) {
-                message = "Xóa sản phẩm thành công!";
+            } else if (dao.softDeleteProduct(id)) {
+                actionLog.log(adminId, "DELETE_PRODUCT", "product", id, null);
+                message = "Ẩn sản phẩm thành công!";
             } else {
                 message = "Có lỗi xảy ra khi xóa!";
                 messageType = "error";
@@ -202,23 +390,8 @@ public class ProductServlet extends HttpServlet {
         }
         return null;
     }
-    
-    // Kiểm tra loại file ảnh hợp lệ
-    private boolean isValidImageType(String contentType) {
-        return contentType != null && (
-            contentType.equals("image/jpeg") ||
-            contentType.equals("image/png") ||
-            contentType.equals("image/gif") ||
-            contentType.equals("image/webp")
-        );
-    }
-    
-    // Lấy extension của file
-    private String getFileExtension(String fileName) {
-        int lastDot = fileName.lastIndexOf('.');
-        if (lastDot > 0) {
-            return fileName.substring(lastDot).toLowerCase();
-        }
-        return ".jpg";
+
+    private String trimToEmpty(String value) {
+        return value == null ? "" : value.trim();
     }
 }

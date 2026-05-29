@@ -8,47 +8,126 @@ import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
+import DAO.AdminActionLogDAO;
 import DAO.OrderDAO;
 import Model.Order;
+import Model.OrderLog;
+import Model.OrderStatusHistory;
+import Model.User;
 
 @WebServlet("/admin/orders")
 public class ManageOrderServlet extends HttpServlet {
     private static final long serialVersionUID = 1L;
+    private AdminActionLogDAO actionLog = new AdminActionLogDAO();
+    private OrderDAO orderDAO = new OrderDAO();
 
     protected void doGet(HttpServletRequest request, HttpServletResponse response) 
             throws ServletException, IOException {
         String action = request.getParameter("action");
-        OrderDAO dao = new OrderDAO();
+        String status = request.getParameter("status");
+        String keyword = request.getParameter("keyword");
+        HttpSession session = request.getSession();
         
         if ("view".equals(action)) {
-            int orderId = Integer.parseInt(request.getParameter("id"));
-            Order order = dao.getOrderById(orderId);
+            int orderId;
+            try {
+                orderId = Integer.parseInt(request.getParameter("id"));
+            } catch (NumberFormatException e) {
+                session.setAttribute("message", "Mã đơn hàng không hợp lệ.");
+                session.setAttribute("messageType", "error");
+                response.sendRedirect(request.getContextPath() + "/admin/orders");
+                return;
+            }
+            Order order = orderDAO.getOrderById(orderId);
+            List<OrderStatusHistory> statusHistory = orderDAO.getStatusHistory(orderId);
+            List<OrderLog> orderLogs = orderDAO.getOrderLogs(orderId);
             request.setAttribute("order", order);
+            request.setAttribute("statusHistory", statusHistory);
+            request.setAttribute("orderLogs", orderLogs);
             request.getRequestDispatcher("/pages/admin/order-detail.jsp").forward(request, response);
             return;
         }
 
-        List<Order> list = dao.getAllOrders();
+        // Pagination
+        int page = 1;
+        int size = 20;
+        try { page = Math.max(1, Integer.parseInt(request.getParameter("page"))); } catch (Exception ignored) {}
+        try { size = Math.max(1, Integer.parseInt(request.getParameter("size"))); } catch (Exception ignored) {}
+
+        List<Order> list = orderDAO.getOrdersPage(page, size, status, keyword);
+        int totalOrders = orderDAO.countOrders(status, keyword);
+        int totalPages = (int) Math.ceil((double) totalOrders / size);
+
         request.setAttribute("orders", list);
+        request.setAttribute("totalOrders", totalOrders);
+        request.setAttribute("currentPage", page);
+        request.setAttribute("pageSize", size);
+        request.setAttribute("totalPages", totalPages);
+        request.setAttribute("selectedStatus", status);
+        request.setAttribute("keyword", keyword);
+        request.setAttribute("pendingPaymentReviewCount", orderDAO.countOrdersAwaitingPaymentVerification());
         request.getRequestDispatcher("/pages/admin/orders.jsp").forward(request, response);
     }
 
     protected void doPost(HttpServletRequest request, HttpServletResponse response) 
             throws ServletException, IOException {
         String action = request.getParameter("action");
-        OrderDAO dao = new OrderDAO();
         HttpSession session = request.getSession();
+        User admin = (User) session.getAttribute("user");
+        int adminId = admin != null ? admin.getId() : 1;
 
         if ("updateStatus".equals(action)) {
-            int orderId = Integer.parseInt(request.getParameter("orderId"));
-            String status = request.getParameter("status");
-            if (dao.updateStatus(orderId, status)) {
+            int orderId;
+            try {
+                orderId = Integer.parseInt(request.getParameter("orderId"));
+            } catch (NumberFormatException e) {
+                session.setAttribute("message", "Mã đơn hàng không hợp lệ.");
+                session.setAttribute("messageType", "error");
+                response.sendRedirect(request.getContextPath() + "/admin/orders");
+                return;
+            }
+            String newStatus = request.getParameter("status");
+            // Get old status for logging
+            Order existing = orderDAO.getOrderById(orderId);
+            String oldStatus = existing != null ? existing.getStatus() : "Unknown";
+            if (orderDAO.updateStatus(orderId, newStatus, adminId)) {
+                actionLog.log(adminId, "UPDATE_ORDER_STATUS", "order", orderId,
+                        "Status changed from " + oldStatus + " to " + newStatus);
                 session.setAttribute("message", "Cập nhật trạng thái đơn hàng thành công!");
                 session.setAttribute("messageType", "success");
             } else {
                 session.setAttribute("message", "Cập nhật trạng thái thất bại!");
                 session.setAttribute("messageType", "error");
             }
+        }
+
+        if ("updatePaymentVerification".equals(action)) {
+            int orderId;
+            try {
+                orderId = Integer.parseInt(request.getParameter("orderId"));
+            } catch (NumberFormatException e) {
+                session.setAttribute("message", "Mã đơn hàng không hợp lệ.");
+                session.setAttribute("messageType", "error");
+                response.sendRedirect(request.getContextPath() + "/admin/orders");
+                return;
+            }
+
+            String verificationStatus = request.getParameter("verificationStatus");
+            String verificationMessage = request.getParameter("verificationMessage");
+            if (orderDAO.updatePaymentVerification(orderId, verificationStatus, verificationMessage)) {
+                actionLog.log(adminId, "UPDATE_PAYMENT_VERIFICATION", "order", orderId,
+                        "Payment verification updated to " + verificationStatus);
+                session.setAttribute("message", "Đã cập nhật trạng thái đối soát thanh toán.");
+                session.setAttribute("messageType", "success");
+            } else {
+                session.setAttribute("message", "Không thể cập nhật trạng thái đối soát thanh toán.");
+                session.setAttribute("messageType", "error");
+            }
+        }
+
+        if ("detail".equalsIgnoreCase(request.getParameter("returnTo"))) {
+            response.sendRedirect(request.getContextPath() + "/admin/orders?action=view&id=" + request.getParameter("orderId"));
+            return;
         }
         response.sendRedirect(request.getContextPath() + "/admin/orders");
     }

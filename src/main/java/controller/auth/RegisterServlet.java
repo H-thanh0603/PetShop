@@ -1,6 +1,9 @@
 package controller.auth;
 
 import java.io.IOException;
+import java.util.HashMap;
+import java.util.Map;
+import com.google.gson.Gson;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServlet;
@@ -9,12 +12,15 @@ import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
 
 import DAO.UserDAO;
+import Model.User;
 import Util.FormHelper;
 import Util.OTPUtil;
+import Util.ValidationUtil;
 
 @WebServlet("/register")
 public class RegisterServlet extends HttpServlet {
     private static final long serialVersionUID = 1L;
+    private final Gson gson = new Gson();
 
     protected void doGet(HttpServletRequest request, HttpServletResponse response) 
             throws ServletException, IOException {
@@ -47,13 +53,17 @@ public class RegisterServlet extends HttpServlet {
         String username = request.getParameter("username");
         
         if (username == null || username.trim().isEmpty()) {
-            response.getWriter().write("{\"available\":false}");
+            Map<String, Object> result = new HashMap<>();
+            result.put("available", false);
+            response.getWriter().write(gson.toJson(result));
             return;
         }
         
         UserDAO dao = new UserDAO();
         boolean exists = dao.checkUsernameExists(username.trim().toLowerCase());
-        response.getWriter().write("{\"available\":" + !exists + "}");
+        Map<String, Object> result = new HashMap<>();
+        result.put("available", !exists);
+        response.getWriter().write(gson.toJson(result));
     }
     
     // Gửi OTP xác thực email
@@ -65,21 +75,21 @@ public class RegisterServlet extends HttpServlet {
         String email = request.getParameter("email");
         
         if (email == null || email.trim().isEmpty()) {
-            response.getWriter().write("{\"success\":false,\"message\":\"Email không được để trống\"}");
+            writeJsonResponse(response, false, "Email không được để trống");
             return;
         }
         
         UserDAO dao = new UserDAO();
         if (dao.checkEmailExists(email)) {
-            response.getWriter().write("{\"success\":false,\"message\":\"Email này đã được đăng ký\"}");
+            writeJsonResponse(response, false, "Email này đã được đăng ký");
             return;
         }
         
         boolean sent = OTPUtil.generateAndSendOTP(email);
         if (sent) {
-            response.getWriter().write("{\"success\":true,\"message\":\"Đã gửi mã OTP đến email của bạn\"}");
+            writeJsonResponse(response, true, "Đã gửi mã OTP đến email của bạn");
         } else {
-            response.getWriter().write("{\"success\":false,\"message\":\"Không thể gửi OTP. Vui lòng thử lại\"}");
+            writeJsonResponse(response, false, "Không thể gửi OTP. Vui lòng thử lại");
         }
     }
     
@@ -95,10 +105,17 @@ public class RegisterServlet extends HttpServlet {
         if (OTPUtil.verifyOTP(email, otp)) {
             HttpSession session = request.getSession();
             session.setAttribute("emailVerified", email);
-            response.getWriter().write("{\"success\":true,\"message\":\"Xác thực thành công\"}");
+            writeJsonResponse(response, true, "Xác thực thành công");
         } else {
-            response.getWriter().write("{\"success\":false,\"message\":\"Mã OTP không đúng hoặc đã hết hạn\"}");
+            writeJsonResponse(response, false, "Mã OTP không đúng hoặc đã hết hạn");
         }
+    }
+    
+    private void writeJsonResponse(HttpServletResponse response, boolean success, String message) throws IOException {
+        Map<String, Object> result = new HashMap<>();
+        result.put("success", success);
+        result.put("message", message);
+        response.getWriter().write(gson.toJson(result));
     }
     
     // Đăng ký tài khoản
@@ -122,7 +139,10 @@ public class RegisterServlet extends HttpServlet {
             valid = false;
         } else {
             fullname = fullname.trim();
-            if (!fullname.matches("^[\\p{L}\\s]+$") || fullname.replaceAll("\\s", "").isEmpty()) {
+            if (!ValidationUtil.validateMaxLength(fullname, 200)) {
+                form.addError("fullName", "Họ tên không được vượt quá 200 ký tự");
+                valid = false;
+            } else if (!fullname.matches("^[\\p{L}\\s]+$") || fullname.replaceAll("\\s", "").isEmpty()) {
                 form.addError("fullName", "Họ tên chỉ được chứa chữ cái và khoảng trắng");
                 valid = false;
             } else if (fullname.length() < 2) {
@@ -139,14 +159,17 @@ public class RegisterServlet extends HttpServlet {
             valid = false;
         }
         
-        // C. Tên đăng nhập - chữ thường, số, gạch dưới, 3-20 ký tự
+        // C. Tên đăng nhập - chữ cái, số, gạch dưới, 3-30 ký tự (tự động lowercase)
         if (username == null || username.trim().isEmpty()) {
             form.addError("username", "Vui lòng nhập tên đăng nhập");
             valid = false;
         } else {
             username = username.trim().toLowerCase();
-            if (!username.matches("^[a-z0-9_]{3,20}$")) {
-                form.addError("username", "Tên đăng nhập không hợp lệ");
+            if (username.length() < 3 || username.length() > 30) {
+                form.addError("username", "Tên đăng nhập phải từ 3-30 ký tự");
+                valid = false;
+            } else if (!username.matches("^[a-z0-9_]+$")) {
+                form.addError("username", "Tên đăng nhập chỉ được chứa chữ thường, số và dấu gạch dưới");
                 valid = false;
             }
         }
@@ -232,11 +255,15 @@ public class RegisterServlet extends HttpServlet {
         // === ĐĂNG KÝ ===
         HttpSession session = request.getSession();
         boolean success = dao.register(username, password, fullname, email);
-        
+
         if (success) {
-            // Lưu email để gợi ý khi đăng nhập
+            // OTP đã xác thực email — kích hoạt tài khoản ngay
+            User newUser = dao.getUserByEmail(email);
+            if (newUser != null) {
+                dao.markEmailVerified(newUser.getId());
+            }
             session.setAttribute("registeredEmail", email);
-            session.setAttribute("success", "Đăng ký thành công! Vui lòng đăng nhập.");
+            session.setAttribute("success", "Đăng ký thành công! Bạn có thể đăng nhập ngay.");
             response.sendRedirect(request.getContextPath() + "/login");
         } else {
             form.addGeneralError("Đăng ký thất bại! Vui lòng thử lại.");

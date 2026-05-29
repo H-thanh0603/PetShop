@@ -126,100 +126,52 @@
     overflow: hidden;
     width: 100%;
 }
-.service-title {
-    font-size: 2.5rem;
-    font-weight: 700;
-    margin-bottom: 40px;
-    color: #f0f0f0;
+.quick-stats {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 16px;
+    margin-top: 18px;
 }
-.service-list {
-    list-style: none;
-    padding: 0;
-    margin: 0;
+.quick-stat {
+    background: rgba(255,255,255,0.14);
+    border: 1px solid rgba(255,255,255,0.18);
+    border-radius: 18px;
+    padding: 16px;
+    backdrop-filter: blur(10px);
 }
-.service-item {
-    font-size: 1.1rem;
-    padding: 15px 0;
-    color: #888;
-    cursor: pointer;
-    transition: 0.3s;
-    border-left: 3px solid transparent;
+.quick-stat strong {
+    display: block;
+    font-size: 1.3rem;
 }
-.service-item:hover {
-    color: #ccc;
+.category-strip {
+    margin: 26px auto 0;
+    max-width: 1100px;
 }
-.service-item.active {
-    color: #fff;
-    font-weight: 600;
-    padding-left: 15px;
-    border-left: 3px solid #8B0000;
-}
-.service-display {
-    position: relative;
-    width: 100%;
-    height: 400px;
-    border-radius: 20px;
-    overflow: hidden;
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
-    background-color: #000;
-}
-.service-main-img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-}
-.service-content-overlay {
-    position: absolute;
-    bottom: 0;
-    left: 0;
-    width: 100%;
-    padding: 30px;
-    background: linear-gradient(to top, rgba(0, 0, 0, 0.9), transparent);
-    color: #fff;
-}
-.service-content-overlay p {
-    font-size: 1rem;
-    margin-bottom: 20px;
-    max-width: 80%;
-}
-.btn-service-more {
-    background-color: #721c24;
-    color: #fff;
-    padding: 8px 20px;
-    border-radius: 5px;
-    text-decoration: none;
+.category-pill {
     display: inline-flex;
     align-items: center;
-    gap: 5px;
+    gap: 8px;
+    background: #fff;
+    color: #0b1a33;
+    border-radius: 999px;
+    padding: 10px 16px;
+    text-decoration: none;
+    box-shadow: 0 10px 24px rgba(15,23,42,.08);
+    font-weight: 600;
+    margin: 6px;
 }
-.btn-service-more:hover {
-    background-color: #a71d2a;
-    color: #fff;
+.category-pill:hover {
+    color: #00bfa5;
 }
-.service-dots {
-    display: flex;
-    justify-content: center;
-    gap: 10px;
-    margin-top: 15px;
+@media (max-width: 991px) {
+    .quick-stats {
+        grid-template-columns: repeat(2, 1fr);
+    }
 }
-.dot {
-    width: 8px;
-    height: 8px;
-    background-color: #555;
-    border-radius: 50%;
-    display: inline-block;
-}
-.dot.active {
-    background-color: #fff;
-    transform: scale(1.2);
-}
-.decor-bottom-left {
-    position: absolute;
-    bottom: 0;
-    left: 20px;
-    width: 150px;
-    opacity: 0.3;
-    filter: invert(1);
+@media (max-width: 576px) {
+    .quick-stats {
+        grid-template-columns: 1fr;
+    }
 }
 
 /* Button booking */
@@ -235,6 +187,7 @@
     background-color: #008f7a;
 }
 </style>
+<link href="${pageContext.request.contextPath}/assets/css/storefront-polish.css" rel="stylesheet">
 </head>
 <body>
 
@@ -250,16 +203,21 @@
 
 		<div class="hero-content">
 			<h1>CHÀO MỪNG ĐẾN VỚI PETSHOP</h1>
-			<p>Thế giới phụ kiện, thức ăn và đồ chơi cao cấp cho thú cưng</p>
+			<p>Thức ăn, phụ kiện và đồ chơi chính hãng cho chó mèo với giao hàng nhanh và nhiều ưu đãi mỗi ngày.</p>
 			<a href="${pageContext.request.contextPath}/shop" class="btn btn-booking">Mua sắm ngay</a>
+            <div class="quick-stats text-start">
+                <div class="quick-stat"><strong>1000+</strong><span>Sản phẩm cho thú cưng</span></div>
+                <div class="quick-stat"><strong>Chính hãng</strong><span>Thương hiệu được tuyển chọn</span></div>
+                <div class="quick-stat"><strong>Nhanh</strong><span>Giao hàng toàn quốc</span></div>
+                <div class="quick-stat"><strong>Hỗ trợ</strong><span>Tư vấn mua sắm mỗi ngày</span></div>
+            </div>
 		</div>
 	</section>
 
 	<section class="features-section">
 		<div class="container">
 			<div class="text-center mb-5">
-				<h2 class="section-title">Sự chăm sóc tốt nhất dành cho thú
-					cưng</h2>
+				<h2 class="section-title">Vì sao khách hàng chọn PetShop</h2>
 			</div>
 
 			<div class="row">
@@ -320,6 +278,12 @@
             <p class="lead mb-4">Khám phá hàng ngàn sản phẩm dành cho "người bạn nhỏ" của bạn ngay hôm nay.</p>
             <a href="${pageContext.request.contextPath}/shop" class="btn btn-lg btn-booking p-3 px-5">Đến Cửa Hàng <i class='bx bx-shopping-bag'></i></a>
         </div>
+    </section>
+    <section class="category-strip text-center mb-5">
+        <a class="category-pill" href="${pageContext.request.contextPath}/shop?pet=dog"><i class='bx bxs-dog'></i> Mua cho chó</a>
+        <a class="category-pill" href="${pageContext.request.contextPath}/shop?pet=cat"><i class='bx bxs-cat'></i> Mua cho mèo</a>
+        <a class="category-pill" href="${pageContext.request.contextPath}/shop?sort=discount"><i class='bx bx-trending-up'></i> Ưu đãi nổi bật</a>
+        <a class="category-pill" href="${pageContext.request.contextPath}/shop?discountOnly=true"><i class='bx bx-purchase-tag-alt'></i> Sản phẩm giảm giá</a>
     </section>
 
 	<script>

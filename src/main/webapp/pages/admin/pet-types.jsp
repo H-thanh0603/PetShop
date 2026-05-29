@@ -1,5 +1,6 @@
 <%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
 <%@ taglib prefix="c" uri="jakarta.tags.core" %>
+<%@ taglib prefix="fn" uri="jakarta.tags.functions" %>
 <!DOCTYPE html>
 <html lang="vi">
 <head>
@@ -42,15 +43,15 @@
                     <c:if test="${empty petTypes}">
                         <tr><td colspan="7"><div class="empty-state"><i class='bx bxs-dog'></i><p>Chưa có loại thú cưng nào</p></div></td></tr>
                     </c:if>
-                    <c:forEach items="${petTypes}" var=""="s">
-                        <tr data-id="${pt.id}" data-name="${pt.name}" data-icon="${pt.icon}"
+                    <c:forEach items="${petTypes}" var="pt" varStatus="s">
+                        <tr data-id="${pt.id}" data-name="${fn:escapeXml(pt.name)}" data-icon="${fn:escapeXml(pt.icon)}"
                             data-order="${pt.displayOrder}" data-active="${pt.active}">
                             <td><strong>${s.index + 1}</strong></td>
                             <td><code style="background:#f1f5f9;padding:3px 8px;border-radius:6px;">${pt.code}</code></td>
-                            <td><strong>${pt.name}</strong></td>
+                            <td><strong>${fn:escapeXml(pt.name)}</strong></td>
                             <td>
                                 <i class='${pt.icon}' style="font-size:1.4rem;margin-right:6px;"></i>
-                                <small style="color:#64748b;">${pt.icon}</small>
+                                <small style="color:#64748b;">${fn:escapeXml(pt.icon)}</small>
                             </td>
                             <td>${pt.displayOrder}</td>
                             <td>
@@ -67,6 +68,7 @@
                                 <div class="table-actions">
                                     <button class="action-btn edit" onclick="openEditModal(this.closest('tr'))" title="Sửa"><i class='bx bx-edit-alt'></i></button>
                                     <form method="post" style="display:inline;">
+                                        <input type="hidden" name="csrfToken" value="${csrfToken}" />
                                         <input type="hidden" name="action" value="toggle">
                                         <input type="hidden" name="id" value="${pt.id}">
                                         <input type="hidden" name="isActive" value="${!pt.active}">
@@ -91,6 +93,7 @@
                 <button class="modal-close" onclick="document.getElementById('addModal').classList.remove('show')"><i class='bx bx-x'></i></button>
             </div>
             <form method="post">
+                <input type="hidden" name="csrfToken" value="${csrfToken}" />
                 <input type="hidden" name="action" value="add">
                 <div class="modal-body">
                     <div class="form-group">
@@ -135,6 +138,7 @@
                 <button class="modal-close" onclick="document.getElementById('editModal').classList.remove('show')"><i class='bx bx-x'></i></button>
             </div>
             <form method="post">
+                <input type="hidden" name="csrfToken" value="${csrfToken}" />
                 <input type="hidden" name="action" value="edit">
                 <input type="hidden" name="id" id="editId">
                 <div class="modal-body">
@@ -184,4 +188,3 @@
     </script>
 </body>
 </html>
-span>
