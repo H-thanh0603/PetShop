@@ -1,6 +1,0 @@
-db.host=localhost
-db.port=3306
-db.username=petshop
-db.password=CHANGE_THIS_TO_THE_MYSQL_PASSWORD
-db.dbname=petvaccine
-db.option=useUnicode=true&characterEncoding=utf-8&serverTimezone=Asia/Ho_Chi_Minh
