@@ -73,6 +73,7 @@ public class DBContext {
             addColumnIfMissing(conn, stmt, "products", "stock", "INT NOT NULL DEFAULT 0");
             addColumnIfMissing(conn, stmt, "products", "category", "VARCHAR(255) NULL");
             addColumnIfMissing(conn, stmt, "products", "pet_type_id", "INT NULL");
+            addColumnIfMissing(conn, stmt, "products", "brand", "VARCHAR(100) NULL");
             addColumnIfMissing(conn, stmt, "users", "email_verified", "BOOLEAN NOT NULL DEFAULT FALSE");
             addColumnIfMissing(conn, stmt, "users", "verification_token", "VARCHAR(255) NULL");
             addColumnIfMissing(conn, stmt, "users", "verification_token_expiry", "TIMESTAMP NULL");
