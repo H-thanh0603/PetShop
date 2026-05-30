@@ -50,7 +50,6 @@ public class MyOrdersServlet extends HttpServlet {
             
             // Bảo mật: Chỉ cho phép xem nếu đơn hàng thuộc về user đang đăng nhập
             if (order != null && order.getUserId() == user.getId()) {
-                order.setItems(orderDAO.getOrderItems(orderId));
                 request.setAttribute("order", order);
                 request.getRequestDispatcher("/pages/shop/order-detail.jsp").forward(request, response);
                 return;

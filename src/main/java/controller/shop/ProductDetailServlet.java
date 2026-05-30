@@ -27,6 +27,7 @@ public class ProductDetailServlet extends HttpServlet {
     protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
         try {
             String idRaw = request.getParameter("id");
+            
             if (idRaw == null || idRaw.isEmpty()) {
                 response.sendRedirect(request.getContextPath() + "/shop");
                 return;

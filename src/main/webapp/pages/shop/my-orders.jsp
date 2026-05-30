@@ -228,15 +228,6 @@
             .product-price { grid-column: 2; }
             .search-box { min-width: 100%; }
         }
-        .payment-paid {
-            background: var(--success-soft);
-            color: #166534;
-        }
-
-        .payment-unpaid {
-            background: var(--warning-soft);
-            color: #92400e;
-        }
     </style>
     <link href="${pageContext.request.contextPath}/assets/css/storefront-polish.css" rel="stylesheet">
 </head>

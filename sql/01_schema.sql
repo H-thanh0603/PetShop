@@ -1,8 +1,6 @@
 CREATE DATABASE IF NOT EXISTS `petvaccine` DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 USE `petvaccine`;
 
-SET FOREIGN_KEY_CHECKS=0;
-
 -- Table structure for table `users`
 DROP TABLE IF EXISTS `users`;
 CREATE TABLE `users` (
@@ -117,9 +115,9 @@ INSERT INTO `pet_types` (`code`, `name`, `icon`, `display_order`, `is_active`) V
 
 -- Thêm cột pet_type_id, category, stock vào products
 ALTER TABLE `products`
-  ADD COLUMN `category` varchar(100) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
-  ADD COLUMN `pet_type_id` int DEFAULT NULL,
-  ADD COLUMN `stock` int DEFAULT 100;
+  ADD COLUMN IF NOT EXISTS `category` varchar(100) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  ADD COLUMN IF NOT EXISTS `pet_type_id` int DEFAULT NULL,
+  ADD COLUMN IF NOT EXISTS `stock` int DEFAULT 100;
 
 ALTER TABLE `products`
   ADD CONSTRAINT `fk_product_pet_type` FOREIGN KEY (`pet_type_id`) REFERENCES `pet_types`(`id`) ON DELETE SET NULL;
@@ -216,5 +214,3 @@ CREATE TABLE `notifications` (
   KEY `idx_user_read` (`user_id`, `is_read`),
   FOREIGN KEY (`user_id`) REFERENCES `users`(`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
-SET FOREIGN_KEY_CHECKS=1;

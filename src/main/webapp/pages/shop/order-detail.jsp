@@ -91,7 +91,7 @@
 
                         <div class="mt-4 pt-3 border-top">
                             <div class="d-flex justify-content-between align-items-center">
-                                <h5 class="mb-0 fw-bold">Tong thanh toan</h5>
+                                <h5 class="mb-0 fw-bold">Tổng thanh toán</h5>
                                 <h4 class="mb-0 fw-bold text-primary">${order.formattedTotalAmount}</h4>
                             </div>
                         </div>

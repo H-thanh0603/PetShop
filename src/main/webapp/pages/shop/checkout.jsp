@@ -293,7 +293,6 @@
                     <input type="hidden" name="csrfToken" value="${csrfToken}" />
                     <input type="hidden" name="action" value="applyCoupon">
                     <input type="hidden" name="note" id="couponNoteHidden">
-                    <input type="hidden" name="paymentMethod" id="couponPaymentMethodHidden" value="${checkoutPaymentMethod}">
                     <div class="input-group mb-3">
                         <input name="couponCode" class="form-control" placeholder="Nhập mã coupon" value="${fn:escapeXml(appliedCouponCode)}">
                         <button type="submit" class="btn btn-primary">Áp dụng</button>

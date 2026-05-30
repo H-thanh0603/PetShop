@@ -176,22 +176,16 @@
                     <div class="sidebar-title">Danh mục</div>
                     <c:forEach items="${categories}" var="cat">
                         <c:if test="${(selectedPet == 'dog' && cat.contains('Chó')) || (selectedPet == 'cat' && cat.contains('Mèo')) || (empty selectedPet)}">
-                            <a href="javascript:void(0)"
-                               onclick="navigateWithFilters({category: '${cat}'})"
-                               class="filter-link ${selectedCategory == cat ? 'active' : ''}">${cat}</a>
+                            <a href="${pageContext.request.contextPath}/shop?category=${cat}" class="filter-link ${selectedCategory == cat ? 'active' : ''}">${cat}</a>
                         </c:if>
                     </c:forEach>
                 </div>
                 <div class="sidebar-section">
                     <div class="sidebar-title">Khoảng giá</div>
-                    <a href="javascript:void(0)" onclick="navigateWithFilters({priceRange: 'under100'})"
-                       class="filter-link ${selectedPriceRange == 'under100' ? 'active' : ''}">Dưới 100.000đ</a>
-                    <a href="javascript:void(0)" onclick="navigateWithFilters({priceRange: '100to300'})"
-                       class="filter-link ${selectedPriceRange == '100to300' ? 'active' : ''}">100.000đ - 300.000đ</a>
-                    <a href="javascript:void(0)" onclick="navigateWithFilters({priceRange: '300to500'})"
-                       class="filter-link ${selectedPriceRange == '300to500' ? 'active' : ''}">300.000đ - 500.000đ</a>
-                    <a href="javascript:void(0)" onclick="navigateWithFilters({priceRange: 'above500'})"
-                       class="filter-link ${selectedPriceRange == 'above500' ? 'active' : ''}">Trên 500.000đ</a>
+                    <a href="${pageContext.request.contextPath}/shop?priceRange=under100${not empty selectedPet ? '&pet='.concat(selectedPet) : ''}" class="filter-link ${selectedPriceRange == 'under100' ? 'active' : ''}">Dưới 100.000đ</a>
+                    <a href="${pageContext.request.contextPath}/shop?priceRange=100to300${not empty selectedPet ? '&pet='.concat(selectedPet) : ''}" class="filter-link ${selectedPriceRange == '100to300' ? 'active' : ''}">100.000đ - 300.000đ</a>
+                    <a href="${pageContext.request.contextPath}/shop?priceRange=300to500${not empty selectedPet ? '&pet='.concat(selectedPet) : ''}" class="filter-link ${selectedPriceRange == '300to500' ? 'active' : ''}">300.000đ - 500.000đ</a>
+                    <a href="${pageContext.request.contextPath}/shop?priceRange=above500${not empty selectedPet ? '&pet='.concat(selectedPet) : ''}" class="filter-link ${selectedPriceRange == 'above500' ? 'active' : ''}">Trên 500.000đ</a>
                 </div>
                 <div class="sidebar-section">
                     <div class="sidebar-title">Thương hiệu</div>
@@ -324,30 +318,10 @@
     <jsp:include page="/components/back-button.jsp" />
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script>
-        function navigateWithFilters(overrides) {
-            const url = new URL(window.location.href);
-            url.searchParams.delete('page');
-            for (const [key, value] of Object.entries(overrides)) {
-                if (value === null || value === '') {
-                    url.searchParams.delete(key);
-                } else {
-                    url.searchParams.set(key, value);
-                }
-            }
-            window.location.href = url.toString();
-        }
-
         function applySort(value) {
-            navigateWithFilters({ sort: value || null });
-        }
-        function applyBrand() {
             const url = new URL(window.location.href);
-            url.searchParams.delete('brand');
+            if (value) { url.searchParams.set('sort', value); } else { url.searchParams.delete('sort'); }
             url.searchParams.delete('page');
-
-            document.querySelectorAll('input[name="brand"]:checked').forEach(cb => {
-                url.searchParams.append('brand', cb.value);
-            });
             window.location.href = url.toString();
         }
         function applyBrand() {

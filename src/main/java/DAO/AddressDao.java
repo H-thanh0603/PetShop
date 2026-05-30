@@ -17,7 +17,7 @@ public class AddressDao {
         List<Address> list = new ArrayList<>();
         String sql = "SELECT * FROM addresses WHERE user_id = ? ORDER BY is_default DESC, created_at DESC";
 
-        try (Connection conn = new DBContext().getConnection();
+        try (Connection conn = DBContext.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
 
             ps.setInt(1, userId);

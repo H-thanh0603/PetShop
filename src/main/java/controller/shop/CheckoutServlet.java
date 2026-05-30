@@ -43,12 +43,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import services.InventoryService;
-import services.payment.BankTransferPaymentService;
-import services.payment.MomoPaymentService;
-import services.payment.PaymentGatewayInitResult;
-import services.payment.PaymentGatewayRequest;
-import services.payment.PaymentTransactionService;
-import services.payment.VnpayPaymentService;
 
 @WebServlet("/checkout")
 public class CheckoutServlet extends HttpServlet {
@@ -123,13 +117,6 @@ public class CheckoutServlet extends HttpServlet {
             return;
         }
 
-        paymentTransactionService.releaseExpiredPendingTransactions(user.getId());
-        user = refreshUserSession(session, user.getId());
-        if (user == null) {
-            response.sendRedirect(request.getContextPath() + "/login");
-            return;
-        }
-
         Map<Integer, CartItem> cart = loadLatestCartForUser(session, user);
         if (cart.isEmpty()) {
             response.sendRedirect(request.getContextPath() + "/shop");
@@ -180,11 +167,7 @@ public class CheckoutServlet extends HttpServlet {
         } else if (couponState.getMessage() != null) {
             request.setAttribute("couponMessage", couponState.getMessage());
         }
-        String checkoutPaymentMethod = trimToEmpty((String) session.getAttribute("checkoutPaymentMethod"));
-        if (checkoutPaymentMethod.isEmpty()) {
-            checkoutPaymentMethod = "COD";
-        }
-        request.setAttribute("checkoutPaymentMethod", checkoutPaymentMethod);
+
         request.getRequestDispatcher("/pages/shop/checkout.jsp").forward(request, response);
     }
 
@@ -197,10 +180,7 @@ public class CheckoutServlet extends HttpServlet {
         }
 
         session.setAttribute("checkoutNote", trimToEmpty(request.getParameter("note")));
-        String selectedPaymentMethod = normalizeRequestedPaymentMethod(request.getParameter("paymentMethod"));
-        if (!selectedPaymentMethod.isEmpty()) {
-            session.setAttribute("checkoutPaymentMethod", selectedPaymentMethod);
-        }
+
         CouponValidationResult validation = validateCouponForUser(
                 request.getParameter("couponCode"),
                 user
@@ -484,39 +464,6 @@ public class CheckoutServlet extends HttpServlet {
 
     private String trimToEmpty(String value) {
         return value == null ? "" : value.trim();
-    }
-    private PaymentSelection resolvePaymentMethod(String paymentMethod, double finalTotal) {
-        switch (trimToEmpty(paymentMethod).toUpperCase()) {
-            case "COD":
-                return PaymentSelection.valid("COD", false);
-            case "BANK_TRANSFER":
-                return PaymentSelection.valid("BANK_TRANSFER", false, buildBankTransferMessage(finalTotal));
-            default:
-                return PaymentSelection.invalid("Phương thức thanh toán không hợp lệ.");
-        }
-    }
-
-    private String buildBankTransferMessage(double finalTotal) {
-        String bankName = trimToEmpty(Util.SecretConfig.get("bank_transfer_bank_name"));
-        String accountNumber = trimToEmpty(Util.SecretConfig.get("bank_transfer_account_number"));
-        String accountName = trimToEmpty(Util.SecretConfig.get("bank_transfer_account_name"));
-
-        if (bankName.isEmpty() && accountNumber.isEmpty() && accountName.isEmpty()) {
-            return "Cho xac nhan chuyen khoan ngan hang.";
-        }
-
-        StringBuilder message = new StringBuilder("Cho chuyen khoan");
-        if (!bankName.isEmpty()) {
-            message.append(" - ").append(bankName);
-        }
-        if (!accountNumber.isEmpty()) {
-            message.append(" - STK ").append(accountNumber);
-        }
-        if (!accountName.isEmpty()) {
-            message.append(" - ").append(accountName);
-        }
-        message.append(" - So tien ").append(Math.round(finalTotal)).append(" VND.");
-        return message.toString();
     }
 
     private String resolvePaymentMethodKey(HttpServletRequest request) {

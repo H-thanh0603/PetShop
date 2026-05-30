@@ -159,14 +159,6 @@
     color: #6b7280;
     background: #f9fafb;
 }
-.star-icon:has(label:hover) label {
-    color: #ddd;
-}
-
-.star-icon label:hover,
-.star-icon label:hover ~ label {
-    color: #ffc107;
-}
 </style>
 <link href="${pageContext.request.contextPath}/assets/css/storefront-polish.css" rel="stylesheet">
 </head>

@@ -52,7 +52,7 @@ public class OrderDAO {
     }
 
     public int saveOrder(Connection conn, Order order) throws Exception {
-        String query = "INSERT INTO orders (user_id, fullname, phone, address, note, total_amount, status, payment_method, payment_status, payment_token, payment_provider_transaction_id, payment_message, createdAt) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+        String query = "INSERT INTO orders (user_id, fullname, phone, address, note, total_amount, status, payment_method, payment_status, createdAt) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
         try (PreparedStatement ps = conn.prepareStatement(query, Statement.RETURN_GENERATED_KEYS)) {
             ps.setInt(1, order.getUserId());
             ps.setString(2, order.getFullname());
@@ -63,10 +63,7 @@ public class OrderDAO {
             ps.setString(7, "Pending");
             ps.setString(8, order.getPayment_method());
             ps.setBoolean(9, order.getPayment_status());
-            ps.setString(10, order.getPaymentToken());
-            ps.setString(11, order.getPaymentProviderTransactionId());
-            ps.setString(12, order.getPaymentMessage());
-            ps.setTimestamp(13, order.getCreatedAt());
+            ps.setTimestamp(10, order.getCreatedAt());
 
             ps.executeUpdate();
             try (ResultSet rs = ps.getGeneratedKeys()) {
@@ -237,15 +234,6 @@ public class OrderDAO {
     }
 
     public Order getOrderById(int orderId) {
-        try (Connection conn = new DBContext().getConnection()) {
-            return getOrderById(conn, orderId);
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-        return null;
-    }
-
-    public Order getOrderById(Connection conn, int orderId) {
         String query = "SELECT * FROM orders WHERE id = ?";
         try (Connection conn = DBContext.getConnection();
              PreparedStatement ps = conn.prepareStatement(query)) {
@@ -401,71 +389,6 @@ public class OrderDAO {
             log.error("DB error", e);
         }
         return false;
-    }
-
-    public boolean updateStatus(Connection conn, int orderId, String status) throws Exception {
-        ProductDAO productDAO = new ProductDAO();
-        String lockOrderQuery = "SELECT status FROM orders WHERE id = ? FOR UPDATE";
-        String updateStatusQuery = "UPDATE orders SET status = ? WHERE id = ?";
-
-        String currentStatus = null;
-        try (PreparedStatement lockPs = conn.prepareStatement(lockOrderQuery)) {
-            lockPs.setInt(1, orderId);
-            try (ResultSet rs = lockPs.executeQuery()) {
-                if (rs.next()) {
-                    currentStatus = rs.getString("status");
-                }
-            }
-        }
-
-        if (currentStatus == null) {
-            return false;
-        }
-
-        boolean wasCancelled = "Cancelled".equalsIgnoreCase(currentStatus);
-        boolean willBeCancelled = "Cancelled".equalsIgnoreCase(status);
-
-        if (!wasCancelled && willBeCancelled) {
-            for (OrderItem item : getOrderItems(conn, orderId)) {
-                if (!productDAO.increaseStock(conn, item.getProductId(), item.getQuantity())) {
-                    return false;
-                }
-            }
-        } else if (wasCancelled && !willBeCancelled) {
-            for (OrderItem item : getOrderItems(conn, orderId)) {
-                if (!productDAO.decreaseStock(conn, item.getProductId(), item.getQuantity())) {
-                    return false;
-                }
-            }
-        }
-
-        try (PreparedStatement updatePs = conn.prepareStatement(updateStatusQuery)) {
-            updatePs.setString(1, status);
-            updatePs.setInt(2, orderId);
-            return updatePs.executeUpdate() > 0;
-        }
-    }
-
-    public boolean updatePaymentDetails(Connection conn, int orderId, boolean paymentStatus,
-                                        String paymentToken, String paymentProviderTransactionId,
-                                        String paymentMessage) throws Exception {
-        String query = """
-            UPDATE orders
-            SET payment_status = ?,
-                payment_token = ?,
-                payment_provider_transaction_id = ?,
-                payment_message = ?
-            WHERE id = ?
-        """;
-
-        try (PreparedStatement ps = conn.prepareStatement(query)) {
-            ps.setBoolean(1, paymentStatus);
-            ps.setString(2, paymentToken);
-            ps.setString(3, paymentProviderTransactionId);
-            ps.setString(4, paymentMessage);
-            ps.setInt(5, orderId);
-            return ps.executeUpdate() > 0;
-        }
     }
 
     public int countPendingOrders() {

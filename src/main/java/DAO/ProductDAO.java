@@ -839,26 +839,4 @@ public class ProductDAO {
             while (rs.next()) { list.add(mapProduct(rs)); }
         } catch (Exception e) { log.error("Error fetching out-of-stock products", e); } return list;
     }
-    // lay tat ca cac brand dang hoat dong ra lam filter
-        public List<String> getAllBrands() {
-            List<String> brands = new ArrayList<>();
-            String sql = "SELECT DISTINCT brand FROM products WHERE brand IS NOT NULL ORDER BY brand";
-
-            try (Connection conn = DBContext.getConnection();
-                 PreparedStatement ps = conn.prepareStatement(sql);
-                 ResultSet rs = ps.executeQuery()) {
-
-                while (rs.next()) {
-                    brands.add(rs.getString("brand"));
-                }
-
-            } catch (SQLException e) {
-                e.printStackTrace();
-            } catch (Exception e) {
-                throw new RuntimeException(e);
-            }
-
-            return brands;
-        }
-
 }

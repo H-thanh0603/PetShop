@@ -148,14 +148,6 @@ public class UserDAO {
             return ps.executeUpdate() > 0;
         }
     }
-
-    public boolean unmarkDiscountAsUsed(Connection conn, int userId) throws SQLException {
-        String query = "UPDATE users SET has_used_discount = 0 WHERE id = ?";
-        try (PreparedStatement ps = conn.prepareStatement(query)) {
-            ps.setInt(1, userId);
-            return ps.executeUpdate() > 0;
-        }
-    }
     
     public String getEmailByUserId(int userId) {
         User user = getUserById(userId);
