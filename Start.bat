@@ -6,26 +6,22 @@ echo   PetShop - Starting Tomcat 10 Server
 echo ========================================
 echo.
 
+set "JAVA_HOME=C:\Program Files\Java\jdk-21"
+
 if defined PETSHOP_TOMCAT_HOME (
     set "CATALINA_HOME=%PETSHOP_TOMCAT_HOME%"
 ) else (
-    set "CATALINA_HOME=E:\apache-tomcat-10.1.49-windows-x64\apache-tomcat-10.1.49"
+    set "CATALINA_HOME=D:\apache-tomcat-10.1.49"
 )
 
 set "PROJECT_ROOT=%~dp0"
 if "%PROJECT_ROOT:~-1%"=="\" set "PROJECT_ROOT=%PROJECT_ROOT:~0,-1%"
-set "WAR_FILE=%PROJECT_ROOT%\build\libs\PetShop.war"
-
-if defined PETSHOP_CONTEXT_PATH (
-    set "PETSHOP_CONTEXT_PATH_VALUE=%PETSHOP_CONTEXT_PATH%"
-) else (
-    set "PETSHOP_CONTEXT_PATH_VALUE=/PetShop"
-)
+set "WAR_FILE=%PROJECT_ROOT%\build\libs\ROOT.war"
 
 if defined PETSHOP_BASE_URL (
     set "PETSHOP_URL=%PETSHOP_BASE_URL%"
 ) else (
-    set "PETSHOP_URL=http://localhost:8080%PETSHOP_CONTEXT_PATH_VALUE%/home"
+    set "PETSHOP_URL=http://localhost:8080/home"
 )
 
 if not defined PETSHOP_OPEN_BROWSER (
@@ -61,11 +57,12 @@ if not exist "%WAR_FILE%" (
 echo.
 echo Step 2: Cleaning old deployment...
 if exist "%CATALINA_HOME%\bin\shutdown.bat" (
+    set "CATALINA_HOME=%CATALINA_HOME%"
     call "%CATALINA_HOME%\bin\shutdown.bat" >nul 2>&1
     timeout /t 3 /nobreak >nul
 )
-if exist "%CATALINA_HOME%\webapps\PetShop.war" del /f /q "%CATALINA_HOME%\webapps\PetShop.war"
-if exist "%CATALINA_HOME%\webapps\PetShop" rd /s /q "%CATALINA_HOME%\webapps\PetShop"
+if exist "%CATALINA_HOME%\webapps\ROOT.war" del /f /q "%CATALINA_HOME%\webapps\ROOT.war"
+if exist "%CATALINA_HOME%\webapps\ROOT" rd /s /q "%CATALINA_HOME%\webapps\ROOT"
 
 echo Step 3: Deploying new WAR file...
 copy /y "%WAR_FILE%" "%CATALINA_HOME%\webapps\"
