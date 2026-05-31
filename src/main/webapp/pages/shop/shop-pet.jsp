@@ -115,7 +115,10 @@
 <body>
     <jsp:include page="/components/navbar.jsp" />
     <jsp:include page="/components/toast.jsp" />
-    <c:set var="currentPageUrl" value="${pageContext.request.requestURI}${empty pageContext.request.queryString ? '' : '?'}${pageContext.request.queryString}" />
+    <c:if test="${empty currentPageUrl}">
+        <c:set var="currentPageUrl"
+               value="${pageContext.request.requestURI}${empty pageContext.request.queryString ? '' : '?'}${pageContext.request.queryString}" />
+    </c:if>
 
     <div class="container">
         <div class="breadcrumb-section">

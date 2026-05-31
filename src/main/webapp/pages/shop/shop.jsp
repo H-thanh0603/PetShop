@@ -92,13 +92,56 @@
         .filter-link { display: block; padding: 8px 0; color: #555; text-decoration: none; font-size: 0.9rem; transition: all 0.2s; border-left: 3px solid transparent; padding-left: 12px; }
         .filter-link:hover { color: #00bfa5; border-left-color: #00bfa5; padding-left: 16px; }
         .filter-link.active { color: #00bfa5; font-weight: 600; border-left-color: #00bfa5; }
+
+        /* ===== PRODUCT SLIDER ===== */
+        .slider-wrapper { position: relative; padding: 0 30px; }
+        .slider-arrow {
+            position: absolute;
+            top: 50%; transform: translateY(-50%);
+            z-index: 10;
+            background: #fff;
+            border: 2px solid #e0e0e0;
+            border-radius: 50%;
+            width: 44px; height: 44px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 1.5rem;
+            color: #333;
+            cursor: pointer;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            transition: all 0.2s;
+            outline: none;
+        }
+        .slider-arrow:hover:not(:disabled) {
+            background: #00bfa5; border-color: #00bfa5;
+            color: #fff; box-shadow: 0 4px 14px rgba(0,191,165,0.35);
+        }
+        .slider-arrow:disabled { opacity: 0.25; cursor: default; }
+        .slider-arrow.arrow-left  { left: -8px; }
+        .slider-arrow.arrow-right { right: -8px; }
+        .slider-track-outer { overflow: hidden; }
+        .slider-track {
+            display: flex;
+            gap: 16px;
+            transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+            will-change: transform;
+        }
+        .slider-item {
+            flex: 0 0 calc(25% - 12px);
+            min-width: 0;
+        }
+        @media (max-width: 991px)  { .slider-item { flex: 0 0 calc(33.333% - 11px); } }
+        @media (max-width: 767px)  { .slider-item { flex: 0 0 calc(50% - 8px); } }
     </style>
     <link href="${pageContext.request.contextPath}/assets/css/storefront-polish.css" rel="stylesheet">
 </head>
 <body>
     <jsp:include page="/components/navbar.jsp" />
     <jsp:include page="/components/toast.jsp" />
-    <c:set var="currentPageUrl" value="${pageContext.request.requestURI}${empty pageContext.request.queryString ? '' : '?'}${pageContext.request.queryString}" />
+
+    <c:if test="${empty currentPageUrl}">
+        <c:set var="currentPageUrl"
+               value="${pageContext.request.requestURI}${empty pageContext.request.queryString ? '' : '?'}${pageContext.request.queryString}" />
+    </c:if>
 
     <section class="shop-hero">
         <div class="container">
@@ -174,15 +217,9 @@
                             </div>
                             <div class="price mb-3">${fn:escapeXml(popularProducts[0].formattedPrice)}</div>
                             <c:choose>
-                                <c:when test="${popularProducts[0].stock <= 0}">
-                                    <div class="stock-pill stock-out">Hết hàng</div>
-                                </c:when>
-                                <c:when test="${popularProducts[0].stock < 10}">
-                                    <div class="stock-pill stock-low">Sắp hết: ${popularProducts[0].stock}</div>
-                                </c:when>
-                                <c:otherwise>
-                                    <div class="stock-pill stock-ok">Còn hàng: ${popularProducts[0].stock}</div>
-                                </c:otherwise>
+                                <c:when test="${popularProducts[0].stock <= 0}"><div class="stock-pill stock-out">Hết hàng</div></c:when>
+                                <c:when test="${popularProducts[0].stock < 10}"><div class="stock-pill stock-low">Sắp hết: ${popularProducts[0].stock}</div></c:when>
+                                <c:otherwise><div class="stock-pill stock-ok">Còn hàng: ${popularProducts[0].stock}</div></c:otherwise>
                             </c:choose>
                         </div>
                         <div class="text-center">
@@ -216,15 +253,9 @@
                                             <span class="price">${fn:escapeXml(p.formattedPrice)}</span>
                                             <c:if test="${p.discount > 0}"><span class="old-price">${fn:escapeXml(p.formattedOldPrice)}</span></c:if>
                                             <c:choose>
-                                                <c:when test="${p.stock <= 0}">
-                                                    <div class="stock-pill stock-out">Hết hàng</div>
-                                                </c:when>
-                                                <c:when test="${p.stock < 10}">
-                                                    <div class="stock-pill stock-low">Sắp hết: ${p.stock}</div>
-                                                </c:when>
-                                                <c:otherwise>
-                                                    <div class="stock-pill stock-ok">Còn hàng: ${p.stock}</div>
-                                                </c:otherwise>
+                                                <c:when test="${p.stock <= 0}"><div class="stock-pill stock-out">Hết hàng</div></c:when>
+                                                <c:when test="${p.stock < 10}"><div class="stock-pill stock-low">Sắp hết: ${p.stock}</div></c:when>
+                                                <c:otherwise><div class="stock-pill stock-ok">Còn hàng: ${p.stock}</div></c:otherwise>
                                             </c:choose>
                                         </div>
                                         <div class="product-actions">
@@ -252,64 +283,81 @@
             </div>
         </div>
 
+
         <c:if test="${not empty discountProducts}">
             <div class="section-header d-flex justify-content-between align-items-center mt-5">
                 <h2><i class='bx bxs-discount' style="color: #00bfa5;"></i> Đang Giảm Giá</h2>
                 <a href="${pageContext.request.contextPath}/shop?discountOnly=true">Xem tất cả <i class='bx bx-right-arrow-alt'></i></a>
             </div>
-            <div class="row g-3 mb-3">
-                <c:forEach items="${discountProducts}" var="p">
-                    <div class="col-6 col-md-4 col-lg-3">
-                        <div class="product-card">
-                            <div class="img-wrap">
-                                <span class="badge-sale">-${p.discount}%</span>
-                                <a href="${pageContext.request.contextPath}/product-detail?id=${p.id}">
-                                    <c:set var="productImageUrl" value="${fn:startsWith(p.image, 'http') ? p.image : pageContext.request.contextPath}${fn:startsWith(p.image, 'http') ? '' : '/assets/images/shop_pic/'}${fn:startsWith(p.image, 'http') ? '' : p.image}${fn:startsWith(p.image, 'http') ? '' : '?v=real-products-1'}" />
-                                    <img loading="lazy" src="${fn:escapeXml(productImageUrl)}" alt="${fn:escapeXml(p.name)}" onerror="this.src='https://placehold.co/200x200/f9f9f9/999?text=PetShop'">
-                                </a>
-                            </div>
-                            <div class="info">
-                                <div class="cat-label">${fn:escapeXml(p.category)}</div>
-                                <div class="name"><a href="${pageContext.request.contextPath}/product-detail?id=${p.id}">${fn:escapeXml(p.name)}</a></div>
-                                <div class="rating-line"><i class='bx bxs-star'></i> ${p.formattedAverageRating} <span class="muted">(${p.reviewCount} đánh giá)</span></div>
-                                <div class="d-flex justify-content-between align-items-start">
-                                    <div>
-                                        <span class="price">${fn:escapeXml(p.formattedPrice)}</span>
-                                        <span class="old-price">${fn:escapeXml(p.formattedOldPrice)}</span>
-                                        <c:choose>
-                                            <c:when test="${p.stock <= 0}">
-                                                <div class="stock-pill stock-out">Hết hàng</div>
-                                            </c:when>
-                                            <c:when test="${p.stock < 10}">
-                                                <div class="stock-pill stock-low">Sắp hết: ${p.stock}</div>
-                                            </c:when>
-                                            <c:otherwise>
-                                                <div class="stock-pill stock-ok">Còn hàng: ${p.stock}</div>
-                                            </c:otherwise>
-                                        </c:choose>
+
+            <%-- Wrapper slider: nút trái + track cuộn + nút phải --%>
+            <div class="slider-wrapper mb-4">
+
+                <%-- Nút mũi tên TRÁI --%>
+                <button class="slider-arrow arrow-left" id="discSliderPrev"
+                        onclick="discSlider(-1)" aria-label="Sản phẩm trước" disabled>
+                    <i class='bx bx-chevron-left'></i>
+                </button>
+
+                <%-- Vùng cuộn (overflow hidden) --%>
+                <div class="slider-track-outer">
+                    <div class="slider-track" id="discSliderTrack">
+                        <c:forEach items="${discountProducts}" var="p">
+                            <div class="slider-item">
+                                <div class="product-card">
+                                    <div class="img-wrap">
+                                        <span class="badge-sale">-${p.discount}%</span>
+                                        <a href="${pageContext.request.contextPath}/product-detail?id=${p.id}">
+                                            <c:set var="productImageUrl" value="${fn:startsWith(p.image, 'http') ? p.image : pageContext.request.contextPath}${fn:startsWith(p.image, 'http') ? '' : '/assets/images/shop_pic/'}${fn:startsWith(p.image, 'http') ? '' : p.image}${fn:startsWith(p.image, 'http') ? '' : '?v=real-products-1'}" />
+                                            <img loading="lazy" src="${fn:escapeXml(productImageUrl)}" alt="${fn:escapeXml(p.name)}" onerror="this.src='https://placehold.co/200x200/f9f9f9/999?text=PetShop'">
+                                        </a>
                                     </div>
-                                    <div class="product-actions">
-                                        <form action="${pageContext.request.contextPath}/toggle-wishlist" method="post">
-                                            <input type="hidden" name="csrfToken" value="${csrfToken}">
-                                            <input type="hidden" name="productId" value="${p.id}">
-                                            <input type="hidden" name="redirect" value="${currentPageUrl}">
-                                            <button type="submit" class="btn-wishlist ${p.wishlisted ? 'active' : ''}" title="Yêu thích">
-                                                <i class='bx ${p.wishlisted ? 'bxs-heart' : 'bx-heart'}'></i>
-                                            </button>
-                                        </form>
-                                        <form action="${pageContext.request.contextPath}/add-to-cart" method="post">
-                                            <input type="hidden" name="csrfToken" value="${csrfToken}">
-                                            <input type="hidden" name="id" value="${p.id}">
-                                            <input type="hidden" name="quantity" value="1">
-                                            <button type="submit" class="btn-cart" <c:if test="${p.stock <= 0}">disabled="disabled"</c:if>><i class='bx bx-cart-add'></i></button>
-                                        </form>
+                                    <div class="info">
+                                        <div class="cat-label">${fn:escapeXml(p.category)}</div>
+                                        <div class="name"><a href="${pageContext.request.contextPath}/product-detail?id=${p.id}">${fn:escapeXml(p.name)}</a></div>
+                                        <div class="rating-line"><i class='bx bxs-star'></i> ${p.formattedAverageRating} <span class="muted">(${p.reviewCount} đánh giá)</span></div>
+                                        <div class="d-flex justify-content-between align-items-start">
+                                            <div>
+                                                <span class="price">${fn:escapeXml(p.formattedPrice)}</span>
+                                                <span class="old-price">${fn:escapeXml(p.formattedOldPrice)}</span>
+                                                <c:choose>
+                                                    <c:when test="${p.stock <= 0}"><div class="stock-pill stock-out">Hết hàng</div></c:when>
+                                                    <c:when test="${p.stock < 10}"><div class="stock-pill stock-low">Sắp hết: ${p.stock}</div></c:when>
+                                                    <c:otherwise><div class="stock-pill stock-ok">Còn hàng: ${p.stock}</div></c:otherwise>
+                                                </c:choose>
+                                            </div>
+                                            <div class="product-actions">
+                                                <form action="${pageContext.request.contextPath}/toggle-wishlist" method="post">
+                                                    <input type="hidden" name="csrfToken" value="${csrfToken}">
+                                                    <input type="hidden" name="productId" value="${p.id}">
+                                                    <input type="hidden" name="redirect" value="${currentPageUrl}">
+                                                    <button type="submit" class="btn-wishlist ${p.wishlisted ? 'active' : ''}" title="Yêu thích">
+                                                        <i class='bx ${p.wishlisted ? 'bxs-heart' : 'bx-heart'}'></i>
+                                                    </button>
+                                                </form>
+                                                <form action="${pageContext.request.contextPath}/add-to-cart" method="post">
+                                                    <input type="hidden" name="csrfToken" value="${csrfToken}">
+                                                    <input type="hidden" name="id" value="${p.id}">
+                                                    <input type="hidden" name="quantity" value="1">
+                                                    <button type="submit" class="btn-cart" <c:if test="${p.stock <= 0}">disabled="disabled"</c:if>><i class='bx bx-cart-add'></i></button>
+                                                </form>
+                                            </div>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
-                        </div>
-                    </div>
-                </c:forEach>
-            </div>
+                        </c:forEach>
+                    </div><%-- /slider-track --%>
+                </div><%-- /slider-track-outer --%>
+
+                <%-- Nút mũi tên PHẢI --%>
+                <button class="slider-arrow arrow-right" id="discSliderNext"
+                        onclick="discSlider(1)" aria-label="Sản phẩm tiếp theo">
+                    <i class='bx bx-chevron-right'></i>
+                </button>
+
+            </div><%-- /slider-wrapper --%>
+
             <c:if test="${saleTotalPages > 1}">
                 <div class="shop-pagination mb-5">
                     <a href="${pageContext.request.contextPath}/shop?salePage=${salePage - 1}&catalogPage=${catalogPage}" class="${salePage <= 1 ? 'disabled' : ''}"><i class='bx bx-chevron-left'></i></a>
@@ -382,103 +430,152 @@
                     <div class="row g-3 mb-3">
                         <c:forEach items="${catalogProducts}" var="p">
                             <div class="col-6 col-md-4 col-lg-4">
-                        <div class="product-card">
-                            <div class="img-wrap">
-                                <c:if test="${p.discount > 0}"><span class="badge-sale">-${p.discount}%</span></c:if>
-                                <a href="${pageContext.request.contextPath}/product-detail?id=${p.id}">
-                                    <c:set var="productImageUrl" value="${fn:startsWith(p.image, 'http') ? p.image : pageContext.request.contextPath}${fn:startsWith(p.image, 'http') ? '' : '/assets/images/shop_pic/'}${fn:startsWith(p.image, 'http') ? '' : p.image}${fn:startsWith(p.image, 'http') ? '' : '?v=real-products-1'}" />
-                                    <img loading="lazy" src="${fn:escapeXml(productImageUrl)}" alt="${fn:escapeXml(p.name)}" onerror="this.src='https://placehold.co/200x200/f9f9f9/999?text=PetShop'">
-                                </a>
-                            </div>
-                            <div class="info">
-                                <div class="cat-label">${fn:escapeXml(p.category)}</div>
-                                <div class="name"><a href="${pageContext.request.contextPath}/product-detail?id=${p.id}">${fn:escapeXml(p.name)}</a></div>
-                                <div class="rating-line"><i class='bx bxs-star'></i> ${p.formattedAverageRating} <span class="muted">(${p.reviewCount} đánh giá)</span></div>
-                                <div class="d-flex justify-content-between align-items-start">
-                                    <div>
-                                        <span class="price">${fn:escapeXml(p.formattedPrice)}</span>
-                                        <c:if test="${p.discount > 0}"><span class="old-price">${fn:escapeXml(p.formattedOldPrice)}</span></c:if>
-                                        <c:choose>
-                                            <c:when test="${p.stock <= 0}">
-                                                <div class="stock-pill stock-out">Hết hàng</div>
-                                            </c:when>
-                                            <c:when test="${p.stock < 10}">
-                                                <div class="stock-pill stock-low">Sắp hết: ${p.stock}</div>
-                                            </c:when>
-                                            <c:otherwise>
-                                                <div class="stock-pill stock-ok">Còn hàng: ${p.stock}</div>
-                                            </c:otherwise>
-                                        </c:choose>
+                                <div class="product-card">
+                                    <div class="img-wrap">
+                                        <c:if test="${p.discount > 0}"><span class="badge-sale">-${p.discount}%</span></c:if>
+                                        <a href="${pageContext.request.contextPath}/product-detail?id=${p.id}">
+                                            <c:set var="productImageUrl" value="${fn:startsWith(p.image, 'http') ? p.image : pageContext.request.contextPath}${fn:startsWith(p.image, 'http') ? '' : '/assets/images/shop_pic/'}${fn:startsWith(p.image, 'http') ? '' : p.image}${fn:startsWith(p.image, 'http') ? '' : '?v=real-products-1'}" />
+                                            <img loading="lazy" src="${fn:escapeXml(productImageUrl)}" alt="${fn:escapeXml(p.name)}" onerror="this.src='https://placehold.co/200x200/f9f9f9/999?text=PetShop'">
+                                        </a>
                                     </div>
-                                    <div class="product-actions">
-                                        <form action="${pageContext.request.contextPath}/toggle-wishlist" method="post">
-                                            <input type="hidden" name="csrfToken" value="${csrfToken}">
-                                            <input type="hidden" name="productId" value="${p.id}">
-                                            <input type="hidden" name="redirect" value="${currentPageUrl}">
-                                            <button type="submit" class="btn-wishlist ${p.wishlisted ? 'active' : ''}" title="Yêu thích">
-                                                <i class='bx ${p.wishlisted ? 'bxs-heart' : 'bx-heart'}'></i>
-                                            </button>
-                                        </form>
-                                        <form action="${pageContext.request.contextPath}/add-to-cart" method="post">
-                                            <input type="hidden" name="csrfToken" value="${csrfToken}">
-                                            <input type="hidden" name="id" value="${p.id}">
-                                            <input type="hidden" name="quantity" value="1">
-                                            <button type="submit" class="btn-cart" <c:if test="${p.stock <= 0}">disabled="disabled"</c:if>><i class='bx bx-cart-add'></i></button>
-                                        </form>
+                                    <div class="info">
+                                        <div class="cat-label">${fn:escapeXml(p.category)}</div>
+                                        <div class="name"><a href="${pageContext.request.contextPath}/product-detail?id=${p.id}">${fn:escapeXml(p.name)}</a></div>
+                                        <div class="rating-line"><i class='bx bxs-star'></i> ${p.formattedAverageRating} <span class="muted">(${p.reviewCount} đánh giá)</span></div>
+                                        <div class="d-flex justify-content-between align-items-start">
+                                            <div>
+                                                <span class="price">${fn:escapeXml(p.formattedPrice)}</span>
+                                                <c:if test="${p.discount > 0}"><span class="old-price">${fn:escapeXml(p.formattedOldPrice)}</span></c:if>
+                                                <c:choose>
+                                                    <c:when test="${p.stock <= 0}"><div class="stock-pill stock-out">Hết hàng</div></c:when>
+                                                    <c:when test="${p.stock < 10}"><div class="stock-pill stock-low">Sắp hết: ${p.stock}</div></c:when>
+                                                    <c:otherwise><div class="stock-pill stock-ok">Còn hàng: ${p.stock}</div></c:otherwise>
+                                                </c:choose>
+                                            </div>
+                                            <div class="product-actions">
+                                                <form action="${pageContext.request.contextPath}/toggle-wishlist" method="post">
+                                                    <input type="hidden" name="csrfToken" value="${csrfToken}">
+                                                    <input type="hidden" name="productId" value="${p.id}">
+                                                    <input type="hidden" name="redirect" value="${currentPageUrl}">
+                                                    <button type="submit" class="btn-wishlist ${p.wishlisted ? 'active' : ''}" title="Yêu thích">
+                                                        <i class='bx ${p.wishlisted ? 'bxs-heart' : 'bx-heart'}'></i>
+                                                    </button>
+                                                </form>
+                                                <form action="${pageContext.request.contextPath}/add-to-cart" method="post">
+                                                    <input type="hidden" name="csrfToken" value="${csrfToken}">
+                                                    <input type="hidden" name="id" value="${p.id}">
+                                                    <input type="hidden" name="quantity" value="1">
+                                                    <button type="submit" class="btn-cart" <c:if test="${p.stock <= 0}">disabled="disabled"</c:if>><i class='bx bx-cart-add'></i></button>
+                                                </form>
+                                            </div>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
-                        </div>
+                        </c:forEach>
                     </div>
-                </c:forEach>
-            </div>
-            <c:if test="${catalogTotalPages > 1}">
-                <div class="shop-pagination pb-2 mb-5">
-                    <a href="${pageContext.request.contextPath}/shop?catalogPage=${catalogPage - 1}&salePage=${salePage}" class="${catalogPage <= 1 ? 'disabled' : ''}"><i class='bx bx-chevron-left'></i></a>
-                    <c:choose>
-                        <c:when test="${catalogTotalPages <= 4}">
-                            <c:forEach begin="1" end="${catalogTotalPages}" var="i">
-                                <a href="${pageContext.request.contextPath}/shop?catalogPage=${i}&salePage=${salePage}" class="${catalogPage == i ? 'active' : ''}">${i}</a>
-                            </c:forEach>
-                        </c:when>
-                        <c:otherwise>
+                    <c:if test="${catalogTotalPages > 1}">
+                        <div class="shop-pagination pb-2 mb-5">
+                            <a href="${pageContext.request.contextPath}/shop?catalogPage=${catalogPage - 1}&salePage=${salePage}" class="${catalogPage <= 1 ? 'disabled' : ''}"><i class='bx bx-chevron-left'></i></a>
                             <c:choose>
-                                <c:when test="${catalogPage <= 2}">
-                                    <c:forEach begin="1" end="3" var="i">
-                                        <a href="${pageContext.request.contextPath}/shop?catalogPage=${i}&salePage=${salePage}" class="${catalogPage == i ? 'active' : ''}">${i}</a>
-                                    </c:forEach>
-                                    <span class="disabled">...</span>
-                                    <a href="${pageContext.request.contextPath}/shop?catalogPage=${catalogTotalPages}&salePage=${salePage}">${catalogTotalPages}</a>
-                                </c:when>
-                                <c:when test="${catalogPage >= catalogTotalPages - 1}">
-                                    <a href="${pageContext.request.contextPath}/shop?catalogPage=1&salePage=${salePage}">1</a>
-                                    <span class="disabled">...</span>
-                                    <c:forEach begin="${catalogTotalPages - 2}" end="${catalogTotalPages}" var="i">
+                                <c:when test="${catalogTotalPages <= 4}">
+                                    <c:forEach begin="1" end="${catalogTotalPages}" var="i">
                                         <a href="${pageContext.request.contextPath}/shop?catalogPage=${i}&salePage=${salePage}" class="${catalogPage == i ? 'active' : ''}">${i}</a>
                                     </c:forEach>
                                 </c:when>
                                 <c:otherwise>
-                                    <a href="${pageContext.request.contextPath}/shop?catalogPage=1&salePage=${salePage}">1</a>
-                                    <span class="disabled">...</span>
-                                    <a href="${pageContext.request.contextPath}/shop?catalogPage=${catalogPage}&salePage=${salePage}" class="active">${catalogPage}</a>
-                                    <span class="disabled">...</span>
-                                    <a href="${pageContext.request.contextPath}/shop?catalogPage=${catalogTotalPages}&salePage=${salePage}">${catalogTotalPages}</a>
+                                    <c:choose>
+                                        <c:when test="${catalogPage <= 2}">
+                                            <c:forEach begin="1" end="3" var="i">
+                                                <a href="${pageContext.request.contextPath}/shop?catalogPage=${i}&salePage=${salePage}" class="${catalogPage == i ? 'active' : ''}">${i}</a>
+                                            </c:forEach>
+                                            <span class="disabled">...</span>
+                                            <a href="${pageContext.request.contextPath}/shop?catalogPage=${catalogTotalPages}&salePage=${salePage}">${catalogTotalPages}</a>
+                                        </c:when>
+                                        <c:when test="${catalogPage >= catalogTotalPages - 1}">
+                                            <a href="${pageContext.request.contextPath}/shop?catalogPage=1&salePage=${salePage}">1</a>
+                                            <span class="disabled">...</span>
+                                            <c:forEach begin="${catalogTotalPages - 2}" end="${catalogTotalPages}" var="i">
+                                                <a href="${pageContext.request.contextPath}/shop?catalogPage=${i}&salePage=${salePage}" class="${catalogPage == i ? 'active' : ''}">${i}</a>
+                                            </c:forEach>
+                                        </c:when>
+                                        <c:otherwise>
+                                            <a href="${pageContext.request.contextPath}/shop?catalogPage=1&salePage=${salePage}">1</a>
+                                            <span class="disabled">...</span>
+                                            <a href="${pageContext.request.contextPath}/shop?catalogPage=${catalogPage}&salePage=${salePage}" class="active">${catalogPage}</a>
+                                            <span class="disabled">...</span>
+                                            <a href="${pageContext.request.contextPath}/shop?catalogPage=${catalogTotalPages}&salePage=${salePage}">${catalogTotalPages}</a>
+                                        </c:otherwise>
+                                    </c:choose>
                                 </c:otherwise>
                             </c:choose>
-                        </c:otherwise>
-                    </c:choose>
-                    <a href="${pageContext.request.contextPath}/shop?catalogPage=${catalogPage + 1}&salePage=${salePage}" class="${catalogPage >= catalogTotalPages ? 'disabled' : ''}"><i class='bx bx-chevron-right'></i></a>
+                            <a href="${pageContext.request.contextPath}/shop?catalogPage=${catalogPage + 1}&salePage=${salePage}" class="${catalogPage >= catalogTotalPages ? 'disabled' : ''}"><i class='bx bx-chevron-right'></i></a>
+                        </div>
+                    </c:if>
                 </div>
-            </c:if>
             </div>
-        </div>
         </c:if>
     </div>
 
     <div style="padding-bottom: 60px;"></div>
-
     <jsp:include page="/components/footer.jsp" />
     <jsp:include page="/components/back-button.jsp" />
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+    <script>
+    // ===== PRODUCT SLIDER - Đang Giảm Giá =====
+    (function () {
+        var track   = document.getElementById('discSliderTrack');
+        var btnPrev = document.getElementById('discSliderPrev');
+        var btnNext = document.getElementById('discSliderNext');
+        if (!track || !btnPrev || !btnNext) return;
+
+        var currentIndex = 0;
+
+        // Số card hiển thị cùng lúc tuỳ theo màn hình
+        function getVisibleCount() {
+            if (window.innerWidth >= 992) return 4;
+            if (window.innerWidth >= 768) return 3;
+            return 2;
+        }
+
+        function getTotalItems() {
+            return track.querySelectorAll('.slider-item').length;
+        }
+
+        function updateSlider() {
+            var visible  = getVisibleCount();
+            var total    = getTotalItems();
+            var maxIndex = Math.max(0, total - visible);
+
+            // Clamp index khi resize thu nhỏ màn hình
+            if (currentIndex > maxIndex) currentIndex = maxIndex;
+
+            // Tính pixel offset dựa trên width thực của 1 item + gap (16px)
+            var firstItem = track.querySelector('.slider-item');
+            var itemWidth = firstItem ? (firstItem.offsetWidth + 16) : 0;
+            track.style.transform = 'translateX(-' + (currentIndex * itemWidth) + 'px)';
+
+            // Ẩn/disable nút khi ở đầu hoặc cuối
+            btnPrev.disabled = (currentIndex <= 0);
+            btnNext.disabled = (currentIndex >= maxIndex);
+        }
+
+        // Gọi khi bấm nút: dir = -1 (trái) hoặc +1 (phải)
+        window.discSlider = function (dir) {
+            var visible  = getVisibleCount();
+            var total    = getTotalItems();
+            var maxIndex = Math.max(0, total - visible);
+            currentIndex = Math.min(Math.max(currentIndex + dir, 0), maxIndex);
+            updateSlider();
+        };
+
+        // Cập nhật lại khi resize trình duyệt
+        window.addEventListener('resize', updateSlider);
+
+        // Khởi tạo lần đầu
+        updateSlider();
+    })();
+    </script>
 </body>
 </html>

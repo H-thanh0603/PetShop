@@ -97,6 +97,12 @@ public class ShopServlet extends HttpServlet {
             request.setAttribute("saleTotalPages", getTotalPages(discountTotal, PAGE_SIZE));
             request.setAttribute("catalogTotalPages", getTotalPages(catalogTotal, PAGE_SIZE));
             request.setAttribute("totalProducts", catalogTotal);
+
+
+            String currentPageUrl = request.getRequestURI()
+                    + (request.getQueryString() != null ? "?" + request.getQueryString() : "");
+            request.setAttribute("currentPageUrl", currentPageUrl);
+
             request.getRequestDispatcher("/pages/shop/shop.jsp").forward(request, response);
             return;
         }
@@ -128,6 +134,11 @@ public class ShopServlet extends HttpServlet {
         request.setAttribute("discountProducts", discountProducts);
         List<String> allBrands = productDao.getAllBrands();
         request.setAttribute("brands", allBrands);
+
+        String currentPageUrl = request.getRequestURI()
+                + (request.getQueryString() != null ? "?" + request.getQueryString() : "");
+        request.setAttribute("currentPageUrl", currentPageUrl);
+
         request.getRequestDispatcher("/pages/shop/shop-pet.jsp").forward(request, response);
     }
 
@@ -162,16 +173,12 @@ public class ShopServlet extends HttpServlet {
     }
 
     private int getTotalPages(int totalItems, int pageSize) {
-        if (totalItems <= 0) {
-            return 1;
-        }
+        if (totalItems <= 0) return 1;
         return (int) Math.ceil((double) totalItems / pageSize);
     }
 
     private void markWishlisted(List<Product> products, Set<Integer> wishlistProductIds) {
-        if (products == null || wishlistProductIds == null || wishlistProductIds.isEmpty()) {
-            return;
-        }
+        if (products == null || wishlistProductIds == null || wishlistProductIds.isEmpty()) return;
         for (Product product : products) {
             product.setWishlisted(wishlistProductIds.contains(product.getId()));
         }
@@ -182,17 +189,13 @@ public class ShopServlet extends HttpServlet {
     }
 
     private String trimToNull(String value) {
-        if (!hasText(value)) {
-            return null;
-        }
+        if (!hasText(value)) return null;
         return value.trim();
     }
 
     private String trimAndClamp(String value, int maxLength) {
         String trimmed = trimToNull(value);
-        if (trimmed == null) {
-            return null;
-        }
+        if (trimmed == null) return null;
         return trimmed.substring(0, Math.min(trimmed.length(), maxLength));
     }
 }
