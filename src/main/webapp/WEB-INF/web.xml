@@ -3,4 +3,83 @@
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="https://jakarta.ee/xml/ns/jakartaee https://jakarta.ee/xml/ns/jakartaee/web-app_6_0.xsd"
          version="6.0">
+
+    <filter>
+        <filter-name>RateLimitFilter</filter-name>
+        <filter-class>controller.filter.RateLimitFilter</filter-class>
+    </filter>
+    <filter>
+        <filter-name>AdminAuthFilter</filter-name>
+        <filter-class>controller.filter.AdminAuthFilter</filter-class>
+    </filter>
+    <filter>
+        <filter-name>CsrfFilter</filter-name>
+        <filter-class>controller.filter.CsrfFilter</filter-class>
+    </filter>
+    <filter>
+        <filter-name>StaticAssetCacheFilter</filter-name>
+        <filter-class>controller.filter.StaticAssetCacheFilter</filter-class>
+    </filter>
+    <filter>
+        <filter-name>CookieAttributeFilter</filter-name>
+        <filter-class>controller.filter.CookieAttributeFilter</filter-class>
+    </filter>
+
+    <filter-mapping>
+        <filter-name>RateLimitFilter</filter-name>
+        <url-pattern>/*</url-pattern>
+    </filter-mapping>
+    <filter-mapping>
+        <filter-name>AdminAuthFilter</filter-name>
+        <url-pattern>/pages/admin/*</url-pattern>
+    </filter-mapping>
+    <filter-mapping>
+        <filter-name>AdminAuthFilter</filter-name>
+        <url-pattern>/admin/*</url-pattern>
+    </filter-mapping>
+    <filter-mapping>
+        <filter-name>CsrfFilter</filter-name>
+        <url-pattern>/*</url-pattern>
+    </filter-mapping>
+    <filter-mapping>
+        <filter-name>StaticAssetCacheFilter</filter-name>
+        <url-pattern>/assets/*</url-pattern>
+    </filter-mapping>
+    <filter-mapping>
+        <filter-name>CookieAttributeFilter</filter-name>
+        <url-pattern>/*</url-pattern>
+    </filter-mapping>
+
+    <session-config>
+        <session-timeout>30</session-timeout>
+        <cookie-config>
+            <http-only>true</http-only>
+        </cookie-config>
+    </session-config>
+
+    <error-page>
+        <error-code>404</error-code>
+        <location>/pages/error/404.jsp</location>
+    </error-page>
+    <error-page>
+        <error-code>500</error-code>
+        <location>/pages/error/500.jsp</location>
+    </error-page>
+    <error-page>
+        <exception-type>java.lang.Throwable</exception-type>
+        <location>/pages/error/500.jsp</location>
+    </error-page>
+
+    <!-- NOTE: Enable this block only on production with a real SSL certificate.
+         Forcing HTTPS on localhost (no SSL cert) will cause "Unable to connect" errors.
+    <security-constraint>
+        <web-resource-collection>
+            <web-resource-name>Entire Application</web-resource-name>
+            <url-pattern>/*</url-pattern>
+        </web-resource-collection>
+        <user-data-constraint>
+            <transport-guarantee>CONFIDENTIAL</transport-guarantee>
+        </user-data-constraint>
+    </security-constraint>
+    -->
 </web-app>

@@ -1,4 +1,5 @@
 <%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
+<%@ taglib prefix="fn" uri="jakarta.tags.functions" %>
 <%@ taglib prefix="c" uri="jakarta.tags.core" %>
 <c:if test="${not empty sessionScope.success}">
     <c:set var="success" value="${sessionScope.success}" scope="request"/>
@@ -125,6 +126,26 @@
             color: white;
             transform: translateY(-5px);
         }
+        .social-item.disabled{
+            opacity: .45;
+            cursor: not-allowed;
+            pointer-events: none;
+        }
+        .social-item a{
+            color: inherit;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            text-decoration: none;
+            width: 100%;
+            height: 100%;
+        }
+        .social-help {
+            margin-top: 8px;
+            text-align: center;
+            font-size: .85rem;
+            color: #6c757d;
+        }
     </style>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
 </head>
@@ -134,7 +155,22 @@
         
         <jsp:include page="/components/alerts.jsp" />
         
+        <c:if test="${not empty unverifiedEmail}">
+            <div class="alert alert-warning d-flex align-items-center gap-2 mb-3" style="border-radius:10px;">
+                <i class='bx bx-envelope' style="font-size:1.3rem;"></i>
+                <div>
+                    Email chưa được xác thực.
+                    <form action="${pageContext.request.contextPath}/verify-email" method="post" class="d-inline">
+                        <input type="hidden" name="csrfToken" value="${csrfToken}" />
+                        <input type="hidden" name="email" value="${unverifiedEmail}">
+                        <button type="submit" class="btn btn-sm btn-warning ms-2 fw-bold">Gửi lại email xác thực</button>
+                    </form>
+                </div>
+            </div>
+        </c:if>
+        
         <form method="post" action="${pageContext.request.contextPath}/login">
+            <input type="hidden" name="csrfToken" value="${csrfToken}" />
             <div class="mb-3">
                 <label class="form-label fw-bold">Email</label>
                 <div class="input-group">
@@ -148,7 +184,7 @@
                     </span>
                 </div>
                 <c:if test="${not empty errors.email}">
-                    <div class="invalid-feedback">${errors.email}</div>
+                    <div class="invalid-feedback">${fn:escapeXml(errors.email)}</div>
                 </c:if>
             </div>
             
@@ -164,7 +200,7 @@
                     </span>
                 </div>
                 <c:if test="${not empty errors.password}">
-                    <div class="invalid-feedback">${errors.password}</div>
+                    <div class="invalid-feedback">${fn:escapeXml(errors.password)}</div>
                 </c:if>
             </div>
             
@@ -184,17 +220,24 @@
             </button>
 <%--            login by gg and fb--%>
             <div class="social-login">
-                <div class="social-item google" title="Login by google">
-                    <a href="https://accounts.google.com/o/oauth2/auth?scope=email profile openid&redirect_uri=http://localhost:8080/PetShop_war/LoginByGoogleServlet&response_type=code&client_id=875562698779-ahopbc7kehsmb02gvpi4r9rhb2o8309q.apps.googleusercontent.com&approval_prompt=force">
+                <div class="social-item google ${not googleLoginEnabled ? 'disabled' : ''}"
+                     title="${googleLoginEnabled ? 'Login by google' : 'Google login chưa cấu hình'}">
+                    <a href="${googleAuthUrl}">
                         <i class="bi bi-google"></i>
                     </a>
                 </div>
-                <div class="social-item facebook" title="Login by facebook">
-                    <a href="https://www.facebook.com/v19.0/dialog/oauth?client_id=1485991816200631&redirect_uri=http://localhost:8080/PetShop_war/LoginByFacebookServlet&scope=email,public_profile">
+                <div class="social-item facebook ${not facebookLoginEnabled ? 'disabled' : ''}"
+                     title="${facebookLoginEnabled ? 'Login by facebook' : 'Facebook login chưa cấu hình'}">
+                    <a href="${facebookAuthUrl}">
                         <i class="bi bi-facebook"></i>
                     </a>
                 </div>
             </div>
+            <c:if test="${not googleLoginEnabled or not facebookLoginEnabled}">
+                <div class="social-help">
+                    Một số đăng nhập mạng xã hội chưa được cấu hình trên máy này.
+                </div>
+            </c:if>
 
             <div class="text-center">
                 <p class="mb-2">Chưa có tài khoản? <a href="${pageContext.request.contextPath}/register" class="text-decoration-none">Đăng ký ngay</a></p>

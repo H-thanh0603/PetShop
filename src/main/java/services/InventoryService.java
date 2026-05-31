@@ -36,6 +36,37 @@ public class InventoryService {
         }
     }
 
+    /**
+     * Refresh cart products and return names of removed products for notification.
+     */
+    public List<String> refreshCartProductsWithNotification(Map<Integer, CartItem> cart) {
+        List<String> removedNames = new ArrayList<>();
+        if (cart == null || cart.isEmpty()) {
+            return removedNames;
+        }
+
+        List<Integer> removedProductIds = new ArrayList<>();
+        for (Map.Entry<Integer, CartItem> entry : cart.entrySet()) {
+            Product latestProduct = productDAO.getProductById(entry.getKey());
+
+            if (latestProduct == null || latestProduct.getStock() <= 0) {
+                String name = entry.getValue().getProduct() != null
+                        ? entry.getValue().getProduct().getName()
+                        : "Sản phẩm #" + entry.getKey();
+                removedNames.add(name);
+                removedProductIds.add(entry.getKey());
+                continue;
+            }
+
+            entry.getValue().setProduct(latestProduct);
+        }
+
+        for (Integer removedProductId : removedProductIds) {
+            cart.remove(removedProductId);
+        }
+        return removedNames;
+    }
+
     public StockValidationResult validateAddToCart(Map<Integer, CartItem> cart, int productId, int quantityToAdd) {
         Product latestProduct = productDAO.getProductById(productId);
         if (latestProduct == null) {

@@ -45,4 +45,9 @@ public class PasswordUtil {
     public static boolean isHashed(String password) {
         return password != null && password.matches("^\\$2[aby]\\$\\d{2}\\$.{53}$");
     }
+
+    public static boolean isStrongPassword(String password) {
+        return password != null
+                && password.matches("^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)(?=.*[^A-Za-z0-9\\s]).{8,}$");
+    }
 }

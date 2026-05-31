@@ -1,6 +1,7 @@
 <%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
 <%@ taglib uri="jakarta.tags.core" prefix="c" %>
 <%@ taglib uri="jakarta.tags.fmt" prefix="fmt" %>
+<%@ taglib uri="jakarta.tags.functions" prefix="fn" %>
 
 <c:set var="totalAmount" value="0" />
 <%-- Chỉ tính giỏ hàng khi user đã đăng nhập --%>
@@ -21,6 +22,9 @@
     
     <style>
         body { background-color: #f8f9fa; font-family: 'Segoe UI', sans-serif; }
+        .cart-hero { background: linear-gradient(135deg, #0b1a33, #1d4f7a); color: #fff; border-radius: 20px; padding: 26px 28px; margin-bottom: 24px; box-shadow: 0 16px 30px rgba(11,26,51,.14); }
+        .cart-hero p { margin: 8px 0 0; opacity: .82; }
+        .cart-tip { background: #eef6ff; border: 1px solid #cfe2ff; border-radius: 14px; padding: 14px 16px; color: #1e3a5f; font-size: .95rem; margin-bottom: 18px; }
         .cart-title { color: #10314d; font-weight: 700; text-transform: uppercase; font-size: 1.8rem; margin-bottom: 30px; border-bottom: 2px solid #e0e0e0; padding-bottom: 15px; }
         .table-cart { background: white; border-radius: 10px; box-shadow: 0 5px 20px rgba(0,0,0,0.05); overflow: hidden; width: 100%; border-collapse: separate; border-spacing: 0; }
         .table-cart thead { background-color: #10314d; color: white; }
@@ -49,6 +53,7 @@
         .btn-confirm-delete { background: linear-gradient(135deg, #dc3545 0%, #b91c1c 100%); color: white; border: none; padding: 12px 30px; border-radius: 50px; font-weight: 600; transition: 0.3s; }
         .btn-confirm-delete:hover { background: linear-gradient(135deg, #b91c1c 0%, #991b1b 100%); transform: translateY(-2px); box-shadow: 0 4px 15px rgba(220, 53, 69, 0.4); }
     </style>
+    <link href="${pageContext.request.contextPath}/assets/css/storefront-polish.css" rel="stylesheet">
 </head>
 <body>
 
@@ -56,12 +61,25 @@
     <jsp:include page="/components/toast.jsp" />
 
     <div class="container mt-5 mb-5" style="min-height: 600px;">
-        <h2 class="cart-title"><i class='bx bx-cart-alt'></i> Giỏ Hàng Của Bạn</h2>
+        <div class="cart-hero">
+            <div class="d-flex justify-content-between align-items-center flex-wrap gap-3">
+                <div>
+                    <h2 class="mb-1"><i class='bx bx-cart-alt'></i> Giỏ hàng của bạn</h2>
+                    <p>Kiểm tra lại số lượng, tồn kho và tổng tiền trước khi chuyển sang bước thanh toán.</p>
+                </div>
+                <a href="${pageContext.request.contextPath}/shop" class="btn btn-light fw-semibold">
+                    <i class='bx bx-store'></i> Tiếp tục mua sắm
+                </a>
+            </div>
+        </div>
+        <div class="cart-tip">
+            <i class='bx bx-info-circle'></i> Giá và tồn kho được đồng bộ theo dữ liệu mới nhất để tránh đặt vượt số lượng còn lại.
+        </div>
 
         <%-- Hiển thị thông báo nếu chưa đăng nhập --%>
         <c:if test="${empty sessionScope.user}">
             <div class="text-center py-5 bg-white rounded shadow-sm">
-                <img src="https://cdn-icons-png.flaticon.com/512/6195/6195678.png" width="150" style="opacity: 0.6">
+                <img loading="lazy" src="https://cdn-icons-png.flaticon.com/512/6195/6195678.png" width="150" style="opacity: 0.6">
                 <h4 class="mt-4 text-muted">Vui lòng đăng nhập để xem giỏ hàng</h4>
                 <a href="${pageContext.request.contextPath}/login" class="btn btn-checkout px-5 mt-3" style="width: auto;">
                     <i class='bx bx-log-in'></i> Đăng nhập ngay
@@ -72,7 +90,7 @@
         <%-- Giỏ hàng trống (đã đăng nhập nhưng không có sản phẩm) --%>
         <c:if test="${not empty sessionScope.user and empty sessionScope.cart}">
             <div class="text-center py-5 bg-white rounded shadow-sm">
-                <img src="https://cdn-icons-png.flaticon.com/512/11329/11329060.png" width="150" style="opacity: 0.6">
+                <img loading="lazy" src="https://cdn-icons-png.flaticon.com/512/11329/11329060.png" width="150" style="opacity: 0.6">
                 <h4 class="mt-4 text-muted">Giỏ hàng trống</h4>
                 <a href="${pageContext.request.contextPath}/shop" class="btn btn-checkout px-5 mt-3" style="width: auto;">Mua sắm ngay</a>
             </div>
@@ -100,14 +118,14 @@
                                     <tr class="cart-row">
                                         <td>
                                             <div class="d-flex align-items-center">
-                                                <img src="${pageContext.request.contextPath}/assets/images/shop_pic/${item.product.image}" 
+                                                <img loading="lazy" src="${fn:startsWith(item.product.image, 'http') ? fn:escapeXml(item.product.image) : pageContext.request.contextPath += '/assets/images/shop_pic/' += fn:escapeXml(item.product.image)}" 
                                                      class="cart-product-img"
                                                      onerror="this.src='https://placehold.co/300x300/e2e8f0/1e293b?text=PetShop'">
                                                 <div>
-                                                    <p class="fw-bold mb-0">${item.product.name}</p>
+                                                    <p class="fw-bold mb-0">${fn:escapeXml(item.product.name)}</p>
                                                     <small class="text-muted">ID: ${item.product.id}</small>
                                                     <c:if test="${item.product.stock > 0 and item.product.stock < 10}">
-                                                        <div><small class="text-warning fw-semibold">Con lai: ${item.product.stock} san pham</small></div>
+                                                        <div><small class="text-warning fw-semibold">Còn lại: ${item.product.stock} sản phẩm</small></div>
                                                     </c:if>
                                                 </div>
                                             </div>
@@ -179,9 +197,14 @@
                         <button type="button" class="btn btn-cancel-delete" data-bs-dismiss="modal">
                             <i class='bx bx-x'></i> Hủy
                         </button>
-                        <a href="#" id="confirmDeleteBtn" class="btn btn-confirm-delete">
-                            <i class='bx bx-check'></i> Xóa
-                        </a>
+                        <form action="${pageContext.request.contextPath}/cart" method="post" class="m-0">
+                            <input type="hidden" name="csrfToken" value="${csrfToken}">
+                            <input type="hidden" name="action" value="remove">
+                            <input type="hidden" name="id" id="deleteProductId">
+                            <button type="submit" id="confirmDeleteBtn" class="btn btn-confirm-delete">
+                                <i class='bx bx-check'></i> Xóa
+                            </button>
+                        </form>
                     </div>
                 </div>
             </div>
@@ -196,7 +219,7 @@
 
         function openDeleteModal(productId, productName) {
             document.getElementById('deleteProductName').textContent = productName;
-            document.getElementById('confirmDeleteBtn').href = '${pageContext.request.contextPath}/cart?action=remove&id=' + productId;
+            document.getElementById('deleteProductId').value = productId;
             var deleteModal = new bootstrap.Modal(document.getElementById('deleteModal'));
             deleteModal.show();
         }
@@ -249,7 +272,8 @@
             fetch('<%= request.getContextPath() %>/cart', {
                 method: 'POST',
                 headers: {
-                    'Content-Type': 'application/x-www-form-urlencoded'
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                    'X-CSRF-Token': '${csrfToken}'
                 },
                 body: 'action=update'
                     + '&id=' + encodeURIComponent(productId)
@@ -368,7 +392,7 @@
                     }
                 })
                 .catch(error => {
-                    console.error('Khong dong bo duoc trang gio hang:', error);
+                    console.error('Không đồng bộ được trạng thái giỏ hàng:', error);
                 });
         }
 

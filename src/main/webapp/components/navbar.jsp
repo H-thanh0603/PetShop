@@ -1,5 +1,6 @@
 <%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
 <%@ taglib prefix="c" uri="jakarta.tags.core" %>
+<%@ taglib prefix="fn" uri="jakarta.tags.functions" %>
 <%--
     NAVBAR COMPONENT - Dùng chung cho tất cả trang
     Include: <jsp:include page="/components/navbar.jsp" />
@@ -494,7 +495,7 @@
         <form action="${pageContext.request.contextPath}/shop" method="get" class="nav-search-form d-none d-lg-flex ms-auto me-3" id="navSearchForm">
             <div class="nav-search-bar" style="position: relative;">
                 <i class='bx bx-search'></i>
-                <input type="text" name="search" id="searchInput" placeholder="Tìm kiếm sản phẩm..." autocomplete="off" value="${param.search}">
+                <input type="text" name="search" id="searchInput" placeholder="Tìm kiếm sản phẩm..." autocomplete="off" value="${fn:escapeXml(param.search)}">
                 <!-- Autocomplete dropdown -->
                 <div id="autocompleteDropdown" class="autocomplete-dropdown"></div>
             </div>
@@ -516,7 +517,7 @@
                 <c:when test="${not empty sessionScope.user}">
                     <div class="dropdown">
                         <button class="btn-nav-user dropdown-toggle" type="button" aria-expanded="false">
-                            <i class='bx bxs-user'></i> ${sessionScope.username}
+                            <i class='bx bxs-user'></i> ${fn:escapeXml(sessionScope.username)}
                         </button>
                         <ul class="dropdown-menu dropdown-menu-end">
                             <c:if test="${sessionScope.role == 'admin'}">
@@ -531,6 +532,16 @@
                                 <li>
                                     <a class="dropdown-item" href="${pageContext.request.contextPath}/my-orders">
                                         <i class='bx bx-package'></i> Đơn hàng của tôi
+                                    </a>
+                                </li>
+                                <li>
+                                    <a class="dropdown-item" href="${pageContext.request.contextPath}/my-account">
+                                        <i class='bx bx-user-circle'></i> Tài khoản của tôi
+                                    </a>
+                                </li>
+                                <li>
+                                    <a class="dropdown-item" href="${pageContext.request.contextPath}/wishlist">
+                                        <i class='bx bx-heart'></i> Yêu thích
                                     </a>
                                 </li>
                                 <li>
@@ -620,6 +631,7 @@ document.addEventListener('DOMContentLoaded', function() {
             autocompleteDropdown.classList.add('show');
             autocompleteDropdown.innerHTML = '<div class="autocomplete-loading"><i class="bx bx-loader-alt"></i> Đang tìm...</div>';
 
+            // Debounce 300ms
             searchTimeout = setTimeout(function() {
                 fetch(contextPath + '/api/search-autocomplete?q=' + encodeURIComponent(query))
                     .then(function(response) {
@@ -646,11 +658,9 @@ document.addEventListener('DOMContentLoaded', function() {
 
                             var img = document.createElement('img');
                             img.src = p.image
-                                ? contextPath + '/assets/images/shop_pic/' + p.image
+                                ? (p.image.startsWith('http') ? p.image : (contextPath + '/assets/images/shop_pic/' + p.image))
                                 : contextPath + '/assets/images/no-image.png';
-
                             img.alt = p.name || '';
-
                             img.onerror = function() {
                                 this.onerror = null;
                                 this.src = contextPath + '/assets/images/no-image.png';
@@ -674,6 +684,7 @@ document.addEventListener('DOMContentLoaded', function() {
                             info.appendChild(name);
                             info.appendChild(price);
                             info.appendChild(quantity);
+
                             item.appendChild(img);
                             item.appendChild(info);
 

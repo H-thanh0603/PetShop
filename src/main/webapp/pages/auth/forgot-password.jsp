@@ -1,4 +1,5 @@
 <%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
+<%@ taglib prefix="fn" uri="jakarta.tags.functions" %>
 <%@ taglib prefix="c" uri="jakarta.tags.core" %>
 <!DOCTYPE html>
 <html lang="vi">
@@ -80,19 +81,26 @@
         
         <c:if test="${not empty error}">
             <div class="alert alert-danger alert-dismissible fade show" role="alert">
-                <i class='bx bx-error-circle me-2'></i>${error}
+                <i class='bx bx-error-circle me-2'></i>${fn:escapeXml(error)}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+        </c:if>
+        <c:if test="${not empty success}">
+            <div class="alert alert-info alert-dismissible fade show" role="alert">
+                <i class='bx bx-info-circle me-2'></i>${fn:escapeXml(success)}
                 <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
             </div>
         </c:if>
         
         <form method="post" action="${pageContext.request.contextPath}/forgot-password">
+            <input type="hidden" name="csrfToken" value="${csrfToken}" />
             <div class="mb-4">
                 <label class="form-label fw-bold">Email</label>
                 <div class="input-group">
                     <span class="input-group-text"><i class='bx bx-envelope'></i></span>
                     <input type="email" class="form-control" name="email" 
                            placeholder="Nhập email đã đăng ký" required
-                           value="${email}" autocomplete="email">
+                           value="${fn:escapeXml(email)}" autocomplete="email">
                 </div>
             </div>
             

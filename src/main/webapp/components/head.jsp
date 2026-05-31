@@ -1,9 +1,15 @@
-﻿<%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
+<%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
 <%-- 
     Component: head.jsp
     Mô tả: Chứa các CSS libraries dùng chung cho toàn bộ website
     Sử dụng: <jsp:include page="/components/head.jsp" />
 --%>
+
+<!-- Preconnect to external domains to speed up DNS + TCP setup -->
+<link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+<link rel="preconnect" href="https://fonts.googleapis.com" crossorigin>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="preconnect" href="https://unpkg.com" crossorigin>
 
 <!-- Favicon -->
 <link rel="icon" type="image/x-icon" href="${pageContext.request.contextPath}/assets/images/favicon/favicon.ico">

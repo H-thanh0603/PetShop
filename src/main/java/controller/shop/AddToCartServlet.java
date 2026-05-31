@@ -97,7 +97,7 @@ public class AddToCartServlet extends HttpServlet {
             session.setAttribute("cart", cart);
             recalculateTotalQuantity(session, cart);
 
-            session.setAttribute("toastMessage", "Đã thêm <b>" + product.getName() + "</b> vào giỏ hàng!");
+            session.setAttribute("toastMessage", "Đã thêm " + product.getName() + " vào giỏ hàng!");
             session.setAttribute("toastType", "success");
         } catch (Exception e) {
             session.setAttribute("toastMessage", "Sản phẩm không tồn tại!");

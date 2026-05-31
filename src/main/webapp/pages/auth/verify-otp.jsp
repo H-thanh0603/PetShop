@@ -1,4 +1,5 @@
 <%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
+<%@ taglib prefix="fn" uri="jakarta.tags.functions" %>
 <%@ taglib prefix="c" uri="jakarta.tags.core" %>
 <!DOCTYPE html>
 <html lang="vi">
@@ -91,12 +92,13 @@
         
         <c:if test="${not empty error}">
             <div class="alert alert-danger alert-dismissible fade show" role="alert">
-                <i class='bx bx-error-circle me-2'></i>${error}
+                <i class='bx bx-error-circle me-2'></i>${fn:escapeXml(error)}
                 <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
             </div>
         </c:if>
         
         <form method="post" action="${pageContext.request.contextPath}/verify-otp">
+            <input type="hidden" name="csrfToken" value="${csrfToken}" />
             <div class="mb-4">
                 <label class="form-label fw-bold">Mã OTP (6 số)</label>
                 <input type="text" class="form-control otp-input" name="otp" 

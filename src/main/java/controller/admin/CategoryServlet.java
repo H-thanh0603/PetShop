@@ -17,10 +17,13 @@ import jakarta.servlet.http.HttpSession;
 import Context.DBContext;
 import DAO.PetTypeDAO;
 import Model.PetType;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 @WebServlet("/pages/admin/categories")
 public class CategoryServlet extends HttpServlet {
     private static final long serialVersionUID = 1L;
+    private static final Logger logger = LoggerFactory.getLogger(CategoryServlet.class);
 
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
@@ -95,7 +98,7 @@ public class CategoryServlet extends HttpServlet {
                 });
             }
         } catch (Exception e) {
-            e.printStackTrace();
+            logger.error("Error loading categories", e);
         }
         return list;
     }
@@ -107,7 +110,7 @@ public class CategoryServlet extends HttpServlet {
             ps.setString(1, newName);
             ps.setString(2, oldName);
             return ps.executeUpdate();
-        } catch (Exception e) { e.printStackTrace(); }
+        } catch (Exception e) { logger.error("Error renaming category from '{}' to '{}'", oldName, newName, e); }
         return 0;
     }
 
@@ -118,7 +121,7 @@ public class CategoryServlet extends HttpServlet {
             ps.setInt(1, petTypeId);
             ps.setString(2, category);
             return ps.executeUpdate();
-        } catch (Exception e) { e.printStackTrace(); }
+        } catch (Exception e) { logger.error("Error assigning pet type {} to category '{}'", petTypeId, category, e); }
         return 0;
     }
 

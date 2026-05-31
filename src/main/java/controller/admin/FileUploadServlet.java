@@ -2,7 +2,10 @@ package controller.admin;
 
 import java.io.File;
 import java.io.IOException;
-import java.io.PrintWriter;
+import java.util.HashMap;
+import java.util.Map;
+
+import com.google.gson.Gson;
 
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.MultipartConfig;
@@ -13,6 +16,9 @@ import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.Part;
 
 import Util.FileUploadUtil;
+import Util.FileUploadValidator;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Servlet upload file sử dụng Servlet 3.0 API (@MultipartConfig)
@@ -20,7 +26,7 @@ import Util.FileUploadUtil;
  * Cách sử dụng:
  * - Form phải có enctype="multipart/form-data"
  * - Input file có name="file"
- * - Parameter "type" để chọn thư mục: product, blog, hoặc mặc định uploads
+ * - Parameter "type" để chọn thư mục: product hoặc mặc định uploads
  * - Gửi POST request đến /admin/upload?type=product
  * 
  * Response JSON:
@@ -35,10 +41,11 @@ import Util.FileUploadUtil;
 )
 public class FileUploadServlet extends HttpServlet {
     private static final long serialVersionUID = 1L;
+    private static final Logger logger = LoggerFactory.getLogger(FileUploadServlet.class);
+    private final Gson gson = new Gson();
     
     // Thư mục lưu ảnh theo loại
     private static final String UPLOAD_FOLDER_PRODUCT = "assets/images/shop_pic";
-    private static final String UPLOAD_FOLDER_BLOG = "assets/images/community_pic";
     private static final String UPLOAD_FOLDER_DEFAULT = "assets/images/uploads";
     
     @Override
@@ -46,28 +53,23 @@ public class FileUploadServlet extends HttpServlet {
             throws ServletException, IOException {
         
         request.setCharacterEncoding("UTF-8");
-        response.setContentType("application/json; charset=UTF-8");
-        PrintWriter out = response.getWriter();
+        response.setContentType("application/json;charset=UTF-8");
+        response.setCharacterEncoding("UTF-8");
         
         try {
             // Lấy file từ request
             Part filePart = request.getPart("file");
             
-            // Kiểm tra file có tồn tại không
-            if (filePart == null || filePart.getSize() == 0) {
-                out.print("{\"success\": false, \"message\": \"Vui lòng chọn file để upload\"}");
-                return;
-            }
-            
-            // Kiểm tra định dạng file
-            if (!FileUploadUtil.isValidImage(filePart)) {
-                out.print("{\"success\": false, \"message\": \"Chỉ chấp nhận file ảnh (JPG, PNG, GIF, WebP)\"}");
+            // Validate file using FileUploadValidator
+            FileUploadValidator.ValidationResult validationResult = FileUploadValidator.validate(filePart);
+            if (!validationResult.isValid()) {
+                writeJsonResponse(response, false, validationResult.getErrorMessage());
                 return;
             }
             
             // Kiểm tra kích thước
             if (!FileUploadUtil.isValidSize(filePart)) {
-                out.print("{\"success\": false, \"message\": \"File quá lớn. Tối đa 5MB\"}");
+                writeJsonResponse(response, false, "File quá lớn. Tối đa 5MB");
                 return;
             }
             
@@ -76,8 +78,6 @@ public class FileUploadServlet extends HttpServlet {
             String uploadFolder;
             if ("product".equals(type)) {
                 uploadFolder = UPLOAD_FOLDER_PRODUCT;
-            } else if ("blog".equals(type)) {
-                uploadFolder = UPLOAD_FOLDER_BLOG;
             } else {
                 uploadFolder = UPLOAD_FOLDER_DEFAULT;
             }
@@ -85,33 +85,50 @@ public class FileUploadServlet extends HttpServlet {
             // Lấy đường dẫn thư mục upload (absolute path)
             String uploadDir = getServletContext().getRealPath("") + File.separator + uploadFolder;
             
-            // Lưu file
-            String fileName = FileUploadUtil.saveFile(filePart, uploadDir, null);
+            // Use secure filename from validator
+            String fileName = validationResult.getSecureFileName();
+            
+            // Ensure upload directory exists
+            File dir = new File(uploadDir);
+            if (!dir.exists()) dir.mkdirs();
+            
+            // Write file
+            filePart.write(uploadDir + File.separator + fileName);
             
             if (fileName != null) {
                 // Trả về JSON thành công
                 String fileUrl = request.getContextPath() + "/" + uploadFolder + "/" + fileName;
-                out.print("{\"success\": true, \"fileName\": \"" + fileName + "\", " +
-                         "\"fileUrl\": \"" + fileUrl + "\", " +
-                         "\"fileSize\": \"" + FileUploadUtil.formatFileSize(filePart.getSize()) + "\", " +
-                         "\"message\": \"Upload thành công!\"}");
+                Map<String, Object> result = new HashMap<>();
+                result.put("success", true);
+                result.put("fileName", fileName);
+                result.put("fileUrl", fileUrl);
+                result.put("fileSize", FileUploadUtil.formatFileSize(filePart.getSize()));
+                result.put("message", "Upload thành công!");
+                response.getWriter().write(gson.toJson(result));
             } else {
-                out.print("{\"success\": false, \"message\": \"Không thể lưu file\"}");
+                writeJsonResponse(response, false, "Không thể lưu file");
             }
             
         } catch (IllegalStateException e) {
             // File quá lớn (vượt maxFileSize hoặc maxRequestSize)
-            out.print("{\"success\": false, \"message\": \"File quá lớn. Tối đa 5MB\"}");
+            writeJsonResponse(response, false, "File quá lớn. Tối đa 5MB");
         } catch (Exception e) {
-            e.printStackTrace();
-            out.print("{\"success\": false, \"message\": \"Lỗi server: " + e.getMessage() + "\"}");
+            logger.error("Error uploading file", e);
+            writeJsonResponse(response, false, "Lỗi server khi upload file");
         }
+    }
+    
+    private void writeJsonResponse(HttpServletResponse response, boolean success, String message) throws IOException {
+        Map<String, Object> result = new HashMap<>();
+        result.put("success", success);
+        result.put("message", message);
+        response.getWriter().write(gson.toJson(result));
     }
     
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response) 
             throws ServletException, IOException {
-        // Redirect đến trang upload demo
-        response.sendRedirect(request.getContextPath() + "/pages/admin/upload-demo.jsp");
+        // Project ecommerce chỉ hỗ trợ upload ảnh phục vụ quản lý sản phẩm.
+        response.sendRedirect(request.getContextPath() + "/pages/admin/products");
     }
 }

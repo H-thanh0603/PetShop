@@ -2,6 +2,7 @@ package controller.shop;
 
 import java.io.IOException;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import com.google.gson.Gson;
@@ -18,10 +19,13 @@ import Model.Product;
 import Model.User;
 import services.InventoryService;
 import services.InventoryService.StockValidationResult;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 @WebServlet("/cart")
 public class CartServlet extends HttpServlet {
     private static final long serialVersionUID = 1L;
+    private static final Logger logger = LoggerFactory.getLogger(CartServlet.class);
     private final CartDAO cartDAO = new CartDAO();
     private final InventoryService inventoryService = new InventoryService();
     private final Gson gson = new Gson();
@@ -33,7 +37,7 @@ public class CartServlet extends HttpServlet {
         String action = request.getParameter("action");
         
         if ("remove".equals(action)) {
-            removeFromCart(request, response);
+            response.sendRedirect(request.getContextPath() + "/cart");
         } else if ("state".equals(action)) {
             writeCartState(request, response);
         } else {
@@ -79,9 +83,14 @@ public class CartServlet extends HttpServlet {
             cart = new HashMap<>();
         }
 
-        inventoryService.refreshCartProducts(cart);
+        List<String> removedNames = inventoryService.refreshCartProductsWithNotification(cart);
         session.setAttribute("cart", cart);
         recalculateTotalQuantity(session, cart);
+
+        if (!removedNames.isEmpty()) {
+            session.setAttribute("toastMessage", "Các sản phẩm sau đã bị xóa khỏi giỏ hàng vì không còn hàng: " + String.join(", ", removedNames));
+            session.setAttribute("toastType", "warning");
+        }
 
         request.getRequestDispatcher("/pages/shop/cart.jsp").forward(request, response);
     }
@@ -142,7 +151,15 @@ public class CartServlet extends HttpServlet {
             return;
         }
         
-        int productId = Integer.parseInt(idStr);
+        int productId;
+        try {
+            productId = Integer.parseInt(idStr);
+        } catch (NumberFormatException e) {
+            session.setAttribute("toastMessage", "Mã sản phẩm không hợp lệ.");
+            session.setAttribute("toastType", "error");
+            response.sendRedirect(request.getContextPath() + "/cart");
+            return;
+        }
         User user = (User) session.getAttribute("user");
         
         @SuppressWarnings("unchecked")
@@ -179,7 +196,7 @@ public class CartServlet extends HttpServlet {
         String quantityStr = request.getParameter("quantity");
 
         if (idStr == null || quantityStr == null) {
-            response.getWriter().write("{\"success\":false,\"message\":\"Thiếu id hoặc quantity\"}");
+            writeJson(response, false, "Thiếu id hoặc quantity");
             return;
         }
 
@@ -215,20 +232,19 @@ public class CartServlet extends HttpServlet {
                     }
                 }
 
-                response.getWriter().write(
-                        "{\"success\":true," +
-                                "\"quantity\":" + quantity + "," +
-                                "\"totalQuantity\":" + totalQuantity +
-                                "}"
-                );
+                Map<String, Object> result = new HashMap<>();
+                result.put("success", true);
+                result.put("quantity", quantity);
+                result.put("totalQuantity", totalQuantity);
+                writeJson(response, result);
                 return;
             }
 
-            response.getWriter().write("{\"success\":false,\"message\":\"Không tìm thấy sản phẩm trong cart\"}");
+            writeJson(response, false, "Không tìm thấy sản phẩm trong cart");
 
         } catch (Exception e) {
-            e.printStackTrace();
-            response.getWriter().write("{\"success\":false,\"message\":\"Lỗi server\"}");
+            logger.error("Error updating cart for product id={}", request.getParameter("id"), e);
+            writeJson(response, false, "Lỗi server");
         }
     }
 
@@ -243,7 +259,7 @@ public class CartServlet extends HttpServlet {
         String quantityStr = request.getParameter("quantity");
 
         if (idStr == null || quantityStr == null) {
-            writeJson(response, false, "Thieu id hoac quantity");
+            writeJson(response, false, "Thiếu id hoặc số lượng");
             return;
         }
 
@@ -256,7 +272,7 @@ public class CartServlet extends HttpServlet {
             Map<Integer, CartItem> cart = (Map<Integer, CartItem>) session.getAttribute("cart");
 
             if (cart == null || !cart.containsKey(productId)) {
-                writeJson(response, false, "Khong tim thay san pham trong gio hang");
+                writeJson(response, false, "Không tìm thấy sản phẩm trong giỏ hàng");
                 return;
             }
 
@@ -271,7 +287,7 @@ public class CartServlet extends HttpServlet {
                 }
                 cart = reloadCart(session, user, cart);
                 recalculateTotalQuantity(session, cart);
-                writeJson(response, false, "San pham khong con ton tai");
+                writeJson(response, false, "Sản phẩm không còn tồn tại");
                 return;
             }
 
@@ -345,7 +361,7 @@ public class CartServlet extends HttpServlet {
             result.put("totalQuantity", recalculateTotalQuantity(session, cart));
             writeJson(response, result);
         } catch (Exception e) {
-            e.printStackTrace();
+            logger.error("Error updating cart with stock check for product id={}", request.getParameter("id"), e);
             writeJson(response, false, "Loi server");
         }
     }

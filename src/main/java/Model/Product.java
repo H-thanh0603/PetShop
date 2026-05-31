@@ -1,12 +1,15 @@
 package Model;
 
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.text.DecimalFormat;
+import java.util.Locale;
 
 public class Product {
     private int id;
     private String name;
     private String image;
-    private double price;    
+    private BigDecimal price;    
     private int discount;     
     private String description;
     private String category;
@@ -14,22 +17,35 @@ public class Product {
     private int stock;
     private int pet_type_id;
     private String brand;
-    public Product() {}
+    private double averageRating;
+    private int reviewCount;
+    private boolean wishlisted;
+    private boolean isActive = true;
+    
+    public Product() {
+        this.price = BigDecimal.ZERO;
+    }
 
     // Constructor 6 tham số
-    public Product(int id, String name, String image, double price, int discount, String description) {
+    public Product(int id, String name, String image, BigDecimal price, int discount, String description) {
         this.id = id;
         this.name = name;
         this.image = image;
-        this.price = price;
+        this.price = price != null ? price : BigDecimal.ZERO;
         this.discount = discount;
         this.description = description;
     }
 
     // Constructor 7 tham số (có category)
-    public Product(int id, String name, String image, double price, int discount, String description, String category) {
+    public Product(int id, String name, String image, BigDecimal price, int discount, String description, String category) {
         this(id, name, image, price, discount, description);
         this.category = category;
+    }
+
+    // Constructor 7 tham số (có weight - từ main)
+    public Product(int id, String name, String image, BigDecimal price, int discount, String description, int weight) {
+        this(id, name, image, price, discount, description);
+        this.weight = weight;
     }
 
     // Getters & Setters
@@ -39,8 +55,8 @@ public class Product {
     public void setName(String name) { this.name = name; }
     public String getImage() { return image; }
     public void setImage(String image) { this.image = image; }
-    public double getPrice() { return price; }
-    public void setPrice(double price) { this.price = price; }
+    public BigDecimal getPrice() { return price; }
+    public void setPrice(BigDecimal price) { this.price = price != null ? price : BigDecimal.ZERO; }
     public int getDiscount() { return discount; }
     public void setDiscount(int discount) { this.discount = discount; }
     public String getDescription() { return description; }
@@ -55,9 +71,9 @@ public class Product {
         return formatter.format(price).replace(',', '.') + "đ";
     }
     
-    public double getOldPrice() {
+    public BigDecimal getOldPrice() {
         if (discount > 0 && discount < 100) {
-            return price / (1 - discount / 100.0);
+            return price.divide(BigDecimal.ONE.subtract(BigDecimal.valueOf(discount).divide(BigDecimal.valueOf(100), 10, RoundingMode.HALF_UP)), 0, RoundingMode.HALF_UP);
         }
         return price;
     }
@@ -65,6 +81,16 @@ public class Product {
     public String getFormattedOldPrice() {
         DecimalFormat formatter = new DecimalFormat("###,###");
         return formatter.format(getOldPrice()).replace(',', '.') + "đ";
+    }
+
+    public BigDecimal getDiscountAmount() {
+        BigDecimal diff = getOldPrice().subtract(price);
+        return diff.compareTo(BigDecimal.ZERO) > 0 ? diff : BigDecimal.ZERO;
+    }
+
+    public String getFormattedDiscountAmount() {
+        DecimalFormat formatter = new DecimalFormat("###,###");
+        return formatter.format(getDiscountAmount()).replace(',', '.') + "đ";
     }
 
     public int getStock() {
@@ -82,6 +108,43 @@ public class Product {
     public void setPet_type_id(int pet_type_id) {
         this.pet_type_id = pet_type_id;
     }
+
     public String getBrand() { return brand; }
     public void setBrand(String brand) { this.brand = brand; }
+
+    public double getAverageRating() {
+        return averageRating;
+    }
+
+    public void setAverageRating(double averageRating) {
+        this.averageRating = averageRating;
+    }
+
+    public int getReviewCount() {
+        return reviewCount;
+    }
+
+    public void setReviewCount(int reviewCount) {
+        this.reviewCount = reviewCount;
+    }
+
+    public String getFormattedAverageRating() {
+        return String.format(Locale.US, "%.1f", Math.max(0, averageRating));
+    }
+
+    public boolean isWishlisted() {
+        return wishlisted;
+    }
+
+    public void setWishlisted(boolean wishlisted) {
+        this.wishlisted = wishlisted;
+    }
+
+    public boolean isActive() {
+        return isActive;
+    }
+
+    public void setActive(boolean isActive) {
+        this.isActive = isActive;
+    }
 }

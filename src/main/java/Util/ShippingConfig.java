@@ -1,22 +1,10 @@
 package Util;
 
-import java.io.InputStream;
-import java.util.Properties;
-
 public class ShippingConfig {
-    private static Properties prop = new Properties();
-    static {
-        try {
-            InputStream input =
-                    ShippingConfig.class.getClassLoader()
-                            .getResourceAsStream("ship.properties");
-            prop.load(input);
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-    }
     public static String get(String key) {
-        return prop.getProperty(key);
+        return AppConfig.get("shipping." + key.toLowerCase().replace('_', '-'), key);
     }
-    public static int getInt(String key) {return Integer.parseInt(prop.getProperty(key));}
+    public static int getInt(String key) {
+        return AppConfig.getInt("shipping." + key.toLowerCase().replace('_', '-'), 0, key);
+    }
 }

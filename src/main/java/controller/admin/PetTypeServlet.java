@@ -12,6 +12,7 @@ import jakarta.servlet.http.HttpSession;
 
 import DAO.PetTypeDAO;
 import Model.PetType;
+import services.PetTypeCache;
 
 @WebServlet("/pages/admin/pet-types")
 public class PetTypeServlet extends HttpServlet {
@@ -49,6 +50,7 @@ public class PetTypeServlet extends HttpServlet {
                 PetType pt = new PetType(0, code.trim().toLowerCase(), name.trim(),
                         icon != null ? icon.trim() : "bx bxs-dog", displayOrder, isActive);
                 if (dao.addPetType(pt)) {
+                    PetTypeCache.getInstance().invalidate();
                     message = "Thêm loại thú cưng thành công!";
                 } else {
                     message = "Lỗi khi thêm! Mã code có thể đã tồn tại.";
@@ -70,6 +72,7 @@ public class PetTypeServlet extends HttpServlet {
                 PetType pt = new PetType(id, "", name.trim(),
                         icon != null ? icon.trim() : "bx bxs-dog", displayOrder, isActive);
                 if (dao.updatePetType(pt)) {
+                    PetTypeCache.getInstance().invalidate();
                     message = "Cập nhật thành công!";
                 } else {
                     message = "Lỗi khi cập nhật!";
@@ -81,6 +84,7 @@ public class PetTypeServlet extends HttpServlet {
             int id = parseIntSafe(request.getParameter("id"), 0);
             boolean isActive = "true".equals(request.getParameter("isActive"));
             if (dao.togglePetTypeStatus(id, isActive)) {
+                PetTypeCache.getInstance().invalidate();
                 message = isActive ? "Đã kích hoạt!" : "Đã vô hiệu hóa!";
             } else {
                 message = "Lỗi khi cập nhật trạng thái!";

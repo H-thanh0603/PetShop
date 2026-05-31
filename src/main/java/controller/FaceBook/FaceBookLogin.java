@@ -2,10 +2,10 @@ package controller.FaceBook;
 import Constant.IConstant;
 import Model.FbAccount.Account;
 import Util.SecretConfig;
+import Util.SocialAuthUtil;
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 import org.apache.http.client.ClientProtocolException;
-import org.apache.http.client.fluent.Form;
 import org.apache.http.client.fluent.Request;
 
 import java.io.BufferedReader;
@@ -15,13 +15,16 @@ import java.net.URL;
 
 
 public class FaceBookLogin {
-    static String CLIENT_ID = SecretConfig.get("facebook_client_id");
-    static String CLIENT_SECRET = SecretConfig.get("facebook_client_secret");
-    public static String getToken(String code) throws ClientProtocolException, IOException {
+    public static String getToken(String code, String redirectUri) throws ClientProtocolException, IOException {
+        if (!SocialAuthUtil.isFacebookConfigured()) {
+            throw new IllegalStateException("Facebook login chưa được cấu hình đầy đủ.");
+        }
+        String clientId = SecretConfig.get("facebook_client_id");
+        String clientSecret = SecretConfig.get("facebook_client_secret");
         String link = "https://graph.facebook.com/v19.0/oauth/access_token?"
-                + "client_id=" + CLIENT_ID
-                + "&client_secret=" + CLIENT_SECRET
-                + "&redirect_uri=" + IConstant.facebook_redirect_uri
+                + "client_id=" + clientId
+                + "&client_secret=" + clientSecret
+                + "&redirect_uri=" + redirectUri
                 + "&code=" + code;
 
         URL url = new URL(link);
@@ -33,9 +36,16 @@ public class FaceBookLogin {
 
         JsonObject json = new Gson().fromJson(response, JsonObject.class);
 
+        if (json == null || !json.has("access_token")) {
+            throw new IllegalStateException("Không lấy được access token từ Facebook.");
+        }
+
         return json.get("access_token").getAsString();
     }
     public static Account getUserInfo(final String accessToken) throws ClientProtocolException, IOException {
+        if (accessToken == null || accessToken.isBlank()) {
+            throw new IllegalArgumentException("Access token Facebook không hợp lệ.");
+        }
         String link = IConstant.facebook_link_get_user_info + accessToken;
         String response = Request.Get(link).execute().returnContent().asString();
         Account fbAccount= new Gson().fromJson(response, Account .class);

@@ -1,9 +1,10 @@
 <%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
+<%@ taglib prefix="fn" uri="jakarta.tags.functions" %>
 <!-- Admin Header Dropdown Component -->
 <div class="admin-user-dropdown" id="adminUserDropdown">
     <div class="admin-badge" onclick="toggleAdminDropdown(event)">
         <i class='bx bxs-user-circle'></i> 
-        ${sessionScope.user.fullname}
+        ${fn:escapeXml(sessionScope.user.fullname)}
         <i class='bx bx-chevron-down dropdown-arrow'></i>
     </div>
     <div class="admin-dropdown-menu">

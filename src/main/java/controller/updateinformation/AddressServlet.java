@@ -21,21 +21,7 @@ public class AddressServlet extends HttpServlet {
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
-
-        HttpSession session = request.getSession();
-        User user = (User) session.getAttribute("user");
-
-        if (user == null) {
-            response.sendRedirect(request.getContextPath() + "/login");
-            return;
-        }
-
-        Integer defaultId = ValidationUtil.parseIntOrNull(request.getParameter("defaultId"));
-        if (defaultId != null) {
-            dao.setDefaultAddress(user.getId(), defaultId);
-        }
-
-        redirectToCheckout(request, response);
+        response.sendRedirect(resolveRedirectTarget(request));
     }
 
     @Override
@@ -49,11 +35,35 @@ public class AddressServlet extends HttpServlet {
             handleUpdate(request, response);
             return;
         }
+        if ("patch".equalsIgnoreCase(method) || "setDefault".equalsIgnoreCase(request.getParameter("action"))) {
+            handleSetDefault(request, response);
+            return;
+        }
         if ("delete".equalsIgnoreCase(method)) {
             handleDelete(request, response);
             return;
         }
         handleAdd(request, response);
+    }
+
+    private void handleSetDefault(HttpServletRequest request, HttpServletResponse response)
+            throws IOException {
+
+        HttpSession session = request.getSession();
+        User user = (User) session.getAttribute("user");
+
+        if (user == null) {
+            response.sendRedirect(request.getContextPath() + "/login");
+            return;
+        }
+
+        Integer addressId = ValidationUtil.parseIntOrNull(request.getParameter("id"));
+        if (addressId != null && !dao.setDefaultAddress(user.getId(), addressId)) {
+            redirectToCheckoutWithToast(request, response, "Không thể chọn địa chỉ giao hàng. Vui lòng thử lại.");
+            return;
+        }
+
+        redirectToCheckout(request, response);
     }
     private void handleDelete(HttpServletRequest request, HttpServletResponse response)
             throws IOException {
@@ -97,6 +107,9 @@ public class AddressServlet extends HttpServlet {
         String district = trimToEmpty(request.getParameter("district"));
         String ward = trimToEmpty(request.getParameter("ward"));
         boolean isDefault = request.getParameter("isDefault") != null;
+        if (shouldPromoteSavedAddress(request)) {
+            isDefault = true;
+        }
 
         if (addressDetail.isEmpty() || province.isEmpty() || district.isEmpty() || ward.isEmpty()) {
             redirectToCheckoutWithToast(request, response, "Vui lòng nhập đầy đủ thông tin địa chỉ.");
@@ -113,7 +126,7 @@ public class AddressServlet extends HttpServlet {
             isDefault = true;
         }
 
-        dao.addAddress(
+        boolean saved = dao.addAddress(
                 user.getId(),
                 isDefault,
                 Timestamp.valueOf(LocalDateTime.now()),
@@ -122,6 +135,10 @@ public class AddressServlet extends HttpServlet {
                 district,
                 ward
         );
+        if (!saved) {
+            redirectToCheckoutWithToast(request, response, "Không thể lưu địa chỉ. Vui lòng thử lại.");
+            return;
+        }
 
         redirectToCheckout(request, response);
     }
@@ -143,6 +160,9 @@ public class AddressServlet extends HttpServlet {
         String district = trimToEmpty(request.getParameter("district"));
         String ward = trimToEmpty(request.getParameter("ward"));
         boolean isDefault = request.getParameter("isDefault") != null;
+        if (shouldPromoteSavedAddress(request)) {
+            isDefault = true;
+        }
 
         if (id == null || addressDetail.isEmpty() || province.isEmpty() || district.isEmpty() || ward.isEmpty()) {
             redirectToCheckoutWithToast(request, response, "Vui lòng nhập đầy đủ thông tin địa chỉ.");
@@ -155,7 +175,7 @@ public class AddressServlet extends HttpServlet {
             return;
         }
 
-        dao.updateAddress(
+        boolean updated = dao.updateAddress(
                 id,
                 user.getId(),
                 isDefault,
@@ -165,6 +185,10 @@ public class AddressServlet extends HttpServlet {
                 district,
                 ward
         );
+        if (!updated) {
+            redirectToCheckoutWithToast(request, response, "Không thể cập nhật địa chỉ. Vui lòng thử lại.");
+            return;
+        }
 
         redirectToCheckout(request, response);
     }
@@ -173,9 +197,14 @@ public class AddressServlet extends HttpServlet {
         return value == null ? "" : value.trim();
     }
 
+    private boolean shouldPromoteSavedAddress(HttpServletRequest request) {
+        String source = trimToEmpty(request.getParameter("source"));
+        return "checkout".equalsIgnoreCase(source) || "account".equalsIgnoreCase(source);
+    }
+
     private void redirectToCheckout(HttpServletRequest request, HttpServletResponse response)
             throws IOException {
-        response.sendRedirect(request.getContextPath() + "/checkout");
+        response.sendRedirect(resolveRedirectTarget(request));
     }
 
     private void redirectToCheckoutWithToast(HttpServletRequest request, HttpServletResponse response,
@@ -184,5 +213,17 @@ public class AddressServlet extends HttpServlet {
         session.setAttribute("toastMessage", message);
         session.setAttribute("toastType", "warning");
         redirectToCheckout(request, response);
+    }
+
+    private String resolveRedirectTarget(HttpServletRequest request) {
+        String redirect = request.getParameter("redirect");
+        if ("account".equalsIgnoreCase(redirect)) {
+            return request.getContextPath() + "/my-account";
+        }
+        String source = request.getParameter("source");
+        if ("account".equalsIgnoreCase(source)) {
+            return request.getContextPath() + "/my-account";
+        }
+        return request.getContextPath() + "/checkout";
     }
 }

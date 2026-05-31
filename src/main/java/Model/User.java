@@ -1,5 +1,6 @@
 package Model;
 
+import java.math.BigDecimal;
 import java.sql.Timestamp;
 
 public class User {
@@ -15,9 +16,13 @@ public class User {
     private boolean discountUsed;
     private Timestamp createdAt;
     
+    // Brute-force protection
+    private int failedLoginAttempts;
+    private java.sql.Timestamp lockedUntil;
+    
     // Thống kê
     private int orderCount;
-    private double totalSpent;
+    private BigDecimal totalSpent = BigDecimal.ZERO;
 
     public User() {}
 
@@ -87,6 +92,12 @@ public class User {
     public int getOrderCount() { return orderCount; }
     public void setOrderCount(int orderCount) { this.orderCount = orderCount; }
     
-    public double getTotalSpent() { return totalSpent; }
-    public void setTotalSpent(double totalSpent) { this.totalSpent = totalSpent; }
+    public BigDecimal getTotalSpent() { return totalSpent; }
+    public void setTotalSpent(BigDecimal totalSpent) { this.totalSpent = totalSpent != null ? totalSpent : BigDecimal.ZERO; }
+    
+    public int getFailedLoginAttempts() { return failedLoginAttempts; }
+    public void setFailedLoginAttempts(int failedLoginAttempts) { this.failedLoginAttempts = failedLoginAttempts; }
+    
+    public java.sql.Timestamp getLockedUntil() { return lockedUntil; }
+    public void setLockedUntil(java.sql.Timestamp lockedUntil) { this.lockedUntil = lockedUntil; }
 }
