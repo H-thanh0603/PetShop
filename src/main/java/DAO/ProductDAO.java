@@ -80,6 +80,11 @@ public class ProductDAO {
         } catch (Exception ignored) {
         }
 
+        try {
+            product.setSoldQuantity(rs.getInt("total_sold"));
+        } catch (Exception ignored) {
+            product.setSoldQuantity(0);
+        }
         return product;
     }
 
@@ -839,4 +844,5 @@ public class ProductDAO {
             while (rs.next()) { list.add(mapProduct(rs)); }
         } catch (Exception e) { log.error("Error fetching out-of-stock products", e); } return list;
     }
+
 }

@@ -21,6 +21,7 @@ public class Product {
     private int reviewCount;
     private boolean wishlisted;
     private boolean isActive = true;
+    private int soldQuantity;
     
     public Product() {
         this.price = BigDecimal.ZERO;
@@ -65,6 +66,8 @@ public class Product {
     public void setCategory(String category) { this.category = category; }
     public int getWeight() { return weight; }
     public void setWeight(int weight) { this.weight = weight; }
+    public int getSoldQuantity() { return soldQuantity; }
+    public void setSoldQuantity(int soldQuantity) { this.soldQuantity = soldQuantity; }
 
     public String getFormattedPrice() {
         DecimalFormat formatter = new DecimalFormat("###,###");
