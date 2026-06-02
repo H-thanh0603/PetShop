@@ -483,6 +483,11 @@
                                 <i class='bx bx-grid-alt'></i> Tất cả sản phẩm
                             </a>
                         </li>
+                        <li>
+                            <a class="dropdown-item" href="${pageContext.request.contextPath}/featured-products">
+                                <i class='bx bx-trophy'></i> Sản phẩm nổi bật
+                            </a>
+                        </li>
                     </ul>
                 </li>
                 <li class="nav-item">

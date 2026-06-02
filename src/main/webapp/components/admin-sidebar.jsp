@@ -18,6 +18,9 @@
         <a href="${pageContext.request.contextPath}/pages/admin/products" class="<%= "products".equals(currentPage) ? "active" : "" %>">
             <i class='bx bxs-shopping-bag'></i> Quản lý Sản phẩm
         </a>
+        <a href="${pageContext.request.contextPath}/featured-products" class="<%= "featured-products".equals(currentPage) ? "active" : "" %>">
+             <i class='bx bx-trophy'></i> Sản phẩm nổi bật
+        </a>
         <a href="${pageContext.request.contextPath}/pages/admin/pet-types" class="<%= "pet-types".equals(currentPage) ? "active" : "" %>">
             <i class='bx bxs-dog'></i> Loại Thú Cưng
         </a>
