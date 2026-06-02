@@ -20,7 +20,7 @@ public class ReviewDAO {
 
         String query = "SELECT r.*, u.fullname FROM reviews r " +
                        "JOIN users u ON r.user_id = u.id " +
-                       "WHERE r.product_id = ? ORDER BY r.created_at DESC";
+                       "WHERE r.product_id = ? AND r.status = 1 ORDER BY r.created_at DESC";
 
         try (Connection conn = DBContext.getConnection();
              PreparedStatement ps = conn.prepareStatement(query)) {
@@ -85,7 +85,7 @@ public class ReviewDAO {
     // 3. Lấy đánh giá theo rating tối đa (admin filter)
     public List<Review> getReviewsByMaxRating(int maxRating) {
         List<Review> list = new ArrayList<>();
-        String query = "SELECT r.*, u.fullname, p.name AS product_name FROM reviews r JOIN users u ON r.user_id = u.id JOIN products p ON r.product_id = p.id WHERE r.rating <= ? ORDER BY r.created_at DESC";
+        String query = "SELECT r.*, u.fullname, p.name AS product_name FROM reviews r JOIN users u ON r.user_id = u.id JOIN products p ON r.product_id = p.id WHERE r.rating = ? ORDER BY r.created_at DESC";
         try (Connection conn = DBContext.getConnection();
              PreparedStatement ps = conn.prepareStatement(query)) {
             ps.setInt(1, maxRating);

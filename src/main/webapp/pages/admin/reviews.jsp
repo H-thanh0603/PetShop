@@ -99,9 +99,11 @@
             </div>
             <select class="filter-select" id="filterMaxRating" onchange="applyRatingFilter()">
                 <option value="" ${selectedMaxRating == 0 ? 'selected' : ''}>Tất cả</option>
-                <option value="1" ${selectedMaxRating == 1 ? 'selected' : ''}>≤ 1 sao</option>
-                <option value="2" ${selectedMaxRating == 2 ? 'selected' : ''}>≤ 2 sao</option>
-                <option value="3" ${selectedMaxRating == 3 ? 'selected' : ''}>≤ 3 sao</option>
+                <option value="1" ${selectedMaxRating == 1 ? 'selected' : ''}>1 sao</option>
+                <option value="2" ${selectedMaxRating == 2 ? 'selected' : ''}>2 sao</option>
+                <option value="3" ${selectedMaxRating == 3 ? 'selected' : ''}>3 sao</option>
+                <option value="4" ${selectedMaxRating == 4 ? 'selected' : ''}>4 sao</option>
+                <option value="5" ${selectedMaxRating == 5 ? 'selected' : ''}>5 sao</option>
             </select>
         </div>
 
