@@ -5,6 +5,7 @@ import org.slf4j.LoggerFactory;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 import Context.DBContext;
@@ -62,7 +63,7 @@ public class ReviewDAO {
     // 2. Lấy tất cả đánh giá (admin moderation)
     public List<Review> getAllReviews() {
         List<Review> list = new ArrayList<>();
-        String query = "SELECT r.*, u.fullname, p.name AS product_name FROM reviews r JOIN users u ON r.user_id = u.id JOIN products p ON r.product_id = p.id ORDER BY r.created_at DESC";
+        String query = "SELECT r.*, u.fullname, p.name AS product_name FROM reviews r JOIN users u ON r.user_id = u.id JOIN products p ON r.product_id = p.id WHERE r.status = 1 ORDER BY r.created_at DESC";
         try (Connection conn = DBContext.getConnection();
              PreparedStatement ps = conn.prepareStatement(query);
              ResultSet rs = ps.executeQuery()) {
@@ -181,6 +182,24 @@ public class ReviewDAO {
             log.error("DB error", e);
             return true; // fail-safe: reject on DB error
         }
+    }
+
+    public boolean updateReviewStatus(int reviewId, boolean status) throws SQLException {
+        String sql = "UPDATE reviews SET status = ? WHERE id = ?";
+
+        try (Connection conn = DBContext.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+
+            ps.setBoolean(1, status);
+            ps.setInt(2, reviewId);
+
+            return ps.executeUpdate() > 0;
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+
+        return false;
     }
 }
 

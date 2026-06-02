@@ -66,44 +66,80 @@ public class ReviewModerationServlet extends HttpServlet {
     @Override
     protected void doPost(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
-        request.setCharacterEncoding("UTF-8");
 
-        // Check admin session
-        HttpSession session = request.getSession();
+        request.setCharacterEncoding("UTF-8");
+        response.setCharacterEncoding("UTF-8");
+
+        HttpSession session = request.getSession(false);
+
+        if (session == null) {
+            response.sendRedirect(request.getContextPath() + "/login");
+            return;
+        }
+
         User user = (User) session.getAttribute("user");
-        if (user == null || !"admin".equals(user.getRole())) {
+
+        if (user == null || user.getRole() == null || !"admin".equalsIgnoreCase(user.getRole())) {
             response.sendRedirect(request.getContextPath() + "/login");
             return;
         }
 
         String action = request.getParameter("action");
-        String message;
+        String message = "";
         String messageType = "success";
 
-        if ("delete".equals(action)) {
-            String reviewIdStr = request.getParameter("reviewId");
-            Integer reviewId = ValidationUtil.parseIntOrNull(reviewIdStr);
+        ReviewDAO reviewDAO = new ReviewDAO();
 
-            if (reviewId == null) {
-                message = "Review không tồn tại hoặc đã bị xóa.";
-                messageType = "error";
-            } else {
-                ReviewDAO dao = new ReviewDAO();
-                if (dao.deleteReview(reviewId)) {
+        try {
+            if ("delete".equals(action)) {
+
+                Integer reviewId = ValidationUtil.parseIntOrNull(request.getParameter("reviewId"));
+
+                if (reviewId == null) {
+                    message = "Review không hợp lệ.";
+                    messageType = "error";
+                } else if (reviewDAO.deleteReview(reviewId)) {
                     new AdminActionLogDAO().log(user.getId(), "DELETE_REVIEW", "review", reviewId, null);
                     message = "Xóa review thành công!";
                 } else {
-                    message = "Review không tồn tại hoặc đã bị xóa.";
+                    message = "Xóa review thất bại.";
                     messageType = "error";
                 }
+
+            } else if ("refresh".equals(action)) {
+
+                Integer reviewId = ValidationUtil.parseIntOrNull(request.getParameter("reviewId"));
+                Integer statusValue = ValidationUtil.parseIntOrNull(request.getParameter("status"));
+
+                if (reviewId == null || statusValue == null || (statusValue != 0 && statusValue != 1)) {
+                    message = "Dữ liệu cập nhật trạng thái không hợp lệ.";
+                    messageType = "error";
+                } else {
+                    boolean status = statusValue == 1;
+
+                    if (reviewDAO.updateReviewStatus(reviewId, status)) {
+                        new AdminActionLogDAO().log(user.getId(), "UPDATE_REVIEW_STATUS", "review", reviewId, null);
+                        message = "Cập nhật trạng thái review thành công!";
+                    } else {
+                        message = "Cập nhật trạng thái review thất bại.";
+                        messageType = "error";
+                    }
+                }
+
+            } else {
+                message = "Hành động không hợp lệ.";
+                messageType = "error";
             }
-        } else {
-            message = "Hành động không hợp lệ!";
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            message = "Có lỗi xảy ra khi xử lý review.";
             messageType = "error";
         }
 
         session.setAttribute("message", message);
         session.setAttribute("messageType", messageType);
+
         response.sendRedirect(request.getContextPath() + "/pages/admin/reviews");
     }
 }

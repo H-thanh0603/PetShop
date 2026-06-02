@@ -11,7 +11,7 @@ public class Review {
     private int rating;
     private String comment;
     private Date createdAt;
-
+    private boolean status;
     public Review() {
     }
 
@@ -23,6 +23,16 @@ public class Review {
         this.rating = rating;
         this.comment = comment;
         this.createdAt = createdAt;
+    }
+    public Review(int id, int productId, int userId, String userName, int rating, String comment, Date createdAt, boolean status) {
+        this.id = id;
+        this.productId = productId;
+        this.userId = userId;
+        this.userName = userName;
+        this.rating = rating;
+        this.comment = comment;
+        this.createdAt = createdAt;
+        this.status = status;
     }
 
     // Getter & Setter
@@ -42,4 +52,12 @@ public class Review {
     public void setComment(String comment) { this.comment = comment; }
     public Date getCreatedAt() { return createdAt; }
     public void setCreatedAt(Date createdAt) { this.createdAt = createdAt; }
+
+    public boolean isStatus() {
+        return status;
+    }
+
+    public void setStatus(boolean status) {
+        this.status = status;
+    }
 }
