@@ -12,6 +12,7 @@ public class Review {
     private String comment;
     private Date createdAt;
     private boolean status;
+    private String adminReply;
     public Review() {
     }
 
@@ -59,5 +60,12 @@ public class Review {
 
     public void setStatus(boolean status) {
         this.status = status;
+    }
+    public String getAdminReply() {
+        return adminReply;
+    }
+
+    public void setAdminReply(String adminReply) {
+        this.adminReply = adminReply;
     }
 }

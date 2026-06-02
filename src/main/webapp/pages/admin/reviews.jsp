@@ -181,6 +181,14 @@
                                             data-status="${r.status ? '1' : '0'}">
                                         <i class='bx bx-refresh'></i>
                                     </button>
+                                    <button type="button"
+                                            class="action-btn btn-reply-review"
+                                            title="Trả lời bình luận"
+                                            data-id="${r.id}"
+                                            data-user="${fn:escapeXml(r.userName)}"
+                                            data-comment="${fn:escapeXml(r.comment)}">
+                                        <i class='bx bx-message-dots'></i>
+                                    </button>
                                 </div>
                             </td>
                         </tr>
@@ -220,7 +228,41 @@
             </form>
         </div>
     </div>
+    <div class="modal fade" id="replyReviewModal" tabindex="-1">
+        <div class="modal-dialog">
+            <form method="post"
+                  action="${pageContext.request.contextPath}/pages/admin/reviews"
+                  class="modal-content">
 
+                <input type="hidden" name="csrfToken" value="${sessionScope.csrfToken}">
+                <input type="hidden" name="action" value="reply">
+                <input type="hidden" name="reviewId" id="replyReviewId">
+
+                <div class="modal-header">
+                    <h5 class="modal-title">Trả lời bình luận</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+
+                <div class="modal-body">
+                    <p><strong>Người dùng:</strong> <span id="replyUserName"></span></p>
+
+                    <p><strong>Bình luận:</strong></p>
+                    <div class="p-2 bg-light border rounded mb-3" id="replyComment"></div>
+
+                    <label class="form-label">Nội dung trả lời</label>
+                    <textarea name="adminReply"
+                              class="form-control"
+                              rows="4"
+                              required></textarea>
+                </div>
+
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+                    <button type="submit" class="btn btn-primary">Trả lời</button>
+                </div>
+            </form>
+        </div>
+    </div>
     <jsp:include page="/components/scripts.jsp" />
     <jsp:include page="/components/admin-toast.jsp" />
 
@@ -263,6 +305,18 @@
                 modal.show();
             });
         });
+
+            document.querySelectorAll(".btn-reply-review").forEach(function (btn) {
+            btn.addEventListener("click", function () {
+                document.getElementById("replyReviewId").value = this.dataset.id;
+                document.getElementById("replyUserName").textContent = this.dataset.user;
+                document.getElementById("replyComment").textContent = this.dataset.comment;
+
+                const modal = new bootstrap.Modal(document.getElementById("replyReviewModal"));
+                modal.show();
+            });
+        });
+
     </script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 </body>

@@ -468,6 +468,12 @@
                                             </c:forEach>
                                         </div>
                                         <p class="mb-0 text-secondary">${fn:escapeXml(r.comment)}</p>
+                                        <c:if test="${not empty r.adminReply}">
+                                            <div class="mt-2 ms-3 p-2 bg-light border-start border-primary">
+                                                <strong class="text-primary">Admin phản hồi:</strong>
+                                                <div class="text-secondary">${fn:escapeXml(r.adminReply)}</div>
+                                            </div>
+                                        </c:if>
                                     </div>
                                 </div>
                             </c:forEach>

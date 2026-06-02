@@ -170,7 +170,6 @@
                             <p class="text-muted small featured-desc">${fn:escapeXml(popularProducts[0].description)}</p>
                             <div class="meta">
                                 <span class="rating"><i class='bx bxs-star'></i> ${popularProducts[0].formattedAverageRating}</span>
-                                <span class="text-muted">${popularProducts[0].reviewCount} đánh giá</span>
                             </div>
                             <div class="price mb-3">${fn:escapeXml(popularProducts[0].formattedPrice)}</div>
                             <c:choose>
@@ -210,7 +209,7 @@
                                 <div class="info">
                                     <div class="cat-label">${fn:escapeXml(p.category)}</div>
                                     <div class="name"><a href="${pageContext.request.contextPath}/product-detail?id=${p.id}">${fn:escapeXml(p.name)}</a></div>
-                                    <div class="rating-line"><i class='bx bxs-star'></i> ${p.formattedAverageRating} <span class="muted">(${p.reviewCount} đánh giá)</span></div>
+                                    <div class="rating-line"><i class='bx bxs-star'></i> ${p.formattedAverageRating}</div>
                                     <div class="d-flex justify-content-between align-items-start">
                                         <div>
                                             <span class="price">${fn:escapeXml(p.formattedPrice)}</span>
@@ -271,7 +270,7 @@
                             <div class="info">
                                 <div class="cat-label">${fn:escapeXml(p.category)}</div>
                                 <div class="name"><a href="${pageContext.request.contextPath}/product-detail?id=${p.id}">${fn:escapeXml(p.name)}</a></div>
-                                <div class="rating-line"><i class='bx bxs-star'></i> ${p.formattedAverageRating} <span class="muted">(${p.reviewCount} đánh giá)</span></div>
+                                <div class="rating-line"><i class='bx bxs-star'></i> ${p.formattedAverageRating}</div>
                                 <div class="d-flex justify-content-between align-items-start">
                                     <div>
                                         <span class="price">${fn:escapeXml(p.formattedPrice)}</span>
@@ -393,7 +392,7 @@
                             <div class="info">
                                 <div class="cat-label">${fn:escapeXml(p.category)}</div>
                                 <div class="name"><a href="${pageContext.request.contextPath}/product-detail?id=${p.id}">${fn:escapeXml(p.name)}</a></div>
-                                <div class="rating-line"><i class='bx bxs-star'></i> ${p.formattedAverageRating} <span class="muted">(${p.reviewCount} đánh giá)</span></div>
+                                <div class="rating-line"><i class='bx bxs-star'></i> ${p.formattedAverageRating}</div>
                                 <div class="d-flex justify-content-between align-items-start">
                                     <div>
                                         <span class="price">${fn:escapeXml(p.formattedPrice)}</span>

@@ -126,7 +126,26 @@ public class ReviewModerationServlet extends HttpServlet {
                     }
                 }
 
-            } else {
+            } else if ("reply".equals(action)) {
+                Integer reviewId = ValidationUtil.parseIntOrNull(request.getParameter("reviewId"));
+                String adminReply = request.getParameter("adminReply");
+
+                if (reviewId == null || adminReply == null || adminReply.trim().isEmpty()) {
+                    message = "Nội dung trả lời không hợp lệ.";
+                    messageType = "error";
+                } else {
+                    ReviewDAO dao = new ReviewDAO();
+
+                    if (dao.replyReview(reviewId, adminReply.trim())) {
+                        new AdminActionLogDAO().log(user.getId(), "REPLY_REVIEW", "review", reviewId, null);
+                        message = "Trả lời review thành công!";
+                    } else {
+                        message = "Trả lời review thất bại.";
+                        messageType = "error";
+                    }
+                }
+            }
+            else {
                 message = "Hành động không hợp lệ.";
                 messageType = "error";
             }
