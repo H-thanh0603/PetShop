@@ -11,7 +11,7 @@ set "JAVA_HOME=C:\Program Files\Java\jdk-21"
 if defined PETSHOP_TOMCAT_HOME (
     set "CATALINA_HOME=%PETSHOP_TOMCAT_HOME%"
 ) else (
-    set "CATALINA_HOME=D:\apache-tomcat-10.1.49"
+    set "CATALINA_HOME=E:\apache-tomcat-10.1.49-windows-x64\apache-tomcat-10.1.49"
 )
 
 set "PROJECT_ROOT=%~dp0"
