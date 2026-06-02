@@ -225,7 +225,7 @@
                     <div class="rating-stars">
                         <i class="fas fa-star"></i>
                         <span class="fw-semibold text-dark ms-1">${detail.formattedAverageRating}/5</span>
-                        <span class="text-muted ms-1">(${detail.reviewCount} đánh giá)</span>
+                        <span class="text-muted ms-1">(${listReviews.size()} đánh giá)</span>
                     </div>
                     <span class="text-muted border-start ps-3">Mã SP: <strong>SP00${detail.id}</strong></span>
                     <span class="text-muted border-start ps-3">Danh mục: <strong>${fn:escapeXml(detail.category)}</strong></span>
@@ -269,7 +269,7 @@
                         <div>
                             <div class="text-uppercase text-muted small fw-semibold">Đánh giá khách hàng</div>
                             <div class="fs-4 fw-bold text-dark">${detail.formattedAverageRating}/5</div>
-                            <div class="text-muted">Từ ${detail.reviewCount} nhận xét thực tế</div>
+                            <div class="text-muted">Từ ${listReviews.size()} nhận xét thực tế</div>
                         </div>
                         <div class="text-muted small">
                             Sản phẩm đang được khách hàng quan tâm nhờ giá tốt, nguồn gốc rõ ràng và phù hợp cho thú cưng.
@@ -371,7 +371,7 @@
                     </li>
                     <li class="nav-item" role="presentation">
                         <button class="nav-link" id="reviews-tab" data-bs-toggle="tab"
-                            data-bs-target="#reviews" type="button">Đánh giá (${detail.reviewCount})</button>
+                            data-bs-target="#reviews" type="button">Đánh giá (${listReviews.size()})</button>
                     </li>
                 </ul>
 
@@ -468,6 +468,12 @@
                                             </c:forEach>
                                         </div>
                                         <p class="mb-0 text-secondary">${fn:escapeXml(r.comment)}</p>
+                                        <c:if test="${not empty r.adminReply}">
+                                            <div class="mt-2 ms-3 p-2 bg-light border-start border-primary">
+                                                <strong class="text-primary">Admin phản hồi:</strong>
+                                                <div class="text-secondary">${fn:escapeXml(r.adminReply)}</div>
+                                            </div>
+                                        </c:if>
                                     </div>
                                 </div>
                             </c:forEach>
@@ -513,8 +519,7 @@
                                                     required></textarea>
                                             </div>
 
-                                            <button type="submit" class="btn btn-primary">Gửi đánh
-                                                giá</button>
+                                            <button type="submit" class="btn btn-primary">Gửi đánh giá</button>
                                         </form>
                                     </c:otherwise>
                                 </c:choose>

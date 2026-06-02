@@ -240,7 +240,7 @@
                                 <div class="info">
                                     <div class="cat-label">${fn:escapeXml(p.category)}</div>
                                     <div class="name"><a href="${pageContext.request.contextPath}/product-detail?id=${p.id}">${fn:escapeXml(p.name)}</a></div>
-                                    <div class="rating"><i class='bx bxs-star'></i> ${fn:escapeXml(p.formattedAverageRating)} <span class="muted">(${p.reviewCount} đánh giá)</span></div>
+                                    <div class="rating"><i class='bx bxs-star'></i> ${fn:escapeXml(p.formattedAverageRating)}</div>
                                     <div class="d-flex justify-content-between align-items-start">
                                         <div>
                                             <span class="price">${fn:escapeXml(p.formattedPrice)}</span>
