@@ -513,8 +513,7 @@
                                                     required></textarea>
                                             </div>
 
-                                            <button type="submit" class="btn btn-primary">Gửi đánh
-                                                giá</button>
+                                            <button type="submit" class="btn btn-primary">Gửi đánh giá</button>
                                         </form>
                                     </c:otherwise>
                                 </c:choose>
