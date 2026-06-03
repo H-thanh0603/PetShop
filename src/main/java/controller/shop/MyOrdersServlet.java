@@ -60,6 +60,19 @@ public class MyOrdersServlet extends HttpServlet {
         }
         int countPending = orderDAO.countPendingOrdersByUserId(user.getId());
         int countCompleted = orderDAO.countCompletedOrdersByUserId(user.getId());
+
+        final int PAGE_SIZE = 5;
+        int currentPage = 1;
+        try {
+            String pageParam = request.getParameter("page");
+            if (pageParam != null) currentPage = Math.max(1, Integer.parseInt(pageParam));
+        } catch (NumberFormatException ignored) {}
+
+        int totalFiltered = dao.countOrdersByUserIdFiltered(user.getId(), statusFilter, keyword);
+        int totalPages = (int) Math.ceil((double) totalFiltered / PAGE_SIZE);
+        if (totalPages < 1) totalPages = 1;
+        if (currentPage > totalPages) currentPage = totalPages;
+        List<Order> pagedList = dao.getOrdersPageByUserId(user.getId(), currentPage, PAGE_SIZE, statusFilter, keyword);
         List<Order> allOrders = dao.getOrdersByUserId(user.getId());
         List<Order> list = filterOrders(allOrders, statusFilter, keyword);
         List<CustomerRepurchaseSuggestion> repurchaseSuggestions =
@@ -69,6 +82,12 @@ public class MyOrdersServlet extends HttpServlet {
         request.setAttribute("orders", list);
         request.setAttribute("repurchaseSuggestions", repurchaseSuggestions);
         request.setAttribute("totalOrders", allOrders.size());
+        request.setAttribute("orders", pagedList);   // ghi đè list cũ bằng danh sách phân trang
+        request.setAttribute("totalFiltered", totalFiltered);
+        request.setAttribute("currentPage", currentPage);
+        request.setAttribute("totalPages", totalPages);
+        request.setAttribute("pageSize", PAGE_SIZE);
+
         request.setAttribute("selectedStatus", statusFilter);
         request.setAttribute("keyword", keyword);
         request.getRequestDispatcher("/pages/shop/my-orders.jsp").forward(request, response);

@@ -228,6 +228,34 @@
             .product-price { grid-column: 2; }
             .search-box { min-width: 100%; }
         }
+
+        .pagination-bar {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            margin-top: 32px;
+            flex-wrap: wrap;
+        }
+        .page-btn {
+            min-width: 40px; height: 40px;
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            background: rgba(255,255,255,0.9);
+            color: var(--text);
+            font-weight: 700;
+            font-size: 0.92rem;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            text-decoration: none;
+            padding: 0 12px;
+            transition: all 0.2s ease;
+        }
+        .page-btn:hover { background: #eff6ff; color: var(--primary); border-color: #bfdbfe; }
+        .page-btn.active { background: var(--primary); color: #fff; border-color: var(--primary); box-shadow: 0 4px 14px rgba(37,99,235,0.3); }
+        .page-btn.disabled { opacity: 0.4; pointer-events: none; }
+        .page-info { color: var(--muted); font-size: 0.88rem; font-weight: 600; margin: 0 8px; }
     </style>
     <link href="${pageContext.request.contextPath}/assets/css/storefront-polish.css" rel="stylesheet">
 </head>
@@ -472,6 +500,59 @@
                     </div>
                 </c:forEach>
             </div>
+             <c:if test="${totalPages > 1}">
+                            <div class="pagination-bar">
+                                <c:set var="baseUrl"
+                                       value="${pageContext.request.contextPath}/my-orders?status=${empty selectedStatus ? 'all' : selectedStatus}&keyword=${fn:escapeXml(keyword)}" />
+
+                                <%-- Nút Previous --%>
+                                <c:choose>
+                                    <c:when test="${currentPage <= 1}">
+                                        <span class="page-btn disabled">
+                                            <i class='bx bx-chevron-left'></i>
+                                        </span>
+                                    </c:when>
+                                    <c:otherwise>
+                                        <a class="page-btn" href="${baseUrl}&page=${currentPage - 1}">
+                                            <i class='bx bx-chevron-left'></i>
+                                        </a>
+                                    </c:otherwise>
+                                </c:choose>
+
+                                <%-- Các số trang --%>
+                                <c:forEach begin="1" end="${totalPages}" var="p">
+                                    <c:choose>
+                                        <c:when test="${p == currentPage}">
+                                            <span class="page-btn active">${p}</span>
+                                        </c:when>
+                                        <c:when test="${p == 1 || p == totalPages || (p >= currentPage - 2 && p <= currentPage + 2)}">
+                                            <a class="page-btn" href="${baseUrl}&page=${p}">${p}</a>
+                                        </c:when>
+                                        <c:when test="${p == currentPage - 3 || p == currentPage + 3}">
+                                            <span class="page-info">…</span>
+                                        </c:when>
+                                    </c:choose>
+                                </c:forEach>
+
+                                <%-- Nút Next --%>
+                                <c:choose>
+                                    <c:when test="${currentPage >= totalPages}">
+                                        <span class="page-btn disabled">
+                                            <i class='bx bx-chevron-right'></i>
+                                        </span>
+                                    </c:when>
+                                    <c:otherwise>
+                                        <a class="page-btn" href="${baseUrl}&page=${currentPage + 1}">
+                                            <i class='bx bx-chevron-right'></i>
+                                        </a>
+                                    </c:otherwise>
+                                </c:choose>
+
+                                <span class="page-info">
+                                    Trang ${currentPage} / ${totalPages} &middot; ${totalFiltered} đơn
+                                </span>
+                            </div>
+                        </c:if>
         </c:otherwise>
     </c:choose>
 </div>

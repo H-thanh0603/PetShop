@@ -578,6 +578,83 @@ public class OrderDAO {
         return list;
     }
 
+    /**
+     * Phân trang đơn hàng theo user, có lọc trạng thái và tìm kiếm từ khóa.
+     */
+    public List<Order> getOrdersPageByUserId(int userId, int page, int size, String statusFilter, String keyword) {
+        List<Order> list = new ArrayList<>();
+        StringBuilder sql = new StringBuilder("SELECT * FROM orders WHERE user_id = ?");
+        if (statusFilter != null && !statusFilter.isEmpty() && !"all".equalsIgnoreCase(statusFilter)) {
+            sql.append(" AND status = ?");
+        }
+        if (keyword != null && !keyword.isEmpty()) {
+            sql.append(" AND (CAST(id AS CHAR) LIKE ? OR fullname LIKE ? OR phone LIKE ? OR address LIKE ?)");
+        }
+        sql.append(" ORDER BY createdAt DESC LIMIT ? OFFSET ?");
+
+        try (Connection conn = DBContext.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql.toString())) {
+            paymentTransactionDAO.expirePendingTransactions();
+            int idx = 1;
+            ps.setInt(idx++, userId);
+            if (statusFilter != null && !statusFilter.isEmpty() && !"all".equalsIgnoreCase(statusFilter)) {
+                ps.setString(idx++, statusFilter);
+            }
+            if (keyword != null && !keyword.isEmpty()) {
+                String kw = "%" + keyword + "%";
+                ps.setString(idx++, kw); ps.setString(idx++, kw);
+                ps.setString(idx++, kw); ps.setString(idx++, kw);
+            }
+            ps.setInt(idx++, size);
+            ps.setInt(idx, Math.max(0, (page - 1) * size));
+
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    list.add(mapOrder(rs));
+                }
+            }
+            if (!list.isEmpty()) {
+                loadItemsForOrders(conn, list);
+                paymentTransactionDAO.attachLatestToOrders(conn, list);
+            }
+        } catch (Exception e) {
+            log.error("DB error", e);
+        }
+        return list;
+    }
+
+    /**
+     * Đếm số đơn hàng theo user với lọc trạng thái và từ khóa (dùng cho phân trang).
+     */
+    public int countOrdersByUserIdFiltered(int userId, String statusFilter, String keyword) {
+        StringBuilder sql = new StringBuilder("SELECT COUNT(*) FROM orders WHERE user_id = ?");
+        if (statusFilter != null && !statusFilter.isEmpty() && !"all".equalsIgnoreCase(statusFilter)) {
+            sql.append(" AND status = ?");
+        }
+        if (keyword != null && !keyword.isEmpty()) {
+            sql.append(" AND (CAST(id AS CHAR) LIKE ? OR fullname LIKE ? OR phone LIKE ? OR address LIKE ?)");
+        }
+        try (Connection conn = DBContext.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql.toString())) {
+            int idx = 1;
+            ps.setInt(idx++, userId);
+            if (statusFilter != null && !statusFilter.isEmpty() && !"all".equalsIgnoreCase(statusFilter)) {
+                ps.setString(idx++, statusFilter);
+            }
+            if (keyword != null && !keyword.isEmpty()) {
+                String kw = "%" + keyword + "%";
+                ps.setString(idx++, kw); ps.setString(idx++, kw);
+                ps.setString(idx++, kw); ps.setString(idx++, kw);
+            }
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) return rs.getInt(1);
+            }
+        } catch (Exception e) {
+            log.error("DB error", e);
+        }
+        return 0;
+    }
+
     public boolean cancelOrderByUser(int orderId, int userId) {
         ProductDAO productDAO = new ProductDAO();
         OrderStatusHistoryDAO historyDAO = new OrderStatusHistoryDAO();
