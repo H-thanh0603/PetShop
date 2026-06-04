@@ -398,7 +398,69 @@
         from { transform: rotate(0deg); }
         to { transform: rotate(360deg); }
     }
-    
+
+    /* ===== SEARCH HISTORY ===== */
+        .autocomplete-section-label {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 8px 15px 4px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: #999;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+        .autocomplete-section-label button {
+            background: none;
+            border: none;
+            font-size: 0.75rem;
+            color: #aaa;
+            cursor: pointer;
+            padding: 0;
+            font-family: 'Montserrat', sans-serif;
+        }
+        .autocomplete-section-label button:hover { color: #dc3545; }
+        .autocomplete-history-item {
+            display: flex;
+            align-items: center;
+            padding: 9px 15px;
+            cursor: pointer;
+            gap: 10px;
+            color: #444;
+            font-size: 0.9rem;
+            transition: background 0.15s;
+            text-decoration: none;
+        }
+        .autocomplete-history-item:hover { background: #f5f7fa; }
+        .autocomplete-history-item i { color: #aaa; font-size: 1rem; flex-shrink: 0; }
+        .autocomplete-history-item .history-text { flex: 1; }
+        .autocomplete-history-item .history-delete {
+            background: none;
+            border: none;
+            color: #ccc;
+            cursor: pointer;
+            padding: 2px 4px;
+            border-radius: 4px;
+            font-size: 0.85rem;
+            line-height: 1;
+            font-family: 'Montserrat', sans-serif;
+        }
+        .autocomplete-history-item .history-delete:hover { color: #dc3545; background: #fff0f0; }
+        .autocomplete-divider {
+            border: none;
+            border-top: 1px solid #f0f0f0;
+            margin: 4px 0;
+        }
+        /* Highlight từ khoá */
+        .autocomplete-item-name mark {
+            background: rgba(0, 191, 165, 0.18);
+            color: #007a66;
+            font-weight: 600;
+            border-radius: 2px;
+            padding: 0 1px;
+        }
+
     @media (max-width: 991px) {
         nav#navbar-main { padding: 12px 0 !important; }
         nav#navbar-main .navbar-collapse {
