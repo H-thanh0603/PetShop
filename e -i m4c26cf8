@@ -1,0 +1,193 @@
+[33m4c26cf8[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mHoanTien[m[33m, [m[1;31morigin/HoanTien[m[33m, [m[1;32mMThu[m[33m)[m feat(view): hoan thien giao dien manage-returns.jsp kiem soat danh sach doi tra phia admin
+[33m4ef3f4d[m feat(view): thiet ke giao dien form yeu cau doi tra order-return.jsp bang bootstrap
+[33m66d21a8[m feat(admin): trien khai AdminOrderReturnServlet cho phep quan tri vien duyet yeu cau doi tra
+[33m44eef0a[m feat(controller): trien khai OrderReturnServlet dieu huong va xu ly yeu cau doi tra
+[33m0e85701[m feat(dao): trien khai OrderReturnDAO quan ly giao dich va tu dong dong bo trang thai don hang
+[33md0ec197[m feat(model): tao lop OrderReturn bieu dien thong tin yeu cau doi tra hoan tien
+[33ma4bac69[m feat(db): khoi tao bang chat_messages ho tro tu van giua khach hang va admin
+[33m976064a[m[33m ([m[1;31morigin/MThu[m[33m)[m feat(service): trien khai ham requestReturn
+[33m4cd4e64[m feat(jsp): thiet ke trang admin quan ly va phe duyet yeu cau hoan tien
+[33m3cc9923[m feat(jsp): thiet ke giao dien form nhap ly do doi tra va gui yeu cau hoan tien
+[33mf613941[m xoá cmt
+[33m22380d2[m feat(orders): them tab trang thai va phan trang cho giao dien
+[33m9b89388[m feat(orders): them tab trang thai va phan trang cho giao dien
+[33m0747653[m feat(orders): them tab trang thai va phan trang cho giao dien
+[33mcb9c58d[m feat(shop): tich hop phan trang database va dong bo cac chuc nang xu ly don hang
+[33m7da0ebe[m feat(order): trien khai getOrdersByUserIdWithPagination tích hop kiem tra transaction va lay kem order items
+[33mf4d31cc[m feat(dao): trien khai phuong thuc countOrdersByUserId de phuc vu thong ke phan trang
+[33m01a88db[m feat(order): trien khai ham lay danh sach don hang phan trang theo status
+[33m58a5015[m feat(order): bo sung hàm dem so luong don hang theo userId va status de phan trang
+[33m4cef15e[m Merge pull request #45 from H-thanh0603/Dat
+[33m22b26dd[m[33m ([m[1;31morigin/Dat[m[33m)[m fix: Thanh toán bằng cod thì success hiện cod
+[33m936b063[m fix: Fix luồng thanh toán lỗi, fix: Bấm nút đã nhận hàng lỗi
+[33m3e19397[m fix: Bấm nút quay lại từ trang 403 về lại trang /admin/login, fix: chỉ admin mới được quản lý kho
+[33m57ec0ce[m fix: Tách luồng thêm sản phẩm và nhập lô hàng và hạn sử dụng
+[33m80f26f1[m feat: Phân trang cho quản lý sản phẩm
+[33mf5cad7b[m Merge pull request #42 from H-thanh0603/Dat
+[33m13b58b0[m fix and feat: fix luồng cập nhật trạng thái cho các role, feat: tạo đăng nhập luồng riêng kh theo web
+[33mf8c9a84[m feat: thêm 2 role cập nhật bộ lọc và hiển thị ver 2
+[33md4d7f06[m feat: thêm 2 role cập nhật bộ lọc và hiển thị
+[33m17c8514[m fix and feat: Ẩn các mục dựa vào role
+[33m5245f2c[m feat: Làm trang 403 thông báo lỗi khi có người cố gắng đăng nhập trang admin và chức năng phân quyền
+[33mc1c189c[m fix: add thêm 2 trạng thái liên quan tới vnpay, fix các cập nhật trạng thái không hợp lệ
+[33m3a48383[m feat: Chức năng thanh toán lại của vnpay gioi han trong 15 phut
+[33mb766db5[m Merge pull request #41 from H-thanh0603/Dat
+[33m0c19e93[m convert: back về code trước
+[33m9075b98[m fix: emailconfig ver 2
+[33maad8656[m fix: emailconfig
+[33me80b0d9[m Merge pull request #39 from H-thanh0603/Dat
+[33m4921e1b[m Update README.md
+[33m4f7e7fd[m Improve wishlist UX and related products carousel
+[33m0363854[m fix: xử lý trả về 2 trạng thái đang chờ hoặc đã thanh toán
+[33m5d8b08a[m fix: font số discount và finalTotal'
+[33m3e1c6eb[m feat: Làm trang thanh toán thất bại và thêm 1 enum là Awaiting Payment
+[33m6c18e84[m feat: tích hợp thanh toán vnpay sanbox
+[33m146ac10[m feat and fix: fix áp dụng coupon cho luồng từ giỏ hàng, feat áp dụng coupon cho mua ngay
+[33m4bb9248[m làm trang thanh toán thành công và chức năng đặt hàng cod mua ngay và cart
+[33maeba738[m feat: làm trang thanh toán thành công và chức năng đặt hàng cod mua ngay và cart
+[33m1eafb4e[m fix: nút mua ngay đặt hàng thành công
+[33m906f732[m fix: them bang de dong bo voi model, chuc nang cap nhat trang thai cho don hang
+[33m08a7c22[m fix: fix db để checkout thành công
+[33mebc12c4[m fix lỗi bấm mua ngay thêm vào giỏ hàng, xử lý vào trang checkout ngay với số lượng và món hàng đó
+[33ma682986[m Merge pull request #36 from H-thanh0603/Dat
+[33m482bfb7[m feat: admin trả lời reviewer
+[33mc2b2b70[m feat: cập nhật trạng thái comments
+[33m03b6d59[m fix: Fix chức năng lọc trang admin
+[33mcf3b9c8[m fix: Hiển thị đánh giá của user
+[33m00ca051[m sua duong dan tomcat
+[33md213839[m Fix start script and bank webhook parsing
+[33m5023fba[m Merge pull request #35 from H-thanh0603/fix/build-web
+[33m2386609[m[33m ([m[1;31morigin/fix/build-web[m[33m)[m resolve conflicts
+[33m460eace[m fix lỗi không build dc web
+[33me73c6e0[m chore: untrack deploy/ folder (contains VPS IP, bank account, secrets)
+[33m1274771[m fix: add brand column auto-migration for brand filter feature
+[33mcb0dd5a[m chore: sync tree with demo_new_feature (remove legacy payment services, images)
+[33m0facb54[m chore: remove leftover temp files and spec/omx artifacts
+[33mb59b45e[m feat: add brand filter + availability sort option
+[33mcb72061[m fix: improve star rating CSS + add lengthReviews attribute
+[33m2ccce45[m fix: refactor autocomplete to DOM manipulation + show stock quantity
+[33mc6ca362[m fix: deactivate duplicate paddy products
+[33m35881b0[m fix: align product seed with real images
+[33m9678940[m data: add Melipet product catalog seed
+[33ma9b3c55[m fix: add production database repair scripts
+[33mcf980be[m chore: add Melipet VPS deployment assets
+[33m849e20b[m feat: support SePay bank webhook payloads
+[33m9919593[m build: target Java 17 for Tomcat deployment
+[33m724eb8e[m Add operating safeguards for orders and inventory
+[33m7e23c34[m Fix checkout inventory and polish storefront UX
+[33m887251d[m Update PetShop website improvements and fixes
+[33m334a1b7[m feat: harden operating foundations
+[33m36f4b04[m docs: add operations audit design spec
+[33m27b9ef1[m feat: add admin payment review flow
+[33mf711be5[m feat: refactor checkout payment flow
+[33mf5e3621[m fix: OTP email, username validation, demo accounts, email verification for existing users
+[33m2f1f0a0[m build: remove pom.xml (fully migrated to Gradle)
+[33m5cd4555[m build: migrate from Maven to Gradle
+[33m674fc76[m feat: complete remaining specs - payment registry, email verification, logging, UI updates
+[33m6e8d61e[m feat: implement order/user features, session extensibility, error handling & resilience
+[33m6eabd18[m feat: implement concurrency & data integrity hardening
+[33m250d036[m feat: implement security hardening (7 layers)
+[33m923c4aa[m feat: add branded 404 and 500 error pages
+[33m21fe4da[m feat: add admin review moderation page
+[33m5cb5465[m feat: enhance admin product management with stock, weight, category, pet type
+[33m8ae3711[m fix: label MoMo and bank transfer as demo payment methods
+[33m3a41e7b[m chore: remove legacy media assets (medical, spa, surgery, vaccine images + hotel video)
+[33m0d374b7[m chore: remove legacy CSS, JS, and JSP components
+[33ma690ff9[m chore: remove legacy domain classes (doctor, careitem, feature)
+[33m9853e00[m fix: remove demo fallback login from UserDAO
+[33ma4755c9[m fix(auth): harden social login and pet type admin
+[33m16b01eb[m fix(auth): prevent login page crash without social secrets
+[33m6a6d872[m fix(ui): polish storefront checkout and cart flows
+[33m1234910[m feat(admin): add ecommerce reporting and alert center
+[33m5423e61[m feat(account): improve profile and social login flows
+[33m907b801[m feat(order): improve storefront and admin order flows
+[33md77b295[m feat(shop): add wishlist and real product ratings
+[33mfe2facb[m refactor(ui): remove non-ecommerce storefront links
+[33m764bd2f[m fix(auth): load MySQL password from env
+[33mc618cde[m /fea/review
+[33m8eb80a9[m[33m ([m[1;31morigin/fea/review[m[33m)[m fix chọn số sao đẹp hơn
+[33md20a071[m fix hiển thị số đánh giá đúng hơn
+[33m62b3672[m /fea/availability
+[33m55bc387[m chore: merge low-risk project files
+[33m8054933[m Update README.md
+[33me527fa9[m[33m ([m[1;31morigin/fea/availability[m[33m)[m làm lọc cho tình trạng còn hàng
+[33me27a453[m lam filter voi brand, them brand cho san pham
+[33mb3a6f4a[m fix/remove-gigitnore
+[33m327d021[m[33m ([m[1;31morigin/fix/remove-gigitnore[m[33m)[m xoa Dbcontext ra khoi gigitnore
+[33mbe41444[m fix/filter ver 1
+[33m442ef6c[m fix chuc nang filter
+[33m2ec4b2d[m /fix/display_image
+[33m6959d20[m[33m ([m[1;31morigin/fix/display_image[m[33m)[m fix hien thi san pham
+[33m83e5c74[m fix/product-detail-navigation
+[33md527a2a[m Hien thi so luong con lai cua mon hang
+[33maeeeeec[m fix bấm vào các sản phẩm trên ô tìm kiếm qua được trang chi tiết
+[33m7c21ebf[m fix/add_DBContext
+[33m8068481[m fix loi khong ket noi duoc voi db
+[33m0bd8226[m Update README.md
+[33md0d7117[m Merge pull request fea/payment-con
+[33m0640167[m build web by gradle and deploy
+[33m74cd46d[m validate/address
+[33m21138bc[m validate/address
+[33meadac17[m /freeship
+[33m43a89af[m ngưỡng freeship
+[33m22f5e98[m fix/used-coupons
+[33m1f7cce0[m fix/used-coupons
+[33ma1bc9a0[m fix/inputQuantity
+[33mc9b2d1a[m fix/inputQuantity
+[33mf1f31aa[m fix/quantity
+[33mae02d92[m fix/quantity
+[33m0af5fca[m Commit này fix/previous-page
+[33mdeb5c0b[m fix/previous-page
+[33m51ddcd1[m fix/luu-anh-san-pham-vao-webapp - Sửa lưu ảnh sản phẩm vào webapp/assets/images/shop_pic thay vì thư mục ngoài
+[33me5dcd73[m Db thừa - Thư
+[33m96b4d41[m update/cap-nhat-db-sql-day-du-cac-bang-moi - Cập nhật db.sql với đầy đủ bảng pet_types, cart, reviews, wishlist, coupons, notifications
+[33md711ec7[m feature/quan-ly-loai-thu-cuong-va-danh-muc - Thêm quản lý loại thú cưng và danh mục sản phẩm cho admin
+[33m27058dd[m update/them-cac-file-sql-tu-feature-branch - Thêm các file SQL cập nhật database
+[33ma6e77e7[m feature/them-thanh-tim-kiem-trang-home - Thêm thanh tìm kiếm autocomplete vào trang home
+[33m925de58[m fix/ file start.bat
+[33m5f14b7d[m Merge feature/merge-shop-search-forgot-password: trang shop, autocomplete, quên mật khẩu
+[33mfc4918e[m[33m ([m[1;31morigin/feature/merge-shop-search-forgot-password[m[33m)[m feature/merge-shop-search-forgot-password - Merge trang shop, tìm kiếm autocomplete và quên mật khẩu lên main
+[33m26b7720[m fix/my-orders.jsp
+[33mf504273[m fix/my-orders.jsp
+[33m3fc3402[m fea/payment
+[33m0d6dacb[m chức năng thanh toán với cod
+[33m492e614[m fix-CartServlet
+[33m23bcf43[m fix lỗi quantity thay đổi khi out, đồng bộ quantity trên navbar, ajax
+[33m44d1331[m fix lỗi không bấm được nút xóa
+[33m8df927b[m fix fea/delete-cartitem
+[33me92116e[m fix/apply-coupon
+[33mf4eb8f5[m fix khi out /checkout thì tính lại áp dụng mã discount
+[33mb9feca3[m fea/shipping-tax
+[33m0dd0dae[m fea/shipping-tax
+[33m60f93eb[m post/apply-coupon ap dung ma discount
+[33ma2349d2[m put/apply-coupon
+[33m9784f30[m fix/addresses sửa nút bấm không được
+[33mc069de1[m fix/addresses
+[33m465fd51[m delete/addresses
+[33m499387c[m delete/addresses
+[33m41c0678[m put/addresses
+[33mc23c472[m put/addresses
+[33m4c4134d[m Merge pull request #7 from H-thanh0603/post/addresses
+[33m065bd8c[m post/addresses
+[33m13edbf4[m fix thêm danh sách địa chỉ trong trang thanh toán
+[33mf75b366[m fix thêm danh sách địa chỉ trong trang thanh toán
+[33m6f0b8c7[m ervlet xử lý logic 3 bước (nhập email → verify OTP → đặt lại mật khẩu)
+[33m2d348fa[m Trang nhập email khi quên mật khẩu
+[33me9a8ab0[m Trang đặt lại mật khẩu mới
+[33m5260a57[m xác nhận mã OTP
+[33m1426646[m Merge pull request #5 from H-thanh0603/checkout-fuction
+[33m0c07490[m làm trang thanh toán
+[33mabf6091[m Merge pull request #4 from H-thanh0603/fix-increase-decrease-button
+[33m044eddb[m fix xóa bớt nút thừa
+[33mbbbdbb6[m Merge pull request #3 from H-thanh0603/fix-total-quantity
+[33m4be0b2c[m fix hiển thị tổng số lượng khi đăng nhập bằng gg hoặc fb
+[33m5fbffe0[m Thêm phương thức xem toàn bộ sản phẩm (Thư), update lại commit do xử lý conflict mất code
+[33mdebee3b[m merge login-by-gg-fb into main
+[33m62d7f48[m clean project remove secret
+[33m4c887c9[m Thêm phương thức xem toàn bộ sản phẩm -Thư
+[33mea6a5fa[m login-by-facebook
+[33m7049c34[m login-by-facebook
+[33m32cc307[m Delete src/main/webapp/pages/admin/fix-data.jsp
+[33mfd1161c[m Delete src/main/webapp/pages/admin/blogs.jsp
+[33m0b55820[m first commit
+[33me2c431d[m Initial commit
