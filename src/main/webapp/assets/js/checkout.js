@@ -14,7 +14,7 @@
         bankAccountName: configEl.dataset.bankAccountName || "NGUYEN HUU THANH",
         bankTransferPrefix: configEl.dataset.bankTransferPrefix || "PETSHOP",
         bankTransferReference: configEl.dataset.bankTransferReference || "",
-        bankPaymentTtlSeconds: parseInt(configEl.dataset.bankPaymentTtlSeconds || "600", 10) || 600
+        bankPaymentTtlSeconds: parseInt(configEl.dataset.bankPaymentTtlSeconds || "600", 10) || 600,
     };
 
     let provincesLoaded = false;
@@ -282,10 +282,6 @@
                             checkoutButton.dataset.keepDisabled = "true";
                             paymentResult.innerHTML = '<div class="alert alert-success">Đơn hàng đã được tạo. QR bên trên có hiệu lực trong 10 phút, vui lòng hoàn tất chuyển khoản đúng nội dung. <a class="alert-link" href="' + checkoutConfig.contextPath + '/my-orders">Xem đơn hàng</a></div>';
                             return;
-                            paymentResult.innerHTML = '<div class="alert alert-success">Đơn hàng đã được tạo. Vui lòng hoàn tất chuyển khoản theo đúng nội dung để hệ thống tự đối soát.</div>';
-                            setTimeout(() => {
-                                window.location.href = checkoutConfig.contextPath + "/my-orders";
-                            }, 3000);
                         } else {
                             paymentResult.innerHTML = '<div class="alert alert-success">' + escapeHtml(data.message || "Đặt hàng thành công!") + "</div>";
                             setTimeout(() => {
@@ -607,65 +603,4 @@
             });
         }
     }
-
-    function getRenderedCheckoutState() {
-        const items = Array.from(document.querySelectorAll(".product-item[data-product-id]")).map(item => ({
-            productId: Number.parseInt(item.dataset.productId, 10),
-            quantity: Number.parseInt(item.dataset.quantity, 10) || 0
-        })).sort((a, b) => a.productId - b.productId);
-
-        return {
-            items,
-            totalQuantity: items.reduce((sum, item) => sum + item.quantity, 0)
-        };
-    }
-
-    function hasCheckoutStateChanged(serverState) {
-        const currentState = getRenderedCheckoutState();
-        const serverItems = (serverState.items || []).map(item => ({
-            productId: Number.parseInt(item.productId, 10),
-            quantity: Number.parseInt(item.quantity, 10) || 0
-        })).sort((a, b) => a.productId - b.productId);
-
-        if (currentState.totalQuantity !== (serverState.totalQuantity || 0)) {
-            return true;
-        }
-        if (currentState.items.length !== serverItems.length) {
-            return true;
-        }
-
-        for (let i = 0; i < serverItems.length; i++) {
-            const currentItem = currentState.items[i];
-            const serverItem = serverItems[i];
-            if (!currentItem
-                || currentItem.productId !== serverItem.productId
-                || currentItem.quantity !== serverItem.quantity) {
-                return true;
-            }
-        }
-        return false;
-    }
-
-    function syncCheckoutStateIfNeeded() {
-        fetch(checkoutConfig.contextPath + "/cart?action=state", {
-            cache: "no-store"
-        })
-            .then(response => response.json())
-            .then(data => {
-                if (data.success && hasCheckoutStateChanged(data)) {
-                    window.location.reload();
-                }
-            })
-            .catch(error => {
-                console.error("Khong dong bo duoc trang checkout:", error);
-            });
-    }
-
-    window.addEventListener("focus", syncCheckoutStateIfNeeded);
-    document.addEventListener("visibilitychange", () => {
-        if (!document.hidden) {
-            syncCheckoutStateIfNeeded();
-        }
-    });
-    setInterval(syncCheckoutStateIfNeeded, 10000);
 })();

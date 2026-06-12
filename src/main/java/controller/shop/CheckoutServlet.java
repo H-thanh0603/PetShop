@@ -117,9 +117,10 @@ public class CheckoutServlet extends HttpServlet {
             return;
         }
 
-        boolean isBuyNow = "true".equals(request.getParameter("buyNow"));
+        boolean isBuyNow = "true".equals(request.getParameter("buyNow"))
+                || (request.getParameter("id") != null && request.getParameter("quantity") != null);
         Map<Integer, CartItem> checkoutCart = isBuyNow
-                ? loadBuyNowCart(session)
+                ? loadBuyNowCart(session, request)
                 : loadLatestCartForUser(session, user);
 
         if (checkoutCart == null || checkoutCart.isEmpty()) {
@@ -203,7 +204,10 @@ public class CheckoutServlet extends HttpServlet {
             session.setAttribute("couponMessage", validation.getMessage());
         }
 
-        String buyNowParam = "true".equals(request.getParameter("buyNow")) ? "?buyNow=true" : "";
+        String buyNowParam = "true".equals(request.getParameter("buyNow"))
+                || (request.getParameter("id") != null && request.getParameter("quantity") != null)
+                ? "?buyNow=true"
+                : "";
         response.sendRedirect(request.getContextPath() + "/checkout" + buyNowParam);
     }
 
@@ -222,10 +226,15 @@ public class CheckoutServlet extends HttpServlet {
                 write(response, result);
                 return;
             }
+            @SuppressWarnings("unchecked")
+            Map<Integer, CartItem> sessionBuyNowCart =
+                    (Map<Integer, CartItem>) session.getAttribute("buyNowCart");
 
-            boolean isBuyNow = "true".equals(request.getParameter("buyNow"));
+            boolean isBuyNow = "true".equals(request.getParameter("buyNow"))
+                    || (sessionBuyNowCart != null && !sessionBuyNowCart.isEmpty());
+
             Map<Integer, CartItem> checkoutCart = isBuyNow
-                    ? loadBuyNowCart(session)
+                    ? loadBuyNowCart(session, request)
                     : loadLatestCartForUser(session, user);
 
             if (checkoutCart == null || checkoutCart.isEmpty()) {
@@ -465,12 +474,31 @@ public class CheckoutServlet extends HttpServlet {
         return cart;
     }
 
-    private Map<Integer, CartItem> loadBuyNowCart(HttpSession session) {
+    private Map<Integer, CartItem> loadBuyNowCart(HttpSession session, HttpServletRequest request) {
         @SuppressWarnings("unchecked")
         Map<Integer, CartItem> buyNowCart = (Map<Integer, CartItem>) session.getAttribute("buyNowCart");
+
         if (buyNowCart == null) {
-            return new HashMap<>();
+            String idParam = request.getParameter("id");
+            String qtyParam = request.getParameter("quantity");
+            if (idParam != null && qtyParam != null) {
+                try {
+                    int productId = Integer.parseInt(idParam);
+                    int quantity  = Math.max(1, Integer.parseInt(qtyParam));
+                    Product product = productDAO.getProductById(productId);
+                    if (product != null) {
+                        CartItem item = new CartItem(product, quantity);
+                        buyNowCart = new HashMap<>();
+                        buyNowCart.put(productId, item);
+                        session.setAttribute("buyNowCart", buyNowCart);
+                    }
+                } catch (NumberFormatException e) {
+                    logger.warn("Invalid buyNow params: id={}, quantity={}", idParam, qtyParam);
+                }
+            }
         }
+
+        if (buyNowCart == null) return new HashMap<>();
         inventoryService.refreshCartProducts(buyNowCart);
         return buyNowCart;
     }
