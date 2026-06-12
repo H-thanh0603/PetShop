@@ -485,7 +485,7 @@ public class CheckoutServlet extends HttpServlet {
         }
 
         BigDecimal discount = calculateDiscount(totalAmount, coupon);
-        BigDecimal finalTotal = totalAmount.add(BigDecimal.valueOf(shippingFee)).subtract(discount);
+        BigDecimal finalTotal = totalAmount.add(BigDecimal.valueOf(shippingFee)).subtract(discount).setScale(0, RoundingMode.HALF_UP);
         return new CheckoutSummary(totalAmount, shippingFee, shippingMessage, discount, finalTotal);
     }
 
@@ -495,7 +495,7 @@ public class CheckoutServlet extends HttpServlet {
         }
         return totalAmount
                 .multiply(BigDecimal.valueOf(coupon.getDiscountPercent()))
-                .divide(BigDecimal.valueOf(100), 2, RoundingMode.HALF_UP);
+                .divide(BigDecimal.valueOf(100), 0, RoundingMode.HALF_UP);
     }
 
     private User refreshUserSession(HttpSession session, int userId) {
