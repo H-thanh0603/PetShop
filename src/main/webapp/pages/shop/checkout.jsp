@@ -319,10 +319,10 @@
 
                 <div class="payment-card mb-2">
                     <label>
-                        <input type="radio" name="payment" value="momo">
+                        <input type="radio" name="payment" value="vnpay">
                         <span>
-                            <strong>Ví điện tử MoMo</strong>
-                            <small>Demo thanh toán ví điện tử.</small>
+                            <strong>Thanh toán bằng Vnpay</strong>
+                            <small>Demo thanh toán ví vnpay.</small>
                         </span>
                     </label>
                 </div>

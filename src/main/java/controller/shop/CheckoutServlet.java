@@ -15,6 +15,7 @@ import DAO.PaymentTransactionDAO;
 import DAO.ProductDAO;
 import DAO.UserDAO;
 import Context.DBContext;
+import Util.VnpayUtil;
 
 import Model.*;
 
@@ -303,8 +304,12 @@ public class CheckoutServlet extends HttpServlet {
                     + defaultAddress.getProvince();
 
             String paymentMethodKey = resolvePaymentMethodKey(request);
+            boolean isVnpay = "vnpay".equalsIgnoreCase(paymentMethodKey);
+
+            String servicePaymentMethodKey = isVnpay ? "cod" : paymentMethodKey;
+
             String reservedTransferReference = null;
-            if ("bank_transfer".equalsIgnoreCase(paymentMethodKey)) {
+            if ("bank_transfer".equalsIgnoreCase(servicePaymentMethodKey)) {
                 reservedTransferReference = ensureBankTransferReference(
                         session,
                         user.getId(),
@@ -313,7 +318,7 @@ public class CheckoutServlet extends HttpServlet {
             }
 
             services.CheckoutResult checkoutResult = buildCheckoutService().processCheckout(
-                    user, checkoutCart, fullAddress, note, couponState, paymentMethodKey,
+                    user, checkoutCart, fullAddress, note, couponState, servicePaymentMethodKey,
                     baseSummary.getShippingFee(), reservedTransferReference
             );
 
@@ -324,7 +329,7 @@ public class CheckoutServlet extends HttpServlet {
                 return;
             }
 
-            completedPaymentMethod = checkoutResult.getPaymentMethodDb();
+            completedPaymentMethod = isVnpay ? "VNPAY" : checkoutResult.getPaymentMethodDb();
             completedPaymentTransaction = checkoutResult.getPaymentTransaction();
             completedOrderId = checkoutResult.getOrderId();
 
@@ -339,6 +344,29 @@ public class CheckoutServlet extends HttpServlet {
             session.removeAttribute("couponMessage");
             session.removeAttribute("checkoutNote");
             session.removeAttribute(BANK_TRANSFER_REFERENCE_SESSION_KEY);
+
+            if ("VNPAY".equalsIgnoreCase(completedPaymentMethod)) {
+                session.setAttribute("successOrderId", completedOrderId);
+                session.setAttribute("successUser", user);
+                session.setAttribute("successTotalAmount", checkoutResult.getTotalAmount());
+                session.setAttribute("successShippingFee", checkoutResult.getShippingFee());
+                session.setAttribute("successDiscount", checkoutResult.getDiscount());
+                session.setAttribute("successFinalTotal", checkoutResult.getFinalTotal());
+                session.setAttribute("successShippingAddress", fullAddress);
+                session.setAttribute("successOrderNote", note);
+                session.setAttribute("successOrderItems", new ArrayList<>(checkoutCart.values()));
+
+                String vnpayUrl = VnpayUtil.createPaymentUrl(
+                        request,
+                        completedOrderId,
+                        checkoutResult.getFinalTotal()
+                );
+
+                result.put("success", true);
+                result.put("redirectUrl", vnpayUrl);
+                write(response, result);
+                return;
+            }
 
             if ("BANK_TRANSFER".equalsIgnoreCase(completedPaymentMethod) && completedPaymentTransaction != null) {
                 // Giữ nguyên JSON response cho bank transfer (FE cần hiển thị QR + countdown)
@@ -608,8 +636,8 @@ public class CheckoutServlet extends HttpServlet {
         switch (paymentMethodDb.toUpperCase()) {
             case "COD":
                 return "Cash On Delivery";
-            case "MOMO":
-                return "MoMo";
+            case "VNPAY":
+                return "VNPAY";
             case "BANK_TRANSFER":
                 return "Bank Transfer";
             default:

@@ -13,7 +13,8 @@ public final class AppConfig {
             "app.properties",
             "db.properties",
             "secrets.properties",
-            "ship.properties"
+            "ship.properties",
+            "vnpay.properties"
     };
 
     static {

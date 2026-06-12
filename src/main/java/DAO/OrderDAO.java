@@ -874,5 +874,24 @@ public class OrderDAO {
                 return "Đang chờ đối soát thanh toán chuyển khoản.";
         }
     }
+    public boolean updateOrderPaymentStatus(int orderId, String paymentStatus) {
+        String sql = """
+        UPDATE orders
+        SET payment_status = ?
+        WHERE id = ?
+    """;
+
+        try (Connection conn = DBContext.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+
+            ps.setString(1, paymentStatus);
+            ps.setInt(2, orderId);
+            return ps.executeUpdate() > 0;
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
 }
 
