@@ -243,6 +243,7 @@ public class LoginServlet extends HttpServlet {
             HttpSession oldSession = request.getSession(false);
             Map<Integer, CartItem> savedCart = null;
             Integer savedTotalQuantity = null;
+            String redirectUrl = AuthRedirectUtil.consumeRedirectAfterLogin(request);
             if (oldSession != null) {
                 savedCart = (Map<Integer, CartItem>) oldSession.getAttribute("cart");
                 savedTotalQuantity = (Integer) oldSession.getAttribute("totalQuantity");
@@ -303,8 +304,6 @@ public class LoginServlet extends HttpServlet {
             }
             
             // Redirect theo role hoặc về trang trước
-            String redirectUrl = AuthRedirectUtil.consumeRedirectAfterLogin(request);
-            
             if ("admin".equals(user.getRole())) {
                 response.sendRedirect(request.getContextPath() + "/pages/admin/dashboard");
             } else if (redirectUrl != null && !redirectUrl.isEmpty()) {

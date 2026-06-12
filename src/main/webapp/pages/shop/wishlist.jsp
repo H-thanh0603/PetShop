@@ -90,7 +90,7 @@
                                                             <i class='bx bx-cart-add'></i> Thêm vào giỏ
                                                         </button>
                                                     </form>
-                                                    <form action="${pageContext.request.contextPath}/toggle-wishlist" method="post">
+                                                    <form action="${pageContext.request.contextPath}/toggle-wishlist" method="post" data-product-id="${p.id}">
                                                         <input type="hidden" name="csrfToken" value="${csrfToken}">
                                                         <input type="hidden" name="productId" value="${p.id}">
                                                         <input type="hidden" name="redirect" value="${pageContext.request.contextPath}/wishlist">
@@ -113,5 +113,6 @@
 
     <jsp:include page="/components/footer.jsp" />
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="${pageContext.request.contextPath}/assets/js/wishlist-ajax.js?v=20260612-2"></script>
 </body>
 </html>
