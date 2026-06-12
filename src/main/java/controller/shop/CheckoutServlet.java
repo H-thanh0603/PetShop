@@ -333,12 +333,12 @@ public class CheckoutServlet extends HttpServlet {
             session.removeAttribute("checkoutNote");
             session.removeAttribute(BANK_TRANSFER_REFERENCE_SESSION_KEY);
 
-            result.put("success", true);
             if ("BANK_TRANSFER".equalsIgnoreCase(completedPaymentMethod) && completedPaymentTransaction != null) {
-                BankTransferDetails bankTransferDetails = BankTransferDetails.fromConfig();
-                result.put("message", "Đơn hàng đã được tạo. Vui lòng chuyển khoản và chờ hệ thống đối soát.");
+                // Giữ nguyên JSON response cho bank transfer (FE cần hiển thị QR + countdown)
+                result.put("success", true);
                 result.put("pendingVerification", true);
                 result.put("orderId", completedOrderId);
+                BankTransferDetails bankTransferDetails = BankTransferDetails.fromConfig();
                 result.put("bankDisplayName", bankTransferDetails.getDisplayName());
                 result.put("bankId", bankTransferDetails.getBankId());
                 result.put("bankAccountNumber", bankTransferDetails.getAccountNumber());
@@ -346,10 +346,24 @@ public class CheckoutServlet extends HttpServlet {
                 result.put("transferReference", completedPaymentTransaction.getTransferReference());
                 result.put("paymentExpiresAt", completedPaymentTransaction.getExpiresAt());
                 result.put("paymentTtlSeconds", AppConfig.getInt("payment.bank.pending-minutes", 10) * 60);
+                write(response, result);
             } else {
+                session.setAttribute("successOrderId", completedOrderId);
+                session.setAttribute("successUser", user);
+                session.setAttribute("successTotalAmount", checkoutResult.getTotalAmount());
+                session.setAttribute("successShippingFee", checkoutResult.getShippingFee());
+                session.setAttribute("successDiscount", checkoutResult.getDiscount());
+                session.setAttribute("successFinalTotal", checkoutResult.getFinalTotal());
+                session.setAttribute("successShippingAddress", fullAddress);
+                session.setAttribute("successOrderNote", note);
+                session.setAttribute("successOrderItems", new ArrayList<>(checkoutCart.values()));
+
+                result.put("success", true);
                 result.put("message", "Đặt hàng thành công!");
+                result.put("redirectUrl", request.getContextPath() + "/order-success");
+                write(response, result);
+                return;
             }
-            write(response, result);
 
         } catch (Throwable t) {
             logger.error("Unexpected error during checkout for user id={}", userSession.getId(), t);

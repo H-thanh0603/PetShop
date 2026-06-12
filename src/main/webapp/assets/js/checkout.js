@@ -249,16 +249,18 @@
 
             paymentResult.innerHTML = '<div class="alert alert-info">Đang xử lý đơn hàng...</div>';
             checkoutButton.disabled = true;
+            const isBuyNow = new URLSearchParams(window.location.search).get("buyNow") === "true";
 
             const bodyData = new URLSearchParams({
                 action: "placeOrder",
                 csrfToken: checkoutConfig.csrfToken,
                 paymentMethod: selectedPayment,
                 payment: selectedPayment,
-                note: note
+                note: note,
+                buyNow: isBuyNow ? "true" : "false"
             }).toString();
 
-            fetch(checkoutConfig.contextPath + "/checkout", {
+            fetch(checkoutConfig.contextPath + "/checkout" + (isBuyNow ? "?buyNow=true" : ""), {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/x-www-form-urlencoded",
@@ -277,17 +279,22 @@
                 })
                 .then(data => {
                     if (data.success) {
+                        if (data.redirectUrl) {
+                            window.location.href = data.redirectUrl;
+                            return;
+                        }
+
                         if (selectedPayment === "bank_transfer") {
                             applyServerBankTransferData(data);
                             checkoutButton.dataset.keepDisabled = "true";
-                            paymentResult.innerHTML = '<div class="alert alert-success">Đơn hàng đã được tạo. QR bên trên có hiệu lực trong 10 phút, vui lòng hoàn tất chuyển khoản đúng nội dung. <a class="alert-link" href="' + checkoutConfig.contextPath + '/my-orders">Xem đơn hàng</a></div>';
+                            paymentResult.innerHTML = '<div class="alert alert-success">Đơn hàng đã được tạo. QR bên trên có hiệu lực trong 10 phút, vui lòng hoàn tất chuyển khoản đúng nội dung. <a class="alert-link" href="' + checkoutConfig.contextPath + '/order-success">Xem đơn hàng</a></div>';
                             return;
-                        } else {
-                            paymentResult.innerHTML = '<div class="alert alert-success">' + escapeHtml(data.message || "Đặt hàng thành công!") + "</div>";
-                            setTimeout(() => {
-                                window.location.href = checkoutConfig.contextPath + "/my-orders";
-                            }, 1200);
                         }
+
+                        paymentResult.innerHTML = '<div class="alert alert-success">' + escapeHtml(data.message || "Đặt hàng thành công!") + "</div>";
+                        setTimeout(() => {
+                            window.location.href = checkoutConfig.contextPath + "/order-success";
+                        }, 1200);
                     } else {
                         paymentResult.innerHTML = '<div class="alert alert-danger">' + escapeHtml(data.message || "Có lỗi xảy ra.") + "</div>";
                     }
