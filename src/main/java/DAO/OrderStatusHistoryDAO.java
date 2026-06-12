@@ -21,7 +21,7 @@ public class OrderStatusHistoryDAO {
      */
     public boolean insertHistory(Connection conn, int orderId, String oldStatus,
                                   String newStatus, int changedBy) throws Exception {
-        String sql = "INSERT INTO order_status_history (order_id, old_status, new_status, changed_by) " +
+        String sql = "INSERT INTO order_status_history (order_id, old_status, new_status, changedBy) " +
                      "VALUES (?, ?, ?, ?)";
         try (PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setInt(1, orderId);
@@ -39,7 +39,7 @@ public class OrderStatusHistoryDAO {
         List<OrderStatusHistory> list = new ArrayList<>();
         String sql = "SELECT h.*, u.fullname AS changed_by_name " +
                      "FROM order_status_history h " +
-                     "JOIN users u ON h.changed_by = u.id " +
+                     "JOIN users u ON h.changedBy = u.id " +
                      "WHERE h.order_id = ? " +
                      "ORDER BY h.changed_at DESC";
         try (Connection conn = DBContext.getConnection();
@@ -52,7 +52,7 @@ public class OrderStatusHistoryDAO {
                     h.setOrderId(rs.getInt("order_id"));
                     h.setOldStatus(rs.getString("old_status"));
                     h.setNewStatus(rs.getString("new_status"));
-                    h.setChangedBy(rs.getInt("changed_by"));
+                    h.setChangedBy(rs.getInt("changedBy"));
                     h.setChangedByName(rs.getString("changed_by_name"));
                     h.setChangedAt(rs.getTimestamp("changed_at"));
                     list.add(h);
