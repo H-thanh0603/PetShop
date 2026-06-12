@@ -75,6 +75,133 @@
             transform: translateY(-5px);
         }
 
+        .related-carousel {
+            position: relative;
+            padding: 0 8px;
+        }
+
+        .related-carousel-viewport {
+            overflow: hidden;
+        }
+
+        .related-carousel-track {
+            display: flex;
+            gap: 24px;
+            transition: transform 0.35s ease;
+            will-change: transform;
+        }
+
+        .related-carousel-slide {
+            flex: 0 0 calc((100% - 72px) / 4);
+            min-width: 0;
+        }
+
+        .related-carousel-slide .related-card {
+            height: 100%;
+            border-radius: 12px;
+            overflow: hidden;
+        }
+
+        .related-carousel-control {
+            position: absolute;
+            top: 50%;
+            z-index: 3;
+            width: 44px;
+            height: 44px;
+            border: 1px solid #e5e7eb;
+            border-radius: 50%;
+            background: #fff;
+            color: #1f2937;
+            box-shadow: 0 8px 20px rgba(15, 23, 42, 0.12);
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            transform: translateY(-50%);
+            transition: background 0.2s ease, color 0.2s ease, transform 0.2s ease;
+        }
+
+        .related-carousel-control:hover {
+            background: #f1f5f9;
+            color: #0d6efd;
+            transform: translateY(-50%) scale(1.04);
+        }
+
+        .related-carousel-control[hidden] {
+            display: none;
+        }
+
+        .related-carousel-control i {
+            font-size: 1.25rem;
+        }
+
+        .related-carousel-prev {
+            left: -14px;
+        }
+
+        .related-carousel-next {
+            right: -14px;
+        }
+
+        @media (max-width: 991.98px) {
+            .related-carousel-slide {
+                flex-basis: calc((100% - 48px) / 3);
+            }
+        }
+
+        @media (max-width: 767.98px) {
+            .related-carousel-slide {
+                flex-basis: calc((100% - 24px) / 2);
+            }
+
+            .related-carousel-prev {
+                left: -6px;
+            }
+
+            .related-carousel-next {
+                right: -6px;
+            }
+        }
+
+        @media (max-width: 575.98px) {
+            .related-carousel {
+                padding: 0;
+            }
+
+            .related-carousel-viewport {
+                overflow-x: auto;
+                scroll-snap-type: x mandatory;
+                -webkit-overflow-scrolling: touch;
+                scrollbar-width: none;
+            }
+
+            .related-carousel-viewport::-webkit-scrollbar {
+                display: none;
+            }
+
+            .related-carousel-track {
+                gap: 16px;
+                transition: none;
+            }
+
+            .related-carousel-slide {
+                flex-basis: 100%;
+                scroll-snap-align: start;
+            }
+
+            .related-carousel-control {
+                width: 38px;
+                height: 38px;
+            }
+
+            .related-carousel-prev {
+                left: 8px;
+            }
+
+            .related-carousel-next {
+                right: 8px;
+            }
+        }
+
         .rating-css input {
             display: none;
         }
@@ -330,6 +457,7 @@
                 </form>
 
                 <form action="${pageContext.request.contextPath}/toggle-wishlist" method="post"
+                      data-product-id="${detail.id}"
                       class="wishlist-form mt-3 product-wishlist-row">
                     <input type="hidden" name="csrfToken" value="${csrfToken}">
                     <input type="hidden" name="productId" value="${detail.id}">
@@ -556,9 +684,22 @@
                 <h3 class="fw-bold border-bottom pb-2 mb-4">Có thể bạn cũng
                     thích</h3>
 
-                <div class="row row-cols-1 row-cols-md-4 g-4">
+                <c:choose>
+                    <c:when test="${empty relatedProducts}">
+                        <div class="text-center text-muted">
+                            <p>Không có sản phẩm liên quan nào.</p>
+                        </div>
+                    </c:when>
+                    <c:otherwise>
+                        <div class="related-carousel" data-related-carousel>
+                            <button type="button" class="related-carousel-control related-carousel-prev"
+                                    data-related-prev aria-label="San pham truoc">
+                                <i class="fas fa-chevron-left"></i>
+                            </button>
+                            <div class="related-carousel-viewport" data-related-viewport>
+                                <div class="related-carousel-track" data-related-track>
                     <c:forEach items="${relatedProducts}" var="rp">
-                        <div class="col">
+                        <div class="related-carousel-slide">
                             <div class="card h-100 related-card">
                                 <a
                                         href="${pageContext.request.contextPath}/product-detail?id=${rp.id}">
@@ -592,12 +733,15 @@
                         </div>
                     </c:forEach>
 
-                    <c:if test="${empty relatedProducts}">
-                        <div class="col-12 text-center text-muted">
-                            <p>Không có sản phẩm liên quan nào.</p>
+                                </div>
+                            </div>
+                            <button type="button" class="related-carousel-control related-carousel-next"
+                                    data-related-next aria-label="San pham tiep theo">
+                                <i class="fas fa-chevron-right"></i>
+                            </button>
                         </div>
-                    </c:if>
-                </div>
+                    </c:otherwise>
+                </c:choose>
             </div>
 
         </div>
@@ -797,7 +941,116 @@
         });
     }
 
+    function initRelatedCarousel() {
+        var carousel = document.querySelector('[data-related-carousel]');
+        if (!carousel) {
+            return;
+        }
+
+        var viewport = carousel.querySelector('[data-related-viewport]');
+        var track = carousel.querySelector('[data-related-track]');
+        var prevButton = carousel.querySelector('[data-related-prev]');
+        var nextButton = carousel.querySelector('[data-related-next]');
+        var slides = Array.prototype.slice.call(carousel.querySelectorAll('.related-carousel-slide'));
+        var currentIndex = 0;
+        var scrollTicking = false;
+
+        function isMobileLayout() {
+            return window.matchMedia('(max-width: 575.98px)').matches;
+        }
+
+        function getGap() {
+            var styles = window.getComputedStyle(track);
+            return parseFloat(styles.columnGap || styles.gap) || 0;
+        }
+
+        function getSlideStep() {
+            if (!slides.length) {
+                return 0;
+            }
+            return slides[0].getBoundingClientRect().width + getGap();
+        }
+
+        function getVisibleCount() {
+            var step = getSlideStep();
+            if (!step) {
+                return slides.length;
+            }
+            return Math.max(1, Math.round((viewport.clientWidth + getGap()) / step));
+        }
+
+        function getMaxIndex() {
+            return Math.max(0, slides.length - getVisibleCount());
+        }
+
+        function updateControls() {
+            var maxIndex = getMaxIndex();
+            var shouldHideControls = slides.length <= getVisibleCount();
+            prevButton.hidden = shouldHideControls || currentIndex <= 0;
+            nextButton.hidden = shouldHideControls || currentIndex >= maxIndex;
+        }
+
+        function applyPosition() {
+            var step = getSlideStep();
+            var maxIndex = getMaxIndex();
+            currentIndex = Math.max(0, Math.min(currentIndex, maxIndex));
+
+            if (isMobileLayout()) {
+                track.style.transform = '';
+            } else {
+                track.style.transform = 'translateX(-' + (currentIndex * step) + 'px)';
+            }
+
+            updateControls();
+        }
+
+        function moveCarousel(direction) {
+            var step = getSlideStep();
+            var visibleCount = getVisibleCount();
+            currentIndex = Math.max(0, Math.min(currentIndex + (direction * visibleCount), getMaxIndex()));
+
+            // On mobile the viewport stays swipeable; buttons scroll the same track.
+            if (isMobileLayout()) {
+                viewport.scrollTo({
+                    left: currentIndex * step,
+                    behavior: 'smooth'
+                });
+                updateControls();
+            } else {
+                applyPosition();
+            }
+        }
+
+        prevButton.addEventListener('click', function () {
+            moveCarousel(-1);
+        });
+
+        nextButton.addEventListener('click', function () {
+            moveCarousel(1);
+        });
+
+        viewport.addEventListener('scroll', function () {
+            if (!isMobileLayout() || scrollTicking) {
+                return;
+            }
+
+            scrollTicking = true;
+            window.requestAnimationFrame(function () {
+                var step = getSlideStep();
+                currentIndex = step ? Math.round(viewport.scrollLeft / step) : 0;
+                currentIndex = Math.max(0, Math.min(currentIndex, getMaxIndex()));
+                updateControls();
+                scrollTicking = false;
+            });
+        });
+
+        window.addEventListener('resize', applyPosition);
+        applyPosition();
+    }
+
+    initRelatedCarousel();
     syncStockUi();
 </script>
+<script src="${pageContext.request.contextPath}/assets/js/wishlist-ajax.js?v=20260612-2"></script>
 </body>
 </html>

@@ -8,6 +8,7 @@ import org.slf4j.LoggerFactory;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -102,5 +103,44 @@ public class WishlistDAO {
             return removeFromWishlist(userId, productId);
         }
         return addToWishlist(userId, productId);
+    }
+
+    public boolean toggleWishlistAndReturnState(int userId, int productId) throws SQLException {
+        String checkSql = "SELECT 1 FROM wishlist WHERE user_id = ? AND product_id = ?";
+        String insertSql = "INSERT INTO wishlist (user_id, product_id) VALUES (?, ?)";
+        String deleteSql = "DELETE FROM wishlist WHERE user_id = ? AND product_id = ?";
+
+        try (Connection conn = DBContext.getConnection()) {
+            boolean oldAutoCommit = conn.getAutoCommit();
+            conn.setAutoCommit(false);
+            try {
+                boolean wasInWishlist;
+                try (PreparedStatement ps = conn.prepareStatement(checkSql)) {
+                    ps.setInt(1, userId);
+                    ps.setInt(2, productId);
+                    try (ResultSet rs = ps.executeQuery()) {
+                        wasInWishlist = rs.next();
+                    }
+                }
+
+                String updateSql = wasInWishlist ? deleteSql : insertSql;
+                try (PreparedStatement ps = conn.prepareStatement(updateSql)) {
+                    ps.setInt(1, userId);
+                    ps.setInt(2, productId);
+                    int affectedRows = ps.executeUpdate();
+                    if (affectedRows != 1) {
+                        throw new SQLException("Wishlist update affected " + affectedRows + " rows.");
+                    }
+                }
+
+                conn.commit();
+                return !wasInWishlist;
+            } catch (SQLException e) {
+                conn.rollback();
+                throw e;
+            } finally {
+                conn.setAutoCommit(oldAutoCommit);
+            }
+        }
     }
 }

@@ -56,6 +56,12 @@ public class CsrfFilter implements Filter {
             request.setAttribute("csrfToken", sessionToken);
             chain.doFilter(req, res);
         } else {
+            if (isAjaxRequest(request)) {
+                response.setStatus(HttpServletResponse.SC_FORBIDDEN);
+                response.setContentType("application/json;charset=UTF-8");
+                response.getWriter().write("{\"success\":false,\"message\":\"Phiên làm việc đã hết hạn. Vui lòng tải lại trang.\"}");
+                return;
+            }
             response.sendError(HttpServletResponse.SC_FORBIDDEN, "Invalid CSRF token");
         }
     }
@@ -81,5 +87,12 @@ public class CsrfFilter implements Filter {
 
     private boolean isServerToServerWebhook(String uri) {
         return uri != null && uri.endsWith("/api/payment/bank-webhook");
+    }
+
+    private boolean isAjaxRequest(HttpServletRequest request) {
+        String requestedWith = request.getHeader("X-Requested-With");
+        String accept = request.getHeader("Accept");
+        return "XMLHttpRequest".equalsIgnoreCase(requestedWith)
+                || (accept != null && accept.contains("application/json"));
     }
 }

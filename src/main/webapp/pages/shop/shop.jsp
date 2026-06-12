@@ -98,7 +98,7 @@
 <body>
     <jsp:include page="/components/navbar.jsp" />
     <jsp:include page="/components/toast.jsp" />
-    <c:set var="currentPageUrl" value="${pageContext.request.requestURI}${empty pageContext.request.queryString ? '' : '?'}${pageContext.request.queryString}" />
+    <c:set var="currentPageUrl" value="${pageContext.request.contextPath}/shop${empty pageContext.request.queryString ? '' : '?'}${pageContext.request.queryString}" />
 
     <section class="shop-hero">
         <div class="container">
@@ -227,7 +227,7 @@
                                             </c:choose>
                                         </div>
                                         <div class="product-actions">
-                                            <form action="${pageContext.request.contextPath}/toggle-wishlist" method="post">
+                                            <form action="${pageContext.request.contextPath}/toggle-wishlist" method="post" data-product-id="${p.id}">
                                                 <input type="hidden" name="csrfToken" value="${csrfToken}">
                                                 <input type="hidden" name="productId" value="${p.id}">
                                                 <input type="hidden" name="redirect" value="${currentPageUrl}">
@@ -288,7 +288,7 @@
                                         </c:choose>
                                     </div>
                                     <div class="product-actions">
-                                        <form action="${pageContext.request.contextPath}/toggle-wishlist" method="post">
+                                        <form action="${pageContext.request.contextPath}/toggle-wishlist" method="post" data-product-id="${p.id}">
                                             <input type="hidden" name="csrfToken" value="${csrfToken}">
                                             <input type="hidden" name="productId" value="${p.id}">
                                             <input type="hidden" name="redirect" value="${currentPageUrl}">
@@ -410,7 +410,7 @@
                                         </c:choose>
                                     </div>
                                     <div class="product-actions">
-                                        <form action="${pageContext.request.contextPath}/toggle-wishlist" method="post">
+                                        <form action="${pageContext.request.contextPath}/toggle-wishlist" method="post" data-product-id="${p.id}">
                                             <input type="hidden" name="csrfToken" value="${csrfToken}">
                                             <input type="hidden" name="productId" value="${p.id}">
                                             <input type="hidden" name="redirect" value="${currentPageUrl}">
@@ -479,5 +479,6 @@
     <jsp:include page="/components/footer.jsp" />
     <jsp:include page="/components/back-button.jsp" />
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="${pageContext.request.contextPath}/assets/js/wishlist-ajax.js?v=20260612-2"></script>
 </body>
 </html>
