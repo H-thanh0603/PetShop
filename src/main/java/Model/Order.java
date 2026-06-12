@@ -103,6 +103,8 @@ public class Order {
             return "Không xác định";
         }
         switch (status) {
+            case "Awaiting Payment":
+                return "Đang chờ xử lý";
             case "Pending":
                 return "Chờ xử lý";
             case "Confirmed":

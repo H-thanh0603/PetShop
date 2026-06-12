@@ -38,9 +38,11 @@ public class VnpayReturnServlet extends HttpServlet {
             response.sendRedirect(request.getContextPath() + "/order-success");
         } else {
             orderDAO.updateOrderPaymentStatus(orderId, "FAILED");
+            request.setAttribute("orderId", orderId);
             request.setAttribute("paymentStatus", "failed");
             request.setAttribute("paymentMessage", "Thanh toán VNPay thất bại hoặc đã hủy.");
-            request.getRequestDispatcher("/pages/shop/payment-result.jsp").forward(request, response);
+            request.getRequestDispatcher("/pages/shop/payment-failed.jsp").forward(request, response);
+            return;
         }
     }
 }
