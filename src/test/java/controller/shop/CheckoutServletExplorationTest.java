@@ -37,7 +37,7 @@ import static org.mockito.Mockito.*;
 /**
  * Exploratory tests to reproduce the checkout white-screen bug on UNFIXED code.
  *
- * <p>These tests assert the CORRECT (desired) behavior — i.e., that the response body
+ * <p>These tests assert the CORRECT (desired) behavior â€” i.e., that the response body
  * is never empty and always contains valid JSON. On the UNFIXED code, these tests are
  * EXPECTED TO FAIL, which confirms the bug exists.</p>
  *
@@ -46,7 +46,7 @@ import static org.mockito.Mockito.*;
  * covers the {@code try (Connection conn = DBContext.getConnection())} block. Any
  * exception thrown BEFORE this block (e.g., from {@code buildCheckoutSummary()} or
  * from DAO calls) that is not caught internally will escape both
- * {@code placeOrderWithStockCheck()} and {@code doPost()} — Tomcat returns HTTP 500
+ * {@code placeOrderWithStockCheck()} and {@code doPost()} â€” Tomcat returns HTTP 500
  * with empty body, producing a white screen.</p>
  *
  * <p>Specifically:</p>
@@ -125,9 +125,9 @@ class CheckoutServletExplorationTest {
         when(mockInventoryService.refreshCartProductsWithNotification(any())).thenReturn(new ArrayList<>());
     }
 
-    // ─────────────────────────────────────────────────────────────────────────
-    // Task 1.1 — Circuit Breaker / buildCheckoutSummary() throws Error
-    // ─────────────────────────────────────────────────────────────────────────
+    // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    // Task 1.1 â€” Circuit Breaker / buildCheckoutSummary() throws Error
+    // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
     /**
      * Task 1.1: ShippingService throws an Error (not Exception) from within
@@ -139,7 +139,7 @@ class CheckoutServletExplorationTest {
      * An {@code Error} (e.g., {@code AssertionError}) is NOT a subclass of
      * {@code Exception}, so it escapes the internal catch. It then escapes the outer
      * {@code catch (Exception e)} in {@code placeOrderWithStockCheck()} (which only
-     * covers the try-with-resources block), and finally escapes {@code doPost()} —
+     * covers the try-with-resources block), and finally escapes {@code doPost()} â€”
      * Tomcat returns HTTP 500 with empty body.</p>
      *
      * <p>This test asserts the CORRECT behavior (response body is NOT empty).
@@ -153,7 +153,7 @@ class CheckoutServletExplorationTest {
         CheckoutServlet servlet = buildServlet();
 
         // Arrange: mock ShippingService constructor so calculateShippingFee() throws AssertionError.
-        // AssertionError extends Error, NOT Exception — it escapes buildCheckoutSummary()'s
+        // AssertionError extends Error, NOT Exception â€” it escapes buildCheckoutSummary()'s
         // catch (Exception e) and propagates up through placeOrderWithStockCheck() and doPost().
         try (MockedConstruction<ShippingService> mockedShipping = mockConstruction(
                 ShippingService.class,
@@ -161,7 +161,7 @@ class CheckoutServletExplorationTest {
                     when(mock.calculateShippingFee(anyString(), anyString(), anyString(),
                             anyInt(), anyInt(), anyInt(), anyInt()))
                             .thenThrow(new AssertionError(
-                                    "GHN API circuit breaker is open — Error escapes catch(Exception e)"));
+                                    "GHN API circuit breaker is open â€” Error escapes catch(Exception e)"));
                 })) {
 
             HttpServletRequest request = buildPostRequest();
@@ -171,7 +171,7 @@ class CheckoutServletExplorationTest {
             // Act: call doPost()
             // On unfixed code: AssertionError escapes buildCheckoutSummary()'s catch(Exception e),
             // then escapes the outer catch(Exception e) in placeOrderWithStockCheck() (which only
-            // covers the try-with-resources block), then escapes doPost() — response body is empty.
+            // covers the try-with-resources block), then escapes doPost() â€” response body is empty.
             servlet.doPost(request, response);
 
             // Assert: response body must NOT be empty (correct behavior)
@@ -183,9 +183,9 @@ class CheckoutServletExplorationTest {
                     "Counterexample: body='" + body + "'");
 
             // Also assert it is valid JSON with success=false
-            assertDoesNotThrow(() -> JsonParser.parseString(body),
+            assertDoesNotThrow(() -> new JsonParser().parse(body),
                     "Response body must be valid JSON, got: " + body);
-            JsonObject json = JsonParser.parseString(body).getAsJsonObject();
+            JsonObject json = new JsonParser().parse(body).getAsJsonObject();
             assertFalse(json.get("success").getAsBoolean(),
                     "success must be false when ShippingService throws Error");
             assertFalse(json.get("message").getAsString().isEmpty(),
@@ -193,9 +193,9 @@ class CheckoutServletExplorationTest {
         }
     }
 
-    // ─────────────────────────────────────────────────────────────────────────
-    // Task 1.2 — DAO call before outer try-catch throws RuntimeException
-    // ─────────────────────────────────────────────────────────────────────────
+    // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    // Task 1.2 â€” DAO call before outer try-catch throws RuntimeException
+    // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
     /**
      * Task 1.2: {@code userDAO.getUserById()} throws RuntimeException before the outer
@@ -206,7 +206,7 @@ class CheckoutServletExplorationTest {
      * {@code try (Connection conn = DBContext.getConnection())} block. The outer
      * {@code catch (Exception e)} does NOT cover this call site. A
      * {@code RuntimeException} thrown here escapes both {@code placeOrderWithStockCheck()}
-     * and {@code doPost()} — Tomcat returns HTTP 500 with empty body.</p>
+     * and {@code doPost()} â€” Tomcat returns HTTP 500 with empty body.</p>
      *
      * <p>This test asserts the CORRECT behavior (response body is NOT empty).
      * It is EXPECTED TO FAIL on unfixed code, confirming the bug exists.</p>
@@ -221,7 +221,7 @@ class CheckoutServletExplorationTest {
         // BEFORE the outer try (Connection conn = DBContext.getConnection()) block.
         // The outer catch(Exception e) does NOT cover this call site.
         when(mockUserDAO.getUserById(1))
-                .thenThrow(new RuntimeException("DB connection pool exhausted — RuntimeException before outer try-catch"));
+                .thenThrow(new RuntimeException("DB connection pool exhausted â€” RuntimeException before outer try-catch"));
 
         CheckoutServlet servlet = buildServlet();
 
@@ -232,7 +232,7 @@ class CheckoutServletExplorationTest {
         // Act: call doPost()
         // On unfixed code: RuntimeException from userDAO.getUserById() escapes
         // placeOrderWithStockCheck() (no catch covers it) and then escapes doPost()
-        // (no top-level catch) — response body is empty.
+        // (no top-level catch) â€” response body is empty.
         servlet.doPost(request, response);
 
         // Assert: response body must NOT be empty (correct behavior)
@@ -244,18 +244,18 @@ class CheckoutServletExplorationTest {
                 "Counterexample: body='" + body + "'");
 
         // Also assert it is valid JSON with success=false
-        assertDoesNotThrow(() -> JsonParser.parseString(body),
+        assertDoesNotThrow(() -> new JsonParser().parse(body),
                 "Response body must be valid JSON, got: " + body);
-        JsonObject json = JsonParser.parseString(body).getAsJsonObject();
+        JsonObject json = new JsonParser().parse(body).getAsJsonObject();
         assertFalse(json.get("success").getAsBoolean(),
                 "success must be false when DAO throws RuntimeException");
         assertFalse(json.get("message").getAsString().isEmpty(),
                 "message must not be empty");
     }
 
-    // ─────────────────────────────────────────────────────────────────────────
+    // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     // Helper methods
-    // ─────────────────────────────────────────────────────────────────────────
+    // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
     /**
      * Builds a CheckoutServlet with all DAOs injected as mocks via reflection.

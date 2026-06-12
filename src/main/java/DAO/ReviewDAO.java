@@ -5,6 +5,7 @@ import org.slf4j.LoggerFactory;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 import Context.DBContext;
@@ -19,15 +20,19 @@ public class ReviewDAO {
         List<Review> list = new ArrayList<>();
 
         String query = "SELECT r.*, u.fullname FROM reviews r " +
-                       "JOIN users u ON r.user_id = u.id " +
-                       "WHERE r.product_id = ? ORDER BY r.created_at DESC";
+                "JOIN users u ON r.user_id = u.id " +
+                "WHERE r.product_id = ? AND r.status = 1 " +
+                "ORDER BY r.created_at DESC";
 
         try (Connection conn = DBContext.getConnection();
              PreparedStatement ps = conn.prepareStatement(query)) {
+
             ps.setInt(1, productId);
+
             try (ResultSet rs = ps.executeQuery()) {
                 while (rs.next()) {
                     Review r = new Review();
+
                     r.setId(rs.getInt("id"));
                     r.setProductId(rs.getInt("product_id"));
                     r.setUserId(rs.getInt("user_id"));
@@ -35,15 +40,18 @@ public class ReviewDAO {
                     r.setRating(rs.getInt("rating"));
                     r.setComment(rs.getString("comment"));
                     r.setCreatedAt(rs.getDate("created_at"));
+                    r.setAdminReply(rs.getString("admin_reply"));
+
                     list.add(r);
                 }
             }
+
         } catch (Exception e) {
             log.error("DB error", e);
         }
+
         return list;
     }
-
     public boolean hasUserReviewedProduct(int userId, int productId) {
         String query = "SELECT 1 FROM reviews WHERE user_id = ? AND product_id = ?";
         try (Connection conn = DBContext.getConnection();
@@ -76,6 +84,8 @@ public class ReviewDAO {
                 r.setRating(rs.getInt("rating"));
                 r.setComment(rs.getString("comment"));
                 r.setCreatedAt(rs.getDate("created_at"));
+                r.setStatus(rs.getBoolean("status"));
+                r.setAdminReply(rs.getString("admin_reply"));
                 list.add(r);
             }
         } catch (Exception e) { log.error("DB error", e); }
@@ -100,6 +110,8 @@ public class ReviewDAO {
                     r.setRating(rs.getInt("rating"));
                     r.setComment(rs.getString("comment"));
                     r.setCreatedAt(rs.getDate("created_at"));
+                    r.setStatus(rs.getBoolean("status"));
+                    r.setAdminReply(rs.getString("admin_reply"));
                     list.add(r);
                 }
             }
@@ -181,6 +193,41 @@ public class ReviewDAO {
             log.error("DB error", e);
             return true; // fail-safe: reject on DB error
         }
+    }
+
+    public boolean updateReviewStatus(int reviewId, boolean status) throws SQLException {
+        String sql = "UPDATE reviews SET status = ? WHERE id = ?";
+
+        try (Connection conn = DBContext.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+
+            ps.setBoolean(1, status);
+            ps.setInt(2, reviewId);
+
+            return ps.executeUpdate() > 0;
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+
+        return false;
+    }
+    public boolean replyReview(int reviewId, String adminReply) {
+        String sql = "UPDATE reviews SET admin_reply = ? WHERE id = ?";
+
+        try (Connection conn = DBContext.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+
+            ps.setString(1, adminReply);
+            ps.setInt(2, reviewId);
+
+            return ps.executeUpdate() > 0;
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+
+        return false;
     }
 }
 

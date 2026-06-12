@@ -195,6 +195,10 @@ public class CheckoutService {
                 successResult.setOrderId(orderId);
                 successResult.setPaymentMethodDb(paymentResult.getPaymentMethodDb());
                 successResult.setPaymentTransaction(paymentTransaction);
+                successResult.setTotalAmount(totalAmount);
+                successResult.setShippingFee(shippingFee);
+                successResult.setDiscount(discount);
+                successResult.setFinalTotal(finalTotal);
                 return successResult;
 
             } catch (Exception e) {

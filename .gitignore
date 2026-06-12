@@ -65,3 +65,6 @@ RunDemoSQL.class
 *.kiro
 *.omx
 *.doc
+
+# ===== Deploy / Production (KHONG push - chua IP VPS, so tai khoan, secret) =====
+deploy/

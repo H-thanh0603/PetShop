@@ -95,18 +95,18 @@ class CheckoutServletPreservationTest {
         when(mockInventoryService.refreshCartProductsWithNotification(any())).thenReturn(new ArrayList<>());
     }
 
-    // ─────────────────────────────────────────────────────────────────────────
-    // Task 4.1 — Empty cart
-    // ─────────────────────────────────────────────────────────────────────────
+    // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    // Task 4.1 â€” Empty cart
+    // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
     /**
-     * Task 4.1: Empty cart → assert response is
-     * {@code {"success": false, "message": "Giỏ hàng đang trống."}}
+     * Task 4.1: Empty cart â†’ assert response is
+     * {@code {"success": false, "message": "Giá» hÃ ng Ä‘ang trá»‘ng."}}
      *
      * <p><b>Validates: Requirement 3.1</b></p>
      */
     @Test
-    @DisplayName("4.1 Empty cart: response must be {success: false, message: 'Giỏ hàng đang trống.'}")
+    @DisplayName("4.1 Empty cart: response must be {success: false, message: 'Giá» hÃ ng Ä‘ang trá»‘ng.'}")
     void emptyCart_returnsEmptyCartError() throws Exception {
         // Arrange: empty cart
         when(mockCartDAO.getCartByUserId(1)).thenReturn(new HashMap<>());
@@ -123,18 +123,18 @@ class CheckoutServletPreservationTest {
         String body = responseBody.toString();
         assertFalse(body.isEmpty(), "Response body must not be empty");
 
-        JsonObject json = JsonParser.parseString(body).getAsJsonObject();
+        JsonObject json = new JsonParser().parse(body).getAsJsonObject();
         assertFalse(json.get("success").getAsBoolean(), "success must be false");
-        assertEquals("Giỏ hàng đang trống.", json.get("message").getAsString(),
-                "message must be 'Giỏ hàng đang trống.'");
+        assertEquals("Gi\u1ecf h\u00e0ng \u0111ang tr\u1ed1ng.", json.get("message").getAsString(),
+                "message must match expected checkout error");
     }
 
-    // ─────────────────────────────────────────────────────────────────────────
-    // Task 4.2 — Product stock < requested quantity
-    // ─────────────────────────────────────────────────────────────────────────
+    // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    // Task 4.2 â€” Product stock < requested quantity
+    // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
     /**
-     * Task 4.2: Product stock < requested quantity → assert response contains product
+     * Task 4.2: Product stock < requested quantity â†’ assert response contains product
      * name and success=false.
      *
      * <p>This test mocks {@code DBContext.getConnection()} using {@code mockStatic} to
@@ -186,7 +186,7 @@ class CheckoutServletPreservationTest {
         String body = responseBody.toString();
         assertFalse(body.isEmpty(), "Response body must not be empty");
 
-        JsonObject json = JsonParser.parseString(body).getAsJsonObject();
+        JsonObject json = new JsonParser().parse(body).getAsJsonObject();
         assertFalse(json.get("success").getAsBoolean(), "success must be false");
         String message = json.get("message").getAsString();
         assertTrue(message.contains("Dog Food"),
@@ -195,18 +195,18 @@ class CheckoutServletPreservationTest {
                 "message must contain the available stock count '2', got: " + message);
     }
 
-    // ─────────────────────────────────────────────────────────────────────────
-    // Task 4.3 — No default address
-    // ─────────────────────────────────────────────────────────────────────────
+    // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    // Task 4.3 â€” No default address
+    // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
     /**
-     * Task 4.3: No default address → assert response is
-     * {@code {"success": false, "message": "Bạn chưa có địa chỉ mặc định."}}
+     * Task 4.3: No default address â†’ assert response is
+     * {@code {"success": false, "message": "Báº¡n chÆ°a cÃ³ Ä‘á»‹a chá»‰ máº·c Ä‘á»‹nh."}}
      *
      * <p><b>Validates: Requirement 3.4</b></p>
      */
     @Test
-    @DisplayName("4.3 No default address: response must be {success: false, message: 'Bạn chưa có địa chỉ mặc định.'}")
+    @DisplayName("4.3 No default address: response must be {success: false, message: 'Báº¡n chÆ°a cÃ³ Ä‘á»‹a chá»‰ máº·c Ä‘á»‹nh.'}")
     void noDefaultAddress_returnsAddressError() throws Exception {
         // Arrange: cart with product above free-shipping threshold (no ShippingService call)
         Product product = new Product();
@@ -235,19 +235,19 @@ class CheckoutServletPreservationTest {
         String body = responseBody.toString();
         assertFalse(body.isEmpty(), "Response body must not be empty");
 
-        JsonObject json = JsonParser.parseString(body).getAsJsonObject();
+        JsonObject json = new JsonParser().parse(body).getAsJsonObject();
         assertFalse(json.get("success").getAsBoolean(), "success must be false");
-        assertEquals("Bạn chưa có địa chỉ mặc định.", json.get("message").getAsString(),
-                "message must be 'Bạn chưa có địa chỉ mặc định.'");
+        assertEquals("B\u1ea1n ch\u01b0a c\u00f3 \u0111\u1ecba ch\u1ec9 m\u1eb7c \u0111\u1ecbnh.", json.get("message").getAsString(),
+                "message must match expected checkout error");
     }
 
-    // ─────────────────────────────────────────────────────────────────────────
-    // Task 4.4 — Invalid payment method (null from PaymentRegistry)
-    // ─────────────────────────────────────────────────────────────────────────
+    // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    // Task 4.4 â€” Invalid payment method (null from PaymentRegistry)
+    // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
     /**
-     * Task 4.4: Invalid payment method (null from PaymentRegistry) → assert response is
-     * {@code {"success": false, "message": "Phương thức thanh toán không hợp lệ."}}
+     * Task 4.4: Invalid payment method (null from PaymentRegistry) â†’ assert response is
+     * {@code {"success": false, "message": "PhÆ°Æ¡ng thá»©c thanh toÃ¡n khÃ´ng há»£p lá»‡."}}
      *
      * <p>This test uses a product with price above the free-shipping threshold to avoid
      * calling ShippingService. It mocks {@code DBContext.getConnection()} to return a
@@ -258,7 +258,7 @@ class CheckoutServletPreservationTest {
      * <p><b>Validates: Requirement 3.5</b></p>
      */
     @Test
-    @DisplayName("4.4 Invalid payment method: response must be {success: false, message: 'Phương thức thanh toán không hợp lệ.'}")
+    @DisplayName("4.4 Invalid payment method: response must be {success: false, message: 'PhÆ°Æ¡ng thá»©c thanh toÃ¡n khÃ´ng há»£p lá»‡.'}")
     void invalidPaymentMethod_returnsPaymentError() throws Exception {
         // Arrange: cart with product above free-shipping threshold
         Product cartProduct = new Product();
@@ -300,15 +300,15 @@ class CheckoutServletPreservationTest {
         String body = responseBody.toString();
         assertFalse(body.isEmpty(), "Response body must not be empty");
 
-        JsonObject json = JsonParser.parseString(body).getAsJsonObject();
+        JsonObject json = new JsonParser().parse(body).getAsJsonObject();
         assertFalse(json.get("success").getAsBoolean(), "success must be false");
-        assertEquals("Phương thức thanh toán không hợp lệ.", json.get("message").getAsString(),
-                "message must be 'Phương thức thanh toán không hợp lệ.'");
+        assertEquals("Ph\u01b0\u01a1ng th\u1ee9c thanh to\u00e1n kh\u00f4ng h\u1ee3p l\u1ec7.", json.get("message").getAsString(),
+                "message must match expected checkout error");
     }
 
-    // ─────────────────────────────────────────────────────────────────────────
+    // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     // Helper methods
-    // ─────────────────────────────────────────────────────────────────────────
+    // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
     /**
      * Builds a CheckoutServlet with all DAOs injected as mocks via reflection.

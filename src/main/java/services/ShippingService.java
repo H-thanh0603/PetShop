@@ -112,7 +112,7 @@ public class ShippingService {
                 .build();
 
         HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
-        JsonObject json = JsonParser.parseString(response.body()).getAsJsonObject();
+        JsonObject json = new JsonParser().parse(response.body()).getAsJsonObject();
         JsonArray data = json.getAsJsonArray("data");
 
         Integer result = null;
@@ -151,7 +151,7 @@ public class ShippingService {
                 .build();
 
         HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
-        JsonObject json = JsonParser.parseString(response.body()).getAsJsonObject();
+        JsonObject json = new JsonParser().parse(response.body()).getAsJsonObject();
         JsonArray data = json.getAsJsonArray("data");
 
         Integer result = null;
@@ -190,7 +190,7 @@ public class ShippingService {
                 .build();
 
         HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
-        JsonObject json = JsonParser.parseString(response.body()).getAsJsonObject();
+        JsonObject json = new JsonParser().parse(response.body()).getAsJsonObject();
         JsonArray data = json.getAsJsonArray("data");
 
         String result = null;
@@ -220,7 +220,7 @@ public class ShippingService {
                 .build();
 
         HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
-        JsonObject json = JsonParser.parseString(response.body()).getAsJsonObject();
+        JsonObject json = new JsonParser().parse(response.body()).getAsJsonObject();
         JsonArray data = json.getAsJsonArray("data");
 
         if (data == null || data.size() == 0) return null;
@@ -267,7 +267,7 @@ public class ShippingService {
 
             HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
 
-            JsonObject json = JsonParser.parseString(response.body()).getAsJsonObject();
+            JsonObject json = new JsonParser().parse(response.body()).getAsJsonObject();
             JsonObject data = json.getAsJsonObject("data");
 
             if (data == null || data.get("total") == null) {

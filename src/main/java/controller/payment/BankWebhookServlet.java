@@ -82,7 +82,7 @@ public class BankWebhookServlet extends HttpServlet {
     }
 
     private BankWebhookPayload parsePayload(String rawPayload) {
-        JsonObject json = JsonParser.parseString(rawPayload).getAsJsonObject();
+        JsonObject json = new JsonParser().parse(rawPayload).getAsJsonObject();
         String transferType = getOptionalString(json, "transferType");
         if (transferType != null && !"in".equalsIgnoreCase(transferType.trim())) {
             throw new IllegalArgumentException("Webhook không phải giao dịch tiền vào.");

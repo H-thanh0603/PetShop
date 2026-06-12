@@ -40,7 +40,7 @@ import static org.mockito.Mockito.*;
 
 /**
  * Fix-checking tests (Property 1): verify that the FIXED code always returns valid JSON
- * — never an empty response body — when exceptions are thrown at various points.
+ * â€” never an empty response body â€” when exceptions are thrown at various points.
  *
  * <p>These tests assert the CORRECT (desired) behavior. On the FIXED code, all tests
  * should PASS. They validate that the top-level {@code try-catch(Throwable t)} in
@@ -109,9 +109,9 @@ class CheckoutServletFixCheckTest {
         when(mockInventoryService.refreshCartProductsWithNotification(any())).thenReturn(new ArrayList<>());
     }
 
-    // ─────────────────────────────────────────────────────────────────────────
-    // Task 3.1 — ShippingService throws AssertionError (Error subclass)
-    // ─────────────────────────────────────────────────────────────────────────
+    // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    // Task 3.1 â€” ShippingService throws AssertionError (Error subclass)
+    // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
     /**
      * Task 3.1: ShippingService throws an AssertionError (Error subclass) from within
@@ -121,7 +121,7 @@ class CheckoutServletFixCheckTest {
      * internal {@code catch (Exception e)} in {@code buildCheckoutSummary()} does NOT
      * catch it. The fix wraps the entire body of {@code placeOrderWithStockCheck()} in
      * {@code catch (Throwable t)}, which catches both {@code Exception} and {@code Error}
-     * subclasses — ensuring the response is always valid JSON.</p>
+     * subclasses â€” ensuring the response is always valid JSON.</p>
      *
      * <p><b>Validates: Requirements 2.3, 2.4</b></p>
      */
@@ -131,7 +131,7 @@ class CheckoutServletFixCheckTest {
         CheckoutServlet servlet = buildServlet();
 
         // Arrange: mock ShippingService constructor so calculateShippingFee() throws AssertionError.
-        // AssertionError extends Error, NOT Exception — it escapes buildCheckoutSummary()'s
+        // AssertionError extends Error, NOT Exception â€” it escapes buildCheckoutSummary()'s
         // catch (Exception e). The fix's top-level catch(Throwable t) must catch it.
         try (MockedConstruction<ShippingService> mockedShipping = mockConstruction(
                 ShippingService.class,
@@ -139,7 +139,7 @@ class CheckoutServletFixCheckTest {
                     when(mock.calculateShippingFee(anyString(), anyString(), anyString(),
                             anyInt(), anyInt(), anyInt(), anyInt()))
                             .thenThrow(new AssertionError(
-                                    "GHN API circuit breaker is open — Error escapes catch(Exception e)"));
+                                    "GHN API circuit breaker is open â€” Error escapes catch(Exception e)"));
                 })) {
 
             HttpServletRequest request = buildPostRequest();
@@ -156,9 +156,9 @@ class CheckoutServletFixCheckTest {
                     "The fix's catch(Throwable t) must catch Error subclasses. Got: '" + body + "'");
 
             // Assert: valid JSON with success=false and non-empty message
-            assertDoesNotThrow(() -> JsonParser.parseString(body),
+            assertDoesNotThrow(() -> new JsonParser().parse(body),
                     "Response body must be valid JSON, got: " + body);
-            JsonObject json = JsonParser.parseString(body).getAsJsonObject();
+            JsonObject json = new JsonParser().parse(body).getAsJsonObject();
             assertFalse(json.get("success").getAsBoolean(),
                     "success must be false when ShippingService throws AssertionError");
             assertNotNull(json.get("message"),
@@ -168,9 +168,9 @@ class CheckoutServletFixCheckTest {
         }
     }
 
-    // ─────────────────────────────────────────────────────────────────────────
-    // Task 3.2 — userDAO.getUserById() throws RuntimeException
-    // ─────────────────────────────────────────────────────────────────────────
+    // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    // Task 3.2 â€” userDAO.getUserById() throws RuntimeException
+    // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
     /**
      * Task 3.2: {@code userDAO.getUserById()} throws RuntimeException before the outer
@@ -189,7 +189,7 @@ class CheckoutServletFixCheckTest {
     void userDaoThrowsRuntimeException_responseIsValidJson() throws Exception {
         // Arrange: userDAO.getUserById() throws RuntimeException
         when(mockUserDAO.getUserById(1))
-                .thenThrow(new RuntimeException("DB connection pool exhausted — RuntimeException before outer try-catch"));
+                .thenThrow(new RuntimeException("DB connection pool exhausted â€” RuntimeException before outer try-catch"));
 
         CheckoutServlet servlet = buildServlet();
 
@@ -207,9 +207,9 @@ class CheckoutServletFixCheckTest {
                 "The fix's catch(Throwable t) must catch it. Got: '" + body + "'");
 
         // Assert: valid JSON with success=false
-        assertDoesNotThrow(() -> JsonParser.parseString(body),
+        assertDoesNotThrow(() -> new JsonParser().parse(body),
                 "Response body must be valid JSON, got: " + body);
-        JsonObject json = JsonParser.parseString(body).getAsJsonObject();
+        JsonObject json = new JsonParser().parse(body).getAsJsonObject();
         assertFalse(json.get("success").getAsBoolean(),
                 "success must be false when DAO throws RuntimeException");
         assertNotNull(json.get("message"),
@@ -218,12 +218,12 @@ class CheckoutServletFixCheckTest {
                 "message must not be empty");
     }
 
-    // ─────────────────────────────────────────────────────────────────────────
-    // Task 3.3 — cartDAO.getCartByUserId() throws RuntimeException
-    // ─────────────────────────────────────────────────────────────────────────
+    // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    // Task 3.3 â€” cartDAO.getCartByUserId() throws RuntimeException
+    // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
     /**
-     * Task 3.3: {@code cartDAO.getCartByUserId()} throws RuntimeException — another
+     * Task 3.3: {@code cartDAO.getCartByUserId()} throws RuntimeException â€” another
      * point before the DB connection try-with-resources block.
      *
      * <p>The cart is loaded via {@code loadLatestCartForUser()} which calls
@@ -238,7 +238,7 @@ class CheckoutServletFixCheckTest {
     void cartDaoThrowsRuntimeException_responseIsValidJson() throws Exception {
         // Arrange: cartDAO.getCartByUserId() throws RuntimeException
         when(mockCartDAO.getCartByUserId(1))
-                .thenThrow(new RuntimeException("Cart DB error — RuntimeException before DB connection block"));
+                .thenThrow(new RuntimeException("Cart DB error â€” RuntimeException before DB connection block"));
 
         CheckoutServlet servlet = buildServlet();
 
@@ -256,9 +256,9 @@ class CheckoutServletFixCheckTest {
                 "The fix's catch(Throwable t) must catch it. Got: '" + body + "'");
 
         // Assert: valid JSON with success=false
-        assertDoesNotThrow(() -> JsonParser.parseString(body),
+        assertDoesNotThrow(() -> new JsonParser().parse(body),
                 "Response body must be valid JSON, got: " + body);
-        JsonObject json = JsonParser.parseString(body).getAsJsonObject();
+        JsonObject json = new JsonParser().parse(body).getAsJsonObject();
         assertFalse(json.get("success").getAsBoolean(),
                 "success must be false when cartDAO throws RuntimeException");
         assertNotNull(json.get("message"),
@@ -267,9 +267,9 @@ class CheckoutServletFixCheckTest {
                 "message must not be empty");
     }
 
-    // ─────────────────────────────────────────────────────────────────────────
-    // Task 3.4 — doPost() top-level catch handles IOException from placeOrderWithStockCheck
-    // ─────────────────────────────────────────────────────────────────────────
+    // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    // Task 3.4 â€” doPost() top-level catch handles IOException from placeOrderWithStockCheck
+    // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
     /**
      * Task 3.4: Verify that {@code doPost()}'s top-level catch handles the case where
@@ -318,9 +318,9 @@ class CheckoutServletFixCheckTest {
                 "doPost() safety net must write JSON when placeOrderWithStockCheck throws IOException. " +
                 "Got: '" + body + "'");
 
-        assertDoesNotThrow(() -> JsonParser.parseString(body),
+        assertDoesNotThrow(() -> new JsonParser().parse(body),
                 "doPost() safety net response must be valid JSON, got: " + body);
-        JsonObject json = JsonParser.parseString(body).getAsJsonObject();
+        JsonObject json = new JsonParser().parse(body).getAsJsonObject();
         assertFalse(json.get("success").getAsBoolean(),
                 "success must be false in doPost() safety net response");
         assertNotNull(json.get("message"),
@@ -329,9 +329,9 @@ class CheckoutServletFixCheckTest {
                 "message must not be empty in doPost() safety net response");
     }
 
-    // ─────────────────────────────────────────────────────────────────────────
+    // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     // Helper methods
-    // ─────────────────────────────────────────────────────────────────────────
+    // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
     /**
      * Builds a CheckoutServlet with all DAOs injected as mocks via reflection.

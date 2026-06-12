@@ -19,6 +19,7 @@ public class CsrfFilter implements Filter {
             throws IOException, ServletException {
         HttpServletRequest request = (HttpServletRequest) req;
         HttpServletResponse response = (HttpServletResponse) res;
+        request.setCharacterEncoding("UTF-8");
         String uri = request.getRequestURI();
         
         if (isStaticResource(uri) || isServerToServerWebhook(uri)) {

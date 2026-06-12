@@ -8,6 +8,7 @@
     <title>Quản lý Review - Admin</title>
     <jsp:include page="/components/head.jsp" />
     <jsp:include page="/components/admin-styles.jsp" />
+    <link href="https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css" rel="stylesheet">
     <style>
         /* Stats Grid Override */
         .stats-grid {
@@ -99,9 +100,11 @@
             </div>
             <select class="filter-select" id="filterMaxRating" onchange="applyRatingFilter()">
                 <option value="" ${selectedMaxRating == 0 ? 'selected' : ''}>Tất cả</option>
-                <option value="1" ${selectedMaxRating == 1 ? 'selected' : ''}>≤ 1 sao</option>
-                <option value="2" ${selectedMaxRating == 2 ? 'selected' : ''}>≤ 2 sao</option>
-                <option value="3" ${selectedMaxRating == 3 ? 'selected' : ''}>≤ 3 sao</option>
+                <option value="1" ${selectedMaxRating == 1 ? 'selected' : ''}>1 sao</option>
+                <option value="2" ${selectedMaxRating == 2 ? 'selected' : ''}>2 sao</option>
+                <option value="3" ${selectedMaxRating == 3 ? 'selected' : ''}>3 sao</option>
+                <option value="4" ${selectedMaxRating == 4 ? 'selected' : ''}>4 sao</option>
+                <option value="5" ${selectedMaxRating == 5 ? 'selected' : ''}>5 sao</option>
             </select>
         </div>
 
@@ -171,8 +174,20 @@
                             <td>${r.createdAt}</td>
                             <td>
                                 <div class="table-actions">
-                                    <button class="action-btn delete" onclick="openDeleteModal(${r.id})" title="Xóa">
-                                        <i class='bx bx-trash'></i>
+                                    <button type="button" class="action-btn delete btn-update-status" title="Cập nhật trạng thái"
+                                            data-id="${r.id}"
+                                            data-product="${fn:escapeXml(r.productName)}"
+                                            data-user="${fn:escapeXml(r.userName)}"
+                                            data-status="${r.status ? '1' : '0'}">
+                                        <i class='bx bx-refresh'></i>
+                                    </button>
+                                    <button type="button"
+                                            class="action-btn btn-reply-review"
+                                            title="Trả lời bình luận"
+                                            data-id="${r.id}"
+                                            data-user="${fn:escapeXml(r.userName)}"
+                                            data-comment="${fn:escapeXml(r.comment)}">
+                                        <i class='bx bx-message-dots'></i>
                                     </button>
                                 </div>
                             </td>
@@ -183,35 +198,71 @@
         </div>
     </main>
 
-    <!-- Delete Modal -->
-    <div class="modal-overlay" id="deleteModal">
-        <div class="modal-box" style="max-width: 420px;">
-            <div class="modal-header">
-                <h3 class="modal-title">Xóa đánh giá?</h3>
-                <button class="modal-close" onclick="closeDeleteModal()"><i class='bx bx-x'></i></button>
-            </div>
-            <div class="modal-body" style="text-align: center; padding: 30px;">
-                <div style="width: 72px; height: 72px; border-radius: 50%; background: #fee2e2; color: #ef4444; display: flex; align-items: center; justify-content: center; margin: 0 auto 20px; font-size: 2rem;">
-                    <i class='bx bx-trash'></i>
+    <div class="modal fade" id="updateStatusModal" tabindex="-1">
+        <div class="modal-dialog">
+            <form method="post" action="${pageContext.request.contextPath}/pages/admin/reviews" class="modal-content">
+                <input type="hidden" name="csrfToken" value="${sessionScope.csrfToken}">
+                <input type="hidden" name="action" value="refresh">
+                <input type="hidden" name="reviewId" id="modalReviewId">
+
+                <div class="modal-header">
+                    <h5 class="modal-title">Cập nhật trạng thái review</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
-                <p style="color: #64748b; font-size: 0.95rem; margin: 0;">Đánh giá sẽ bị xóa vĩnh viễn và không thể khôi phục.</p>
-            </div>
-            <div class="modal-footer" style="justify-content: center;">
-                <button type="button" class="btn btn-secondary" onclick="closeDeleteModal()">
-                    <i class='bx bx-x'></i> Hủy bỏ
-                </button>
-                <form method="post" style="display: inline;">
-                    <input type="hidden" name="csrfToken" value="${csrfToken}" />
-                    <input type="hidden" name="action" value="delete">
-                    <input type="hidden" name="reviewId" id="deleteReviewId">
-                    <button type="submit" class="btn btn-danger">
-                        <i class='bx bx-trash'></i> Xác nhận xóa
-                    </button>
-                </form>
-            </div>
+
+                <div class="modal-body">
+                    <p><strong>Sản phẩm:</strong> <span id="modalProductName"></span></p>
+                    <p><strong>Người dùng:</strong> <span id="modalUserName"></span></p>
+
+                    <label class="form-label">Trạng thái</label>
+                    <select name="status" id="modalStatus" class="form-select">
+                        <option value="1">Hiển thị</option>
+                        <option value="0">Ẩn</option>
+                    </select>
+                </div>
+
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+                    <button type="submit" class="btn btn-primary">Cập nhật</button>
+                </div>
+            </form>
         </div>
     </div>
+    <div class="modal fade" id="replyReviewModal" tabindex="-1">
+        <div class="modal-dialog">
+            <form method="post"
+                  action="${pageContext.request.contextPath}/pages/admin/reviews"
+                  class="modal-content">
 
+                <input type="hidden" name="csrfToken" value="${sessionScope.csrfToken}">
+                <input type="hidden" name="action" value="reply">
+                <input type="hidden" name="reviewId" id="replyReviewId">
+
+                <div class="modal-header">
+                    <h5 class="modal-title">Trả lời bình luận</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+
+                <div class="modal-body">
+                    <p><strong>Người dùng:</strong> <span id="replyUserName"></span></p>
+
+                    <p><strong>Bình luận:</strong></p>
+                    <div class="p-2 bg-light border rounded mb-3" id="replyComment"></div>
+
+                    <label class="form-label">Nội dung trả lời</label>
+                    <textarea name="adminReply"
+                              class="form-control"
+                              rows="4"
+                              required></textarea>
+                </div>
+
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+                    <button type="submit" class="btn btn-primary">Trả lời</button>
+                </div>
+            </form>
+        </div>
+    </div>
     <jsp:include page="/components/scripts.jsp" />
     <jsp:include page="/components/admin-toast.jsp" />
 
@@ -243,6 +294,30 @@
                 closeDeleteModal();
             }
         });
+            document.querySelectorAll(".btn-update-status").forEach(function (btn) {
+            btn.addEventListener("click", function () {
+                document.getElementById("modalReviewId").value = this.dataset.id;
+                document.getElementById("modalProductName").textContent = this.dataset.product;
+                document.getElementById("modalUserName").textContent = this.dataset.user;
+                document.getElementById("modalStatus").value = this.dataset.status;
+
+                const modal = new bootstrap.Modal(document.getElementById("updateStatusModal"));
+                modal.show();
+            });
+        });
+
+            document.querySelectorAll(".btn-reply-review").forEach(function (btn) {
+            btn.addEventListener("click", function () {
+                document.getElementById("replyReviewId").value = this.dataset.id;
+                document.getElementById("replyUserName").textContent = this.dataset.user;
+                document.getElementById("replyComment").textContent = this.dataset.comment;
+
+                const modal = new bootstrap.Modal(document.getElementById("replyReviewModal"));
+                modal.show();
+            });
+        });
+
     </script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>

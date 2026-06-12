@@ -137,9 +137,9 @@ class CheckoutServletPaymentMethodFallbackTest {
         String responseJson = body.toString();
         assertFalse(responseJson.isEmpty(), "checkout should always return JSON");
 
-        JsonObject json = JsonParser.parseString(responseJson).getAsJsonObject();
+        JsonObject json = new JsonParser().parse(responseJson).getAsJsonObject();
         assertTrue(json.get("success").getAsBoolean(), "fallback payment parameter should still place the order");
-        assertEquals("Đặt hàng thành công!", json.get("message").getAsString());
+        assertEquals("\u0110\u1eb7t h\u00e0ng th\u00e0nh c\u00f4ng!", json.get("message").getAsString());
     }
 
     private static void injectField(Object target, String fieldName, Object value) throws Exception {
