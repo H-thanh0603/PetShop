@@ -16,7 +16,6 @@ public class Coupon {
     private Timestamp startDate;
     private Timestamp endDate;
     private int used;
-    private String status = "available";
 
     public Coupon() {
     }
@@ -126,13 +125,5 @@ public class Coupon {
 
     public void setUsed(int used) {
         this.used = used;
-    }
-
-    public String getStatus() {
-        return status;
-    }
-
-    public void setStatus(String status) {
-        this.status = status;
     }
 }

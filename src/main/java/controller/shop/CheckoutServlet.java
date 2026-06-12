@@ -117,8 +117,12 @@ public class CheckoutServlet extends HttpServlet {
             return;
         }
 
+        @SuppressWarnings("unchecked")
+        Map<Integer, CartItem> sessionBuyNowCart =
+                (Map<Integer, CartItem>) session.getAttribute("buyNowCart");
+
         boolean isBuyNow = "true".equals(request.getParameter("buyNow"))
-                || (request.getParameter("id") != null && request.getParameter("quantity") != null);
+                || (sessionBuyNowCart != null && !sessionBuyNowCart.isEmpty());
         Map<Integer, CartItem> checkoutCart = isBuyNow
                 ? loadBuyNowCart(session, request)
                 : loadLatestCartForUser(session, user);
@@ -204,11 +208,14 @@ public class CheckoutServlet extends HttpServlet {
             session.setAttribute("couponMessage", validation.getMessage());
         }
 
-        String buyNowParam = "true".equals(request.getParameter("buyNow"))
-                || (request.getParameter("id") != null && request.getParameter("quantity") != null)
-                ? "?buyNow=true"
-                : "";
-        response.sendRedirect(request.getContextPath() + "/checkout" + buyNowParam);
+        @SuppressWarnings("unchecked")
+        Map<Integer, CartItem> sessionBuyNowCart =
+                (Map<Integer, CartItem>) session.getAttribute("buyNowCart");
+
+        boolean isBuyNow = "true".equals(request.getParameter("buyNow"))
+                || (sessionBuyNowCart != null && !sessionBuyNowCart.isEmpty());
+
+        response.sendRedirect(request.getContextPath() + "/checkout" + (isBuyNow ? "?buyNow=true" : ""));
     }
 
     private void placeOrderWithStockCheck(HttpServletRequest request, HttpServletResponse response,
