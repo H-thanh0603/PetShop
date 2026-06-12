@@ -150,6 +150,15 @@
         .status-shipping { background: #e0e7ff; color: #4338ca; }
         .status-completed { background: #dcfce7; color: #166534; }
         .status-cancelled { background: #fee2e2; color: #991b1b; }
+        .status-awaiting-payment {
+            background: #ffedd5;
+            color: #c2410c;
+        }
+
+        .status-paid {
+            background: #ccfbf1;
+            color: #0f766e;
+        }
         .payment-badge { display: inline-flex; align-items: center; gap: 6px; margin-top: 8px; border-radius: 999px; padding: 6px 10px; font-size: 0.78rem; font-weight: 700; }
         .payment-pending { background: #fff7ed; color: #c2410c; }
         .payment-verified { background: #dcfce7; color: #166534; }
@@ -290,7 +299,9 @@
         <form action="${pageContext.request.contextPath}/my-orders" method="get">
             <div class="toolbar-left">
                 <a class="chip-filter ${empty selectedStatus || selectedStatus == 'all' ? 'active' : ''}" href="${pageContext.request.contextPath}/my-orders?status=all&keyword=${fn:escapeXml(keyword)}">Tất cả</a>
+                <a class="chip-filter ${selectedStatus == 'Awaiting Payment' ? 'active' : ''}" href="${pageContext.request.contextPath}/my-orders?status=Awaiting Payment&keyword=${fn:escapeXml(keyword)}">Đang chờ thanh toán</a>
                 <a class="chip-filter ${selectedStatus == 'Pending' ? 'active' : ''}" href="${pageContext.request.contextPath}/my-orders?status=Pending&keyword=${fn:escapeXml(keyword)}">Chờ xử lý</a>
+                <a class="chip-filter ${selectedStatus == 'Paid' ? 'active' : ''}" href="${pageContext.request.contextPath}/my-orders?status=Paid&keyword=${fn:escapeXml(keyword)}">Đã thanh toán</a>
                 <a class="chip-filter ${selectedStatus == 'Shipping' ? 'active' : ''}" href="${pageContext.request.contextPath}/my-orders?status=Shipping&keyword=${fn:escapeXml(keyword)}">Đang giao</a>
                 <a class="chip-filter ${selectedStatus == 'Completed' ? 'active' : ''}" href="${pageContext.request.contextPath}/my-orders?status=Completed&keyword=${fn:escapeXml(keyword)}">Hoàn thành</a>
                 <a class="chip-filter ${selectedStatus == 'Cancelled' ? 'active' : ''}" href="${pageContext.request.contextPath}/my-orders?status=Cancelled&keyword=${fn:escapeXml(keyword)}">Đã hủy</a>

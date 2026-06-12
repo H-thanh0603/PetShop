@@ -346,6 +346,8 @@ public class CheckoutServlet extends HttpServlet {
             session.removeAttribute(BANK_TRANSFER_REFERENCE_SESSION_KEY);
 
             if ("VNPAY".equalsIgnoreCase(completedPaymentMethod)) {
+                orderDAO.markOnlinePaymentAwaiting(completedOrderId, "VNPAY");
+                session.setAttribute("paymentMethod", "VNPAY");
                 session.setAttribute("successOrderId", completedOrderId);
                 session.setAttribute("successUser", user);
                 session.setAttribute("successTotalAmount", checkoutResult.getTotalAmount());
@@ -354,6 +356,7 @@ public class CheckoutServlet extends HttpServlet {
                 session.setAttribute("successFinalTotal", checkoutResult.getFinalTotal());
                 session.setAttribute("successShippingAddress", fullAddress);
                 session.setAttribute("successOrderNote", note);
+                session.setAttribute("paymentStatus", 0);
                 session.setAttribute("successOrderItems", new ArrayList<>(checkoutCart.values()));
 
                 String vnpayUrl = VnpayUtil.createPaymentUrl(

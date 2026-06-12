@@ -25,24 +25,28 @@ public class VnpayReturnServlet extends HttpServlet {
         if (!validSignature || orderIdRaw == null) {
             request.setAttribute("paymentStatus", "failed");
             request.setAttribute("paymentMessage", "Giao dịch không hợp lệ.");
-            request.getRequestDispatcher("/pages/shop/payment-result.jsp").forward(request, response);
+            request.getRequestDispatcher("/pages/shop/payment-failed.jsp").forward(request, response);
             return;
         }
 
         int orderId = Integer.parseInt(orderIdRaw);
 
         if ("00".equals(responseCode) && "00".equals(transactionStatus)) {
-            orderDAO.updateOrderPaymentStatus(orderId, "PAID");
-            request.setAttribute("paymentStatus", "success");
-            request.setAttribute("paymentMessage", "Thanh toán VNPay thành công.");
+            orderDAO.markOnlinePaymentPaid(orderId, "VNPAY");
+
+            HttpSession session = request.getSession();
+            session.setAttribute("paymentMethod", "VNPAY");
+            session.setAttribute("paymentStatus", 1);
+            session.setAttribute("successOrderId", orderId);
+
             response.sendRedirect(request.getContextPath() + "/order-success");
         } else {
-            orderDAO.updateOrderPaymentStatus(orderId, "FAILED");
+            orderDAO.markOnlinePaymentAwaiting(orderId, "VNPAY");
+
             request.setAttribute("orderId", orderId);
-            request.setAttribute("paymentStatus", "failed");
-            request.setAttribute("paymentMessage", "Thanh toán VNPay thất bại hoặc đã hủy.");
+            request.setAttribute("paymentStatus", 0);
+            request.setAttribute("paymentMessage", "Đơn hàng đang chờ thanh toán VNPay hoặc bạn đã hủy giao dịch.");
             request.getRequestDispatcher("/pages/shop/payment-failed.jsp").forward(request, response);
-            return;
         }
     }
 }
