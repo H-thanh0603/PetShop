@@ -6,7 +6,7 @@ PetShop là đồ án web e-commerce bán sản phẩm cho thú cưng, tập tru
 - Quản lý giỏ hàng, checkout, đơn hàng
 - Quản trị sản phẩm, người dùng, báo cáo
 - Đăng nhập thường và social login
-- Thanh toán `COD`, `MoMo` demo, `Chuyển khoản ngân hàng` theo luồng chờ đối soát
+- Thanh toán `COD`, `VNPAY` demo, `Chuyển khoản ngân hàng` theo luồng chờ đối soát
 
 ## Yêu cầu môi trường
 
