@@ -42,6 +42,11 @@
             <i class='bx bx-undo'></i> Quản lý Đổi trả / Hoàn tiền
         </a>
 
+        <a href="${pageContext.request.contextPath}/admin/chat"
+           class="<%= "chat".equals(currentPage) ? "active" : "" %>">
+            <i class='bx bx-chat'></i> Hỗ trợ Chat
+        </a>
+
         <c:if test="${sessionScope.user.role == 'admin' || sessionScope.user.role == 'staff'}">
             <a href="${pageContext.request.contextPath}/pages/admin/reviews" class="<%= "reviews".equals(currentPage) ? "active" : "" %>">
                 <i class='bx bxs-star-half'></i> Quản lý Review

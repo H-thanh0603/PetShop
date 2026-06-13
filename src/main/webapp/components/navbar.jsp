@@ -574,6 +574,60 @@
     </div>
 </nav>
 
+<%-- Chat Widget - chỉ hiện khi đã đăng nhập --%>
+<c:if test="${sessionScope.user != null && sessionScope.user.role != 'admin'}">
+
+<!-- Nút mở chat -->
+<button onclick="document.getElementById('myForm').style.display='block'; this.style.display='none';"
+        style="position:fixed; bottom:20px; right:20px; z-index:998; border-radius:50%; width:50px; height:50px;"
+        class="btn btn-primary" id="openChatBtn">
+    <i class='bx bx-chat'></i>
+</button>
+
+<!-- Khung chat -->
+<div class="chat-popup" id="myForm"
+     style="display:none; position:fixed; bottom:20px; right:20px; width:300px;
+            border:1px solid #ccc; background:white; z-index:999; border-radius:8px;">
+    <div class="p-2 bg-primary text-white d-flex justify-content-between align-items-center">
+        <strong><i class='bx bx-support'></i> Hỗ trợ trực tuyến</strong>
+        <button type="button" class="btn-close btn-close-white"
+                onclick="document.getElementById('myForm').style.display='none';
+                         document.getElementById('openChatBtn').style.display='block';"></button>
+    </div>
+    <div id="messageArea" class="p-2"
+         style="height:250px; overflow-y:auto; background:#f9f9f9;"></div>
+    <div class="p-2 d-flex">
+        <input type="text" id="userMsg" class="form-control form-control-sm me-1"
+               placeholder="Nhập tin nhắn..." onkeypress="if(event.key==='Enter') sendMsg();">
+        <button type="button" class="btn btn-primary btn-sm" onclick="sendMsg()">Gửi</button>
+    </div>
+</div>
+
+<script>
+    var userId = ${sessionScope.user.id};
+    var adminId = 1;
+    var ws = new WebSocket("ws://" + window.location.host + "${pageContext.request.contextPath}/chat/" + userId);
+
+    ws.onmessage = function(event) {
+        var data = JSON.parse(event.data);
+        var msgArea = document.getElementById("messageArea");
+        msgArea.innerHTML += "<p style='background:#eee;padding:5px;border-radius:5px;margin:5px;'><b>Admin:</b> " + data.text + "</p>";
+        msgArea.scrollTop = msgArea.scrollHeight;
+    };
+
+    function sendMsg() {
+        var input = document.getElementById("userMsg");
+        var text = input.value.trim();
+        if (text === "" || ws.readyState !== WebSocket.OPEN) return;
+        ws.send(JSON.stringify({ receiverId: adminId, text: text, isAdmin: false }));
+        var msgArea = document.getElementById("messageArea");
+        msgArea.innerHTML += "<p style='background:#d1ecf1;padding:5px;border-radius:5px;margin:5px;text-align:right;'>" + text + " :<b>Bạn</b></p>";
+        input.value = "";
+        msgArea.scrollTop = msgArea.scrollHeight;
+    }
+</script>
+</c:if>
+
 <script>
 document.addEventListener('DOMContentLoaded', function() {
     // Tìm tất cả dropdown toggle trong navbar
