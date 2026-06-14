@@ -1,4 +1,3 @@
-<%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
 <%@ taglib prefix="c" uri="jakarta.tags.core" %>
 <%@ taglib prefix="fn" uri="jakarta.tags.functions" %>
 <%--
@@ -12,7 +11,7 @@
     /* ========================================
        NAVBAR STYLES - Component chung
        ======================================== */
-    
+
     /* Font chung */
     nav#navbar-main {
         font-family: 'Montserrat', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
@@ -28,7 +27,7 @@
     nav#navbar-main i.bx {
         font-family: 'boxicons' !important;
     }
-    
+
     /* Navbar container */
     nav#navbar-main {
         background-color: #ffffff !important;
@@ -43,7 +42,7 @@
         border: none !important;
         border-bottom: 1px solid rgba(0,0,0,0.04) !important;
     }
-    
+
     /* Brand Logo */
     nav#navbar-main .navbar-brand {
         color: #0b1a33 !important;
@@ -66,7 +65,7 @@
         color: #00bfa5 !important;
         font-size: 1.6rem !important;
     }
-    
+
     /* Nav Links */
     nav#navbar-main .nav-link {
         color: #444444 !important;
@@ -85,8 +84,7 @@
         background: #f5f7fa !important;
         text-decoration: none !important;
     }
-    
-    /* Nav Link Dropdown Toggle */
+
     nav#navbar-main .nav-link.dropdown-toggle {
         display: flex !important;
         align-items: center !important;
@@ -117,7 +115,7 @@
         height: 24px !important;
     }
 
-    /* --- BUTTONS STYLES --- */
+    /* Buttons */
     nav#navbar-main .btn-nav-booking {
         background: linear-gradient(135deg, #00bfa5 0%, #008f7a 100%) !important;
         color: #ffffff !important;
@@ -163,9 +161,7 @@
         font-size: 1.1rem !important;
         color: #00bfa5 !important;
     }
-    nav#navbar-main .btn-nav-login:hover i {
-        color: #ffffff !important;
-    }
+    nav#navbar-main .btn-nav-login:hover i { color: #ffffff !important; }
 
     nav#navbar-main .btn-nav-user {
         background: #f5f7fa !important;
@@ -189,7 +185,7 @@
         color: #00bfa5 !important;
     }
 
-    /* --- CART ICON STYLE --- */
+    /* Cart Icon */
     nav#navbar-main .btn-nav-cart {
         color: #444444 !important;
         font-size: 1.5rem !important;
@@ -239,13 +235,10 @@
         right: 0 !important;
         left: auto !important;
     }
-
-    /* Services Dropdown - căn trái */
     nav#navbar-main .dropdown-menu-services {
         left: 0 !important;
         right: auto !important;
     }
-
     nav#navbar-main .dropdown-menu.show {
         display: block !important;
     }
@@ -288,15 +281,10 @@
         border-radius: 8px !important;
     }
 
-    body {
-        padding-top: 80px !important;
-        margin-top: 0 !important;
-    }
+    body { padding-top: 80px !important; margin-top: 0 !important; }
 
-    /* Search Bar in Navbar */
-    .nav-search-form {
-        flex-shrink: 0;
-    }
+    /* Search Bar */
+    .nav-search-form { flex-shrink: 0; }
     .nav-search-bar {
         display: flex;
         align-items: center;
@@ -313,10 +301,7 @@
         background: #fff;
         box-shadow: 0 0 0 3px rgba(0, 191, 165, 0.1);
     }
-    .nav-search-bar i {
-        color: #999;
-        font-size: 1.1rem;
-    }
+    .nav-search-bar i { color: #999; font-size: 1.1rem; }
     .nav-search-bar input {
         border: none;
         outline: none;
@@ -326,9 +311,7 @@
         width: 100%;
         font-family: 'Montserrat', sans-serif;
     }
-    .nav-search-bar input::placeholder {
-        color: #aaa;
-    }
+    .nav-search-bar input::placeholder { color: #aaa; }
 
     /* Autocomplete Dropdown */
     .autocomplete-dropdown {
@@ -346,9 +329,7 @@
         overflow-y: auto;
         z-index: 999999;
     }
-    .autocomplete-dropdown.show {
-        display: block;
-    }
+    .autocomplete-dropdown.show { display: block; }
     .autocomplete-item {
         display: flex;
         align-items: center;
@@ -358,9 +339,7 @@
         text-decoration: none;
         color: #333;
     }
-    .autocomplete-item:hover {
-        background: #f5f7fa;
-    }
+    .autocomplete-item:hover { background: #f5f7fa; }
     .autocomplete-item img {
         width: 40px;
         height: 40px;
@@ -368,10 +347,7 @@
         border-radius: 8px;
         margin-right: 12px;
     }
-    .autocomplete-item-info {
-        flex: 1;
-        min-width: 0;
-    }
+    .autocomplete-item-info { flex: 1; min-width: 0; }
     .autocomplete-item-name {
         font-size: 0.9rem;
         font-weight: 500;
@@ -385,6 +361,12 @@
         color: #00bfa5;
         font-weight: 600;
     }
+    /* Highlight khi dùng bàn phím điều hướng */
+    .autocomplete-item.keyboard-active {
+        background: #f0faf8;
+        outline: 2px solid #00bfa5;
+        outline-offset: -2px;
+    }
     .autocomplete-no-result {
         padding: 15px;
         text-align: center;
@@ -396,83 +378,14 @@
         text-align: center;
         color: #999;
     }
-    .autocomplete-loading i {
-        animation: spin 1s linear infinite;
-    }
+    .autocomplete-loading i { animation: spin 1s linear infinite; }
     @keyframes spin {
         from { transform: rotate(0deg); }
-        to { transform: rotate(360deg); }
-    }
-
-    /* ===== SEARCH HISTORY ===== */
-    .autocomplete-section-label {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        padding: 8px 15px 4px;
-        font-size: 0.75rem;
-        font-weight: 600;
-        color: #999;
-        text-transform: uppercase;
-        letter-spacing: 0.05em;
-    }
-    .autocomplete-section-label button {
-        background: none;
-        border: none;
-        font-size: 0.75rem;
-        color: #aaa;
-        cursor: pointer;
-        padding: 0;
-    }
-    .autocomplete-section-label button:hover {
-        color: #dc3545;
-    }
-    .autocomplete-history-item {
-        display: flex;
-        align-items: center;
-        padding: 9px 15px;
-        cursor: pointer;
-        gap: 10px;
-        color: #444;
-        font-size: 0.9rem;
-        transition: background 0.15s;
-    }
-    .autocomplete-history-item:hover {
-        background: #f5f7fa;
-    }
-    .autocomplete-history-item i {
-        color: #aaa;
-        font-size: 1rem;
-        flex-shrink: 0;
-    }
-    .autocomplete-history-item .history-text {
-        flex: 1;
-    }
-    .autocomplete-history-item .history-delete {
-        background: none;
-        border: none;
-        color: #ccc;
-        cursor: pointer;
-        padding: 2px 6px;
-        border-radius: 4px;
-        font-size: 0.95rem;
-    }
-    .autocomplete-history-item .history-delete:hover {
-        color: #dc3545;
-        background: #fff0f0;
-    }
-    .autocomplete-item-name mark {
-        background: rgba(0,191,165,0.18);
-        color: #007a66;
-        font-weight: 600;
-        border-radius: 2px;
-        padding: 0 1px;
+        to   { transform: rotate(360deg); }
     }
 
     @media (max-width: 991px) {
-        nav#navbar-main {
-            padding: 12px 0 !important;
-        }
+        nav#navbar-main { padding: 12px 0 !important; }
         nav#navbar-main .navbar-collapse {
             background: #ffffff !important;
             padding: 20px !important;
@@ -494,15 +407,9 @@
             justify-content: center !important;
             padding: 14px 24px !important;
         }
-        nav#navbar-main .btn-nav-cart {
-            margin: 10px auto !important;
-        }
-        nav#navbar-main .nav-lang-select {
-            display: none !important;
-        }
-        body {
-            padding-top: 70px !important;
-        }
+        nav#navbar-main .btn-nav-cart { margin: 10px auto !important; }
+        nav#navbar-main .nav-lang-select { display: none !important; }
+        body { padding-top: 70px !important; }
     }
 </style>
 
@@ -527,7 +434,6 @@
                         Sản phẩm <i class='bx bx-chevron-down'></i>
                     </a>
                     <ul class="dropdown-menu dropdown-menu-services">
-                        <%-- Hiển thị động các loại thú cưng từ database --%>
                         <c:choose>
                             <c:when test="${not empty petTypes}">
                                 <c:forEach var="pt" items="${petTypes}">
@@ -539,7 +445,6 @@
                                 </c:forEach>
                             </c:when>
                             <c:otherwise>
-                                <%-- Fallback nếu chưa có dữ liệu pet_types --%>
                                 <li>
                                     <a class="dropdown-item" href="${pageContext.request.contextPath}/shop?pet=dog">
                                         <i class='bx bxs-dog'></i> Dành cho Chó
@@ -566,6 +471,7 @@
             </ul>
         </div>
 
+        <!-- Search Bar -->
         <form action="${pageContext.request.contextPath}/shop" method="get" class="nav-search-form d-none d-lg-flex ms-auto me-3" id="navSearchForm">
             <div class="nav-search-bar" style="position: relative;">
                 <i class='bx bx-search'></i>
@@ -579,9 +485,7 @@
             <a href="${pageContext.request.contextPath}/cart" class="btn-nav-cart">
                 <i class='bx bx-cart'></i>
                 <c:if test="${not empty sessionScope.totalQuantity and sessionScope.totalQuantity > 0}">
-                    <span class="cart-badge" id="cart-count">
-                        ${sessionScope.totalQuantity}
-                    </span>
+                    <span class="cart-badge" id="cart-count">${sessionScope.totalQuantity}</span>
                 </c:if>
             </a>
 
@@ -648,223 +552,180 @@
 
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    // --- DROPDOWN NAVIGATION LOGIC ---
-    var dropdownToggles = document.querySelectorAll('#navbar-main .dropdown-toggle');
 
+    // ========== NAVBAR DROPDOWN ==========
+    var dropdownToggles = document.querySelectorAll('#navbar-main .dropdown-toggle');
     dropdownToggles.forEach(function(toggle) {
         toggle.addEventListener('click', function(e) {
             e.preventDefault();
             e.stopPropagation();
-
             var dropdownMenu = this.nextElementSibling;
             var isOpen = dropdownMenu.classList.contains('show');
-
-            // Đóng tất cả dropdown khác
             document.querySelectorAll('#navbar-main .dropdown-menu.show').forEach(function(menu) {
-                if (menu !== dropdownMenu) menu.classList.remove('show');
+                menu.classList.remove('show');
             });
-
-            // Toggle dropdown hiện tại
             if (!isOpen) {
                 dropdownMenu.classList.add('show');
-            } else {
-                dropdownMenu.classList.remove('show');
             }
         });
     });
-
-    // ========== SEARCH AUTOCOMPLETE LOGIC ==========
-    var searchInput = document.getElementById('searchInput');
-    var autocompleteDropdown = document.getElementById('autocompleteDropdown');
-    var searchTimeout = null;
-    var contextPath = '${pageContext.request.contextPath}';
-
-    if (searchInput && autocompleteDropdown) {
-
-        // --- Highlight từ khoá an toàn (Chống XSS) ---
-        function highlightKeyword(text, keyword) {
-            if (!keyword) return text;
-            const re = new RegExp('(' + keyword.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + ')', 'gi');
-
-            // Escape HTML văn bản gốc để chặn mã độc XSS trước khi chèn thẻ <mark>
-            const div = document.createElement('div');
-            div.textContent = text;
-            const escapedText = div.innerHTML;
-
-            return escapedText.replace(re, '<mark>$1</mark>');
-        }
-
-        // --- API lịch sử ---
-        function loadHistory(callback) {
-            fetch(contextPath + '/api/search-history')
-                .then(function(r) { return r.json(); })
-                .then(callback).catch(function() { callback([]); });
-        }
-        function saveHistory(keyword) {
-            var fd = new FormData();
-            fd.append('q', keyword);
-            fetch(contextPath + '/api/search-history', { method: 'POST', body: fd });
-        }
-        function deleteHistoryItem(keyword, callback) {
-            fetch(contextPath + '/api/search-history?q=' + encodeURIComponent(keyword), { method: 'DELETE' })
-                .then(callback).catch(callback);
-        }
-        function clearAllHistory(callback) {
-            fetch(contextPath + '/api/search-history?all=true', { method: 'DELETE' })
-                .then(callback).catch(callback);
-        }
-
-        // --- Render lịch sử ---
-        function renderHistory(history) {
-            autocompleteDropdown.innerHTML = '';
-            if (!history || history.length === 0) {
-                autocompleteDropdown.innerHTML = '<div class="autocomplete-no-result">Chưa có lịch sử tìm kiếm</div>';
-                autocompleteDropdown.style.display = 'block';
-                autocompleteDropdown.classList.add('show');
-                return;
-            }
-            var label = document.createElement('div');
-            label.className = 'autocomplete-section-label';
-            label.innerHTML = '<span>Tìm kiếm gần đây</span>';
-            var clearBtn = document.createElement('button');
-            clearBtn.textContent = 'Xoá tất cả';
-            clearBtn.addEventListener('click', function(e) {
-                e.preventDefault(); e.stopPropagation();
-                clearAllHistory(function() { renderHistory([]); });
-            });
-            label.appendChild(clearBtn);
-            autocompleteDropdown.appendChild(label);
-
-            history.forEach(function(kw) {
-                var row = document.createElement('div');
-                row.className = 'autocomplete-history-item';
-                row.innerHTML = '<i class="bx bx-history"></i><span class="history-text"></span><button class="history-delete">&times;</button>';
-                row.querySelector('.history-text').textContent = kw;
-
-                row.querySelector('.history-delete').addEventListener('click', function(e) {
-                    e.preventDefault(); e.stopPropagation();
-                    deleteHistoryItem(kw, function() { loadHistory(renderHistory); });
-                });
-
-                row.addEventListener('click', function() {
-                    searchInput.value = kw;
-                    autocompleteDropdown.classList.remove('show');
-                    document.getElementById('navSearchForm').submit();
-                });
-                autocompleteDropdown.appendChild(row);
-            });
-
-            autocompleteDropdown.style.display = 'block';
-            autocompleteDropdown.classList.add('show');
-        }
-
-        // --- Render sản phẩm ---
-        function renderProducts(products, keyword) {
-            autocompleteDropdown.innerHTML = '';
-            if (!products || products.length === 0) {
-                autocompleteDropdown.innerHTML = '<div class="autocomplete-no-result">Không tìm thấy sản phẩm</div>';
-                return;
-            }
-            products.forEach(function(p) {
-                var item = document.createElement('a');
-                item.className = 'autocomplete-item';
-                item.href = contextPath + '/product-detail?id=' + encodeURIComponent(p.id);
-                item.addEventListener('click', function() { saveHistory(keyword); });
-
-                var img = document.createElement('img');
-                img.src = p.image
-                    ? (p.image.startsWith('http') ? p.image : contextPath + '/assets/images/shop_pic/' + p.image)
-                    : contextPath + '/assets/images/no-image.png';
-                img.alt = p.name || '';
-                img.onerror = function() { this.onerror = null; this.src = contextPath + '/assets/images/no-image.png'; };
-
-                var info = document.createElement('div');
-                info.className = 'autocomplete-item-info';
-
-                var name = document.createElement('div');
-                name.className = 'autocomplete-item-name';
-                name.innerHTML = highlightKeyword(p.name || '', keyword);
-
-                var priceRow = document.createElement('div');
-                priceRow.style.cssText = 'display:flex;align-items:center;gap:8px;';
-
-                var price = document.createElement('span');
-                price.className = 'autocomplete-item-price';
-                price.textContent = new Intl.NumberFormat('vi-VN').format(p.price || 0) + 'đ';
-
-                var stock = document.createElement('span');
-                stock.style.cssText = 'font-size:0.78rem;color:' + (p.stock > 0 ? '#aaa' : '#dc3545') + ';';
-                stock.textContent = p.stock > 0 ? 'Còn ' + p.stock : 'Hết hàng';
-
-                priceRow.appendChild(price); priceRow.appendChild(stock);
-                info.appendChild(name); info.appendChild(priceRow);
-                item.appendChild(img); item.appendChild(info);
-                autocompleteDropdown.appendChild(item);
-            });
-        }
-
-        // --- Sự kiện nhập liệu tìm kiếm ---
-        searchInput.addEventListener('input', function() {
-            var query = searchInput.value.trim();
-            if (searchTimeout) clearTimeout(searchTimeout);
-            if (query.length < 1) {
-                loadHistory(renderHistory);
-                return;
-            }
-            autocompleteDropdown.style.display = 'block';
-            autocompleteDropdown.classList.add('show');
-            autocompleteDropdown.innerHTML = '<div class="autocomplete-loading"><i class="bx bx-loader-alt"></i> Đang tìm...</div>';
-
-            searchTimeout = setTimeout(function() {
-                fetch(contextPath + '/api/search-autocomplete?q=' + encodeURIComponent(query))
-                    .then(function(r) { if (!r.ok) throw new Error(); return r.json(); })
-                    .then(function(products) { renderProducts(products, query); })
-                    .catch(function() { autocompleteDropdown.innerHTML = '<div class="autocomplete-no-result">Có lỗi xảy ra</div>'; });
-            }, 300);
-        });
-
-        searchInput.addEventListener('focus', function() {
-            if (searchInput.value.trim().length === 0) loadHistory(renderHistory);
-        });
-
-        document.getElementById('navSearchForm').addEventListener('submit', function() {
-            var q = searchInput.value.trim();
-            if (q.length > 0) saveHistory(q);
-        });
-
-        // Điều khiển bằng phím di chuyển
-        searchInput.addEventListener('keydown', function(e) {
-            var items = autocompleteDropdown.querySelectorAll('.autocomplete-item, .autocomplete-history-item');
-            var current = autocompleteDropdown.querySelector('.ac-active');
-            var idx = Array.prototype.indexOf.call(items, current);
-            if (e.key === 'ArrowDown') {
-                e.preventDefault();
-                if (current) { current.classList.remove('ac-active'); current.style.background = ''; }
-                var next = items[idx + 1] || items[0];
-                if (next) { next.classList.add('ac-active'); next.style.background = '#f5f7fa'; }
-            } else if (e.key === 'ArrowUp') {
-                e.preventDefault();
-                if (current) { current.classList.remove('ac-active'); current.style.background = ''; }
-                var prev = items[idx - 1] || items[items.length - 1];
-                if (prev) { prev.classList.add('ac-active'); prev.style.background = '#f5f7fa'; }
-            } else if (e.key === 'Enter' && current) {
-                e.preventDefault(); current.click();
-            } else if (e.key === 'Escape') {
-                autocompleteDropdown.classList.remove('show');
-            }
-        });
-    }
-
-    // Đóng dropdowns (bao gồm cả Menu điều hướng và Autocomplete) khi click ra ngoài thanh điều hướng
     document.addEventListener('click', function(e) {
         if (!e.target.closest('#navbar-main .dropdown')) {
             document.querySelectorAll('#navbar-main .dropdown-menu.show').forEach(function(menu) {
                 menu.classList.remove('show');
             });
         }
-        if (!e.target.closest('.nav-search-bar')) {
-            if (autocompleteDropdown) autocompleteDropdown.classList.remove('show');
-        }
     });
+
+    // ========== SEARCH AUTOCOMPLETE ==========
+    var searchInput = document.getElementById('searchInput');
+    var autocompleteDropdown = document.getElementById('autocompleteDropdown');
+    var searchTimeout = null;
+    var contextPath = '${pageContext.request.contextPath}';
+    var activeIndex = -1;
+
+    function getItems() {
+        return autocompleteDropdown.querySelectorAll('.autocomplete-item');
+    }
+
+    function setActiveItem(index) {
+        var items = getItems();
+        items.forEach(function(el) { el.classList.remove('keyboard-active'); });
+        if (index >= 0 && index < items.length) {
+            items[index].classList.add('keyboard-active');
+            items[index].scrollIntoView({ block: 'nearest' });
+        }
+        activeIndex = index;
+    }
+
+    function closeDropdown() {
+        autocompleteDropdown.classList.remove('show');
+        autocompleteDropdown.style.display = 'none';
+        activeIndex = -1;
+    }
+
+    if (searchInput && autocompleteDropdown) {
+
+        // Gõ vào ô tìm kiếm
+        searchInput.addEventListener('input', function() {
+            var query = searchInput.value.trim();
+            activeIndex = -1;
+            if (searchTimeout) clearTimeout(searchTimeout);
+
+            if (query.length < 1) {
+                autocompleteDropdown.innerHTML = '';
+                closeDropdown();
+                return;
+            }
+
+            autocompleteDropdown.style.display = 'block';
+            autocompleteDropdown.classList.add('show');
+            autocompleteDropdown.innerHTML = '<div class="autocomplete-loading"><i class="bx bx-loader-alt"></i> Đang tìm...</div>';
+
+            // Debounce 300ms
+            searchTimeout = setTimeout(function() {
+                fetch(contextPath + '/api/search-autocomplete?q=' + encodeURIComponent(query))
+                    .then(function(response) {
+                        if (!response.ok) throw new Error('API lỗi');
+                        return response.json();
+                    })
+                    .then(function(products) {
+                        autocompleteDropdown.innerHTML = '';
+                        activeIndex = -1;
+
+                        if (!products || products.length === 0) {
+                            var noResult = document.createElement('div');
+                            noResult.className = 'autocomplete-no-result';
+                            noResult.textContent = 'Không tìm thấy sản phẩm';
+                            autocompleteDropdown.appendChild(noResult);
+                            return;
+                        }
+
+                        products.forEach(function(p) {
+                            var item = document.createElement('a');
+                            item.className = 'autocomplete-item';
+                            item.href = contextPath + '/product-detail?id=' + encodeURIComponent(p.id);
+
+                            var imgSrc;
+                            if (p.image && p.image.startsWith('http')) {
+                                imgSrc = p.image;
+                            } else if (p.image) {
+                                imgSrc = contextPath + '/assets/images/shop_pic/' + p.image + '?v=real-products-1';
+                            } else {
+                                imgSrc = 'https://placehold.co/40x40/f9f9f9/999?text=Pet';
+                            }
+
+                            var img = document.createElement('img');
+                            img.src = imgSrc;
+                            img.alt = p.name || '';
+                            img.onerror = function() {
+                                this.onerror = null;
+                                this.src = 'https://placehold.co/40x40/f9f9f9/999?text=Pet';
+                            };
+
+                            var info = document.createElement('div');
+                            info.className = 'autocomplete-item-info';
+
+                            var name = document.createElement('div');
+                            name.className = 'autocomplete-item-name';
+                            name.textContent = p.name || '';
+
+                            var price = document.createElement('div');
+                            price.className = 'autocomplete-item-price';
+                            price.textContent = new Intl.NumberFormat('vi-VN').format(p.price || 0) + 'đ';
+
+                            info.appendChild(name);
+                            info.appendChild(price);
+                            item.appendChild(img);
+                            item.appendChild(info);
+                            autocompleteDropdown.appendChild(item);
+                        });
+                    })
+                    .catch(function(error) {
+                        console.log(error);
+                        autocompleteDropdown.innerHTML = '<div class="autocomplete-no-result">Có lỗi xảy ra</div>';
+                    });
+            }, 300);
+        });
+
+        // Điều hướng bằng bàn phím: ↓ ↑ Enter Escape
+        searchInput.addEventListener('keydown', function(e) {
+            var items = getItems();
+            if (!autocompleteDropdown.classList.contains('show') || items.length === 0) return;
+
+            if (e.key === 'ArrowDown') {
+                e.preventDefault();
+                setActiveItem(Math.min(activeIndex + 1, items.length - 1));
+            } else if (e.key === 'ArrowUp') {
+                e.preventDefault();
+                var next = activeIndex - 1;
+                if (next < 0) {
+                    items.forEach(function(el) { el.classList.remove('keyboard-active'); });
+                    activeIndex = -1;
+                } else {
+                    setActiveItem(next);
+                }
+            } else if (e.key === 'Enter') {
+                if (activeIndex >= 0 && activeIndex < items.length) {
+                    e.preventDefault();
+                    window.location.href = items[activeIndex].href;
+                }
+            } else if (e.key === 'Escape') {
+                closeDropdown();
+            }
+        });
+
+        // Đóng khi click ra ngoài
+        document.addEventListener('click', function(e) {
+            if (!e.target.closest('.nav-search-bar')) {
+                closeDropdown();
+            }
+        });
+
+        // Đóng khi blur
+        searchInput.addEventListener('blur', function() {
+            setTimeout(closeDropdown, 200);
+        });
+    }
 });
 </script>
