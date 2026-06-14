@@ -132,7 +132,12 @@ public class ReviewDAO {
 
     // 5. Kiểm tra user đã mua sản phẩm (đơn hàng Completed)
     public boolean hasUserPurchasedProduct(int userId, int productId) {
-        String query = "SELECT 1 FROM order_items oi JOIN orders o ON oi.order_id = o.id WHERE o.user_id = ? AND oi.product_id = ? AND o.status = 'Completed'";
+        String query =
+                "SELECT 1 FROM order_items oi " +
+                        "JOIN orders o ON oi.order_id = o.id " +
+                        "WHERE o.user_id = ? " +
+                        "  AND oi.product_id = ? " +
+                        "  AND o.status = 'Completed'";
         try (Connection conn = DBContext.getConnection();
              PreparedStatement ps = conn.prepareStatement(query)) {
             ps.setInt(1, userId);
@@ -141,7 +146,7 @@ public class ReviewDAO {
                 return rs.next();
             }
         } catch (Exception e) {
-            log.error("DB error", e);
+            log.error("DB error khi kiểm tra lịch sử mua hàng userId={} productId={}", userId, productId, e);
         }
         return false;
     }
