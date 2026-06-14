@@ -1,3 +1,8 @@
+window.addEventListener("pageshow", function (event) {
+    if (event.persisted) {
+        window.location.reload();
+    }
+});
 (function () {
     const configEl = document.getElementById("checkoutConfig");
     if (!configEl) {
@@ -280,7 +285,7 @@
                 .then(data => {
                     if (data.success) {
                         if (data.redirectUrl) {
-                            window.location.href = data.redirectUrl;
+                            window.location.replace(data.redirectUrl);
                             return;
                         }
 

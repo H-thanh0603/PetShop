@@ -874,5 +874,71 @@ public class OrderDAO {
                 return "Đang chờ đối soát thanh toán chuyển khoản.";
         }
     }
+    public boolean updateOrderPaymentStatus(int orderId, String status) {
+        String sql = """
+        UPDATE orders
+        SET payment_status = ?
+        WHERE id = ?
+    """;
+
+        try (Connection conn = DBContext.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+
+            ps.setString(1, status);
+            ps.setInt(2, orderId);
+            return ps.executeUpdate() > 0;
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
+    public boolean markOnlinePaymentAwaiting(int orderId, String paymentMethod) {
+        String sql = """
+        UPDATE orders
+        SET status = ?,
+            payment_method = ?,
+            payment_status = ?
+        WHERE id = ?
+    """;
+
+        try (Connection conn = DBContext.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+
+            ps.setString(1, "Awaiting Payment");
+            ps.setString(2, paymentMethod);
+            ps.setBoolean(3, false);
+            ps.setInt(4, orderId);
+
+            return ps.executeUpdate() > 0;
+        } catch (Exception e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
+
+    public boolean markOnlinePaymentPaid(int orderId, String paymentMethod) {
+        String sql = """
+        UPDATE orders
+        SET status = ?,
+            payment_method = ?,
+            payment_status = ?
+        WHERE id = ?
+    """;
+
+        try (Connection conn = DBContext.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+
+            ps.setString(1, "Paid");
+            ps.setString(2, paymentMethod);
+            ps.setBoolean(3, true);
+            ps.setInt(4, orderId);
+
+            return ps.executeUpdate() > 0;
+        } catch (Exception e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
 }
 

@@ -15,6 +15,7 @@ import DAO.PaymentTransactionDAO;
 import DAO.ProductDAO;
 import DAO.UserDAO;
 import Context.DBContext;
+import Util.VnpayUtil;
 
 import Model.*;
 
@@ -117,8 +118,12 @@ public class CheckoutServlet extends HttpServlet {
             return;
         }
 
+        @SuppressWarnings("unchecked")
+        Map<Integer, CartItem> sessionBuyNowCart =
+                (Map<Integer, CartItem>) session.getAttribute("buyNowCart");
+
         boolean isBuyNow = "true".equals(request.getParameter("buyNow"))
-                || (request.getParameter("id") != null && request.getParameter("quantity") != null);
+                || (sessionBuyNowCart != null && !sessionBuyNowCart.isEmpty());
         Map<Integer, CartItem> checkoutCart = isBuyNow
                 ? loadBuyNowCart(session, request)
                 : loadLatestCartForUser(session, user);
@@ -204,11 +209,14 @@ public class CheckoutServlet extends HttpServlet {
             session.setAttribute("couponMessage", validation.getMessage());
         }
 
-        String buyNowParam = "true".equals(request.getParameter("buyNow"))
-                || (request.getParameter("id") != null && request.getParameter("quantity") != null)
-                ? "?buyNow=true"
-                : "";
-        response.sendRedirect(request.getContextPath() + "/checkout" + buyNowParam);
+        @SuppressWarnings("unchecked")
+        Map<Integer, CartItem> sessionBuyNowCart =
+                (Map<Integer, CartItem>) session.getAttribute("buyNowCart");
+
+        boolean isBuyNow = "true".equals(request.getParameter("buyNow"))
+                || (sessionBuyNowCart != null && !sessionBuyNowCart.isEmpty());
+
+        response.sendRedirect(request.getContextPath() + "/checkout" + (isBuyNow ? "?buyNow=true" : ""));
     }
 
     private void placeOrderWithStockCheck(HttpServletRequest request, HttpServletResponse response,
@@ -296,8 +304,12 @@ public class CheckoutServlet extends HttpServlet {
                     + defaultAddress.getProvince();
 
             String paymentMethodKey = resolvePaymentMethodKey(request);
+            boolean isVnpay = "vnpay".equalsIgnoreCase(paymentMethodKey);
+
+            String servicePaymentMethodKey = isVnpay ? "cod" : paymentMethodKey;
+
             String reservedTransferReference = null;
-            if ("bank_transfer".equalsIgnoreCase(paymentMethodKey)) {
+            if ("bank_transfer".equalsIgnoreCase(servicePaymentMethodKey)) {
                 reservedTransferReference = ensureBankTransferReference(
                         session,
                         user.getId(),
@@ -306,7 +318,7 @@ public class CheckoutServlet extends HttpServlet {
             }
 
             services.CheckoutResult checkoutResult = buildCheckoutService().processCheckout(
-                    user, checkoutCart, fullAddress, note, couponState, paymentMethodKey,
+                    user, checkoutCart, fullAddress, note, couponState, servicePaymentMethodKey,
                     baseSummary.getShippingFee(), reservedTransferReference
             );
 
@@ -317,7 +329,7 @@ public class CheckoutServlet extends HttpServlet {
                 return;
             }
 
-            completedPaymentMethod = checkoutResult.getPaymentMethodDb();
+            completedPaymentMethod = isVnpay ? "VNPAY" : checkoutResult.getPaymentMethodDb();
             completedPaymentTransaction = checkoutResult.getPaymentTransaction();
             completedOrderId = checkoutResult.getOrderId();
 
@@ -332,6 +344,32 @@ public class CheckoutServlet extends HttpServlet {
             session.removeAttribute("couponMessage");
             session.removeAttribute("checkoutNote");
             session.removeAttribute(BANK_TRANSFER_REFERENCE_SESSION_KEY);
+
+            if ("VNPAY".equalsIgnoreCase(completedPaymentMethod)) {
+                orderDAO.markOnlinePaymentAwaiting(completedOrderId, "VNPAY");
+                session.setAttribute("paymentMethod", "VNPAY");
+                session.setAttribute("successOrderId", completedOrderId);
+                session.setAttribute("successUser", user);
+                session.setAttribute("successTotalAmount", checkoutResult.getTotalAmount());
+                session.setAttribute("successShippingFee", checkoutResult.getShippingFee());
+                session.setAttribute("successDiscount", checkoutResult.getDiscount());
+                session.setAttribute("successFinalTotal", checkoutResult.getFinalTotal());
+                session.setAttribute("successShippingAddress", fullAddress);
+                session.setAttribute("successOrderNote", note);
+                session.setAttribute("paymentStatus", 0);
+                session.setAttribute("successOrderItems", new ArrayList<>(checkoutCart.values()));
+
+                String vnpayUrl = VnpayUtil.createPaymentUrl(
+                        request,
+                        completedOrderId,
+                        checkoutResult.getFinalTotal()
+                );
+
+                result.put("success", true);
+                result.put("redirectUrl", vnpayUrl);
+                write(response, result);
+                return;
+            }
 
             if ("BANK_TRANSFER".equalsIgnoreCase(completedPaymentMethod) && completedPaymentTransaction != null) {
                 // Giữ nguyên JSON response cho bank transfer (FE cần hiển thị QR + countdown)
@@ -450,7 +488,7 @@ public class CheckoutServlet extends HttpServlet {
         }
 
         BigDecimal discount = calculateDiscount(totalAmount, coupon);
-        BigDecimal finalTotal = totalAmount.add(BigDecimal.valueOf(shippingFee)).subtract(discount);
+        BigDecimal finalTotal = totalAmount.add(BigDecimal.valueOf(shippingFee)).subtract(discount).setScale(0, RoundingMode.HALF_UP);
         return new CheckoutSummary(totalAmount, shippingFee, shippingMessage, discount, finalTotal);
     }
 
@@ -460,7 +498,7 @@ public class CheckoutServlet extends HttpServlet {
         }
         return totalAmount
                 .multiply(BigDecimal.valueOf(coupon.getDiscountPercent()))
-                .divide(BigDecimal.valueOf(100), 2, RoundingMode.HALF_UP);
+                .divide(BigDecimal.valueOf(100), 0, RoundingMode.HALF_UP);
     }
 
     private User refreshUserSession(HttpSession session, int userId) {
@@ -601,8 +639,8 @@ public class CheckoutServlet extends HttpServlet {
         switch (paymentMethodDb.toUpperCase()) {
             case "COD":
                 return "Cash On Delivery";
-            case "MOMO":
-                return "MoMo";
+            case "VNPAY":
+                return "VNPAY";
             case "BANK_TRANSFER":
                 return "Bank Transfer";
             default:

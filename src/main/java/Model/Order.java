@@ -103,10 +103,14 @@ public class Order {
             return "Không xác định";
         }
         switch (status) {
+            case "Awaiting Payment":
+                return "Đang chờ thanh toán";
             case "Pending":
                 return "Chờ xử lý";
             case "Confirmed":
                 return "Đã xác nhận";
+            case "Paid":
+                return "Đã thanh toán";
             case "Shipping":
                 return "Đang giao";
             case "Completed":
@@ -123,10 +127,14 @@ public class Order {
             return "Đơn hàng chưa có trạng thái.";
         }
         switch (status) {
+            case "Awaiting Payment":
+                return "Đang chờ thanh toán";
             case "Pending":
                 return "Đơn hàng đang chờ cửa hàng xác nhận.";
             case "Confirmed":
                 return "Đơn hàng đã được xác nhận và đang chuẩn bị.";
+                case "Paid":
+                    return "Đơn hàng đã được thanh toán";
             case "Shipping":
                 return "Đơn hàng đang trên đường giao đến bạn.";
             case "Completed":
@@ -143,10 +151,14 @@ public class Order {
             return "status-pending";
         }
         switch (status) {
+            case "Awaiting Payment":
+                return "status-awaiting-payment";
             case "Pending":
                 return "status-pending";
             case "Confirmed":
                 return "status-confirmed";
+                case "Paid":
+                    return "status-paid";
             case "Shipping":
                 return "status-shipping";
             case "Completed":
@@ -188,8 +200,8 @@ public class Order {
         switch (payment_method.toLowerCase()) {
             case "cod":
                 return "Thanh toán khi nhận hàng";
-            case "momo":
-                return "Ví MoMo";
+            case "vnpay":
+                return "Thanh toán qua Vnpay";
             case "bank":
             case "bank_transfer":
                 return "Chuyển khoản ngân hàng";

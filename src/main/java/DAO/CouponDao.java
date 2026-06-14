@@ -21,25 +21,23 @@ public class CouponDao {
             return getValidCouponByCode(conn, code.trim());
         } catch (Exception e) {
             logger.error("Error fetching valid coupon by code={}", code, e);
+            return null;
         }
-        return null;
     }
 
     public Coupon getValidCouponByCode(Connection conn, String code) throws Exception {
         String sql = """
-            SELECT * 
+            SELECT *
             FROM coupons
             WHERE code = ?
-              AND is_active = true
+              AND is_active = 1
               AND quantity > 0
               AND used < quantity
-              AND COALESCE(status, 'available') = 'available'
-              AND (start_date IS NULL OR start_date <= NOW())
-              AND (end_date IS NULL OR end_date >= NOW())
+              AND (start_date IS NULL OR DATE(start_date) <= CURRENT_DATE())
+              AND (end_date IS NULL OR DATE(end_date) >= CURRENT_DATE())
         """;
 
         try (PreparedStatement ps = conn.prepareStatement(sql)) {
-
             ps.setString(1, code);
 
             try (ResultSet rs = ps.executeQuery()) {
@@ -48,17 +46,21 @@ public class CouponDao {
                 }
             }
         }
+
         return null;
     }
 
     public boolean increaseUsedIfAvailable(Connection conn, int couponId) throws Exception {
         String sql = """
-        UPDATE coupons
-        SET used = used + 1,
-            status = CASE WHEN used + 1 >= quantity THEN 'used' ELSE COALESCE(status, 'available') END
-        WHERE id = ? AND used < quantity
-          AND COALESCE(status, 'available') = 'available'
-    """;
+            UPDATE coupons
+            SET used = used + 1,
+                is_active = CASE WHEN used + 1 >= quantity THEN 0 ELSE is_active END
+            WHERE id = ?
+              AND is_active = 1
+              AND used < quantity
+              AND (start_date IS NULL OR DATE(start_date) <= CURRENT_DATE())
+              AND (end_date IS NULL OR DATE(end_date) >= CURRENT_DATE())
+        """;
 
         try (PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setInt(1, couponId);
@@ -67,15 +69,23 @@ public class CouponDao {
     }
 
     public Coupon getCouponByIdForUpdate(Connection conn, int couponId) throws Exception {
-        String sql = "SELECT * FROM coupons WHERE id = ? FOR UPDATE";
+        String sql = """
+            SELECT *
+            FROM coupons
+            WHERE id = ?
+            FOR UPDATE
+        """;
+
         try (PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setInt(1, couponId);
+
             try (ResultSet rs = ps.executeQuery()) {
                 if (rs.next()) {
                     return mapCoupon(rs);
                 }
             }
         }
+
         return null;
     }
 
@@ -83,21 +93,12 @@ public class CouponDao {
         Coupon c = new Coupon();
         c.setId(rs.getInt("id"));
         c.setCode(rs.getString("code"));
-        c.setDiscountType(rs.getString("discount_type"));
-        c.setDiscountValue(rs.getBigDecimal("discount_value"));
         c.setDiscountPercent(rs.getInt("discount_percent"));
-        c.setMinOrder(rs.getBigDecimal("min_order"));
-        c.setMaxDiscount(rs.getBigDecimal("max_discount"));
         c.setActive(rs.getBoolean("is_active"));
         c.setQuantity(rs.getInt("quantity"));
         c.setStartDate(rs.getTimestamp("start_date"));
         c.setEndDate(rs.getTimestamp("end_date"));
         c.setUsed(rs.getInt("used"));
-        try {
-            c.setStatus(rs.getString("status"));
-        } catch (Exception ignored) {
-            c.setStatus("available");
-        }
         return c;
     }
 }

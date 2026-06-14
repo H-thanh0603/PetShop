@@ -626,10 +626,10 @@
         <div style="margin-top:12px; display:flex; justify-content:space-between; align-items:center;">
             <span style="font-size:13px;color:var(--text-hint);">Phương thức thanh toán</span>
             <c:choose>
-                <c:when test="${pendingVerification}">
+                <c:when test="${paymentMethod eq 'VNPAY'}">
                     <span class="payment-badge bank">
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/></svg>
-                        Chuyển khoản ngân hàng
+                        Chuyển khoản qua Vnpay
                     </span>
                 </c:when>
                 <c:otherwise>
