@@ -158,6 +158,42 @@
 
 
 
+                <div class="checkout-field-group mt-4">
+                    <label for="recipientFullname">Họ và tên người nhận hàng</label>
+                    <input type="text"
+                           id="recipientFullname"
+                           name="recipientFullname"
+                           class="form-control mb-1"
+                           maxlength="100"
+                           value="${fn:escapeXml(user.fullname)}"
+                           autocomplete="name"
+                           required>
+                    <div class="text-danger small mb-3" id="recipientFullnameError" role="alert"></div>
+
+                    <label for="recipientPhone">Số điện thoại người nhận hàng</label>
+                    <input type="tel"
+                           id="recipientPhone"
+                           name="recipientPhone"
+                           class="form-control mb-1"
+                           maxlength="10"
+                           inputmode="numeric"
+                           pattern="0[0-9]{9}"
+                           value="${fn:escapeXml(user.phone)}"
+                           autocomplete="tel"
+                           required>
+                    <div class="text-danger small mb-3" id="recipientPhoneError" role="alert"></div>
+
+                    <label for="shippingAddress">Địa chỉ giao hàng</label>
+                    <textarea id="shippingAddress"
+                              name="shippingAddress"
+                              class="form-control mb-1"
+                              rows="3"
+                              maxlength="500"
+                              autocomplete="shipping street-address"
+                              required>${fn:escapeXml(defaultShippingAddress)}</textarea>
+                    <div class="text-danger small" id="shippingAddressError" role="alert"></div>
+                </div>
+
                 <div class="checkout-address-current">
                     <div class="section-label">Vị trí giao hàng</div>
                     <c:choose>

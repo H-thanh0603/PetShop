@@ -71,6 +71,27 @@ public class CheckoutService {
                                           String paymentMethodKey,
                                           int shippingFee,
                                           String reservedTransferReference) throws Exception {
+        return processCheckout(
+                user,
+                cart,
+                user.getFullname(),
+                user.getPhone(),
+                fullAddress,
+                note,
+                couponState,
+                paymentMethodKey,
+                shippingFee,
+                reservedTransferReference
+        );
+    }
+
+    public CheckoutResult processCheckout(User user, Map<Integer, CartItem> cart,
+                                          String recipientFullname, String recipientPhone,
+                                          String shippingAddress, String note,
+                                          CouponValidationResult couponState,
+                                          String paymentMethodKey,
+                                          int shippingFee,
+                                          String reservedTransferReference) throws Exception {
         BigDecimal totalAmount = calculateCartTotal(cart);
 
         try (Connection conn = DBContext.getConnection()) {
@@ -130,17 +151,16 @@ public class CheckoutService {
                 }
 
                 // 4. Create Order
-                Order order = new Order();
-                order.setUserId(user.getId());
-                order.setFullname(user.getFullname());
-                order.setPhone(user.getPhone());
-                order.setAddress(fullAddress);
-                order.setNote(note);
-                order.setTotalAmount(finalTotal);
-                order.setStatus("Pending");
-                order.setCreatedAt(Timestamp.valueOf(LocalDateTime.now()));
-                order.setPayment_method(paymentResult.getPaymentMethodDb());
-                order.setPayment_status(paymentResult.isPaymentStatus());
+                Order order = buildOrderSnapshot(
+                        user,
+                        recipientFullname,
+                        recipientPhone,
+                        shippingAddress,
+                        note,
+                        finalTotal,
+                        paymentResult.getPaymentMethodDb(),
+                        paymentResult.isPaymentStatus()
+                );
 
                 int orderId = orderDAO.saveOrder(conn, order);
                 if (orderId <= 0) {
@@ -214,6 +234,25 @@ public class CheckoutService {
         return cart.values().stream()
                 .map(item -> item.getProduct().getPrice().multiply(BigDecimal.valueOf(item.getQuantity())))
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
+    }
+
+    static Order buildOrderSnapshot(User user, String recipientFullname, String recipientPhone,
+                                    String shippingAddress, String note, BigDecimal finalTotal,
+                                    String paymentMethodDb, boolean paymentStatus) {
+        Order order = new Order();
+        order.setUserId(user.getId());
+        order.setCustomerFullname(user.getFullname());
+        order.setCustomerPhone(user.getPhone());
+        order.setRecipientFullname(recipientFullname);
+        order.setRecipientPhone(recipientPhone);
+        order.setShippingAddress(shippingAddress);
+        order.setNote(note);
+        order.setTotalAmount(finalTotal);
+        order.setStatus("Pending");
+        order.setCreatedAt(Timestamp.valueOf(LocalDateTime.now()));
+        order.setPayment_method(paymentMethodDb);
+        order.setPayment_status(paymentStatus);
+        return order;
     }
 
     private BigDecimal calculateDiscount(BigDecimal cartTotal, Coupon coupon) {

@@ -12,6 +12,8 @@ import jakarta.servlet.http.HttpServletResponse;
 import services.payment.BankWebhookPayload;
 import services.payment.BankWebhookReconciliationResult;
 import services.payment.BankWebhookReconciliationService;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.math.BigDecimal;
@@ -25,6 +27,7 @@ import java.util.Map;
 @WebServlet("/api/payment/bank-webhook")
 public class BankWebhookServlet extends HttpServlet {
     private static final long serialVersionUID = 1L;
+    private static final Logger logger = LoggerFactory.getLogger(BankWebhookServlet.class);
     private final BankWebhookReconciliationService reconciliationService = new BankWebhookReconciliationService();
     private final Gson gson = new Gson();
 
@@ -47,12 +50,17 @@ public class BankWebhookServlet extends HttpServlet {
         try {
             BankWebhookPayload payload = parsePayload(rawPayload);
             BankWebhookReconciliationResult result = reconciliationService.reconcile(payload);
+            logger.info("Bank webhook result={} transactionId={} orderId={} paymentTransactionId={} message={}",
+                    result.getStatus(), payload.getTransactionId(), result.getOrderId(),
+                    result.getPaymentTransactionId(), result.getMessage());
             response.setStatus(HttpServletResponse.SC_OK);
             writeSuccess(response);
         } catch (IllegalArgumentException e) {
+            logger.warn("Invalid bank webhook payload: {}", e.getMessage());
             response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
             write(response, false, e.getMessage(), null);
         } catch (Exception e) {
+            logger.error("Failed to process bank webhook", e);
             response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
             write(response, false, "Không xử lý được webhook thanh toán.", null);
         }
@@ -69,7 +77,7 @@ public class BankWebhookServlet extends HttpServlet {
             submittedSecret = request.getHeader("X-Secret-Key");
         }
         if (submittedSecret == null || submittedSecret.isBlank()) {
-            submittedSecret = bearerToken(request.getHeader("Authorization"));
+            submittedSecret = authorizationToken(request.getHeader("Authorization"));
         }
         if (submittedSecret == null || submittedSecret.isBlank()) {
             return false;
@@ -88,11 +96,13 @@ public class BankWebhookServlet extends HttpServlet {
             throw new IllegalArgumentException("Webhook không phải giao dịch tiền vào.");
         }
 
-        String transactionId = firstRequiredString(json, "transaction_id", "id", "referenceCode");
-        BigDecimal amount = new BigDecimal(firstRequiredString(json, "amount", "transferAmount"));
-        String content = getRequiredString(json, "content");
-        String bankAccount = firstOptionalString(json, "bank_account", "accountNumber");
-        LocalDateTime paidAt = parseTime(firstOptionalString(json, "time", "transactionDate"));
+        String transactionId = firstRequiredString(json, "referenceCode", "reference_code", "transaction_id",
+                "transactionId", "id");
+        BigDecimal amount = new BigDecimal(firstRequiredString(json, "transferAmount", "transfer_amount", "amount"));
+        String content = firstRequiredString(json, "content", "description", "transactionContent",
+                "transaction_content", "bank_content");
+        String bankAccount = firstOptionalString(json, "accountNumber", "account_number", "bank_account");
+        LocalDateTime paidAt = parseTime(firstOptionalString(json, "transactionDate", "transaction_date", "time"));
         return new BankWebhookPayload(transactionId, amount, content, bankAccount, rawPayload, paidAt);
     }
 
@@ -114,14 +124,6 @@ public class BankWebhookServlet extends HttpServlet {
         return null;
     }
 
-    private String getRequiredString(JsonObject json, String fieldName) {
-        String value = getOptionalString(json, fieldName);
-        if (value == null || value.isBlank()) {
-            throw new IllegalArgumentException("Webhook thiếu trường " + fieldName + ".");
-        }
-        return value.trim();
-    }
-
     private String getOptionalString(JsonObject json, String fieldName) {
         if (!json.has(fieldName) || json.get(fieldName).isJsonNull()) {
             return null;
@@ -136,13 +138,15 @@ public class BankWebhookServlet extends HttpServlet {
         return LocalDateTime.parse(value.trim(), DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
     }
 
-    private String bearerToken(String authorizationHeader) {
+    private String authorizationToken(String authorizationHeader) {
         if (authorizationHeader == null) {
             return null;
         }
-        String prefix = "Bearer ";
-        if (authorizationHeader.regionMatches(true, 0, prefix, 0, prefix.length())) {
-            return authorizationHeader.substring(prefix.length()).trim();
+        String[] prefixes = {"Bearer ", "Apikey ", "ApiKey ", "Api-Key "};
+        for (String prefix : prefixes) {
+            if (authorizationHeader.regionMatches(true, 0, prefix, 0, prefix.length())) {
+                return authorizationHeader.substring(prefix.length()).trim();
+            }
         }
         return null;
     }

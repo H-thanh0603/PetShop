@@ -11,6 +11,11 @@ public class Order {
     private String fullname;
     private String phone;
     private String address;
+    private String recipientFullname;
+    private String recipientPhone;
+    private String shippingAddress;
+    private String customerFullname;
+    private String customerPhone;
     private String note;
     private BigDecimal totalAmount;
     private String status; // Pending, Confirmed, Shipping, Completed, Cancelled
@@ -34,6 +39,9 @@ public class Order {
         this.fullname = fullname;
         this.phone = phone;
         this.address = address;
+        this.recipientFullname = fullname;
+        this.recipientPhone = phone;
+        this.shippingAddress = address;
         this.note = note;
         this.totalAmount = totalAmount != null ? totalAmount : BigDecimal.ZERO;
         this.status = status;
@@ -48,14 +56,66 @@ public class Order {
     public int getUserId() { return userId; }
     public void setUserId(int userId) { this.userId = userId; }
 
-    public String getFullname() { return fullname; }
-    public void setFullname(String fullname) { this.fullname = fullname; }
+    public String getFullname() { return getRecipientFullname(); }
+    public void setFullname(String fullname) {
+        this.fullname = fullname;
+        this.recipientFullname = fullname;
+    }
 
-    public String getPhone() { return phone; }
-    public void setPhone(String phone) { this.phone = phone; }
+    public String getPhone() { return getRecipientPhone(); }
+    public void setPhone(String phone) {
+        this.phone = phone;
+        this.recipientPhone = phone;
+    }
 
-    public String getAddress() { return address; }
-    public void setAddress(String address) { this.address = address; }
+    public String getAddress() { return getShippingAddress(); }
+    public void setAddress(String address) {
+        this.address = address;
+        this.shippingAddress = address;
+    }
+
+    public String getRecipientFullname() {
+        return hasText(recipientFullname) ? recipientFullname : fullname;
+    }
+
+    public void setRecipientFullname(String recipientFullname) {
+        this.recipientFullname = recipientFullname;
+        this.fullname = recipientFullname;
+    }
+
+    public String getRecipientPhone() {
+        return hasText(recipientPhone) ? recipientPhone : phone;
+    }
+
+    public void setRecipientPhone(String recipientPhone) {
+        this.recipientPhone = recipientPhone;
+        this.phone = recipientPhone;
+    }
+
+    public String getShippingAddress() {
+        return hasText(shippingAddress) ? shippingAddress : address;
+    }
+
+    public void setShippingAddress(String shippingAddress) {
+        this.shippingAddress = shippingAddress;
+        this.address = shippingAddress;
+    }
+
+    public String getCustomerFullname() {
+        return customerFullname;
+    }
+
+    public void setCustomerFullname(String customerFullname) {
+        this.customerFullname = customerFullname;
+    }
+
+    public String getCustomerPhone() {
+        return customerPhone;
+    }
+
+    public void setCustomerPhone(String customerPhone) {
+        this.customerPhone = customerPhone;
+    }
 
     public String getNote() { return note; }
     public void setNote(String note) { this.note = note; }
@@ -240,6 +300,10 @@ public class Order {
 
     public void setPaymentVerifiedAt(Timestamp paymentVerifiedAt) {
         this.paymentVerifiedAt = paymentVerifiedAt;
+    }
+
+    private boolean hasText(String value) {
+        return value != null && !value.trim().isEmpty();
     }
 
     public String getPaymentFlowLabel() {

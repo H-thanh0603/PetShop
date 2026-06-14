@@ -324,7 +324,8 @@
                                 <div class="order-code"><i class='bx bx-receipt'></i> Đơn hàng #${o.id}</div>
                                 <div class="order-meta">
                                     <span><i class='bx bx-calendar'></i> <fmt:formatDate value="${o.createdAt}" pattern="dd/MM/yyyy HH:mm"/></span>
-                                    <span><i class='bx bx-user'></i> ${fn:escapeXml(o.fullname)}</span>
+                                    <span><i class='bx bx-user'></i> Tài khoản: ${fn:escapeXml(o.customerFullname)}</span>
+                                    <span><i class='bx bx-user-check'></i> Người nhận: ${fn:escapeXml(o.recipientFullname)}</span>
                                     <span><i class='bx bx-package'></i> ${o.itemCount} sản phẩm</span>
                                 </div>
                             </div>
@@ -337,7 +338,7 @@
                             <div class="summary-grid">
                                 <div class="summary-card">
                                     <div class="summary-label"><i class='bx bx-map'></i> Địa chỉ nhận hàng</div>
-                                    <div class="summary-value">${fn:escapeXml(o.address)}</div>
+                                    <div class="summary-value">${fn:escapeXml(o.shippingAddress)}</div>
                                 </div>
                                 <div class="summary-card">
                                     <div class="summary-label"><i class='bx bx-wallet'></i> Tổng thanh toán</div>
@@ -436,16 +437,20 @@
                                         <div class="detail-title"><i class='bx bx-detail'></i> Thông tin chi tiết</div>
                                         <div class="info-list">
                                             <div class="info-item">
+                                                <div class="label">Tên tài khoản khách hàng</div>
+                                                <div class="value">${fn:escapeXml(o.customerFullname)}</div>
+                                            </div>
+                                            <div class="info-item">
                                                 <div class="label">Người nhận</div>
-                                                <div class="value">${fn:escapeXml(o.fullname)}</div>
+                                                <div class="value">${fn:escapeXml(o.recipientFullname)}</div>
                                             </div>
                                             <div class="info-item">
                                                 <div class="label">Số điện thoại</div>
-                                                <div class="value">${fn:escapeXml(o.phone)}</div>
+                                                <div class="value">${fn:escapeXml(o.recipientPhone)}</div>
                                             </div>
                                             <div class="info-item">
                                                 <div class="label">Địa chỉ giao hàng</div>
-                                                <div class="value">${fn:escapeXml(o.address)}</div>
+                                                <div class="value">${fn:escapeXml(o.shippingAddress)}</div>
                                             </div>
                                             <div class="info-item">
                                                 <div class="label">Thanh toán</div>

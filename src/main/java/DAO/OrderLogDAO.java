@@ -8,6 +8,7 @@ import org.slf4j.LoggerFactory;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
+import java.sql.Statement;
 import java.sql.Types;
 import java.util.ArrayList;
 import java.util.List;
@@ -17,6 +18,7 @@ public class OrderLogDAO {
 
     public boolean insert(Connection conn, int orderId, String actorType, Integer actorId,
                           String action, String oldStatus, String newStatus, String note) throws Exception {
+        ensureTableExists(conn);
         String sql = "INSERT INTO order_logs " +
                 "(order_id, actor_type, actor_id, action, old_status, new_status, note) " +
                 "VALUES (?, ?, ?, ?, ?, ?, ?)";
@@ -33,6 +35,26 @@ public class OrderLogDAO {
             ps.setString(6, newStatus);
             ps.setString(7, note);
             return ps.executeUpdate() > 0;
+        }
+    }
+
+    private void ensureTableExists(Connection conn) throws Exception {
+        String sql = "CREATE TABLE IF NOT EXISTS order_logs (" +
+                "id INT AUTO_INCREMENT PRIMARY KEY," +
+                "order_id INT NOT NULL," +
+                "actor_type VARCHAR(50) NOT NULL," +
+                "actor_id INT NULL," +
+                "action VARCHAR(100) NOT NULL," +
+                "old_status VARCHAR(50) NULL," +
+                "new_status VARCHAR(50) NULL," +
+                "note TEXT NULL," +
+                "created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP," +
+                "INDEX idx_order_logs_order_created (order_id, created_at)," +
+                "INDEX idx_order_logs_actor_created (actor_type, actor_id, created_at)," +
+                "CONSTRAINT fk_order_logs_order FOREIGN KEY (order_id) REFERENCES orders(id) ON DELETE CASCADE" +
+                ")";
+        try (Statement stmt = conn.createStatement()) {
+            stmt.execute(sql);
         }
     }
 

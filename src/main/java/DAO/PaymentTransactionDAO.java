@@ -15,6 +15,7 @@ import java.sql.Timestamp;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Locale;
 
 public class PaymentTransactionDAO {
     private static final Logger log = LoggerFactory.getLogger(PaymentTransactionDAO.class);
@@ -81,6 +82,14 @@ public class PaymentTransactionDAO {
     }
 
     public PaymentTransaction findPendingByTransferReferenceInContentForUpdate(Connection conn, String content) throws Exception {
+        PaymentTransaction exactMatch = findPendingByExactTransferReferenceInContentForUpdate(conn, content);
+        if (exactMatch != null) {
+            return exactMatch;
+        }
+        return findPendingByNormalizedTransferReferenceInContentForUpdate(conn, content);
+    }
+
+    private PaymentTransaction findPendingByExactTransferReferenceInContentForUpdate(Connection conn, String content) throws Exception {
         String sql = "SELECT * FROM payment_transactions " +
                 "WHERE provider_key = 'BANK_TRANSFER' " +
                 "AND status = 'PENDING_VERIFICATION' " +
@@ -97,6 +106,43 @@ public class PaymentTransactionDAO {
             }
         }
         return null;
+    }
+
+    private PaymentTransaction findPendingByNormalizedTransferReferenceInContentForUpdate(Connection conn, String content) throws Exception {
+        String normalizedContent = normalizeTransferReferenceToken(content);
+        if (normalizedContent.isEmpty()) {
+            return null;
+        }
+
+        String sql = "SELECT * FROM payment_transactions " +
+                "WHERE provider_key = 'BANK_TRANSFER' " +
+                "AND status = 'PENDING_VERIFICATION' " +
+                "AND transfer_reference IS NOT NULL " +
+                "ORDER BY created_at ASC, id ASC " +
+                "LIMIT 200 FOR UPDATE";
+        PaymentTransaction bestMatch = null;
+        int bestLength = -1;
+        try (PreparedStatement ps = conn.prepareStatement(sql);
+             ResultSet rs = ps.executeQuery()) {
+            while (rs.next()) {
+                PaymentTransaction candidate = map(rs);
+                String normalizedReference = normalizeTransferReferenceToken(candidate.getTransferReference());
+                if (!normalizedReference.isEmpty()
+                        && normalizedContent.contains(normalizedReference)
+                        && normalizedReference.length() > bestLength) {
+                    bestMatch = candidate;
+                    bestLength = normalizedReference.length();
+                }
+            }
+        }
+        return bestMatch;
+    }
+
+    static String normalizeTransferReferenceToken(String value) {
+        if (value == null) {
+            return "";
+        }
+        return value.toUpperCase(Locale.ROOT).replaceAll("[^A-Z0-9]", "");
     }
 
     public boolean updateVerificationStatus(Connection conn, int transactionId, String transactionStatus,

@@ -82,7 +82,16 @@ public class DBContext {
             addColumnIfMissing(conn, stmt, "orders", "payment_method", "VARCHAR(50) DEFAULT 'COD'");
             addColumnIfMissing(conn, stmt, "orders", "payment_status", "TINYINT(1) NOT NULL DEFAULT 0");
             addColumnIfMissing(conn, stmt, "orders", "createdAt", "TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP");
+            addColumnIfMissing(conn, stmt, "orders", "recipient_fullname", "VARCHAR(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NULL");
+            addColumnIfMissing(conn, stmt, "orders", "recipient_phone", "VARCHAR(20) NULL");
+            addColumnIfMissing(conn, stmt, "orders", "shipping_address", "VARCHAR(500) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NULL");
             executeIgnore(stmt, "UPDATE orders SET createdAt = created_at WHERE createdAt IS NULL AND created_at IS NOT NULL");
+            executeIgnore(stmt, "UPDATE orders SET recipient_fullname = COALESCE(NULLIF(recipient_fullname, ''), fullname), " +
+                    "recipient_phone = COALESCE(NULLIF(recipient_phone, ''), phone), " +
+                    "shipping_address = COALESCE(NULLIF(shipping_address, ''), address) " +
+                    "WHERE recipient_fullname IS NULL OR recipient_fullname = '' " +
+                    "OR recipient_phone IS NULL OR recipient_phone = '' " +
+                    "OR shipping_address IS NULL OR shipping_address = ''");
             stmt.execute("CREATE TABLE IF NOT EXISTS payment_transactions (" +
                     "id INT AUTO_INCREMENT PRIMARY KEY," +
                     "order_id INT NOT NULL," +
@@ -177,6 +186,20 @@ public class DBContext {
                     "CONSTRAINT fk_stock_movements_batch FOREIGN KEY (inventory_batch_id) REFERENCES inventory_batches(id) ON DELETE SET NULL," +
                     "CONSTRAINT fk_stock_movements_order FOREIGN KEY (order_id) REFERENCES orders(id) ON DELETE SET NULL," +
                     "CONSTRAINT fk_stock_movements_created_by FOREIGN KEY (created_by) REFERENCES users(id) ON DELETE SET NULL" +
+                    ")");
+            stmt.execute("CREATE TABLE IF NOT EXISTS order_logs (" +
+                    "id INT AUTO_INCREMENT PRIMARY KEY," +
+                    "order_id INT NOT NULL," +
+                    "actor_type VARCHAR(50) NOT NULL," +
+                    "actor_id INT NULL," +
+                    "action VARCHAR(100) NOT NULL," +
+                    "old_status VARCHAR(50) NULL," +
+                    "new_status VARCHAR(50) NULL," +
+                    "note TEXT NULL," +
+                    "created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP," +
+                    "INDEX idx_order_logs_order_created (order_id, created_at)," +
+                    "INDEX idx_order_logs_actor_created (actor_type, actor_id, created_at)," +
+                    "CONSTRAINT fk_order_logs_order FOREIGN KEY (order_id) REFERENCES orders(id) ON DELETE CASCADE" +
                     ")");
             executeIgnore(stmt, "ALTER TABLE payment_transactions ADD COLUMN expires_at TIMESTAMP NULL");
             executeIgnore(stmt, "ALTER TABLE payment_transactions ADD COLUMN amount_received DECIMAL(15,2) NULL");

@@ -25,14 +25,21 @@ public class OrderDAO {
 
     private static final Logger log = LoggerFactory.getLogger(OrderDAO.class);
     private final PaymentTransactionDAO paymentTransactionDAO = new PaymentTransactionDAO();
+    private static final String ORDER_SELECT =
+            "SELECT o.*, " +
+            "COALESCE(o.recipient_fullname, o.fullname) AS mapped_recipient_fullname, " +
+            "COALESCE(o.recipient_phone, o.phone) AS mapped_recipient_phone, " +
+            "COALESCE(o.shipping_address, o.address) AS mapped_shipping_address, " +
+            "u.fullname AS customer_fullname, u.phone AS customer_phone " +
+            "FROM orders o JOIN users u ON u.id = o.user_id ";
 
     private Order mapOrder(ResultSet rs) throws Exception {
-        return new Order(
+        Order order = new Order(
                 rs.getInt("id"),
                 rs.getInt("user_id"),
-                rs.getString("fullname"),
-                rs.getString("phone"),
-                rs.getString("address"),
+                rs.getString("mapped_recipient_fullname"),
+                rs.getString("mapped_recipient_phone"),
+                rs.getString("mapped_shipping_address"),
                 rs.getString("note"),
                 rs.getBigDecimal("total_amount"),
                 rs.getString("status"),
@@ -40,6 +47,12 @@ public class OrderDAO {
                 rs.getString("payment_method"),
                 rs.getBoolean("payment_status")
         );
+        order.setRecipientFullname(rs.getString("mapped_recipient_fullname"));
+        order.setRecipientPhone(rs.getString("mapped_recipient_phone"));
+        order.setShippingAddress(rs.getString("mapped_shipping_address"));
+        order.setCustomerFullname(rs.getString("customer_fullname"));
+        order.setCustomerPhone(rs.getString("customer_phone"));
+        return order;
     }
 
     public int saveOrder(Order order) {
@@ -52,18 +65,21 @@ public class OrderDAO {
     }
 
     public int saveOrder(Connection conn, Order order) throws Exception {
-        String query = "INSERT INTO orders (user_id, fullname, phone, address, note, total_amount, status, payment_method, payment_status, createdAt) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+        String query = "INSERT INTO orders (user_id, fullname, phone, address, recipient_fullname, recipient_phone, shipping_address, note, total_amount, status, payment_method, payment_status, createdAt) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
         try (PreparedStatement ps = conn.prepareStatement(query, Statement.RETURN_GENERATED_KEYS)) {
             ps.setInt(1, order.getUserId());
-            ps.setString(2, order.getFullname());
-            ps.setString(3, order.getPhone());
-            ps.setString(4, order.getAddress());
-            ps.setString(5, order.getNote());
-            ps.setBigDecimal(6, order.getTotalAmount());
-            ps.setString(7, "Pending");
-            ps.setString(8, order.getPayment_method());
-            ps.setBoolean(9, order.getPayment_status());
-            ps.setTimestamp(10, order.getCreatedAt());
+            ps.setString(2, order.getRecipientFullname());
+            ps.setString(3, order.getRecipientPhone());
+            ps.setString(4, order.getShippingAddress());
+            ps.setString(5, order.getRecipientFullname());
+            ps.setString(6, order.getRecipientPhone());
+            ps.setString(7, order.getShippingAddress());
+            ps.setString(8, order.getNote());
+            ps.setBigDecimal(9, order.getTotalAmount());
+            ps.setString(10, "Pending");
+            ps.setString(11, order.getPayment_method());
+            ps.setBoolean(12, order.getPayment_status());
+            ps.setTimestamp(13, order.getCreatedAt());
 
             ps.executeUpdate();
             try (ResultSet rs = ps.getGeneratedKeys()) {
@@ -100,7 +116,7 @@ public class OrderDAO {
 
     public List<Order> getAllOrders() {
         List<Order> list = new ArrayList<>();
-        String query = "SELECT * FROM orders ORDER BY createdAt DESC";
+        String query = ORDER_SELECT + "ORDER BY o.createdAt DESC";
         try (Connection conn = DBContext.getConnection();
              PreparedStatement ps = conn.prepareStatement(query);
              ResultSet rs = ps.executeQuery()) {
@@ -123,14 +139,14 @@ public class OrderDAO {
      */
     public List<Order> getOrdersPage(int page, int size, String statusFilter, String keyword) {
         List<Order> list = new ArrayList<>();
-        StringBuilder sql = new StringBuilder("SELECT * FROM orders WHERE 1=1");
+        StringBuilder sql = new StringBuilder(ORDER_SELECT + "WHERE 1=1");
         if (statusFilter != null && !statusFilter.isEmpty() && !"all".equalsIgnoreCase(statusFilter)) {
-            sql.append(" AND status = ?");
+            sql.append(" AND o.status = ?");
         }
         if (keyword != null && !keyword.isEmpty()) {
-            sql.append(" AND (CAST(id AS CHAR) LIKE ? OR fullname LIKE ? OR phone LIKE ? OR address LIKE ?)");
+            sql.append(" AND (CAST(o.id AS CHAR) LIKE ? OR u.fullname LIKE ? OR COALESCE(o.recipient_fullname, o.fullname) LIKE ? OR COALESCE(o.recipient_phone, o.phone) LIKE ? OR COALESCE(o.shipping_address, o.address) LIKE ?)");
         }
-        sql.append(" ORDER BY createdAt DESC LIMIT ? OFFSET ?");
+        sql.append(" ORDER BY o.createdAt DESC LIMIT ? OFFSET ?");
 
         try (Connection conn = DBContext.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql.toString())) {
@@ -143,6 +159,7 @@ public class OrderDAO {
                 String kw = "%" + keyword + "%";
                 ps.setString(idx++, kw); ps.setString(idx++, kw);
                 ps.setString(idx++, kw); ps.setString(idx++, kw);
+                ps.setString(idx++, kw);
             }
             ps.setInt(idx++, size);
             ps.setInt(idx, Math.max(0, (page - 1) * size));
@@ -165,12 +182,12 @@ public class OrderDAO {
     }
 
     public int countOrders(String statusFilter, String keyword) {
-        StringBuilder sql = new StringBuilder("SELECT COUNT(*) FROM orders WHERE 1=1");
+        StringBuilder sql = new StringBuilder("SELECT COUNT(*) FROM orders o JOIN users u ON u.id = o.user_id WHERE 1=1");
         if (statusFilter != null && !statusFilter.isEmpty() && !"all".equalsIgnoreCase(statusFilter)) {
-            sql.append(" AND status = ?");
+            sql.append(" AND o.status = ?");
         }
         if (keyword != null && !keyword.isEmpty()) {
-            sql.append(" AND (CAST(id AS CHAR) LIKE ? OR fullname LIKE ? OR phone LIKE ? OR address LIKE ?)");
+            sql.append(" AND (CAST(o.id AS CHAR) LIKE ? OR u.fullname LIKE ? OR COALESCE(o.recipient_fullname, o.fullname) LIKE ? OR COALESCE(o.recipient_phone, o.phone) LIKE ? OR COALESCE(o.shipping_address, o.address) LIKE ?)");
         }
         try (Connection conn = DBContext.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql.toString())) {
@@ -183,6 +200,7 @@ public class OrderDAO {
                 String kw = "%" + keyword + "%";
                 ps.setString(idx++, kw); ps.setString(idx++, kw);
                 ps.setString(idx++, kw); ps.setString(idx++, kw);
+                ps.setString(idx++, kw);
             }
             try (ResultSet rs = ps.executeQuery()) {
                 if (rs.next()) return rs.getInt(1);
@@ -234,7 +252,7 @@ public class OrderDAO {
     }
 
     public Order getOrderById(int orderId) {
-        String query = "SELECT * FROM orders WHERE id = ?";
+        String query = ORDER_SELECT + "WHERE o.id = ?";
         try (Connection conn = DBContext.getConnection();
              PreparedStatement ps = conn.prepareStatement(query)) {
             paymentTransactionDAO.expirePendingTransactions();
@@ -543,7 +561,7 @@ public class OrderDAO {
     }
 
     private Order getOrderByIdForUpdate(Connection conn, int orderId) throws Exception {
-        String query = "SELECT * FROM orders WHERE id = ? FOR UPDATE";
+        String query = ORDER_SELECT + "WHERE o.id = ? FOR UPDATE";
         try (PreparedStatement ps = conn.prepareStatement(query)) {
             ps.setInt(1, orderId);
             try (ResultSet rs = ps.executeQuery()) {
@@ -557,7 +575,7 @@ public class OrderDAO {
 
     public List<Order> getOrdersByUserId(int userId) {
         List<Order> list = new ArrayList<>();
-        String query = "SELECT * FROM orders WHERE user_id = ? ORDER BY createdAt DESC";
+        String query = ORDER_SELECT + "WHERE o.user_id = ? ORDER BY o.createdAt DESC";
         try (Connection conn = DBContext.getConnection();
              PreparedStatement ps = conn.prepareStatement(query)) {
             paymentTransactionDAO.expirePendingTransactions();

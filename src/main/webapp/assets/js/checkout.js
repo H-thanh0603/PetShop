@@ -26,6 +26,7 @@
         bindLocationSelectors();
         bindCouponNoteSync();
         bindPaymentSelection();
+        bindRecipientFields();
         bindCheckoutSubmit();
         startCheckoutTimer();
     });
@@ -220,6 +221,111 @@
         }
     }
 
+    function setFieldError(inputId, errorId, message) {
+        const input = document.getElementById(inputId);
+        const errorEl = document.getElementById(errorId);
+        if (errorEl) {
+            errorEl.textContent = message || "";
+        }
+        if (input) {
+            input.classList.toggle("is-invalid", Boolean(message));
+        }
+    }
+
+    function validateRecipientName(value) {
+        const normalized = (value || "").trim().replace(/\s+/g, " ");
+        if (!normalized) {
+            return "Vui lòng nhập họ và tên người nhận hàng.";
+        }
+        if (normalized.length > 100) {
+            return "Họ và tên người nhận không được vượt quá 100 ký tự.";
+        }
+        return "";
+    }
+
+    function validateRecipientPhone(value) {
+        if (!value) {
+            return "Vui lòng nhập số điện thoại người nhận hàng.";
+        }
+        if (/\s/.test(value)) {
+            return "Số điện thoại người nhận không được chứa khoảng trắng.";
+        }
+        if (!/^\d+$/.test(value)) {
+            return "Số điện thoại người nhận chỉ được nhập số.";
+        }
+        if (!value.startsWith("0")) {
+            return "Số điện thoại người nhận phải bắt đầu bằng số 0.";
+        }
+        if (value.length !== 10) {
+            return "Số điện thoại người nhận phải có đúng 10 chữ số.";
+        }
+        return "";
+    }
+
+    function validateShippingAddress(value) {
+        const normalized = (value || "").trim().replace(/\s+/g, " ");
+        if (!normalized) {
+            return "Vui lòng nhập địa chỉ giao hàng.";
+        }
+        if (normalized.length > 500) {
+            return "Địa chỉ giao hàng không được vượt quá 500 ký tự.";
+        }
+        return "";
+    }
+
+    function validateRecipientFields() {
+        const fullname = document.getElementById("recipientFullname");
+        const phone = document.getElementById("recipientPhone");
+        const address = document.getElementById("shippingAddress");
+
+        const fullnameError = validateRecipientName(fullname ? fullname.value : "");
+        const phoneError = validateRecipientPhone(phone ? phone.value : "");
+        const addressError = validateShippingAddress(address ? address.value : "");
+
+        setFieldError("recipientFullname", "recipientFullnameError", fullnameError);
+        setFieldError("recipientPhone", "recipientPhoneError", phoneError);
+        setFieldError("shippingAddress", "shippingAddressError", addressError);
+
+        return !fullnameError && !phoneError && !addressError;
+    }
+
+    function bindRecipientFields() {
+        const fullname = document.getElementById("recipientFullname");
+        const phone = document.getElementById("recipientPhone");
+        const address = document.getElementById("shippingAddress");
+
+        if (fullname) {
+            fullname.addEventListener("blur", function () {
+                fullname.value = fullname.value.trim().replace(/\s+/g, " ");
+                setFieldError("recipientFullname", "recipientFullnameError", validateRecipientName(fullname.value));
+            });
+            fullname.addEventListener("input", function () {
+                setFieldError("recipientFullname", "recipientFullnameError", validateRecipientName(fullname.value));
+            });
+        }
+        if (phone) {
+            phone.addEventListener("input", function () {
+                const digitsOnly = phone.value.replace(/\D/g, "").slice(0, 10);
+                if (digitsOnly !== phone.value) {
+                    phone.value = digitsOnly;
+                }
+                setFieldError("recipientPhone", "recipientPhoneError", validateRecipientPhone(phone.value));
+            });
+            phone.addEventListener("blur", function () {
+                setFieldError("recipientPhone", "recipientPhoneError", validateRecipientPhone(phone.value));
+            });
+        }
+        if (address) {
+            address.addEventListener("blur", function () {
+                address.value = address.value.trim().replace(/\s+/g, " ");
+                setFieldError("shippingAddress", "shippingAddressError", validateShippingAddress(address.value));
+            });
+            address.addEventListener("input", function () {
+                setFieldError("shippingAddress", "shippingAddressError", validateShippingAddress(address.value));
+            });
+        }
+    }
+
     function bindCheckoutSubmit() {
         const checkoutButton = document.getElementById("btnCheckout");
         if (!checkoutButton) {
@@ -231,8 +337,16 @@
             const selectedPayment = selectedPaymentInput ? selectedPaymentInput.value : "";
             const note = document.getElementById("note") ? document.getElementById("note").value : "";
             const paymentResult = document.getElementById("paymentResult");
-            const fullname = document.getElementById("fullname") ? document.getElementById("fullname").value : "";
-            const phone = document.getElementById("phone") ? document.getElementById("phone").value : "";
+            const recipientFullname = document.getElementById("recipientFullname") ? document.getElementById("recipientFullname").value.trim().replace(/\s+/g, " ") : "";
+            const recipientPhone = document.getElementById("recipientPhone") ? document.getElementById("recipientPhone").value : "";
+            const shippingAddress = document.getElementById("shippingAddress") ? document.getElementById("shippingAddress").value.trim().replace(/\s+/g, " ") : "";
+            const fullname = recipientFullname;
+            const phone = recipientPhone;
+
+            if (!validateRecipientFields()) {
+                paymentResult.innerHTML = '<div class="alert alert-danger">Vui lòng kiểm tra lại thông tin người nhận hàng.</div>';
+                return;
+            }
 
             if (!fullname || fullname.trim() === "") {
                 paymentResult.innerHTML = '<div class="alert alert-danger">Vui lòng cập nhật họ tên.</div>';
@@ -256,6 +370,9 @@
                 csrfToken: checkoutConfig.csrfToken,
                 paymentMethod: selectedPayment,
                 payment: selectedPayment,
+                recipientFullname: recipientFullname,
+                recipientPhone: recipientPhone,
+                shippingAddress: shippingAddress,
                 note: note,
                 buyNow: isBuyNow ? "true" : "false"
             }).toString();
@@ -287,7 +404,8 @@
                         if (selectedPayment === "bank_transfer") {
                             applyServerBankTransferData(data);
                             checkoutButton.dataset.keepDisabled = "true";
-                            paymentResult.innerHTML = '<div class="alert alert-success">Đơn hàng đã được tạo. QR bên trên có hiệu lực trong 10 phút, vui lòng hoàn tất chuyển khoản đúng nội dung. <a class="alert-link" href="' + checkoutConfig.contextPath + '/order-success">Xem đơn hàng</a></div>';
+                            const orderUrl = checkoutConfig.contextPath + "/my-orders?action=view&id=" + encodeURIComponent(data.orderId || "");
+                            paymentResult.innerHTML = '<div class="alert alert-success">Đơn hàng đã được tạo và đang chờ thanh toán chuyển khoản. QR bên trên có hiệu lực trong 10 phút, vui lòng chuyển đúng số tiền và nội dung. <a class="alert-link" href="' + orderUrl + '">Xem đơn hàng chưa thanh toán</a></div>';
                             return;
                         }
 
