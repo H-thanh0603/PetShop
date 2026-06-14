@@ -86,7 +86,7 @@
         text-decoration: none !important;
     }
     
-    /* Nav Link Dropdown Toggle - Đã lấy từ nhánh Main để mũi tên đẹp hơn */
+    /* Nav Link Dropdown Toggle */
     nav#navbar-main .nav-link.dropdown-toggle {
         display: flex !important;
         align-items: center !important;
@@ -99,7 +99,7 @@
     nav#navbar-main .nav-item.dropdown:hover .nav-link.dropdown-toggle i.bx-chevron-down {
         transform: rotate(180deg) !important;
     }
-    
+
     /* Toggler for mobile */
     nav#navbar-main .navbar-toggler {
         border: 2px solid #e0e0e0 !important;
@@ -116,7 +116,7 @@
         width: 24px !important;
         height: 24px !important;
     }
-    
+
     /* --- BUTTONS STYLES --- */
     nav#navbar-main .btn-nav-booking {
         background: linear-gradient(135deg, #00bfa5 0%, #008f7a 100%) !important;
@@ -139,7 +139,7 @@
         background: linear-gradient(135deg, #008f7a 0%, #007a66 100%) !important;
         color: #ffffff !important;
     }
-    
+
     nav#navbar-main .btn-nav-login {
         color: #444444 !important;
         border: 2px solid #e0e0e0 !important;
@@ -163,8 +163,10 @@
         font-size: 1.1rem !important;
         color: #00bfa5 !important;
     }
-    nav#navbar-main .btn-nav-login:hover i { color: #ffffff !important; }
-    
+    nav#navbar-main .btn-nav-login:hover i {
+        color: #ffffff !important;
+    }
+
     nav#navbar-main .btn-nav-user {
         background: #f5f7fa !important;
         border: 2px solid #e8eaed !important;
@@ -187,7 +189,7 @@
         color: #00bfa5 !important;
     }
 
-    /* --- CART ICON STYLE (MỚI) --- */
+    /* --- CART ICON STYLE --- */
     nav#navbar-main .btn-nav-cart {
         color: #444444 !important;
         font-size: 1.5rem !important;
@@ -217,7 +219,7 @@
         border: 2px solid #fff !important;
         transform: translate(25%, -25%) !important;
     }
-    
+
     /* Dropdown Menu */
     nav#navbar-main .dropdown {
         position: relative !important;
@@ -237,13 +239,13 @@
         right: 0 !important;
         left: auto !important;
     }
-    
+
     /* Services Dropdown - căn trái */
     nav#navbar-main .dropdown-menu-services {
         left: 0 !important;
         right: auto !important;
     }
-    
+
     nav#navbar-main .dropdown-menu.show {
         display: block !important;
     }
@@ -272,7 +274,7 @@
         margin: 8px 12px !important;
         border-color: #e8eaed !important;
     }
-    
+
     /* Lang Select */
     nav#navbar-main .nav-lang-select {
         color: #666666 !important;
@@ -285,10 +287,13 @@
         padding: 8px 12px !important;
         border-radius: 8px !important;
     }
-    
-    body { padding-top: 80px !important; margin-top: 0 !important; }
-    
-    /* Search Bar in Navbar - Hiển thị cố định */
+
+    body {
+        padding-top: 80px !important;
+        margin-top: 0 !important;
+    }
+
+    /* Search Bar in Navbar */
     .nav-search-form {
         flex-shrink: 0;
     }
@@ -324,7 +329,7 @@
     .nav-search-bar input::placeholder {
         color: #aaa;
     }
-    
+
     /* Autocomplete Dropdown */
     .autocomplete-dropdown {
         display: none;
@@ -398,9 +403,76 @@
         from { transform: rotate(0deg); }
         to { transform: rotate(360deg); }
     }
-    
+
+    /* ===== SEARCH HISTORY ===== */
+    .autocomplete-section-label {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 8px 15px 4px;
+        font-size: 0.75rem;
+        font-weight: 600;
+        color: #999;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+    }
+    .autocomplete-section-label button {
+        background: none;
+        border: none;
+        font-size: 0.75rem;
+        color: #aaa;
+        cursor: pointer;
+        padding: 0;
+    }
+    .autocomplete-section-label button:hover {
+        color: #dc3545;
+    }
+    .autocomplete-history-item {
+        display: flex;
+        align-items: center;
+        padding: 9px 15px;
+        cursor: pointer;
+        gap: 10px;
+        color: #444;
+        font-size: 0.9rem;
+        transition: background 0.15s;
+    }
+    .autocomplete-history-item:hover {
+        background: #f5f7fa;
+    }
+    .autocomplete-history-item i {
+        color: #aaa;
+        font-size: 1rem;
+        flex-shrink: 0;
+    }
+    .autocomplete-history-item .history-text {
+        flex: 1;
+    }
+    .autocomplete-history-item .history-delete {
+        background: none;
+        border: none;
+        color: #ccc;
+        cursor: pointer;
+        padding: 2px 6px;
+        border-radius: 4px;
+        font-size: 0.95rem;
+    }
+    .autocomplete-history-item .history-delete:hover {
+        color: #dc3545;
+        background: #fff0f0;
+    }
+    .autocomplete-item-name mark {
+        background: rgba(0,191,165,0.18);
+        color: #007a66;
+        font-weight: 600;
+        border-radius: 2px;
+        padding: 0 1px;
+    }
+
     @media (max-width: 991px) {
-        nav#navbar-main { padding: 12px 0 !important; }
+        nav#navbar-main {
+            padding: 12px 0 !important;
+        }
         nav#navbar-main .navbar-collapse {
             background: #ffffff !important;
             padding: 20px !important;
@@ -422,24 +494,27 @@
             justify-content: center !important;
             padding: 14px 24px !important;
         }
-        /* Mobile: Giỏ hàng căn giữa */
         nav#navbar-main .btn-nav-cart {
             margin: 10px auto !important;
         }
-        nav#navbar-main .nav-lang-select { display: none !important; }
-        body { padding-top: 70px !important; }
+        nav#navbar-main .nav-lang-select {
+            display: none !important;
+        }
+        body {
+            padding-top: 70px !important;
+        }
     }
 </style>
 
 <nav class="navbar navbar-expand-lg" id="navbar-main">
-    <div class="container-fluid px-4 px-lg-5"> 
-        
+    <div class="container-fluid px-4 px-lg-5">
+
         <a class="navbar-brand" href="${pageContext.request.contextPath}/home">
             <i class='bx bxs-dog'></i> PetShop
         </a>
 
         <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarMainContent">
-            <span class="navbar-toggler-icon"></span> 
+            <span class="navbar-toggler-icon"></span>
         </button>
 
         <div class="collapse navbar-collapse justify-content-center" id="navbarMainContent">
@@ -490,29 +565,26 @@
                 </li>
             </ul>
         </div>
-        
-        <!-- Search Bar - Hiển thị cố định trên navbar (giữa menu và buttons) -->
+
         <form action="${pageContext.request.contextPath}/shop" method="get" class="nav-search-form d-none d-lg-flex ms-auto me-3" id="navSearchForm">
             <div class="nav-search-bar" style="position: relative;">
                 <i class='bx bx-search'></i>
                 <input type="text" name="search" id="searchInput" placeholder="Tìm kiếm sản phẩm..." autocomplete="off" value="${fn:escapeXml(param.search)}">
-                <!-- Autocomplete dropdown -->
                 <div id="autocompleteDropdown" class="autocomplete-dropdown"></div>
             </div>
         </form>
 
         <div class="d-flex align-items-center gap-3 navbar-nav-buttons">
-            
+
             <a href="${pageContext.request.contextPath}/cart" class="btn-nav-cart">
                 <i class='bx bx-cart'></i>
-                <%-- Chỉ hiển thị badge khi user đã đăng nhập VÀ có sản phẩm trong giỏ --%>
                 <c:if test="${not empty sessionScope.totalQuantity and sessionScope.totalQuantity > 0}">
                     <span class="cart-badge" id="cart-count">
                         ${sessionScope.totalQuantity}
                     </span>
                 </c:if>
             </a>
-            
+
             <c:choose>
                 <c:when test="${not empty sessionScope.user}">
                     <div class="dropdown">
@@ -565,7 +637,7 @@
                     </a>
                 </c:otherwise>
             </c:choose>
-            
+
             <div class="nav-lang-select d-none d-lg-flex">
                 <i class='bx bx-globe'></i> Vi <i class='bx bx-chevron-down'></i>
             </div>
@@ -576,141 +648,223 @@
 
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    // Tìm tất cả dropdown toggle trong navbar
+    // --- DROPDOWN NAVIGATION LOGIC ---
     var dropdownToggles = document.querySelectorAll('#navbar-main .dropdown-toggle');
-    
+
     dropdownToggles.forEach(function(toggle) {
         toggle.addEventListener('click', function(e) {
             e.preventDefault();
             e.stopPropagation();
-            
+
             var dropdownMenu = this.nextElementSibling;
             var isOpen = dropdownMenu.classList.contains('show');
-            
+
             // Đóng tất cả dropdown khác
             document.querySelectorAll('#navbar-main .dropdown-menu.show').forEach(function(menu) {
-                menu.classList.remove('show');
+                if (menu !== dropdownMenu) menu.classList.remove('show');
             });
-            
+
             // Toggle dropdown hiện tại
             if (!isOpen) {
                 dropdownMenu.classList.add('show');
+            } else {
+                dropdownMenu.classList.remove('show');
             }
         });
     });
-    
-    // Đóng dropdown khi click ra ngoài
+
+    // ========== SEARCH AUTOCOMPLETE LOGIC ==========
+    var searchInput = document.getElementById('searchInput');
+    var autocompleteDropdown = document.getElementById('autocompleteDropdown');
+    var searchTimeout = null;
+    var contextPath = '${pageContext.request.contextPath}';
+
+    if (searchInput && autocompleteDropdown) {
+
+        // --- Highlight từ khoá an toàn (Chống XSS) ---
+        function highlightKeyword(text, keyword) {
+            if (!keyword) return text;
+            const re = new RegExp('(' + keyword.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + ')', 'gi');
+
+            // Escape HTML văn bản gốc để chặn mã độc XSS trước khi chèn thẻ <mark>
+            const div = document.createElement('div');
+            div.textContent = text;
+            const escapedText = div.innerHTML;
+
+            return escapedText.replace(re, '<mark>$1</mark>');
+        }
+
+        // --- API lịch sử ---
+        function loadHistory(callback) {
+            fetch(contextPath + '/api/search-history')
+                .then(function(r) { return r.json(); })
+                .then(callback).catch(function() { callback([]); });
+        }
+        function saveHistory(keyword) {
+            var fd = new FormData();
+            fd.append('q', keyword);
+            fetch(contextPath + '/api/search-history', { method: 'POST', body: fd });
+        }
+        function deleteHistoryItem(keyword, callback) {
+            fetch(contextPath + '/api/search-history?q=' + encodeURIComponent(keyword), { method: 'DELETE' })
+                .then(callback).catch(callback);
+        }
+        function clearAllHistory(callback) {
+            fetch(contextPath + '/api/search-history?all=true', { method: 'DELETE' })
+                .then(callback).catch(callback);
+        }
+
+        // --- Render lịch sử ---
+        function renderHistory(history) {
+            autocompleteDropdown.innerHTML = '';
+            if (!history || history.length === 0) {
+                autocompleteDropdown.innerHTML = '<div class="autocomplete-no-result">Chưa có lịch sử tìm kiếm</div>';
+                autocompleteDropdown.style.display = 'block';
+                autocompleteDropdown.classList.add('show');
+                return;
+            }
+            var label = document.createElement('div');
+            label.className = 'autocomplete-section-label';
+            label.innerHTML = '<span>Tìm kiếm gần đây</span>';
+            var clearBtn = document.createElement('button');
+            clearBtn.textContent = 'Xoá tất cả';
+            clearBtn.addEventListener('click', function(e) {
+                e.preventDefault(); e.stopPropagation();
+                clearAllHistory(function() { renderHistory([]); });
+            });
+            label.appendChild(clearBtn);
+            autocompleteDropdown.appendChild(label);
+
+            history.forEach(function(kw) {
+                var row = document.createElement('div');
+                row.className = 'autocomplete-history-item';
+                row.innerHTML = '<i class="bx bx-history"></i><span class="history-text"></span><button class="history-delete">&times;</button>';
+                row.querySelector('.history-text').textContent = kw;
+
+                row.querySelector('.history-delete').addEventListener('click', function(e) {
+                    e.preventDefault(); e.stopPropagation();
+                    deleteHistoryItem(kw, function() { loadHistory(renderHistory); });
+                });
+
+                row.addEventListener('click', function() {
+                    searchInput.value = kw;
+                    autocompleteDropdown.classList.remove('show');
+                    document.getElementById('navSearchForm').submit();
+                });
+                autocompleteDropdown.appendChild(row);
+            });
+
+            autocompleteDropdown.style.display = 'block';
+            autocompleteDropdown.classList.add('show');
+        }
+
+        // --- Render sản phẩm ---
+        function renderProducts(products, keyword) {
+            autocompleteDropdown.innerHTML = '';
+            if (!products || products.length === 0) {
+                autocompleteDropdown.innerHTML = '<div class="autocomplete-no-result">Không tìm thấy sản phẩm</div>';
+                return;
+            }
+            products.forEach(function(p) {
+                var item = document.createElement('a');
+                item.className = 'autocomplete-item';
+                item.href = contextPath + '/product-detail?id=' + encodeURIComponent(p.id);
+                item.addEventListener('click', function() { saveHistory(keyword); });
+
+                var img = document.createElement('img');
+                img.src = p.image
+                    ? (p.image.startsWith('http') ? p.image : contextPath + '/assets/images/shop_pic/' + p.image)
+                    : contextPath + '/assets/images/no-image.png';
+                img.alt = p.name || '';
+                img.onerror = function() { this.onerror = null; this.src = contextPath + '/assets/images/no-image.png'; };
+
+                var info = document.createElement('div');
+                info.className = 'autocomplete-item-info';
+
+                var name = document.createElement('div');
+                name.className = 'autocomplete-item-name';
+                name.innerHTML = highlightKeyword(p.name || '', keyword);
+
+                var priceRow = document.createElement('div');
+                priceRow.style.cssText = 'display:flex;align-items:center;gap:8px;';
+
+                var price = document.createElement('span');
+                price.className = 'autocomplete-item-price';
+                price.textContent = new Intl.NumberFormat('vi-VN').format(p.price || 0) + 'đ';
+
+                var stock = document.createElement('span');
+                stock.style.cssText = 'font-size:0.78rem;color:' + (p.stock > 0 ? '#aaa' : '#dc3545') + ';';
+                stock.textContent = p.stock > 0 ? 'Còn ' + p.stock : 'Hết hàng';
+
+                priceRow.appendChild(price); priceRow.appendChild(stock);
+                info.appendChild(name); info.appendChild(priceRow);
+                item.appendChild(img); item.appendChild(info);
+                autocompleteDropdown.appendChild(item);
+            });
+        }
+
+        // --- Sự kiện nhập liệu tìm kiếm ---
+        searchInput.addEventListener('input', function() {
+            var query = searchInput.value.trim();
+            if (searchTimeout) clearTimeout(searchTimeout);
+            if (query.length < 1) {
+                loadHistory(renderHistory);
+                return;
+            }
+            autocompleteDropdown.style.display = 'block';
+            autocompleteDropdown.classList.add('show');
+            autocompleteDropdown.innerHTML = '<div class="autocomplete-loading"><i class="bx bx-loader-alt"></i> Đang tìm...</div>';
+
+            searchTimeout = setTimeout(function() {
+                fetch(contextPath + '/api/search-autocomplete?q=' + encodeURIComponent(query))
+                    .then(function(r) { if (!r.ok) throw new Error(); return r.json(); })
+                    .then(function(products) { renderProducts(products, query); })
+                    .catch(function() { autocompleteDropdown.innerHTML = '<div class="autocomplete-no-result">Có lỗi xảy ra</div>'; });
+            }, 300);
+        });
+
+        searchInput.addEventListener('focus', function() {
+            if (searchInput.value.trim().length === 0) loadHistory(renderHistory);
+        });
+
+        document.getElementById('navSearchForm').addEventListener('submit', function() {
+            var q = searchInput.value.trim();
+            if (q.length > 0) saveHistory(q);
+        });
+
+        // Điều khiển bằng phím di chuyển
+        searchInput.addEventListener('keydown', function(e) {
+            var items = autocompleteDropdown.querySelectorAll('.autocomplete-item, .autocomplete-history-item');
+            var current = autocompleteDropdown.querySelector('.ac-active');
+            var idx = Array.prototype.indexOf.call(items, current);
+            if (e.key === 'ArrowDown') {
+                e.preventDefault();
+                if (current) { current.classList.remove('ac-active'); current.style.background = ''; }
+                var next = items[idx + 1] || items[0];
+                if (next) { next.classList.add('ac-active'); next.style.background = '#f5f7fa'; }
+            } else if (e.key === 'ArrowUp') {
+                e.preventDefault();
+                if (current) { current.classList.remove('ac-active'); current.style.background = ''; }
+                var prev = items[idx - 1] || items[items.length - 1];
+                if (prev) { prev.classList.add('ac-active'); prev.style.background = '#f5f7fa'; }
+            } else if (e.key === 'Enter' && current) {
+                e.preventDefault(); current.click();
+            } else if (e.key === 'Escape') {
+                autocompleteDropdown.classList.remove('show');
+            }
+        });
+    }
+
+    // Đóng dropdowns (bao gồm cả Menu điều hướng và Autocomplete) khi click ra ngoài thanh điều hướng
     document.addEventListener('click', function(e) {
         if (!e.target.closest('#navbar-main .dropdown')) {
             document.querySelectorAll('#navbar-main .dropdown-menu.show').forEach(function(menu) {
                 menu.classList.remove('show');
             });
         }
+        if (!e.target.closest('.nav-search-bar')) {
+            if (autocompleteDropdown) autocompleteDropdown.classList.remove('show');
+        }
     });
-    
-    // ========== SEARCH AUTOCOMPLETE ==========
-    var searchInput = document.getElementById('searchInput');
-    var autocompleteDropdown = document.getElementById('autocompleteDropdown');
-    var searchTimeout = null;
-    var contextPath = '${pageContext.request.contextPath}';
-    
-    if (searchInput && autocompleteDropdown) {
-        searchInput.addEventListener('input', function() {
-            var query = searchInput.value.trim();
-
-            if (searchTimeout) clearTimeout(searchTimeout);
-
-            if (query.length < 1) {
-                autocompleteDropdown.innerHTML = '';
-                autocompleteDropdown.classList.remove('show');
-                autocompleteDropdown.style.display = 'none';
-                return;
-            }
-
-            autocompleteDropdown.style.display = 'block';
-            autocompleteDropdown.classList.add('show');
-            autocompleteDropdown.innerHTML = '<div class="autocomplete-loading"><i class="bx bx-loader-alt"></i> Đang tìm...</div>';
-
-            // Debounce 300ms
-            searchTimeout = setTimeout(function() {
-                fetch(contextPath + '/api/search-autocomplete?q=' + encodeURIComponent(query))
-                    .then(function(response) {
-                        if (!response.ok) {
-                            throw new Error('API lỗi');
-                        }
-                        return response.json();
-                    })
-                    .then(function(products) {
-                        autocompleteDropdown.innerHTML = '';
-
-                        if (!products || products.length === 0) {
-                            var noResult = document.createElement('div');
-                            noResult.className = 'autocomplete-no-result';
-                            noResult.textContent = 'Không tìm thấy sản phẩm';
-                            autocompleteDropdown.appendChild(noResult);
-                            return;
-                        }
-
-                        products.forEach(function(p) {
-                            var item = document.createElement('a');
-                            item.className = 'autocomplete-item';
-                            item.href = contextPath + '/product-detail?id=' + encodeURIComponent(p.id);
-
-                            var img = document.createElement('img');
-                            img.src = p.image
-                                ? (p.image.startsWith('http') ? p.image : (contextPath + '/assets/images/shop_pic/' + p.image))
-                                : contextPath + '/assets/images/no-image.png';
-                            img.alt = p.name || '';
-                            img.onerror = function() {
-                                this.onerror = null;
-                                this.src = contextPath + '/assets/images/no-image.png';
-                            };
-
-                            var info = document.createElement('div');
-                            info.className = 'autocomplete-item-info';
-
-                            var name = document.createElement('div');
-                            name.className = 'autocomplete-item-name';
-                            name.textContent = p.name || '';
-
-                            var price = document.createElement('div');
-                            price.className = 'autocomplete-item-price';
-                            price.textContent = new Intl.NumberFormat('vi-VN').format(p.price || 0) + 'đ';
-
-                            var quantity = document.createElement('div');
-                            quantity.className = 'autocomplete-item-quantity';
-                            quantity.textContent = 'Số lượng: ' + (p.stock || 0);
-
-                            info.appendChild(name);
-                            info.appendChild(price);
-                            info.appendChild(quantity);
-
-                            item.appendChild(img);
-                            item.appendChild(info);
-
-                            autocompleteDropdown.appendChild(item);
-                        });
-                    })
-                    .catch(function(error) {
-                        console.log(error);
-                        autocompleteDropdown.innerHTML = '<div class="autocomplete-no-result">Có lỗi xảy ra</div>';
-                    });
-            }, 300);
-        });
-        
-        // Đóng autocomplete khi click ra ngoài
-        document.addEventListener('click', function(e) {
-            if (!e.target.closest('.nav-search-bar')) {
-                autocompleteDropdown.classList.remove('show');
-            }
-        });
-        
-        // Đóng autocomplete khi focus ra ngoài
-        searchInput.addEventListener('blur', function() {
-            setTimeout(function() {
-                autocompleteDropdown.classList.remove('show');
-            }, 200);
-        });
-    }
 });
 </script>
