@@ -237,6 +237,8 @@
                         <option value="">Tất cả vai trò</option>
                         <option value="user" ${selectedRole == 'user' ? 'selected' : ''}>Khách hàng</option>
                         <option value="admin" ${selectedRole == 'admin' ? 'selected' : ''}>Quản trị viên</option>
+                        <option value="staff" ${selectedRole == 'staff' ? 'selected' : ''}>Nhân viên</option>
+                        <option value="shiper" ${selectedRole == 'shiper' ? 'selected' : ''}>Shipper</option>
                     </select>
                     <button type="submit" class="btn btn-primary">
                         <i class='bx bx-search'></i> Tìm kiếm
@@ -304,10 +306,20 @@
                                         <small class="text-muted">${not empty user.phone ? fn:escapeXml(user.phone) : '-'}</small>
                                     </td>
                                     <td>
-                                        <span class="badge-admin ${user.role == 'admin' ? 'badge-warning' : 'badge-primary'}">
-                                            <i class='bx ${user.role == "admin" ? "bxs-crown" : "bxs-user"}'></i>
-                                            ${user.role == 'admin' ? 'Admin' : 'User'}
-                                        </span>
+                                        <c:choose>
+                                            <c:when test="${user.role == 'admin'}">
+                                                <span class="badge-admin badge-warning"><i class='bx bxs-crown'></i> Admin</span>
+                                            </c:when>
+                                            <c:when test="${user.role == 'staff'}">
+                                                <span class="badge-admin badge-info"><i class='bx bxs-user-badge'></i> Staff</span>
+                                            </c:when>
+                                            <c:when test="${user.role == 'shiper'}">
+                                                <span class="badge-admin badge-secondary"><i class='bx bxs-truck'></i> Shiper</span>
+                                            </c:when>
+                                            <c:otherwise>
+                                                <span class="badge-admin badge-primary"><i class='bx bxs-user'></i> User</span>
+                                            </c:otherwise>
+                                        </c:choose>
                                     </td>
                                     <td>
                                         <fmt:formatDate value="${user.createdAt}" pattern="dd/MM/yyyy"/>
