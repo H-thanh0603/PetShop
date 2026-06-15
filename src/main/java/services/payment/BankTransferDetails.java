@@ -26,7 +26,7 @@ public class BankTransferDetails {
                 AppConfig.getOrDefault("payment.bank.display-name", "VP Bank"),
                 AppConfig.getOrDefault("payment.bank.account-number", "0368600557"),
                 AppConfig.getOrDefault("payment.bank.account-name", "NGUYEN HUU THANH"),
-                AppConfig.getOrDefault("payment.bank.transfer-prefix", "PETSHOP"),
+                AppConfig.getOrDefault("payment.bank.transfer-prefix", "PETSH"),
                 AppConfig.getOrDefault("payment.bank.currency", "VND")
         );
     }
@@ -36,13 +36,11 @@ public class BankTransferDetails {
     }
 
     public String buildTransferReference(int orderId) {
-        long suffix = System.currentTimeMillis() % 1_000_000L;
-        return transferPrefix + "-" + orderId + "-" + suffix;
+        return normalizedTransferPrefix() + orderId + sixDigitSuffix();
     }
 
     public String buildReservedTransferReference(int userId) {
-        long suffix = System.currentTimeMillis() % 1_000_000L;
-        return transferPrefix + "-U" + userId + "-" + suffix;
+        return normalizedTransferPrefix() + userId + sixDigitSuffix();
     }
 
     public String getBankId() {
@@ -71,5 +69,15 @@ public class BankTransferDetails {
 
     private boolean hasText(String value) {
         return value != null && !value.trim().isEmpty();
+    }
+
+    private String normalizedTransferPrefix() {
+        String normalized = transferPrefix == null ? "" : transferPrefix.toUpperCase().replaceAll("[^A-Z0-9]", "");
+        return normalized.isEmpty() ? "PETSH" : normalized;
+    }
+
+    private String sixDigitSuffix() {
+        long suffix = System.currentTimeMillis() % 1_000_000L;
+        return String.format("%06d", suffix);
     }
 }

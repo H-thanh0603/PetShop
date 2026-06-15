@@ -340,10 +340,13 @@
             <div class="product-purchase-panel">
                 <div class="d-flex flex-wrap gap-2 mb-2">
                     <span class="badge product-badge">Chính hãng</span>
-                    <c:if test="${detail.discount > 0}">
-                        <span class="badge product-badge product-badge-sale">Giảm ${detail.discount}%</span>
+                    <c:if test="${detail.hasPromotion}">
+                        <span class="badge product-badge product-badge-sale">Giảm ${detail.displayDiscountPercent}%</span>
                     </c:if>
-                    <c:if test="${detail.stock > 0 && detail.stock < 10}">
+                    <c:if test="${detail.flashSale}">
+                        <span class="badge product-badge product-badge-sale">Flash Sale</span>
+                    </c:if>
+                    <c:if test="${detail.availablePurchaseQuantity > 0 && detail.availablePurchaseQuantity < 10}">
                         <span class="badge product-badge product-badge-warn">Sắp hết hàng</span>
                     </c:if>
                 </div>
@@ -362,9 +365,9 @@
                 <div class="price-panel mb-4">
                     <div class="d-flex flex-wrap align-items-end gap-3">
                         <span class="price-tag"> <fmt:formatNumber
-                                value="${detail.price}" type="currency" currencySymbol="₫"/>
+                                value="${detail.effectivePrice}" type="currency" currencySymbol="₫"/>
                         </span>
-                        <c:if test="${detail.discount > 0}">
+                        <c:if test="${detail.hasPromotion}">
                             <div class="pb-2">
                                 <div class="text-muted text-decoration-line-through">${fn:escapeXml(detail.formattedOldPrice)}</div>
                                 <div class="text-success fw-semibold">Tiết
@@ -372,21 +375,24 @@
                             </div>
                         </c:if>
                     </div>
+                    <c:if test="${not empty detail.activePromotionName}">
+                        <div class="small text-danger fw-semibold mb-2">${fn:escapeXml(detail.activePromotionName)}</div>
+                    </c:if>
                     <div class="mt-2">
                         <c:choose>
-                            <c:when test="${detail.stock <= 0}">
+                            <c:when test="${detail.availablePurchaseQuantity <= 0}">
                                 <div class="text-danger fw-semibold">
                                     <i class='bx bxs-error-circle'></i> Hết hàng
                                 </div>
                             </c:when>
-                            <c:when test="${detail.stock < 10}">
+                            <c:when test="${detail.availablePurchaseQuantity < 10}">
                                 <div class="text-warning fw-semibold">
-                                    <i class='bx bxs-package'></i> Chỉ còn ${detail.stock} sản phẩm
+                                    <i class='bx bxs-package'></i> Chỉ còn ${detail.availablePurchaseQuantity} sản phẩm có thể mua
                                 </div>
                             </c:when>
                             <c:otherwise>
                                 <div class="text-success">
-                                    <i class='bx bxs-check-circle'></i> Còn ${detail.stock} sản phẩm - Sẵn sàng giao
+                                    <i class='bx bxs-check-circle'></i> Còn ${detail.availablePurchaseQuantity} sản phẩm - Sẵn sàng giao
                                     ngay
                                 </div>
                             </c:otherwise>
@@ -543,13 +549,18 @@
                         <tr>
                             <th>Khuyến mãi</th>
                             <td><c:choose>
-                                <c:when test="${detail.discount > 0}">Giảm ${detail.discount}% - tiết kiệm ${detail.formattedDiscountAmount}</c:when>
+                                <c:when test="${detail.hasPromotion}">
+                                    <c:choose>
+                                        <c:when test="${not empty detail.activePromotionName}">${fn:escapeXml(detail.activePromotionName)} - giảm ${detail.displayDiscountPercent}% - tiết kiệm ${detail.formattedDiscountAmount}</c:when>
+                                        <c:otherwise>Giảm ${detail.displayDiscountPercent}% - tiết kiệm ${detail.formattedDiscountAmount}</c:otherwise>
+                                    </c:choose>
+                                </c:when>
                                 <c:otherwise>Không có khuyến mãi</c:otherwise>
                             </c:choose></td>
                         </tr>
                         <tr>
                             <th>Tồn kho</th>
-                            <td>${detail.stock} sản phẩm</td>
+                            <td>${detail.availablePurchaseQuantity} sản phẩm có thể mua</td>
                         </tr>
                         <tr>
                             <th>Đánh giá trung bình</th>
@@ -721,9 +732,12 @@
                                         <span class="text-muted">(${rp.reviewCount})</span>
                                     </div>
                                     <p class="text-danger fw-bold mb-0">
-                                        <fmt:formatNumber value="${rp.price}" type="currency"
+                                        <fmt:formatNumber value="${rp.effectivePrice}" type="currency"
                                                           currencySymbol="₫"/>
                                     </p>
+                                    <c:if test="${rp.hasPromotion}">
+                                        <div class="small text-muted text-decoration-line-through">${fn:escapeXml(rp.formattedOldPrice)}</div>
+                                    </c:if>
 
                                     <a
                                             href="${pageContext.request.contextPath}/product-detail?id=${rp.id}"
@@ -753,7 +767,7 @@
         src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 
 <script>
-    const availableStock = ${detail.stock};
+    const availableStock = ${detail.availablePurchaseQuantity};
     const quantityMessages = {
         negative: "Kh\u00f4ng \u0111\u01b0\u1ee3c nh\u1eadp s\u1ed1 \u00e2m.",
         decimal: "Kh\u00f4ng \u0111\u01b0\u1ee3c nh\u1eadp s\u1ed1 th\u1eadp ph\u00e2n.",

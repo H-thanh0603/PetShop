@@ -82,7 +82,22 @@ public class DBContext {
             addColumnIfMissing(conn, stmt, "orders", "payment_method", "VARCHAR(50) DEFAULT 'COD'");
             addColumnIfMissing(conn, stmt, "orders", "payment_status", "TINYINT(1) NOT NULL DEFAULT 0");
             addColumnIfMissing(conn, stmt, "orders", "createdAt", "TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP");
+            addColumnIfMissing(conn, stmt, "orders", "recipient_fullname", "VARCHAR(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NULL");
+            addColumnIfMissing(conn, stmt, "orders", "recipient_phone", "VARCHAR(20) NULL");
+            addColumnIfMissing(conn, stmt, "orders", "shipping_address", "VARCHAR(500) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NULL");
+            addColumnIfMissing(conn, stmt, "order_items", "original_price", "DECIMAL(18,0) NULL");
+            addColumnIfMissing(conn, stmt, "order_items", "final_price", "DECIMAL(18,0) NULL");
+            addColumnIfMissing(conn, stmt, "order_items", "discount_amount", "DECIMAL(18,0) NULL");
+            addColumnIfMissing(conn, stmt, "order_items", "promotion_id", "INT NULL");
+            addColumnIfMissing(conn, stmt, "order_items", "promotion_name", "VARCHAR(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NULL");
+            addColumnIfMissing(conn, stmt, "order_items", "promotion_type", "VARCHAR(30) NULL");
             executeIgnore(stmt, "UPDATE orders SET createdAt = created_at WHERE createdAt IS NULL AND created_at IS NOT NULL");
+            executeIgnore(stmt, "UPDATE orders SET recipient_fullname = COALESCE(NULLIF(recipient_fullname, ''), fullname), " +
+                    "recipient_phone = COALESCE(NULLIF(recipient_phone, ''), phone), " +
+                    "shipping_address = COALESCE(NULLIF(shipping_address, ''), address) " +
+                    "WHERE recipient_fullname IS NULL OR recipient_fullname = '' " +
+                    "OR recipient_phone IS NULL OR recipient_phone = '' " +
+                    "OR shipping_address IS NULL OR shipping_address = ''");
             stmt.execute("CREATE TABLE IF NOT EXISTS payment_transactions (" +
                     "id INT AUTO_INCREMENT PRIMARY KEY," +
                     "order_id INT NOT NULL," +
@@ -178,6 +193,52 @@ public class DBContext {
                     "CONSTRAINT fk_stock_movements_order FOREIGN KEY (order_id) REFERENCES orders(id) ON DELETE SET NULL," +
                     "CONSTRAINT fk_stock_movements_created_by FOREIGN KEY (created_by) REFERENCES users(id) ON DELETE SET NULL" +
                     ")");
+            stmt.execute("CREATE TABLE IF NOT EXISTS order_logs (" +
+                    "id INT AUTO_INCREMENT PRIMARY KEY," +
+                    "order_id INT NOT NULL," +
+                    "actor_type VARCHAR(50) NOT NULL," +
+                    "actor_id INT NULL," +
+                    "action VARCHAR(100) NOT NULL," +
+                    "old_status VARCHAR(50) NULL," +
+                    "new_status VARCHAR(50) NULL," +
+                    "note TEXT NULL," +
+                    "created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP," +
+                    "INDEX idx_order_logs_order_created (order_id, created_at)," +
+                    "INDEX idx_order_logs_actor_created (actor_type, actor_id, created_at)," +
+                    "CONSTRAINT fk_order_logs_order FOREIGN KEY (order_id) REFERENCES orders(id) ON DELETE CASCADE" +
+                    ")");
+            stmt.execute("CREATE TABLE IF NOT EXISTS promotions (" +
+                    "id INT AUTO_INCREMENT PRIMARY KEY," +
+                    "name VARCHAR(255) NOT NULL," +
+                    "description TEXT NULL," +
+                    "discount_type VARCHAR(20) NOT NULL," +
+                    "discount_value DECIMAL(18,0) NOT NULL DEFAULT 0," +
+                    "start_date TIMESTAMP NOT NULL," +
+                    "end_date TIMESTAMP NOT NULL," +
+                    "status VARCHAR(20) NOT NULL DEFAULT 'INACTIVE'," +
+                    "promotion_type VARCHAR(30) NOT NULL DEFAULT 'NORMAL'," +
+                    "created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP," +
+                    "updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP," +
+                    "INDEX idx_promotions_status_time (status, start_date, end_date)," +
+                    "INDEX idx_promotions_type_status (promotion_type, status)" +
+                    ")");
+            stmt.execute("CREATE TABLE IF NOT EXISTS promotion_products (" +
+                    "id INT AUTO_INCREMENT PRIMARY KEY," +
+                    "promotion_id INT NOT NULL," +
+                    "product_id INT NOT NULL," +
+                    "sale_quantity INT NULL," +
+                    "sold_quantity INT NULL," +
+                    "created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP," +
+                    "UNIQUE KEY uk_promotion_products (promotion_id, product_id)," +
+                    "INDEX idx_promotion_products_product (product_id)," +
+                    "INDEX idx_promotion_products_flash (promotion_id, sale_quantity, sold_quantity)," +
+                    "CONSTRAINT fk_promotion_products_promotion FOREIGN KEY (promotion_id) REFERENCES promotions(id) ON DELETE CASCADE," +
+                    "CONSTRAINT fk_promotion_products_product FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE CASCADE" +
+                    ")");
+            executeIgnore(stmt, "ALTER TABLE order_items ADD CONSTRAINT fk_order_items_promotion FOREIGN KEY (promotion_id) REFERENCES promotions(id) ON DELETE SET NULL");
+            executeIgnore(stmt, "UPDATE order_items SET original_price = price WHERE original_price IS NULL");
+            executeIgnore(stmt, "UPDATE order_items SET final_price = price WHERE final_price IS NULL");
+            executeIgnore(stmt, "UPDATE order_items SET discount_amount = GREATEST(COALESCE(original_price, price) - COALESCE(final_price, price), 0) WHERE discount_amount IS NULL");
             executeIgnore(stmt, "ALTER TABLE payment_transactions ADD COLUMN expires_at TIMESTAMP NULL");
             executeIgnore(stmt, "ALTER TABLE payment_transactions ADD COLUMN amount_received DECIMAL(15,2) NULL");
             executeIgnore(stmt, "ALTER TABLE payment_transactions ADD COLUMN bank_content VARCHAR(500) NULL");

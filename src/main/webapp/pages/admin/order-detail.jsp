@@ -48,13 +48,15 @@
                 <div class="order-info-card">
                     <h5 class="mb-4 fw-bold">Thông tin khách hàng</h5>
                     <div class="info-label">Người nhận</div>
-                    <div class="info-value text-primary fw-bold">${fn:escapeXml(order.fullname)}</div>
+                    <div class="info-value">${fn:escapeXml(order.recipientFullname)}</div>
+                    <div class="info-label">Tên tài khoản khách hàng</div>
+                    <div class="info-value text-primary fw-bold">${fn:escapeXml(order.customerFullname)}</div>
 
                     <div class="info-label">Số điện thoại</div>
-                    <div class="info-value">${fn:escapeXml(order.phone)}</div>
+                    <div class="info-value">${fn:escapeXml(order.recipientPhone)}</div>
 
                     <div class="info-label">Địa chỉ</div>
-                    <div class="info-value">${fn:escapeXml(order.address)}</div>
+                    <div class="info-value">${fn:escapeXml(order.shippingAddress)}</div>
 
                     <div class="info-label">Ngày đặt</div>
                     <div class="info-value"><fmt:formatDate value="${order.createdAt}" pattern="dd/MM/yyyy HH:mm:ss"/></div>

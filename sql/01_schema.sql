@@ -54,6 +54,9 @@ CREATE TABLE `orders` (
   `fullname` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
   `phone` varchar(20) NOT NULL,
   `address` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+  `recipient_fullname` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+  `recipient_phone` varchar(20) NOT NULL,
+  `shipping_address` varchar(500) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
   `note` text CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci,
   `total_amount` decimal(18,0) NOT NULL,
   `status` varchar(50) DEFAULT 'Pending',
@@ -70,10 +73,51 @@ CREATE TABLE `order_items` (
   `product_id` int NOT NULL,
   `quantity` int NOT NULL,
   `price` decimal(18,0) NOT NULL,
+  `original_price` decimal(18,0) NOT NULL DEFAULT 0,
+  `final_price` decimal(18,0) NOT NULL DEFAULT 0,
+  `discount_amount` decimal(18,0) NOT NULL DEFAULT 0,
+  `promotion_id` int DEFAULT NULL,
+  `promotion_name` varchar(255) DEFAULT NULL,
+  `promotion_type` varchar(50) DEFAULT NULL,
   PRIMARY KEY (`id`),
   FOREIGN KEY (`order_id`) REFERENCES `orders`(`id`) ON DELETE CASCADE,
   FOREIGN KEY (`product_id`) REFERENCES `products`(`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+DROP TABLE IF EXISTS `promotion_products`;
+DROP TABLE IF EXISTS `promotions`;
+CREATE TABLE `promotions` (
+  `id` int NOT NULL AUTO_INCREMENT,
+  `name` varchar(255) NOT NULL,
+  `description` text DEFAULT NULL,
+  `promotion_type` varchar(50) NOT NULL DEFAULT 'NORMAL',
+  `discount_type` varchar(20) NOT NULL DEFAULT 'PERCENT',
+  `discount_value` decimal(18,0) NOT NULL DEFAULT 0,
+  `start_date` datetime NOT NULL,
+  `end_date` datetime NOT NULL,
+  `status` varchar(20) NOT NULL DEFAULT 'INACTIVE',
+  `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  KEY `idx_promotions_status_dates` (`status`, `start_date`, `end_date`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE `promotion_products` (
+  `id` int NOT NULL AUTO_INCREMENT,
+  `promotion_id` int NOT NULL,
+  `product_id` int NOT NULL,
+  `sale_quantity` int DEFAULT NULL,
+  `sold_quantity` int DEFAULT NULL,
+  `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uq_promotion_products_pair` (`promotion_id`, `product_id`),
+  KEY `idx_promotion_products_product` (`product_id`),
+  CONSTRAINT `fk_promotion_products_promotion` FOREIGN KEY (`promotion_id`) REFERENCES `promotions` (`id`) ON DELETE CASCADE,
+  CONSTRAINT `fk_promotion_products_product` FOREIGN KEY (`product_id`) REFERENCES `products` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+ALTER TABLE `order_items`
+  ADD CONSTRAINT `fk_order_items_promotion` FOREIGN KEY (`promotion_id`) REFERENCES `promotions`(`id`) ON DELETE SET NULL;
 
 -- Table structure for table `features`
 DROP TABLE IF EXISTS `features`;

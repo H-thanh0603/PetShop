@@ -174,6 +174,7 @@ public class MyOrdersServlet extends HttpServlet {
                     || order.getStatus().equalsIgnoreCase(normalizedStatus);
             boolean matchesKeyword = normalizedKeyword.isEmpty()
                     || String.valueOf(order.getId()).contains(normalizedKeyword)
+                    || (order.getCustomerFullname() != null && order.getCustomerFullname().toLowerCase().contains(normalizedKeyword))
                     || (order.getFullname() != null && order.getFullname().toLowerCase().contains(normalizedKeyword))
                     || (order.getPhone() != null && order.getPhone().toLowerCase().contains(normalizedKeyword))
                     || (order.getAddress() != null && order.getAddress().toLowerCase().contains(normalizedKeyword));

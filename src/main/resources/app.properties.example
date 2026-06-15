@@ -6,6 +6,10 @@ deploy.tomcat-home=
 app.cookies.secure=false
 app.static.cache.max-age-seconds=86400
 
+# Social login redirect URI examples:
+# Google authorized redirect URI: ${app.base-url}/LoginByGoogleServlet
+# Production example: https://melipet.shop/PetShop/LoginByGoogleServlet
+
 # Checkout client config
 api.provinces.base-url=https://provinces.open-api.vn/api/v1
 payment.bank.pending-minutes=10
@@ -15,7 +19,7 @@ payment.bank.id=VPB
 payment.bank.account-number=0368600557
 payment.bank.account-name=NGUYEN HUU THANH
 payment.bank.display-name=VP Bank
-payment.bank.transfer-prefix=PETSHOP
+payment.bank.transfer-prefix=PETSH
 payment.bank.currency=VND
 
 # Future bank verification integration placeholders

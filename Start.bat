@@ -20,8 +20,7 @@ set "WAR_FILE=%PROJECT_ROOT%\build\libs\ROOT.war"
 
 if defined PETSHOP_BASE_URL (
     set "PETSHOP_URL=%PETSHOP_BASE_URL%"
-) else (
-    set "PETSHOP_URL=http://localhost:8080/home"
+) else (    set "PETSHOP_URL=http://localhost:8080/home"
 )
 
 if not defined PETSHOP_OPEN_BROWSER (

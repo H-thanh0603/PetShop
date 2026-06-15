@@ -345,7 +345,8 @@
                     <c:forEach items="${products}" var="p" varStatus="loop">
                         <c:set var="inventory" value="${inventoryByProduct[p.id]}" />
                         <tr data-id="${p.id}" data-name="${fn:escapeXml(p.name)}" data-image="${fn:escapeXml(p.image)}" 
-                            data-price="${p.price}" data-discount="${p.discount}" data-description="${fn:escapeXml(p.description)}"
+                            data-price="${p.price}" data-discount="${p.displayDiscountPercent}" data-description="${fn:escapeXml(p.description)}"
+                            data-has-discount="${p.hasPromotion}"
                             data-stock="${p.stock}" data-weight="${p.weight}" data-category="${fn:escapeXml(p.category)}" data-pet-type-id="${p.pet_type_id}"
                             data-stock-status="${p.stock == 0 ? 'out-of-stock' : (p.stock < 10 ? 'low-stock' : 'ok')}"
                             data-expiry-status="${empty inventory ? 'missing-batch' : inventory.expiryStatus}">
@@ -371,8 +372,8 @@
                             <td><span class="price-current">${fn:escapeXml(p.formattedPrice)}</span></td>
                             <td>
                                 <c:choose>
-                                    <c:when test="${p.discount > 0}">
-                                        <span class="discount-badge">-${p.discount}%</span>
+                                    <c:when test="${p.hasPromotion}">
+                                        <span class="discount-badge">-${p.displayDiscountPercent}%</span>
                                     </c:when>
                                     <c:otherwise>
                                         <span class="no-discount">-</span>

@@ -14,14 +14,23 @@ import Model.Product;
 import Model.ProductFilterCriteria;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import services.ProductPricingService;
 
 public class ProductDAO {
 
     private static final Logger log = LoggerFactory.getLogger(ProductDAO.class);
+    private static final String ACTIVE_PROMOTION_EXISTS_SQL =
+            "EXISTS (SELECT 1 FROM promotions prm " +
+            "JOIN promotion_products ppm ON ppm.promotion_id = prm.id " +
+            "WHERE ppm.product_id = p.id " +
+            "AND prm.status = 'ACTIVE' " +
+            "AND NOW() BETWEEN prm.start_date AND prm.end_date " +
+            "AND (prm.promotion_type <> 'FLASH_SALE' OR (ppm.sale_quantity IS NOT NULL AND COALESCE(ppm.sold_quantity, 0) < ppm.sale_quantity)))";
 
     private static final String PRODUCT_SELECT_WITH_REVIEWS =
             "SELECT p.*, COALESCE(AVG(r.rating), 0) AS average_rating, COUNT(r.id) AS review_count " +
             "FROM products p LEFT JOIN reviews r ON r.product_id = p.id ";
+    private final ProductPricingService pricingService = new ProductPricingService();
 
     private Product mapProduct(ResultSet rs) throws Exception {
         String desc = rs.getString("description");
@@ -79,6 +88,8 @@ public class ProductDAO {
             product.setBrand(rs.getString("brand"));
         } catch (Exception ignored) {
         }
+
+        pricingService.applyPricing(product);
 
         return product;
     }
@@ -261,7 +272,7 @@ public class ProductDAO {
 
     public List<Product> getDiscountedProductsList() {
         List<Product> list = new ArrayList<>();
-        String query = PRODUCT_SELECT_WITH_REVIEWS + "WHERE p.discount > 0 AND p.is_active = 1 GROUP BY p.id ORDER BY p.discount DESC, p.id DESC";
+        String query = PRODUCT_SELECT_WITH_REVIEWS + "WHERE (p.discount > 0 OR " + ACTIVE_PROMOTION_EXISTS_SQL + ") AND p.is_active = 1 GROUP BY p.id ORDER BY p.discount DESC, p.id DESC";
         try (Connection conn = DBContext.getConnection(); PreparedStatement ps = conn.prepareStatement(query); ResultSet rs = ps.executeQuery()) {
             while (rs.next()) { list.add(mapProduct(rs)); }
         } catch (Exception e) { log.error("Error fetching discounted products list", e); }
@@ -270,7 +281,7 @@ public class ProductDAO {
 
     public List<Product> getDiscountedProductsPage(int page, int size) {
         List<Product> list = new ArrayList<>();
-        String query = PRODUCT_SELECT_WITH_REVIEWS + "WHERE p.discount > 0 AND p.is_active = 1 GROUP BY p.id ORDER BY p.discount DESC, p.id DESC LIMIT ? OFFSET ?";
+        String query = PRODUCT_SELECT_WITH_REVIEWS + "WHERE (p.discount > 0 OR " + ACTIVE_PROMOTION_EXISTS_SQL + ") AND p.is_active = 1 GROUP BY p.id ORDER BY p.discount DESC, p.id DESC LIMIT ? OFFSET ?";
         try (Connection conn = DBContext.getConnection(); PreparedStatement ps = conn.prepareStatement(query)) {
             ps.setInt(1, size); ps.setInt(2, Math.max(0, (page - 1) * size));
             ResultSet rs = ps.executeQuery(); while (rs.next()) { list.add(mapProduct(rs)); }
@@ -279,7 +290,7 @@ public class ProductDAO {
     }
 
     public int getTotalDiscountedProductsCount() {
-        String query = "SELECT COUNT(*) FROM products WHERE discount > 0 AND is_active = 1";
+        String query = "SELECT COUNT(*) FROM products p WHERE (p.discount > 0 OR " + ACTIVE_PROMOTION_EXISTS_SQL + ") AND p.is_active = 1";
         try (Connection conn = DBContext.getConnection(); PreparedStatement ps = conn.prepareStatement(query); ResultSet rs = ps.executeQuery()) {
             if (rs.next()) return rs.getInt(1);
         } catch (Exception e) { log.error("Error counting discounted products", e); }
@@ -394,7 +405,7 @@ public class ProductDAO {
             where.append(" AND (p.name LIKE ? OR p.description LIKE ?)");
         }
         if (criteria.isDiscountOnly()) {
-            where.append(" AND p.discount > 0");
+            where.append(" AND (p.discount > 0 OR ").append(ACTIVE_PROMOTION_EXISTS_SQL).append(")");
         }
         if (criteria.getPriceRange() != null && !criteria.getPriceRange().isBlank()) {
             switch (criteria.getPriceRange()) {

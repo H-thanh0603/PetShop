@@ -113,13 +113,15 @@
                 <div class="info-section shadow-sm">
                     <h5 class="fw-bold mb-4">Thông tin giao hàng</h5>
                     <div class="label">Người nhận</div>
-                    <div class="value">${fn:escapeXml(order.fullname)}</div>
+                    <div class="value">${fn:escapeXml(order.recipientFullname)}</div>
+                    <div class="label">Tên tài khoản khách hàng</div>
+                    <div class="value">${fn:escapeXml(order.customerFullname)}</div>
 
                     <div class="label">Số điện thoại</div>
-                    <div class="value">${fn:escapeXml(order.phone)}</div>
+                    <div class="value">${fn:escapeXml(order.recipientPhone)}</div>
 
                     <div class="label">Địa chỉ giao hàng</div>
-                    <div class="value">${fn:escapeXml(order.address)}</div>
+                    <div class="value">${fn:escapeXml(order.shippingAddress)}</div>
 
                     <div class="label">Thanh toán</div>
                     <div class="value">

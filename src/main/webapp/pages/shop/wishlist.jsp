@@ -73,12 +73,12 @@
                                                         <i class='bx bxs-star'></i> ${fn:escapeXml(p.formattedAverageRating)} (${p.reviewCount} đánh giá)
                                                     </div>
                                                     <div class="fw-bold text-danger fs-5">${fn:escapeXml(p.formattedPrice)}</div>
-                                                    <c:if test="${p.discount > 0}">
+                                                    <c:if test="${p.hasPromotion}">
                                                         <div class="small text-muted">Tiết kiệm ${fn:escapeXml(p.formattedDiscountAmount)}</div>
                                                     </c:if>
-                                                    <div class="small mt-2 ${p.stock > 0 ? 'text-success' : 'text-danger'}">
-                                                        <i class='bx ${p.stock > 0 ? "bx-check-circle" : "bx-x-circle"}'></i>
-                                                        ${p.stock > 0 ? 'Còn hàng' : 'Hết hàng'}
+                                                    <div class="small mt-2 ${p.availablePurchaseQuantity > 0 ? 'text-success' : 'text-danger'}">
+                                                        <i class='bx ${p.availablePurchaseQuantity > 0 ? "bx-check-circle" : "bx-x-circle"}'></i>
+                                                        ${p.availablePurchaseQuantity > 0 ? 'Còn hàng' : 'Hết hàng'}
                                                     </div>
                                                 </div>
                                                 <div class="d-flex flex-column gap-2 justify-content-center">
@@ -86,7 +86,7 @@
                                                         <input type="hidden" name="csrfToken" value="${csrfToken}">
                                                         <input type="hidden" name="id" value="${p.id}">
                                                         <input type="hidden" name="quantity" value="1">
-                                                        <button type="submit" class="btn btn-primary" ${p.stock <= 0 ? 'disabled' : ''}>
+                                                        <button type="submit" class="btn btn-primary" ${p.availablePurchaseQuantity <= 0 ? 'disabled' : ''}>
                                                             <i class='bx bx-cart-add'></i> Thêm vào giỏ
                                                         </button>
                                                     </form>

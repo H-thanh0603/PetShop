@@ -303,4 +303,30 @@ class CheckoutServiceInventoryBatchTest {
         assertTrue(expiresAt.toInstant().isAfter(beforeCheckout.plus(Duration.ofMinutes(9))));
         assertTrue(expiresAt.toInstant().isBefore(beforeCheckout.plus(Duration.ofMinutes(11))));
     }
+
+    @Test
+    void processCheckoutPersistsRecipientSnapshotSeparateFromAccountProfile() throws Exception {
+        User user = new User();
+        user.setId(7);
+        user.setFullname("Account Owner");
+        user.setPhone("0900000000");
+        user.setEmail("");
+
+        Order savedOrder = CheckoutService.buildOrderSnapshot(
+                user,
+                "Nguyen Van Receiver",
+                "0912345678",
+                "123 Nguyen Trai",
+                "",
+                new BigDecimal("110000"),
+                "COD",
+                false
+        );
+
+        assertEquals(7, savedOrder.getUserId());
+        assertEquals("Nguyen Van Receiver", savedOrder.getRecipientFullname());
+        assertEquals("0912345678", savedOrder.getRecipientPhone());
+        assertEquals("123 Nguyen Trai", savedOrder.getShippingAddress());
+        assertEquals("Account Owner", savedOrder.getCustomerFullname());
+    }
 }
