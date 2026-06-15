@@ -384,6 +384,16 @@
                                             <i class='bx bx-cart-add'></i> Mua lại
                                         </button>
                                     </form>
+                                    <c:if test="${o.repayable}">
+                                        <form action="${pageContext.request.contextPath}/my-orders" method="post">
+                                            <input type="hidden" name="csrfToken" value="${csrfToken}" />
+                                            <input type="hidden" name="action" value="repay">
+                                            <input type="hidden" name="orderId" value="${o.id}">
+                                            <button type="submit" class="btn btn-warning">
+                                                <i class='bx bx-credit-card'></i> Thanh toán lại
+                                            </button>
+                                        </form>
+                                    </c:if>
                                     <c:if test="${o.cancelableByUser}">
                                         <form action="${pageContext.request.contextPath}/my-orders" method="post" onsubmit="return confirm('Bạn chắc chắn muốn hủy đơn hàng này?');">
                                             <input type="hidden" name="csrfToken" value="${csrfToken}" />

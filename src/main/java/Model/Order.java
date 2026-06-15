@@ -171,6 +171,11 @@ public class Order {
     }
 
     public boolean isCancelableByUser() {
+        // Unpaid orders awaiting payment can always be cancelled (gives an exit
+        // for abandoned VNPAY checkouts so they don't stay stuck forever).
+        if ("Awaiting Payment".equalsIgnoreCase(status) && !payment_status) {
+            return true;
+        }
         if (!"Pending".equalsIgnoreCase(status) && !"Confirmed".equalsIgnoreCase(status)) {
             return false;
         }
@@ -180,6 +185,25 @@ public class Order {
             return elapsedSeconds <= 3600;
         }
         return true; // if no timestamp, allow cancel
+    }
+
+    /**
+     * Whether the user may re-pay this order via VNPAY without creating a
+     * duplicate. Only unpaid "Awaiting Payment" VNPAY orders within a 30-minute
+     * window from creation are eligible.
+     */
+    public boolean isRepayable() {
+        if (!"Awaiting Payment".equalsIgnoreCase(status) || payment_status) {
+            return false;
+        }
+        if (payment_method != null && !"VNPAY".equalsIgnoreCase(payment_method)) {
+            return false;
+        }
+        if (createdAt == null) {
+            return true;
+        }
+        long elapsedSeconds = (System.currentTimeMillis() - createdAt.getTime()) / 1000;
+        return elapsedSeconds <= 1800;
     }
 
     public int getItemCount() {
