@@ -49,7 +49,7 @@ public class InventoryService {
         for (Map.Entry<Integer, CartItem> entry : cart.entrySet()) {
             Product latestProduct = productDAO.getProductById(entry.getKey());
 
-            if (latestProduct == null || latestProduct.getStock() <= 0) {
+            if (latestProduct == null || latestProduct.getAvailablePurchaseQuantity() <= 0) {
                 String name = entry.getValue().getProduct() != null
                         ? entry.getValue().getProduct().getName()
                         : "Sản phẩm #" + entry.getKey();
@@ -74,10 +74,10 @@ public class InventoryService {
         }
 
         if (quantityToAdd < 1) {
-            return StockValidationResult.invalid("Số lượng sản phẩm không hợp lệ.", latestProduct, 0, latestProduct.getStock() <= 0);
+            return StockValidationResult.invalid("Số lượng sản phẩm không hợp lệ.", latestProduct, 0, latestProduct.getAvailablePurchaseQuantity() <= 0);
         }
 
-        if (latestProduct.getStock() <= 0) {
+        if (latestProduct.getAvailablePurchaseQuantity() <= 0) {
             return StockValidationResult.invalid(
                     "Sản phẩm \"" + latestProduct.getName() + "\" đã hết hàng.",
                     latestProduct,
@@ -92,11 +92,12 @@ public class InventoryService {
         }
 
         int requestedTotalQuantity = currentQuantityInCart + quantityToAdd;
-        if (requestedTotalQuantity > latestProduct.getStock()) {
+        int availableQuantity = latestProduct.getAvailablePurchaseQuantity();
+        if (requestedTotalQuantity > availableQuantity) {
             return StockValidationResult.invalid(
-                    "Sản phẩm \"" + latestProduct.getName() + "\" chỉ còn " + latestProduct.getStock() + " sản phẩm.",
+                    "Sản phẩm \"" + latestProduct.getName() + "\" chỉ còn " + availableQuantity + " sản phẩm có thể mua.",
                     latestProduct,
-                    latestProduct.getStock(),
+                    availableQuantity,
                     false
             );
         }
@@ -119,7 +120,7 @@ public class InventoryService {
             return StockValidationResult.valid(latestProduct, 0);
         }
 
-        if (latestProduct.getStock() <= 0) {
+        if (latestProduct.getAvailablePurchaseQuantity() <= 0) {
             return StockValidationResult.invalid(
                     "Sản phẩm \"" + latestProduct.getName() + "\" đã hết hàng.",
                     latestProduct,
@@ -128,11 +129,12 @@ public class InventoryService {
             );
         }
 
-        if (requestedQuantity > latestProduct.getStock()) {
+        int availableQuantity = latestProduct.getAvailablePurchaseQuantity();
+        if (requestedQuantity > availableQuantity) {
             return StockValidationResult.invalid(
-                    "Sản phẩm \"" + latestProduct.getName() + "\" chỉ còn " + latestProduct.getStock() + " sản phẩm.",
+                    "Sản phẩm \"" + latestProduct.getName() + "\" chỉ còn " + availableQuantity + " sản phẩm có thể mua.",
                     latestProduct,
-                    latestProduct.getStock(),
+                    availableQuantity,
                     false
             );
         }
@@ -156,10 +158,11 @@ public class InventoryService {
             item.setProduct(latestProduct);
 
             // Chặn checkout nếu sản phẩm đã hết hàng hoặc số lượng trong cart vượt stock hiện tại.
-            if (latestProduct.getStock() <= 0) {
+            int availableQuantity = latestProduct.getAvailablePurchaseQuantity();
+            if (availableQuantity <= 0) {
                 stockErrors.add("Sản phẩm \"" + latestProduct.getName() + "\" đã hết hàng.");
-            } else if (item.getQuantity() > latestProduct.getStock()) {
-                stockErrors.add("Sản phẩm \"" + latestProduct.getName() + "\" chỉ còn " + latestProduct.getStock() + " sản phẩm.");
+            } else if (item.getQuantity() > availableQuantity) {
+                stockErrors.add("Sản phẩm \"" + latestProduct.getName() + "\" chỉ còn " + availableQuantity + " sản phẩm có thể mua.");
             }
         }
 

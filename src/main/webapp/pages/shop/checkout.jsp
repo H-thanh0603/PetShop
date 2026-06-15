@@ -59,7 +59,15 @@
                              src="${fn:startsWith(item.product.image, 'http') ? fn:escapeXml(item.product.image) : pageContext.request.contextPath += '/assets/images/shop_pic/' += fn:escapeXml(item.product.image)}">
                         <div class="flex-grow-1">
                             <div class="fw-semibold">${fn:escapeXml(item.product.name)}</div>
-                            <div class="text-muted">${fn:escapeXml(item.product.price)}₫</div>
+                            <div class="text-muted">
+                                ${fn:escapeXml(item.product.formattedPrice)}
+                                <c:if test="${item.product.hasPromotion}">
+                                    <span class="text-decoration-line-through ms-2">${fn:escapeXml(item.product.formattedOldPrice)}</span>
+                                </c:if>
+                            </div>
+                            <c:if test="${not empty item.product.activePromotionName}">
+                                <div class="small text-danger">${fn:escapeXml(item.product.activePromotionName)}</div>
+                            </c:if>
                         </div>
 
                         <div class="qty-badge">
@@ -67,7 +75,7 @@
                         </div>
 
                         <div class="fw-bold text-danger">
-                                ${item.product.price * item.quantity} ₫
+                            ${item.totalPrice} ₫
                         </div>
                     </div>
                 </c:forEach>

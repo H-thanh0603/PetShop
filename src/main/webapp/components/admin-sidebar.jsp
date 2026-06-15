@@ -27,6 +27,9 @@
         <a href="${pageContext.request.contextPath}/admin/orders" class="<%= "orders".equals(currentPage) ? "active" : "" %>">
             <i class='bx bxs-cart-alt'></i> Quản lý Đơn hàng
         </a>
+        <a href="${pageContext.request.contextPath}/admin/promotions" class="<%= "promotions".equals(currentPage) ? "active" : "" %>">
+            <i class='bx bxs-bolt-circle'></i> Quản lý Khuyến mãi
+        </a>
         <a href="${pageContext.request.contextPath}/pages/admin/reviews" class="<%= "reviews".equals(currentPage) ? "active" : "" %>">
             <i class='bx bxs-star-half'></i> Quản lý Review
         </a>

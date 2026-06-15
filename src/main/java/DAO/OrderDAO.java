@@ -104,12 +104,19 @@ public class OrderDAO {
     }
 
     public boolean saveOrderItem(Connection conn, OrderItem item) throws Exception {
-        String query = "INSERT INTO order_items (order_id, product_id, quantity, price) VALUES (?, ?, ?, ?)";
+        String query = "INSERT INTO order_items (order_id, product_id, quantity, price, original_price, final_price, discount_amount, promotion_id, promotion_name, promotion_type) " +
+                "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
         try (PreparedStatement ps = conn.prepareStatement(query)) {
             ps.setInt(1, item.getOrderId());
             ps.setInt(2, item.getProductId());
             ps.setInt(3, item.getQuantity());
             ps.setBigDecimal(4, item.getPrice());
+            ps.setBigDecimal(5, item.getOriginalPrice());
+            ps.setBigDecimal(6, item.getFinalPrice());
+            ps.setBigDecimal(7, item.getDiscountAmount());
+            ps.setObject(8, item.getPromotionId());
+            ps.setString(9, item.getPromotionName());
+            ps.setString(10, item.getPromotionType());
             return ps.executeUpdate() > 0;
         }
     }
@@ -237,6 +244,12 @@ public class OrderDAO {
                     item.setProductId(rs.getInt("product_id"));
                     item.setQuantity(rs.getInt("quantity"));
                     item.setPrice(rs.getBigDecimal("price"));
+                    item.setOriginalPrice(rs.getBigDecimal("original_price"));
+                    item.setFinalPrice(rs.getBigDecimal("final_price"));
+                    item.setDiscountAmount(rs.getBigDecimal("discount_amount"));
+                    item.setPromotionId((Integer) rs.getObject("promotion_id"));
+                    item.setPromotionName(rs.getString("promotion_name"));
+                    item.setPromotionType(rs.getString("promotion_type"));
                     Product p = new Product();
                     p.setId(rs.getInt("product_id"));
                     p.setName(rs.getString("product_name"));
@@ -295,6 +308,12 @@ public class OrderDAO {
                     item.setProductId(rs.getInt("product_id"));
                     item.setQuantity(rs.getInt("quantity"));
                     item.setPrice(rs.getBigDecimal("price"));
+                    item.setOriginalPrice(rs.getBigDecimal("original_price"));
+                    item.setFinalPrice(rs.getBigDecimal("final_price"));
+                    item.setDiscountAmount(rs.getBigDecimal("discount_amount"));
+                    item.setPromotionId((Integer) rs.getObject("promotion_id"));
+                    item.setPromotionName(rs.getString("promotion_name"));
+                    item.setPromotionType(rs.getString("promotion_type"));
 
                     Product p = new Product();
                     p.setId(rs.getInt("product_id"));
@@ -528,7 +547,13 @@ public class OrderDAO {
 
     public boolean releaseReservedStockForOrder(Connection conn, int orderId) throws Exception {
         ProductDAO productDAO = new ProductDAO();
+        PromotionDAO promotionDAO = new PromotionDAO();
         for (OrderItem item : getOrderItems(conn, orderId)) {
+            if ("FLASH_SALE".equalsIgnoreCase(item.getPromotionType()) && item.getPromotionId() != null) {
+                if (!promotionDAO.releaseFlashSaleQuantity(conn, item.getPromotionId(), item.getProductId(), item.getQuantity())) {
+                    return false;
+                }
+            }
             if (!productDAO.releaseReservedStock(conn, item.getProductId(), item.getQuantity())) {
                 return false;
             }
