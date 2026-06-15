@@ -9,41 +9,55 @@
         <i class='bx bxs-dog'></i>
         <h5>Admin Panel</h5>
     </div>
-    <nav class="sidebar-nav">
-        <a href="${pageContext.request.contextPath}/pages/admin/dashboard" class="<%= "dashboard".equals(currentPage) ? "active" : "" %>">
-            <i class='bx bxs-dashboard'></i> Dashboard
-        </a>
+    <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
+<nav class="sidebar-nav">
+        <c:if test="${sessionScope.user.role == 'admin' || sessionScope.user.role == 'staff'}">
+            <a href="${pageContext.request.contextPath}/pages/admin/dashboard" class="<%= "dashboard".equals(currentPage) ? "active" : "" %>">
+                <i class='bx bxs-dashboard'></i> Dashboard
+            </a>
+        </c:if>
         
         <div class="sidebar-section-title">Thương mại</div>
-        <a href="${pageContext.request.contextPath}/pages/admin/products" class="<%= "products".equals(currentPage) ? "active" : "" %>">
-            <i class='bx bxs-shopping-bag'></i> Quản lý Sản phẩm
-        </a>
-        <a href="${pageContext.request.contextPath}/pages/admin/pet-types" class="<%= "pet-types".equals(currentPage) ? "active" : "" %>">
-            <i class='bx bxs-dog'></i> Loại Thú Cưng
-        </a>
-        <a href="${pageContext.request.contextPath}/pages/admin/categories" class="<%= "categories".equals(currentPage) ? "active" : "" %>">
-            <i class='bx bx-category'></i> Danh Mục SP
-        </a>
+        <c:if test="${sessionScope.user.role == 'admin' || sessionScope.user.role == 'staff'}">
+            <a href="${pageContext.request.contextPath}/pages/admin/products" class="<%= "products".equals(currentPage) ? "active" : "" %>">
+                <i class='bx bxs-shopping-bag'></i> Quản lý Sản phẩm
+            </a>
+            <a href="${pageContext.request.contextPath}/pages/admin/pet-types" class="<%= "pet-types".equals(currentPage) ? "active" : "" %>">
+                <i class='bx bxs-dog'></i> Loại Thú Cưng
+            </a>
+            <a href="${pageContext.request.contextPath}/pages/admin/categories" class="<%= "categories".equals(currentPage) ? "active" : "" %>">
+                <i class='bx bx-category'></i> Danh Mục SP
+            </a>
+        </c:if>
+
         <a href="${pageContext.request.contextPath}/admin/orders" class="<%= "orders".equals(currentPage) ? "active" : "" %>">
             <i class='bx bxs-cart-alt'></i> Quản lý Đơn hàng
         </a>
-        <a href="${pageContext.request.contextPath}/pages/admin/reviews" class="<%= "reviews".equals(currentPage) ? "active" : "" %>">
-            <i class='bx bxs-star-half'></i> Quản lý Review
-        </a>
         
-        <div class="sidebar-section-title">Hệ thống</div>
-        <a href="${pageContext.request.contextPath}/admin/users" class="<%= "users".equals(currentPage) ? "active" : "" %>">
-            <i class='bx bxs-group'></i> Người dùng
-        </a>
-        <a href="${pageContext.request.contextPath}/admin/statistics" class="<%= "statistics".equals(currentPage) ? "active" : "" %>">
-            <i class='bx bxs-bar-chart-alt-2'></i> Thống kê doanh thu
-        </a>
-        <a href="${pageContext.request.contextPath}/admin/reports" class="<%= "reports".equals(currentPage) ? "active" : "" %>">
-            <i class='bx bx-spreadsheet'></i> Báo cáo vận hành
-        </a>
-        <a href="${pageContext.request.contextPath}/admin/notifications" class="<%= "notifications".equals(currentPage) ? "active" : "" %>">
-            <i class='bx bxs-bell-ring'></i> Trung tâm cảnh báo
-        </a>
+        <c:if test="${sessionScope.user.role == 'admin' || sessionScope.user.role == 'staff'}">
+            <a href="${pageContext.request.contextPath}/pages/admin/reviews" class="<%= "reviews".equals(currentPage) ? "active" : "" %>">
+                <i class='bx bxs-star-half'></i> Quản lý Review
+            </a>
+        </c:if>
+        
+        <c:if test="${sessionScope.user.role == 'admin'}">
+            <div class="sidebar-section-title">Hệ thống</div>
+            <a href="${pageContext.request.contextPath}/admin/users" class="<%= "users".equals(currentPage) ? "active" : "" %>">
+                <i class='bx bxs-group'></i> Người dùng
+            </a>
+            <a href="${pageContext.request.contextPath}/admin/statistics" class="<%= "statistics".equals(currentPage) ? "active" : "" %>">
+                <i class='bx bxs-bar-chart-alt-2'></i> Thống kê doanh thu
+            </a>
+            <a href="${pageContext.request.contextPath}/admin/reports" class="<%= "reports".equals(currentPage) ? "active" : "" %>">
+                <i class='bx bx-spreadsheet'></i> Báo cáo vận hành
+            </a>
+        </c:if>
+        
+        <c:if test="${sessionScope.user.role == 'admin' || sessionScope.user.role == 'staff'}">
+             <a href="${pageContext.request.contextPath}/admin/notifications" class="<%= "notifications".equals(currentPage) ? "active" : "" %>">
+                <i class='bx bxs-bell-ring'></i> Trung tâm cảnh báo
+            </a>
+        </c:if>
         
         <div class="sidebar-divider"></div>
         <a href="${pageContext.request.contextPath}/home">

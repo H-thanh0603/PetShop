@@ -139,14 +139,16 @@
                                     <a href="${pageContext.request.contextPath}/admin/orders?action=view&id=${o.id}" class="action-btn edit" title="Xem chi tiết">
                                         <i class='bx bx-show'></i>
                                     </a>
-                                    <c:if test="${o.awaitingPaymentReview}">
-                                        <button class="action-btn edit" onclick="openPaymentModal(${o.id}, '${fn:escapeXml(o.paymentVerificationStatus)}', '${fn:escapeXml(o.paymentReference)}')" title="Đối soát thanh toán">
-                                            <i class='bx bx-check-circle'></i>
+                                    <c:if test="${sessionScope.user.role != 'shiper'}">
+                                        <c:if test="${o.awaitingPaymentReview}">
+                                            <button class="action-btn edit" onclick="openPaymentModal(${o.id}, '${fn:escapeXml(o.paymentVerificationStatus)}', '${fn:escapeXml(o.paymentReference)}')" title="Đối soát thanh toán">
+                                                <i class='bx bx-check-circle'></i>
+                                            </button>
+                                        </c:if>
+                                        <button class="action-btn edit" onclick="openUpdateModal(${o.id}, '${o.status}')" title="Cập nhật trạng thái">
+                                            <i class='bx bx-refresh'></i>
                                         </button>
                                     </c:if>
-                                    <button class="action-btn edit" onclick="openUpdateModal(${o.id}, '${o.status}')" title="Cập nhật trạng thái">
-                                        <i class='bx bx-refresh'></i>
-                                    </button>
                                 </div>
                             </td>
                         </tr>
