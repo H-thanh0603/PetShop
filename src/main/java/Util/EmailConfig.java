@@ -1,29 +1,19 @@
 package Util;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.util.Properties;
-
 public class EmailConfig {
-    private static final Properties props = new Properties();
+    private static final String SMTP_HOST = "smtp.gmail.com";
+    private static final String SMTP_PORT = "587";
+    private static final boolean SMTP_AUTH = true;
+    private static final boolean SMTP_STARTTLS = true;
+    private static final String SMTP_EMAIL = "phamdat7879@gmail.com";
+    private static final String SMTP_PASSWORD = "xbeu ovud rhqy wzkx";
+    private static final String SENDER_NAME = "PetShop";
 
-    static {
-        try (InputStream input = EmailConfig.class.getClassLoader()
-                .getResourceAsStream("email.properties")) {
-            if (input == null) {
-                throw new RuntimeException("Không tìm thấy file email.properties trong resources");
-            }
-            props.load(input);
-        } catch (IOException e) {
-            throw new RuntimeException("Lỗi khi đọc email.properties", e);
-        }
-    }
-
-    public static String getSmtpHost() { return props.getProperty("smtp.host"); }
-    public static String getSmtpPort() { return props.getProperty("smtp.port"); }
-    public static boolean isSmtpAuth() { return Boolean.parseBoolean(props.getProperty("smtp.auth")); }
-    public static boolean isSmtpStarttls() { return Boolean.parseBoolean(props.getProperty("smtp.starttls")); }
-    public static String getSmtpEmail() { return props.getProperty("smtp.email"); }
-    public static String getSmtpPassword() { return props.getProperty("smtp.password"); }
-    public static String getSenderName() { return props.getProperty("smtp.senderName"); }
+    public static String getSmtpHost() { return SMTP_HOST; }
+    public static String getSmtpPort() { return SMTP_PORT; }
+    public static boolean isSmtpAuth() { return SMTP_AUTH; }
+    public static boolean isSmtpStarttls() { return SMTP_STARTTLS; }
+    public static String getSmtpEmail() { return SMTP_EMAIL; }
+    public static String getSmtpPassword() { return SMTP_PASSWORD; }
+    public static String getSenderName() { return SENDER_NAME; }
 }

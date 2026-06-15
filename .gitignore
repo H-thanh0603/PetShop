@@ -12,7 +12,7 @@ target/
 # ===== Sensitive Files =====
 .env
 src/main/java/Context/DBContext.java
-src/main/resources/email.properties
+src/main/java/Util/EmailConfig.java
 secrets.properties
 
 # ===== IntelliJ IDEA =====
