@@ -6,12 +6,12 @@ echo   PetShop - Starting Tomcat 10 Server
 echo ========================================
 echo.
 
-set "JAVA_HOME=C:\Program Files\Java\jdk-21"
+set "JAVA_HOME=C:\Program Files\Java\jdk-21.0.10"
 
 if defined PETSHOP_TOMCAT_HOME (
     set "CATALINA_HOME=%PETSHOP_TOMCAT_HOME%"
 ) else (
-    set "CATALINA_HOME=D:\apache-tomcat-10.1.49"
+    set "CATALINA_HOME=C:\apache-tomcat-10.1.55"
 )
 
 set "PROJECT_ROOT=%~dp0"
