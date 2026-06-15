@@ -11,6 +11,8 @@
     <jsp:include page="/components/admin-styles.jsp" />
     <style>
         .status-badge { padding: 6px 12px; border-radius: 20px; font-size: 0.85rem; font-weight: 600; }
+        .status-awaiting-payment { background: #fff7ed; color: #c2410c; }
+        .status-paid { background: #ccfbf1; color: #0f766e; }
         .status-pending { background: #fef3c7; color: #92400e; }
         .status-confirmed { background: #e0f2fe; color: #075985; }
         .status-shipping { background: #f3e8ff; color: #6b21a8; }
@@ -63,6 +65,8 @@
             <div class="toolbar-wrap px-4 pt-3">
                 <div class="d-flex flex-wrap gap-2">
                     <a class="filter-chip ${empty selectedStatus || selectedStatus == 'all' ? 'active' : ''}" href="${pageContext.request.contextPath}/admin/orders?status=all&keyword=${fn:escapeXml(keyword)}">Tất cả</a>
+                    <a class="filter-chip ${selectedStatus == 'Awaiting Payment' ? 'active' : ''}" href="${pageContext.request.contextPath}/admin/orders?status=Awaiting Payment&keyword=${fn:escapeXml(keyword)}">Chờ thanh toán</a>
+                    <a class="filter-chip ${selectedStatus == 'Paid' ? 'active' : ''}" href="${pageContext.request.contextPath}/admin/orders?status=Paid&keyword=${fn:escapeXml(keyword)}">Đã thanh toán</a>
                     <a class="filter-chip ${selectedStatus == 'Pending' ? 'active' : ''}" href="${pageContext.request.contextPath}/admin/orders?status=Pending&keyword=${fn:escapeXml(keyword)}">Chờ xử lý</a>
                     <a class="filter-chip ${selectedStatus == 'Confirmed' ? 'active' : ''}" href="${pageContext.request.contextPath}/admin/orders?status=Confirmed&keyword=${fn:escapeXml(keyword)}">Đã xác nhận</a>
                     <a class="filter-chip ${selectedStatus == 'Shipping' ? 'active' : ''}" href="${pageContext.request.contextPath}/admin/orders?status=Shipping&keyword=${fn:escapeXml(keyword)}">Đang giao</a>
@@ -166,6 +170,8 @@
                     <div class="form-group">
                         <label class="form-label">Trạng thái mới</label>
                         <select name="status" id="modalStatus" class="form-select">
+                            <option value="Awaiting Payment">Chờ thanh toán</option>
+                            <option value="Paid">Đã thanh toán</option>
                             <option value="Pending">Chờ xử lý</option>
                             <option value="Confirmed">Xác nhận đơn hàng</option>
                             <option value="Shipping">Đang giao hàng</option>

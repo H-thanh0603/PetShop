@@ -158,6 +158,8 @@
                         <input type="hidden" name="returnTo" value="detail">
                         <div class="col-md-8">
                             <select name="status" class="form-select">
+                                <option value="Awaiting Payment" ${order.status == 'Awaiting Payment' ? 'selected' : ''}>Chờ thanh toán</option>
+                                <option value="Paid" ${order.status == 'Paid' ? 'selected' : ''}>Đã thanh toán</option>
                                 <option value="Pending" ${order.status == 'Pending' ? 'selected' : ''}>Chờ xử lý</option>
                                 <option value="Confirmed" ${order.status == 'Confirmed' ? 'selected' : ''}>Xác nhận đơn hàng</option>
                                 <option value="Shipping" ${order.status == 'Shipping' ? 'selected' : ''}>Đang giao hàng</option>
