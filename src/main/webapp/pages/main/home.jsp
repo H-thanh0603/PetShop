@@ -1,5 +1,7 @@
 <%@ page language="java" contentType="text/html; charset=UTF-8"
 	pageEncoding="UTF-8"%>
+<%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
+<%@ taglib uri="http://java.sun.com/jsp/jstl/fmt" prefix="fmt" %>
 <!DOCTYPE html>
 <html lang="vi">
 <head>
@@ -286,6 +288,36 @@
         <a class="category-pill" href="${pageContext.request.contextPath}/shop?discountOnly=true"><i class='bx bx-purchase-tag-alt'></i> Sản phẩm giảm giá</a>
     </section>
 
+    <c:if test="${not empty repurchaseProducts}">
+         <div class="container my-5 product-repurchase-section" style="background-color: #fff9f5; padding: 25px; border-radius: 12px; border: 1px dashed #ff9800;">
+             <div class="d-flex align-items-center mb-4">
+                 <span style="font-size: 24px; margin-right: 10px;">⏰</span>
+                 <h3 class="mb-0" style="color: #e65100; font-weight: bold;">Có thể thú cưng của bạn sắp hết đồ dùng?</h3>
+             </div>
+             <p class="text-muted">Dựa trên lịch sử mua sắm, PetShop gợi ý các nhu yếu phẩm có thể bạn cần mua lại cho bé cưng:</p>
+
+             <div class="row row-cols-1 row-cols-md-4 g-4 mt-2">
+                 <c:forEach var="prod" items="${repurchaseProducts}">
+                     <div class="col">
+                         <div class="card h-100 shadow-sm border-0 product-card">
+                             <img src="${prod.image}" class="card-img-top p-3" alt="${prod.name}" style="height: 200px; object-fit: contain;"
+                                  onerror="this.src='https://images.unsplash.com/photo-1583511655857-d19b40a7a54e?q=80&w=200&auto=format&fit=crop'">
+                             <div class="card-body d-flex flex-column">
+                                 <h5 class="card-title text-dark fs-6 font-weight-bold">${prod.name}</h5>
+                                 <p class="card-text text-danger fw-bold mt-auto">
+                                     <fmt:formatNumber value="${prod.price}" type="currency" currencySymbol="đ" maxFractionDigits="0"/>
+                                 </p>
+                                 <a href="${pageContext.request.contextPath}/cart?action=add&id=${prod.id}" class="btn btn-warning btn-sm w-100 mt-2" style="background-color: #ff9800; color: white; font-weight: 500;">
+                                     🛒 Mua lại ngay
+                                 </a>
+                             </div>
+                         </div>
+                     </div>
+                 </c:forEach>
+             </div>
+         </div>
+     </c:if>
+
 	<script>
         const contextPath = "${pageContext.request.contextPath}";
 
@@ -293,15 +325,15 @@
             var nav = document.getElementById('navbar');
             if (nav) {
                 if (window.scrollY > 50) {
-                    nav.classList.add('navbar-scrolled'); 
+                    nav.classList.add('navbar-scrolled');
                 } else {
-                    nav.classList.remove('navbar-scrolled'); 
+                    nav.classList.remove('navbar-scrolled');
                 }
             }
         });
     </script>
-    
-    
+
+
 	<jsp:include page="/components/footer.jsp" />
 
 	<!-- Bootstrap JS -->

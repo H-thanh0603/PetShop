@@ -839,4 +839,36 @@ public class ProductDAO {
             while (rs.next()) { list.add(mapProduct(rs)); }
         } catch (Exception e) { log.error("Error fetching out-of-stock products", e); } return list;
     }
+    public List<Product> getRepurchaseSuggestionsByUserId(int userId) {
+        List<Product> list = new ArrayList<>();
+        String query = "SELECT DISTINCT p.* FROM products p " +
+                "JOIN order_items oi ON p.id = oi.product_id " +
+                "JOIN orders o ON oi.order_id = o.id " +
+                "WHERE o.user_id = ? " +
+                "AND (o.status = 'Delivered' OR o.status = 'Success' OR o.status = 'Completed') " +
+                "AND (p.category LIKE ? OR p.category LIKE ? OR p.category LIKE ?) " +
+                "AND o.createdAt < DATE_SUB(NOW(), INTERVAL 20 DAY) " +
+                "ORDER BY o.createdAt DESC " +
+                "LIMIT 4";
+
+        try (Connection conn = DBContext.getConnection();
+             PreparedStatement ps = conn.prepareStatement(query)) {
+
+            ps.setInt(1, userId);
+            ps.setString(2, "%Thức ăn%");
+            ps.setString(3, "%Cát%");
+            ps.setString(4, "%Pate%");
+
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    // Sử dụng hàm mapProduct có sẵn của dự án để đảm bảo map đầy đủ thông tin:
+                    // id, name, image, price, stock, category, description, rating, review_count...
+                    list.add(mapProduct(rs));
+                }
+            }
+        } catch (Exception e) {
+            log.error("Error fetching repurchase suggestions for user id={}", userId, e);
+        }
+        return list;
+    }
 }
