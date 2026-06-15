@@ -490,6 +490,8 @@
                             <select class="form-select" name="role">
                                 <option value="user">Khách hàng (User)</option>
                                 <option value="admin">Quản trị viên (Admin)</option>
+                                <option value="staff">Nhân viên (Staff)</option>
+                                <option value="shiper">Người giao hàng (Shiper)</option>
                             </select>
                         </div>
                     </div>
