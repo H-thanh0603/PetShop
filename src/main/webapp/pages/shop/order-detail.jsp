@@ -49,6 +49,16 @@
                 </div>
             </div>
             <div class="d-flex gap-2 flex-wrap">
+                <c:if test="${order.repayable}">
+                    <form action="${pageContext.request.contextPath}/my-orders" method="post">
+                        <input type="hidden" name="csrfToken" value="${csrfToken}" />
+                        <input type="hidden" name="action" value="repay">
+                        <input type="hidden" name="orderId" value="${order.id}">
+                        <button type="submit" class="btn btn-warning">
+                            <i class='bx bx-credit-card'></i> Thanh toán lại
+                        </button>
+                    </form>
+                </c:if>
                 <c:if test="${order.cancelableByUser}">
                     <form action="${pageContext.request.contextPath}/my-orders" method="post" onsubmit="return confirm('Bạn chắc chắn muốn hủy đơn hàng này?');">
                         <input type="hidden" name="csrfToken" value="${csrfToken}" />

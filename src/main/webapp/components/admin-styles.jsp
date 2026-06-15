@@ -495,6 +495,14 @@
         align-items: center;
         gap: 6px;
     }
+    .status-awaiting-payment {
+        background: #fff7ed;
+        color: #c2410c;
+    }
+    .status-paid {
+        background: #ccfbf1;
+        color: #0f766e;
+    }
     .status-pending {
         background: #fef3c7;
         color: #b45309;
@@ -502,6 +510,10 @@
     .status-confirmed {
         background: #d1fae5;
         color: #047857;
+    }
+    .status-shipping {
+        background: #f3e8ff;
+        color: #6b21a8;
     }
     .status-completed {
         background: #e0e7ff;

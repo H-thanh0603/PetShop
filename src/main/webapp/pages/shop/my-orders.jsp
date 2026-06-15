@@ -148,6 +148,7 @@
         .status-pending { background: #fef3c7; color: #92400e; }
         .status-confirmed { background: #dbeafe; color: #1d4ed8; }
         .status-shipping { background: #e0e7ff; color: #4338ca; }
+        .status-delivered { background: #cffafe; color: #0891b2; } /* Light cyan for delivered */
         .status-completed { background: #dcfce7; color: #166534; }
         .status-cancelled { background: #fee2e2; color: #991b1b; }
         .status-awaiting-payment {
@@ -303,6 +304,7 @@
                 <a class="chip-filter ${selectedStatus == 'Pending' ? 'active' : ''}" href="${pageContext.request.contextPath}/my-orders?status=Pending&keyword=${fn:escapeXml(keyword)}">Chờ xử lý</a>
                 <a class="chip-filter ${selectedStatus == 'Paid' ? 'active' : ''}" href="${pageContext.request.contextPath}/my-orders?status=Paid&keyword=${fn:escapeXml(keyword)}">Đã thanh toán</a>
                 <a class="chip-filter ${selectedStatus == 'Shipping' ? 'active' : ''}" href="${pageContext.request.contextPath}/my-orders?status=Shipping&keyword=${fn:escapeXml(keyword)}">Đang giao</a>
+                <a class="chip-filter ${selectedStatus == 'Delivered' ? 'active' : ''}" href="${pageContext.request.contextPath}/my-orders?status=Delivered&keyword=${fn:escapeXml(keyword)}">Đã giao</a>
                 <a class="chip-filter ${selectedStatus == 'Completed' ? 'active' : ''}" href="${pageContext.request.contextPath}/my-orders?status=Completed&keyword=${fn:escapeXml(keyword)}">Hoàn thành</a>
                 <a class="chip-filter ${selectedStatus == 'Cancelled' ? 'active' : ''}" href="${pageContext.request.contextPath}/my-orders?status=Cancelled&keyword=${fn:escapeXml(keyword)}">Đã hủy</a>
             </div>
@@ -384,6 +386,26 @@
                                             <i class='bx bx-cart-add'></i> Mua lại
                                         </button>
                                     </form>
+                                    <c:if test="${o.status == 'Delivered'}">
+                                        <form action="${pageContext.request.contextPath}/my-orders" method="post">
+                                            <input type="hidden" name="csrfToken" value="${csrfToken}" />
+                                            <input type="hidden" name="action" value="confirmReceipt">
+                                            <input type="hidden" name="orderId" value="${o.id}">
+                                            <button type="submit" class="btn btn-success text-white">
+                                                <i class='bx bx-check-double'></i> Đã nhận hàng
+                                            </button>
+                                        </form>
+                                    </c:if>
+                                    <c:if test="${o.repayable}">
+                                        <form action="${pageContext.request.contextPath}/my-orders" method="post">
+                                            <input type="hidden" name="csrfToken" value="${csrfToken}" />
+                                            <input type="hidden" name="action" value="repay">
+                                            <input type="hidden" name="orderId" value="${o.id}">
+                                            <button type="submit" class="btn btn-warning">
+                                                <i class='bx bx-credit-card'></i> Thanh toán lại
+                                            </button>
+                                        </form>
+                                    </c:if>
                                     <c:if test="${o.cancelableByUser}">
                                         <form action="${pageContext.request.contextPath}/my-orders" method="post" onsubmit="return confirm('Bạn chắc chắn muốn hủy đơn hàng này?');">
                                             <input type="hidden" name="csrfToken" value="${csrfToken}" />

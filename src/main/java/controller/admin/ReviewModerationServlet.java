@@ -23,14 +23,6 @@ public class ReviewModerationServlet extends HttpServlet {
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
-        // Check admin session
-        HttpSession session = request.getSession();
-        User user = (User) session.getAttribute("user");
-        if (user == null || !"admin".equals(user.getRole())) {
-            response.sendRedirect(request.getContextPath() + "/login");
-            return;
-        }
-
         ReviewDAO dao = new ReviewDAO();
         List<Review> reviews;
 
@@ -71,18 +63,7 @@ public class ReviewModerationServlet extends HttpServlet {
         response.setCharacterEncoding("UTF-8");
 
         HttpSession session = request.getSession(false);
-
-        if (session == null) {
-            response.sendRedirect(request.getContextPath() + "/login");
-            return;
-        }
-
-        User user = (User) session.getAttribute("user");
-
-        if (user == null || user.getRole() == null || !"admin".equalsIgnoreCase(user.getRole())) {
-            response.sendRedirect(request.getContextPath() + "/login");
-            return;
-        }
+        User user = session != null ? (User) session.getAttribute("user") : null;
 
         String action = request.getParameter("action");
         String message = "";

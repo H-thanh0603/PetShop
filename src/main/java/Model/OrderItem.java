@@ -48,4 +48,9 @@ public class OrderItem {
     public BigDecimal getSubtotal() {
         return price.multiply(BigDecimal.valueOf(quantity));
     }
+
+    // Alias used by the order-success view (mirrors CartItem.getTotalPrice()).
+    public BigDecimal getTotalPrice() {
+        return getSubtotal();
+    }
 }

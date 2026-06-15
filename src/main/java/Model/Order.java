@@ -13,7 +13,7 @@ public class Order {
     private String address;
     private String note;
     private BigDecimal totalAmount;
-    private String status; // Pending, Confirmed, Shipping, Completed, Cancelled
+    private String status; // Pending, Confirmed, Shipping, Delivered, Completed, Cancelled
     private String payment_method;
     private boolean payment_status;
     private String paymentTransactionStatus;
@@ -22,6 +22,7 @@ public class Order {
     private String paymentVerificationMessage;
     private Timestamp paymentVerifiedAt;
     private Timestamp createdAt;
+    private Timestamp statusUpdatedAt;
     private List<OrderItem> items;
 
     public Order() {
@@ -69,6 +70,9 @@ public class Order {
     public Timestamp getCreatedAt() { return createdAt; }
     public void setCreatedAt(Timestamp createdAt) { this.createdAt = createdAt; }
 
+    public Timestamp getStatusUpdatedAt() { return statusUpdatedAt; }
+    public void setStatusUpdatedAt(Timestamp statusUpdatedAt) { this.statusUpdatedAt = statusUpdatedAt; }
+
     public String getFormattedTotalAmount() {
         DecimalFormat formatter = new DecimalFormat("###,###");
         return formatter.format(totalAmount) + "đ";
@@ -113,6 +117,8 @@ public class Order {
                 return "Đã thanh toán";
             case "Shipping":
                 return "Đang giao";
+            case "Delivered":
+                return "Đã giao hàng";
             case "Completed":
                 return "Hoàn thành";
             case "Cancelled":
@@ -137,6 +143,8 @@ public class Order {
                     return "Đơn hàng đã được thanh toán";
             case "Shipping":
                 return "Đơn hàng đang trên đường giao đến bạn.";
+            case "Delivered":
+                return "Đơn hàng đã được giao tới nơi. Vui lòng xác nhận đã nhận hàng.";
             case "Completed":
                 return "Đơn hàng đã được giao thành công.";
             case "Cancelled":
@@ -161,6 +169,8 @@ public class Order {
                     return "status-paid";
             case "Shipping":
                 return "status-shipping";
+            case "Delivered":
+                return "status-delivered"; /* You will need to add this CSS class */
             case "Completed":
                 return "status-completed";
             case "Cancelled":
@@ -171,6 +181,11 @@ public class Order {
     }
 
     public boolean isCancelableByUser() {
+        // Unpaid orders awaiting payment can always be cancelled (gives an exit
+        // for abandoned VNPAY checkouts so they don't stay stuck forever).
+        if ("Awaiting Payment".equalsIgnoreCase(status) && !payment_status) {
+            return true;
+        }
         if (!"Pending".equalsIgnoreCase(status) && !"Confirmed".equalsIgnoreCase(status)) {
             return false;
         }
@@ -180,6 +195,25 @@ public class Order {
             return elapsedSeconds <= 3600;
         }
         return true; // if no timestamp, allow cancel
+    }
+
+    /**
+     * Whether the user may re-pay this order via VNPAY without creating a
+     * duplicate. Only unpaid "Awaiting Payment" VNPAY orders within a 30-minute
+     * window from creation are eligible.
+     */
+    public boolean isRepayable() {
+        if (!"Awaiting Payment".equalsIgnoreCase(status) || payment_status) {
+            return false;
+        }
+        if (payment_method != null && !"VNPAY".equalsIgnoreCase(payment_method)) {
+            return false;
+        }
+        if (createdAt == null) {
+            return true;
+        }
+        long elapsedSeconds = (System.currentTimeMillis() - createdAt.getTime()) / 1000;
+        return elapsedSeconds <= 1800;
     }
 
     public int getItemCount() {

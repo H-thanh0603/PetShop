@@ -11,7 +11,7 @@
         <a href="${pageContext.request.contextPath}/home">
             <i class='bx bx-home'></i> Về trang chủ
         </a>
-        <a href="${pageContext.request.contextPath}/logout" class="logout-link">
+        <a href="${pageContext.request.contextPath}/logout?from=admin" class="logout-link">
             <i class='bx bx-log-out'></i> Đăng xuất
         </a>
     </div>

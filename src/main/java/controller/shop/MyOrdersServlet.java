@@ -4,6 +4,7 @@ import DAO.OrderDAO;
 import Model.CustomerRepurchaseSuggestion;
 import Model.Order;
 import Model.User;
+import Util.VnpayUtil;
 import services.ReorderService;
 
 import java.io.IOException;
@@ -109,6 +110,55 @@ public class MyOrdersServlet extends HttpServlet {
                 session.setAttribute("error", "Không thể mua lại đơn hàng này.");
             } catch (Exception e) {
                 session.setAttribute("error", "Có lỗi xảy ra khi mua lại đơn hàng.");
+            }
+        } else if ("confirmReceipt".equals(action)) {
+            try {
+                int orderId = Integer.parseInt(request.getParameter("orderId"));
+                Order order = orderDAO.getOrderById(orderId);
+                if (order != null && order.getUserId() == user.getId() && "Delivered".equals(order.getStatus())) {
+                    if (orderDAO.updateStatus(orderId, "Completed", user.getId())) {
+                        session.setAttribute("success", "Cảm ơn bạn đã xác nhận. Đơn hàng đã được hoàn tất.");
+                    } else {
+                        session.setAttribute("error", "Không thể xác nhận đơn hàng này.");
+                    }
+                } else {
+                    session.setAttribute("error", "Hành động không hợp lệ.");
+                }
+            } catch (Exception e) {
+                session.setAttribute("error", "Có lỗi xảy ra khi xác nhận đơn hàng.");
+            }
+        } else if ("repay".equals(action)) {
+            try {
+                int orderId = Integer.parseInt(request.getParameter("orderId"));
+                Order order = orderDAO.getOrderById(orderId);
+
+                // Bảo mật + trạng thái: chỉ chủ đơn mới được thanh toán lại,
+                // và đơn phải còn trong điều kiện thanh toán lại (chưa trả, còn hạn).
+                if (order == null || order.getUserId() != user.getId() || !order.isRepayable()) {
+                    session.setAttribute("error", "Đơn hàng không thể thanh toán lại.");
+                    response.sendRedirect(request.getContextPath() + "/my-orders");
+                    return;
+                }
+
+                // Nạp lại dữ liệu cho trang order-success (đọc từ session).
+                session.setAttribute("paymentMethod", "VNPAY");
+                session.setAttribute("paymentStatus", 0);
+                session.setAttribute("successOrderId", orderId);
+                session.setAttribute("successUser", user);
+                session.setAttribute("successTotalAmount", order.getTotalAmount());
+                session.setAttribute("successFinalTotal", order.getTotalAmount());
+                session.setAttribute("successShippingFee", 0);
+                session.setAttribute("successDiscount", 0);
+                session.setAttribute("successShippingAddress", order.getAddress());
+                session.setAttribute("successOrderNote", order.getNote());
+                session.setAttribute("successOrderItems", order.getItems());
+
+                // Tái sử dụng đúng luồng VNPAY hiện có cho chính đơn hàng này.
+                String vnpayUrl = VnpayUtil.createPaymentUrl(request, orderId, order.getTotalAmount());
+                response.sendRedirect(vnpayUrl);
+                return;
+            } catch (Exception e) {
+                session.setAttribute("error", "Có lỗi xảy ra khi thanh toán lại đơn hàng.");
             }
         }
         response.sendRedirect(request.getContextPath() + "/my-orders");

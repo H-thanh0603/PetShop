@@ -7,18 +7,33 @@ import java.util.Set;
  * State machine for order status transitions.
  *
  * Valid transitions:
- *   Pending    → Confirmed, Cancelled
- *   Confirmed  → Shipping,  Cancelled
- *   Shipping   → Completed
- *   Completed  → (none)
- *   Cancelled  → (none)
+ *   Awaiting Payment → Paid, Pending, Cancelled
+ *   Paid             → Confirmed, Cancelled
+ *   Pending          → Confirmed, Paid, Cancelled
+ *   Confirmed        → Shipping,  Cancelled
+ *   Shipping         → Delivered, Cancelled
+ *   Delivered        → Completed
+ *   Completed        → (none)
+ *   Cancelled        → (none)
  */
 public enum OrderStatus {
 
-    PENDING("Pending") {
+    AWAITING_PAYMENT("Awaiting Payment") {
+        @Override
+        public Set<OrderStatus> validTargets() {
+            return EnumSet.of(PAID, PENDING, CANCELLED);
+        }
+    },
+    PAID("Paid") {
         @Override
         public Set<OrderStatus> validTargets() {
             return EnumSet.of(CONFIRMED, CANCELLED);
+        }
+    },
+    PENDING("Pending") {
+        @Override
+        public Set<OrderStatus> validTargets() {
+            return EnumSet.of(CONFIRMED, PAID, CANCELLED);
         }
     },
     CONFIRMED("Confirmed") {
@@ -28,6 +43,12 @@ public enum OrderStatus {
         }
     },
     SHIPPING("Shipping") {
+        @Override
+        public Set<OrderStatus> validTargets() {
+            return EnumSet.of(DELIVERED, CANCELLED);
+        }
+    },
+    DELIVERED("Delivered") {
         @Override
         public Set<OrderStatus> validTargets() {
             return EnumSet.of(COMPLETED);

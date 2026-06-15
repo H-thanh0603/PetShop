@@ -75,6 +75,7 @@ public class ManageOrderServlet extends HttpServlet {
         HttpSession session = request.getSession();
         User admin = (User) session.getAttribute("user");
         int adminId = admin != null ? admin.getId() : 1;
+        String adminRole = admin != null ? admin.getRole() : "";
 
         if ("updateStatus".equals(action)) {
             int orderId;
@@ -87,6 +88,17 @@ public class ManageOrderServlet extends HttpServlet {
                 return;
             }
             String newStatus = request.getParameter("status");
+
+            // Role-based validation for shippers
+            if ("shiper".equals(adminRole)) {
+                if (!"Shipping".equals(newStatus) && !"Delivered".equals(newStatus)) {
+                    session.setAttribute("message", "Shipper chỉ có thể cập nhật trạng thái là 'Đang giao' hoặc 'Đã giao hàng'.");
+                    session.setAttribute("messageType", "error");
+                    response.sendRedirect(request.getContextPath() + "/admin/orders");
+                    return;
+                }
+            }
+
             // Get old status for logging
             Order existing = orderDAO.getOrderById(orderId);
             String oldStatus = existing != null ? existing.getStatus() : "Unknown";
