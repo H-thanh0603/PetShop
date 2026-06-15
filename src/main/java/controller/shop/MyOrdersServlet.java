@@ -111,6 +111,22 @@ public class MyOrdersServlet extends HttpServlet {
             } catch (Exception e) {
                 session.setAttribute("error", "Có lỗi xảy ra khi mua lại đơn hàng.");
             }
+        } else if ("confirmReceipt".equals(action)) {
+            try {
+                int orderId = Integer.parseInt(request.getParameter("orderId"));
+                Order order = orderDAO.getOrderById(orderId);
+                if (order != null && order.getUserId() == user.getId() && "Delivered".equals(order.getStatus())) {
+                    if (orderDAO.updateStatus(orderId, "Completed", user.getId())) {
+                        session.setAttribute("success", "Cảm ơn bạn đã xác nhận. Đơn hàng đã được hoàn tất.");
+                    } else {
+                        session.setAttribute("error", "Không thể xác nhận đơn hàng này.");
+                    }
+                } else {
+                    session.setAttribute("error", "Hành động không hợp lệ.");
+                }
+            } catch (Exception e) {
+                session.setAttribute("error", "Có lỗi xảy ra khi xác nhận đơn hàng.");
+            }
         } else if ("repay".equals(action)) {
             try {
                 int orderId = Integer.parseInt(request.getParameter("orderId"));

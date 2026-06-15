@@ -34,6 +34,10 @@
         <url-pattern>/admin/*</url-pattern>
     </filter-mapping>
     <filter-mapping>
+        <filter-name>AuthorizationFilter</filter-name>
+        <url-pattern>/pages/admin/*</url-pattern>
+    </filter-mapping>
+    <filter-mapping>
         <filter-name>CsrfFilter</filter-name>
         <url-pattern>/*</url-pattern>
     </filter-mapping>

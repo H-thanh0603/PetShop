@@ -13,7 +13,7 @@ public class Order {
     private String address;
     private String note;
     private BigDecimal totalAmount;
-    private String status; // Pending, Confirmed, Shipping, Completed, Cancelled
+    private String status; // Pending, Confirmed, Shipping, Delivered, Completed, Cancelled
     private String payment_method;
     private boolean payment_status;
     private String paymentTransactionStatus;
@@ -22,6 +22,7 @@ public class Order {
     private String paymentVerificationMessage;
     private Timestamp paymentVerifiedAt;
     private Timestamp createdAt;
+    private Timestamp statusUpdatedAt;
     private List<OrderItem> items;
 
     public Order() {
@@ -69,6 +70,9 @@ public class Order {
     public Timestamp getCreatedAt() { return createdAt; }
     public void setCreatedAt(Timestamp createdAt) { this.createdAt = createdAt; }
 
+    public Timestamp getStatusUpdatedAt() { return statusUpdatedAt; }
+    public void setStatusUpdatedAt(Timestamp statusUpdatedAt) { this.statusUpdatedAt = statusUpdatedAt; }
+
     public String getFormattedTotalAmount() {
         DecimalFormat formatter = new DecimalFormat("###,###");
         return formatter.format(totalAmount) + "đ";
@@ -113,6 +117,8 @@ public class Order {
                 return "Đã thanh toán";
             case "Shipping":
                 return "Đang giao";
+            case "Delivered":
+                return "Đã giao hàng";
             case "Completed":
                 return "Hoàn thành";
             case "Cancelled":
@@ -137,6 +143,8 @@ public class Order {
                     return "Đơn hàng đã được thanh toán";
             case "Shipping":
                 return "Đơn hàng đang trên đường giao đến bạn.";
+            case "Delivered":
+                return "Đơn hàng đã được giao tới nơi. Vui lòng xác nhận đã nhận hàng.";
             case "Completed":
                 return "Đơn hàng đã được giao thành công.";
             case "Cancelled":
@@ -161,6 +169,8 @@ public class Order {
                     return "status-paid";
             case "Shipping":
                 return "status-shipping";
+            case "Delivered":
+                return "status-delivered"; /* You will need to add this CSS class */
             case "Completed":
                 return "status-completed";
             case "Cancelled":

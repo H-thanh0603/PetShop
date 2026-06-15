@@ -14,10 +14,17 @@ import java.util.List;
 /**
  * Filter for handling role-based authorization for admin pages.
  */
-@WebFilter("/admin/*")
 public class AuthorizationFilter implements Filter {
 
-    private final List<String> staffAllowedPaths = Arrays.asList("/admin/dashboard", "/admin/orders", "/admin/products", "/admin/reviews", "/admin/notifications");
+    private final List<String> staffAllowedPaths = Arrays.asList(
+        "/pages/admin/dashboard", 
+        "/pages/admin/products", 
+        "/pages/admin/pet-types", 
+        "/pages/admin/categories", 
+        "/admin/orders", 
+        "/pages/admin/reviews", 
+        "/admin/notifications"
+    );
     private final List<String> shipperAllowedPaths = Arrays.asList("/admin/orders");
 
     @Override
@@ -28,10 +35,17 @@ public class AuthorizationFilter implements Filter {
         HttpSession session = req.getSession(false);
 
         String path = req.getServletPath();
+
+        // Allow access to the admin login page and its resources
+        if ("/admin/login".equals(path)) {
+            chain.doFilter(request, response);
+            return;
+        }
+
         User user = (session != null) ? (User) session.getAttribute("user") : null;
 
         if (user == null) {
-            res.sendRedirect(req.getContextPath() + "/login");
+            res.sendRedirect(req.getContextPath() + "/admin/login");
             return;
         }
 

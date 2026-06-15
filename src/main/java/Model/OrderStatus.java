@@ -11,7 +11,8 @@ import java.util.Set;
  *   Paid             → Confirmed, Cancelled
  *   Pending          → Confirmed, Paid, Cancelled
  *   Confirmed        → Shipping,  Cancelled
- *   Shipping         → Completed
+ *   Shipping         → Delivered, Cancelled
+ *   Delivered        → Completed
  *   Completed        → (none)
  *   Cancelled        → (none)
  */
@@ -42,6 +43,12 @@ public enum OrderStatus {
         }
     },
     SHIPPING("Shipping") {
+        @Override
+        public Set<OrderStatus> validTargets() {
+            return EnumSet.of(DELIVERED, CANCELLED);
+        }
+    },
+    DELIVERED("Delivered") {
         @Override
         public Set<OrderStatus> validTargets() {
             return EnumSet.of(COMPLETED);

@@ -16,6 +16,7 @@
         .status-pending { background: #fef3c7; color: #92400e; }
         .status-confirmed { background: #e0f2fe; color: #075985; }
         .status-shipping { background: #f3e8ff; color: #6b21a8; }
+        .status-delivered { background: #e0f2fe; color: #0c4a6e; } /* Light blue for delivered */
         .status-completed { background: #dcfce7; color: #166534; }
         .status-cancelled { background: #fee2e2; color: #991b1b; }
         .order-id { font-family: monospace; font-weight: bold; color: #3b82f6; }
@@ -70,6 +71,7 @@
                     <a class="filter-chip ${selectedStatus == 'Pending' ? 'active' : ''}" href="${pageContext.request.contextPath}/admin/orders?status=Pending&keyword=${fn:escapeXml(keyword)}">Chờ xử lý</a>
                     <a class="filter-chip ${selectedStatus == 'Confirmed' ? 'active' : ''}" href="${pageContext.request.contextPath}/admin/orders?status=Confirmed&keyword=${fn:escapeXml(keyword)}">Đã xác nhận</a>
                     <a class="filter-chip ${selectedStatus == 'Shipping' ? 'active' : ''}" href="${pageContext.request.contextPath}/admin/orders?status=Shipping&keyword=${fn:escapeXml(keyword)}">Đang giao</a>
+                    <a class="filter-chip ${selectedStatus == 'Delivered' ? 'active' : ''}" href="${pageContext.request.contextPath}/admin/orders?status=Delivered&keyword=${fn:escapeXml(keyword)}">Đã giao</a>
                     <a class="filter-chip ${selectedStatus == 'Completed' ? 'active' : ''}" href="${pageContext.request.contextPath}/admin/orders?status=Completed&keyword=${fn:escapeXml(keyword)}">Hoàn thành</a>
                     <a class="filter-chip ${selectedStatus == 'Cancelled' ? 'active' : ''}" href="${pageContext.request.contextPath}/admin/orders?status=Cancelled&keyword=${fn:escapeXml(keyword)}">Đã hủy</a>
                 </div>
@@ -145,10 +147,10 @@
                                                 <i class='bx bx-check-circle'></i>
                                             </button>
                                         </c:if>
-                                        <button class="action-btn edit" onclick="openUpdateModal(${o.id}, '${o.status}')" title="Cập nhật trạng thái">
-                                            <i class='bx bx-refresh'></i>
-                                        </button>
                                     </c:if>
+                                    <button class="action-btn edit" onclick="openUpdateModal(${o.id}, '${o.status}')" title="Cập nhật trạng thái">
+                                        <i class='bx bx-refresh'></i>
+                                    </button>
                                 </div>
                             </td>
                         </tr>
@@ -172,13 +174,22 @@
                     <div class="form-group">
                         <label class="form-label">Trạng thái mới</label>
                         <select name="status" id="modalStatus" class="form-select">
-                            <option value="Awaiting Payment">Chờ thanh toán</option>
-                            <option value="Paid">Đã thanh toán</option>
-                            <option value="Pending">Chờ xử lý</option>
-                            <option value="Confirmed">Xác nhận đơn hàng</option>
-                            <option value="Shipping">Đang giao hàng</option>
-                            <option value="Completed">Đã hoàn thành</option>
-                            <option value="Cancelled">Hủy đơn hàng</option>
+                            <c:choose>
+                                <c:when test="${sessionScope.user.role == 'shiper'}">
+                                    <option value="Shipping">Đang giao hàng</option>
+                                    <option value="Delivered">Đã giao hàng</option>
+                                </c:when>
+                                <c:otherwise>
+                                    <option value="Awaiting Payment">Chờ thanh toán</option>
+                                    <option value="Paid">Đã thanh toán</option>
+                                    <option value="Pending">Chờ xử lý</option>
+                                    <option value="Confirmed">Xác nhận đơn hàng</option>
+                                    <option value="Shipping">Đang giao hàng</option>
+                                    <option value="Delivered">Đã giao hàng</option>
+                                    <option value="Completed">Đã hoàn thành</option>
+                                    <option value="Cancelled">Hủy đơn hàng</option>
+                                </c:otherwise>
+                            </c:choose>
                         </select>
                     </div>
                 </div>

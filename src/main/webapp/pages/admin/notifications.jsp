@@ -5,10 +5,9 @@
 <!DOCTYPE html>
 <html lang="vi">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <jsp:include page="/components/favicon.jsp" />
+    <jsp:include page="/components/meta.jsp" />
     <title>Trung tâm cảnh báo - Admin</title>
+    <jsp:include page="/components/head.jsp" />
     <jsp:include page="/components/admin-styles.jsp" />
     <style>
         .stats-grid, .alerts-grid { display:grid; gap:20px; }

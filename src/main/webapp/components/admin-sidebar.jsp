@@ -49,21 +49,18 @@
                 <i class='bx bxs-bar-chart-alt-2'></i> Thống kê doanh thu
             </a>
             <a href="${pageContext.request.contextPath}/admin/reports" class="<%= "reports".equals(currentPage) ? "active" : "" %>">
-                <i class='bx bx-spreadsheet'></i> Báo cáo vận hành
+                <i class='bx bxs-report'></i> Báo cáo vận hành
             </a>
         </c:if>
         
         <c:if test="${sessionScope.user.role == 'admin' || sessionScope.user.role == 'staff'}">
              <a href="${pageContext.request.contextPath}/admin/notifications" class="<%= "notifications".equals(currentPage) ? "active" : "" %>">
-                <i class='bx bxs-bell-ring'></i> Trung tâm cảnh báo
+                <i class='bx bxs-bell'></i> Trung tâm cảnh báo
             </a>
         </c:if>
         
         <div class="sidebar-divider"></div>
-        <a href="${pageContext.request.contextPath}/home">
-            <i class='bx bx-home'></i> Về trang chủ
-        </a>
-        <a href="${pageContext.request.contextPath}/logout">
+        <a href="${pageContext.request.contextPath}/logout?from=admin">
             <i class='bx bx-log-out'></i> Đăng xuất
         </a>
     </nav>

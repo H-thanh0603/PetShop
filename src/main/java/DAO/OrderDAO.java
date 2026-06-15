@@ -27,7 +27,7 @@ public class OrderDAO {
     private final PaymentTransactionDAO paymentTransactionDAO = new PaymentTransactionDAO();
 
     private Order mapOrder(ResultSet rs) throws Exception {
-        return new Order(
+        Order order = new Order(
                 rs.getInt("id"),
                 rs.getInt("user_id"),
                 rs.getString("fullname"),
@@ -40,6 +40,8 @@ public class OrderDAO {
                 rs.getString("payment_method"),
                 rs.getBoolean("payment_status")
         );
+        order.setStatusUpdatedAt(rs.getTimestamp("status_updated_at"));
+        return order;
     }
 
     public int saveOrder(Order order) {
@@ -572,6 +574,20 @@ public class OrderDAO {
                 loadItemsForOrders(conn, list);
                 paymentTransactionDAO.attachLatestToOrders(conn, list);
             }
+
+            // Auto-complete delivered orders after 1 day
+            long oneDayInMillis = 24 * 60 * 60 * 1000;
+            long now = System.currentTimeMillis();
+            for (Order order : list) {
+                if ("Delivered".equals(order.getStatus()) && order.getStatusUpdatedAt() != null) {
+                    if (now - order.getStatusUpdatedAt().getTime() > oneDayInMillis) {
+                        if (this.updateStatus(order.getId(), "Completed", 1)) { // 1 = System User
+                            order.setStatus("Completed"); // Update object in list for immediate UI consistency
+                        }
+                    }
+                }
+            }
+
         } catch (Exception e) {
             log.error("DB error", e);
         }
