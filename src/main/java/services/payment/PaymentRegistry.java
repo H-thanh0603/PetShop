@@ -22,6 +22,7 @@ public class PaymentRegistry {
         register("cod",           new CODPaymentProvider());
         register("momo",          new MoMoPaymentProvider());
         register("bank_transfer", new BankTransferPaymentProvider());
+        register("vnpay",         new VnpayPaymentProvider());
     }
 
     public static PaymentRegistry getInstance() {

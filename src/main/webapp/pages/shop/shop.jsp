@@ -98,7 +98,7 @@
 <body>
     <jsp:include page="/components/navbar.jsp" />
     <jsp:include page="/components/toast.jsp" />
-    <c:set var="currentPageUrl" value="${pageContext.request.requestURI}${empty pageContext.request.queryString ? '' : '?'}${pageContext.request.queryString}" />
+    <c:set var="currentPageUrl" value="${pageContext.request.contextPath}/shop${empty pageContext.request.queryString ? '' : '?'}${pageContext.request.queryString}" />
 
     <section class="shop-hero">
         <div class="container">
@@ -151,7 +151,7 @@
                     <p>Đăng ký tài khoản để nhận ngay ưu đãi cho tất cả sản phẩm thức ăn hạt cao cấp.</p>
                 </div>
                 <div class="col-md-4 text-md-end mt-3 mt-md-0">
-                    <a href="${pageContext.request.contextPath}/shop?discountOnly=true" class="btn-promo">Xem ưu đãi <i class='bx bx-right-arrow-alt'></i></a>
+                    <a href="${pageContext.request.contextPath}/shop?discountOnly=true" class="btn-promo">Xem ưu đãi / Flash Sale <i class='bx bx-right-arrow-alt'></i></a>
                 </div>
             </div>
         </div>
@@ -199,7 +199,7 @@
                         <div class="col-6 col-md-6 col-lg-3">
                             <div class="product-card">
                                 <div class="img-wrap">
-                                    <c:if test="${p.discount > 0}"><span class="badge-sale">-${p.discount}%</span></c:if>
+                                    <c:if test="${p.hasPromotion}"><span class="badge-sale">-${p.displayDiscountPercent}%</span></c:if>
                                     <span class="badge-top">Hot</span>
                                     <a href="${pageContext.request.contextPath}/product-detail?id=${p.id}">
                                         <c:set var="productImageUrl" value="${fn:startsWith(p.image, 'http') ? p.image : pageContext.request.contextPath}${fn:startsWith(p.image, 'http') ? '' : '/assets/images/shop_pic/'}${fn:startsWith(p.image, 'http') ? '' : p.image}${fn:startsWith(p.image, 'http') ? '' : '?v=real-products-1'}" />
@@ -213,21 +213,24 @@
                                     <div class="d-flex justify-content-between align-items-start">
                                         <div>
                                             <span class="price">${fn:escapeXml(p.formattedPrice)}</span>
-                                            <c:if test="${p.discount > 0}"><span class="old-price">${fn:escapeXml(p.formattedOldPrice)}</span></c:if>
+                                            <c:if test="${p.hasPromotion}"><span class="old-price">${fn:escapeXml(p.formattedOldPrice)}</span></c:if>
                                             <c:choose>
-                                                <c:when test="${p.stock <= 0}">
+                                                <c:when test="${p.availablePurchaseQuantity <= 0}">
                                                     <div class="stock-pill stock-out">Hết hàng</div>
                                                 </c:when>
-                                                <c:when test="${p.stock < 10}">
-                                                    <div class="stock-pill stock-low">Sắp hết: ${p.stock}</div>
+                                                <c:when test="${p.availablePurchaseQuantity < 10}">
+                                                    <div class="stock-pill stock-low">Sắp hết: ${p.availablePurchaseQuantity}</div>
                                                 </c:when>
                                                 <c:otherwise>
-                                                    <div class="stock-pill stock-ok">Còn hàng: ${p.stock}</div>
+                                                    <div class="stock-pill stock-ok">Còn hàng: ${p.availablePurchaseQuantity}</div>
                                                 </c:otherwise>
                                             </c:choose>
+                                            <c:if test="${not empty p.activePromotionName}">
+                                                <div class="small text-danger mt-1">${fn:escapeXml(p.activePromotionName)}</div>
+                                            </c:if>
                                         </div>
                                         <div class="product-actions">
-                                            <form action="${pageContext.request.contextPath}/toggle-wishlist" method="post">
+                                            <form action="${pageContext.request.contextPath}/toggle-wishlist" method="post" data-product-id="${p.id}">
                                                 <input type="hidden" name="csrfToken" value="${csrfToken}">
                                                 <input type="hidden" name="productId" value="${p.id}">
                                                 <input type="hidden" name="redirect" value="${currentPageUrl}">
@@ -239,7 +242,7 @@
                                                 <input type="hidden" name="csrfToken" value="${csrfToken}">
                                                 <input type="hidden" name="id" value="${p.id}">
                                                 <input type="hidden" name="quantity" value="1">
-                                                <button type="submit" class="btn-cart" <c:if test="${p.stock <= 0}">disabled="disabled"</c:if>><i class='bx bx-cart-add'></i></button>
+                                                <button type="submit" class="btn-cart" <c:if test="${p.availablePurchaseQuantity <= 0}">disabled="disabled"</c:if>><i class='bx bx-cart-add'></i></button>
                                             </form>
                                         </div>
                                     </div>
@@ -261,7 +264,7 @@
                     <div class="col-6 col-md-4 col-lg-3">
                         <div class="product-card">
                             <div class="img-wrap">
-                                <span class="badge-sale">-${p.discount}%</span>
+                                <span class="badge-sale">-${p.displayDiscountPercent}%</span>
                                 <a href="${pageContext.request.contextPath}/product-detail?id=${p.id}">
                                     <c:set var="productImageUrl" value="${fn:startsWith(p.image, 'http') ? p.image : pageContext.request.contextPath}${fn:startsWith(p.image, 'http') ? '' : '/assets/images/shop_pic/'}${fn:startsWith(p.image, 'http') ? '' : p.image}${fn:startsWith(p.image, 'http') ? '' : '?v=real-products-1'}" />
                                     <img loading="lazy" src="${fn:escapeXml(productImageUrl)}" alt="${fn:escapeXml(p.name)}" onerror="this.src='https://placehold.co/200x200/f9f9f9/999?text=PetShop'">
@@ -276,19 +279,22 @@
                                         <span class="price">${fn:escapeXml(p.formattedPrice)}</span>
                                         <span class="old-price">${fn:escapeXml(p.formattedOldPrice)}</span>
                                         <c:choose>
-                                            <c:when test="${p.stock <= 0}">
+                                            <c:when test="${p.availablePurchaseQuantity <= 0}">
                                                 <div class="stock-pill stock-out">Hết hàng</div>
                                             </c:when>
-                                            <c:when test="${p.stock < 10}">
-                                                <div class="stock-pill stock-low">Sắp hết: ${p.stock}</div>
+                                            <c:when test="${p.availablePurchaseQuantity < 10}">
+                                                <div class="stock-pill stock-low">Sắp hết: ${p.availablePurchaseQuantity}</div>
                                             </c:when>
                                             <c:otherwise>
-                                                <div class="stock-pill stock-ok">Còn hàng: ${p.stock}</div>
+                                                <div class="stock-pill stock-ok">Còn hàng: ${p.availablePurchaseQuantity}</div>
                                             </c:otherwise>
                                         </c:choose>
+                                        <c:if test="${not empty p.activePromotionName}">
+                                            <div class="small text-danger mt-1">${fn:escapeXml(p.activePromotionName)}</div>
+                                        </c:if>
                                     </div>
                                     <div class="product-actions">
-                                        <form action="${pageContext.request.contextPath}/toggle-wishlist" method="post">
+                                        <form action="${pageContext.request.contextPath}/toggle-wishlist" method="post" data-product-id="${p.id}">
                                             <input type="hidden" name="csrfToken" value="${csrfToken}">
                                             <input type="hidden" name="productId" value="${p.id}">
                                             <input type="hidden" name="redirect" value="${currentPageUrl}">
@@ -300,7 +306,7 @@
                                             <input type="hidden" name="csrfToken" value="${csrfToken}">
                                             <input type="hidden" name="id" value="${p.id}">
                                             <input type="hidden" name="quantity" value="1">
-                                            <button type="submit" class="btn-cart" <c:if test="${p.stock <= 0}">disabled="disabled"</c:if>><i class='bx bx-cart-add'></i></button>
+                                            <button type="submit" class="btn-cart" <c:if test="${p.availablePurchaseQuantity <= 0}">disabled="disabled"</c:if>><i class='bx bx-cart-add'></i></button>
                                         </form>
                                     </div>
                                 </div>
@@ -383,7 +389,7 @@
                             <div class="col-6 col-md-4 col-lg-4">
                         <div class="product-card">
                             <div class="img-wrap">
-                                <c:if test="${p.discount > 0}"><span class="badge-sale">-${p.discount}%</span></c:if>
+                                <c:if test="${p.hasPromotion}"><span class="badge-sale">-${p.displayDiscountPercent}%</span></c:if>
                                 <a href="${pageContext.request.contextPath}/product-detail?id=${p.id}">
                                     <c:set var="productImageUrl" value="${fn:startsWith(p.image, 'http') ? p.image : pageContext.request.contextPath}${fn:startsWith(p.image, 'http') ? '' : '/assets/images/shop_pic/'}${fn:startsWith(p.image, 'http') ? '' : p.image}${fn:startsWith(p.image, 'http') ? '' : '?v=real-products-1'}" />
                                     <img loading="lazy" src="${fn:escapeXml(productImageUrl)}" alt="${fn:escapeXml(p.name)}" onerror="this.src='https://placehold.co/200x200/f9f9f9/999?text=PetShop'">
@@ -396,21 +402,24 @@
                                 <div class="d-flex justify-content-between align-items-start">
                                     <div>
                                         <span class="price">${fn:escapeXml(p.formattedPrice)}</span>
-                                        <c:if test="${p.discount > 0}"><span class="old-price">${fn:escapeXml(p.formattedOldPrice)}</span></c:if>
+                                        <c:if test="${p.hasPromotion}"><span class="old-price">${fn:escapeXml(p.formattedOldPrice)}</span></c:if>
                                         <c:choose>
-                                            <c:when test="${p.stock <= 0}">
+                                            <c:when test="${p.availablePurchaseQuantity <= 0}">
                                                 <div class="stock-pill stock-out">Hết hàng</div>
                                             </c:when>
-                                            <c:when test="${p.stock < 10}">
-                                                <div class="stock-pill stock-low">Sắp hết: ${p.stock}</div>
+                                            <c:when test="${p.availablePurchaseQuantity < 10}">
+                                                <div class="stock-pill stock-low">Sắp hết: ${p.availablePurchaseQuantity}</div>
                                             </c:when>
                                             <c:otherwise>
-                                                <div class="stock-pill stock-ok">Còn hàng: ${p.stock}</div>
+                                                <div class="stock-pill stock-ok">Còn hàng: ${p.availablePurchaseQuantity}</div>
                                             </c:otherwise>
                                         </c:choose>
+                                        <c:if test="${not empty p.activePromotionName}">
+                                            <div class="small text-danger mt-1">${fn:escapeXml(p.activePromotionName)}</div>
+                                        </c:if>
                                     </div>
                                     <div class="product-actions">
-                                        <form action="${pageContext.request.contextPath}/toggle-wishlist" method="post">
+                                        <form action="${pageContext.request.contextPath}/toggle-wishlist" method="post" data-product-id="${p.id}">
                                             <input type="hidden" name="csrfToken" value="${csrfToken}">
                                             <input type="hidden" name="productId" value="${p.id}">
                                             <input type="hidden" name="redirect" value="${currentPageUrl}">
@@ -422,7 +431,7 @@
                                             <input type="hidden" name="csrfToken" value="${csrfToken}">
                                             <input type="hidden" name="id" value="${p.id}">
                                             <input type="hidden" name="quantity" value="1">
-                                            <button type="submit" class="btn-cart" <c:if test="${p.stock <= 0}">disabled="disabled"</c:if>><i class='bx bx-cart-add'></i></button>
+                                            <button type="submit" class="btn-cart" <c:if test="${p.availablePurchaseQuantity <= 0}">disabled="disabled"</c:if>><i class='bx bx-cart-add'></i></button>
                                         </form>
                                     </div>
                                 </div>
@@ -479,5 +488,6 @@
     <jsp:include page="/components/footer.jsp" />
     <jsp:include page="/components/back-button.jsp" />
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="${pageContext.request.contextPath}/assets/js/wishlist-ajax.js?v=20260612-2"></script>
 </body>
 </html>

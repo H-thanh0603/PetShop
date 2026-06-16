@@ -75,6 +75,133 @@
             transform: translateY(-5px);
         }
 
+        .related-carousel {
+            position: relative;
+            padding: 0 8px;
+        }
+
+        .related-carousel-viewport {
+            overflow: hidden;
+        }
+
+        .related-carousel-track {
+            display: flex;
+            gap: 24px;
+            transition: transform 0.35s ease;
+            will-change: transform;
+        }
+
+        .related-carousel-slide {
+            flex: 0 0 calc((100% - 72px) / 4);
+            min-width: 0;
+        }
+
+        .related-carousel-slide .related-card {
+            height: 100%;
+            border-radius: 12px;
+            overflow: hidden;
+        }
+
+        .related-carousel-control {
+            position: absolute;
+            top: 50%;
+            z-index: 3;
+            width: 44px;
+            height: 44px;
+            border: 1px solid #e5e7eb;
+            border-radius: 50%;
+            background: #fff;
+            color: #1f2937;
+            box-shadow: 0 8px 20px rgba(15, 23, 42, 0.12);
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            transform: translateY(-50%);
+            transition: background 0.2s ease, color 0.2s ease, transform 0.2s ease;
+        }
+
+        .related-carousel-control:hover {
+            background: #f1f5f9;
+            color: #0d6efd;
+            transform: translateY(-50%) scale(1.04);
+        }
+
+        .related-carousel-control[hidden] {
+            display: none;
+        }
+
+        .related-carousel-control i {
+            font-size: 1.25rem;
+        }
+
+        .related-carousel-prev {
+            left: -14px;
+        }
+
+        .related-carousel-next {
+            right: -14px;
+        }
+
+        @media (max-width: 991.98px) {
+            .related-carousel-slide {
+                flex-basis: calc((100% - 48px) / 3);
+            }
+        }
+
+        @media (max-width: 767.98px) {
+            .related-carousel-slide {
+                flex-basis: calc((100% - 24px) / 2);
+            }
+
+            .related-carousel-prev {
+                left: -6px;
+            }
+
+            .related-carousel-next {
+                right: -6px;
+            }
+        }
+
+        @media (max-width: 575.98px) {
+            .related-carousel {
+                padding: 0;
+            }
+
+            .related-carousel-viewport {
+                overflow-x: auto;
+                scroll-snap-type: x mandatory;
+                -webkit-overflow-scrolling: touch;
+                scrollbar-width: none;
+            }
+
+            .related-carousel-viewport::-webkit-scrollbar {
+                display: none;
+            }
+
+            .related-carousel-track {
+                gap: 16px;
+                transition: none;
+            }
+
+            .related-carousel-slide {
+                flex-basis: 100%;
+                scroll-snap-align: start;
+            }
+
+            .related-carousel-control {
+                width: 38px;
+                height: 38px;
+            }
+
+            .related-carousel-prev {
+                left: 8px;
+            }
+
+            .related-carousel-next {
+                right: 8px;
+            }
+        }
+
         .rating-css input {
             display: none;
         }
@@ -213,10 +340,13 @@
             <div class="product-purchase-panel">
                 <div class="d-flex flex-wrap gap-2 mb-2">
                     <span class="badge product-badge">Chính hãng</span>
-                    <c:if test="${detail.discount > 0}">
-                        <span class="badge product-badge product-badge-sale">Giảm ${detail.discount}%</span>
+                    <c:if test="${detail.hasPromotion}">
+                        <span class="badge product-badge product-badge-sale">Giảm ${detail.displayDiscountPercent}%</span>
                     </c:if>
-                    <c:if test="${detail.stock > 0 && detail.stock < 10}">
+                    <c:if test="${detail.flashSale}">
+                        <span class="badge product-badge product-badge-sale">Flash Sale</span>
+                    </c:if>
+                    <c:if test="${detail.availablePurchaseQuantity > 0 && detail.availablePurchaseQuantity < 10}">
                         <span class="badge product-badge product-badge-warn">Sắp hết hàng</span>
                     </c:if>
                 </div>
@@ -235,9 +365,9 @@
                 <div class="price-panel mb-4">
                     <div class="d-flex flex-wrap align-items-end gap-3">
                         <span class="price-tag"> <fmt:formatNumber
-                                value="${detail.price}" type="currency" currencySymbol="₫"/>
+                                value="${detail.effectivePrice}" type="currency" currencySymbol="₫"/>
                         </span>
-                        <c:if test="${detail.discount > 0}">
+                        <c:if test="${detail.hasPromotion}">
                             <div class="pb-2">
                                 <div class="text-muted text-decoration-line-through">${fn:escapeXml(detail.formattedOldPrice)}</div>
                                 <div class="text-success fw-semibold">Tiết
@@ -245,21 +375,24 @@
                             </div>
                         </c:if>
                     </div>
+                    <c:if test="${not empty detail.activePromotionName}">
+                        <div class="small text-danger fw-semibold mb-2">${fn:escapeXml(detail.activePromotionName)}</div>
+                    </c:if>
                     <div class="mt-2">
                         <c:choose>
-                            <c:when test="${detail.stock <= 0}">
+                            <c:when test="${detail.availablePurchaseQuantity <= 0}">
                                 <div class="text-danger fw-semibold">
                                     <i class='bx bxs-error-circle'></i> Hết hàng
                                 </div>
                             </c:when>
-                            <c:when test="${detail.stock < 10}">
+                            <c:when test="${detail.availablePurchaseQuantity < 10}">
                                 <div class="text-warning fw-semibold">
-                                    <i class='bx bxs-package'></i> Chỉ còn ${detail.stock} sản phẩm
+                                    <i class='bx bxs-package'></i> Chỉ còn ${detail.availablePurchaseQuantity} sản phẩm có thể mua
                                 </div>
                             </c:when>
                             <c:otherwise>
                                 <div class="text-success">
-                                    <i class='bx bxs-check-circle'></i> Còn ${detail.stock} sản phẩm - Sẵn sàng giao
+                                    <i class='bx bxs-check-circle'></i> Còn ${detail.availablePurchaseQuantity} sản phẩm - Sẵn sàng giao
                                     ngay
                                 </div>
                             </c:otherwise>
@@ -330,6 +463,7 @@
                 </form>
 
                 <form action="${pageContext.request.contextPath}/toggle-wishlist" method="post"
+                      data-product-id="${detail.id}"
                       class="wishlist-form mt-3 product-wishlist-row">
                     <input type="hidden" name="csrfToken" value="${csrfToken}">
                     <input type="hidden" name="productId" value="${detail.id}">
@@ -415,13 +549,18 @@
                         <tr>
                             <th>Khuyến mãi</th>
                             <td><c:choose>
-                                <c:when test="${detail.discount > 0}">Giảm ${detail.discount}% - tiết kiệm ${detail.formattedDiscountAmount}</c:when>
+                                <c:when test="${detail.hasPromotion}">
+                                    <c:choose>
+                                        <c:when test="${not empty detail.activePromotionName}">${fn:escapeXml(detail.activePromotionName)} - giảm ${detail.displayDiscountPercent}% - tiết kiệm ${detail.formattedDiscountAmount}</c:when>
+                                        <c:otherwise>Giảm ${detail.displayDiscountPercent}% - tiết kiệm ${detail.formattedDiscountAmount}</c:otherwise>
+                                    </c:choose>
+                                </c:when>
                                 <c:otherwise>Không có khuyến mãi</c:otherwise>
                             </c:choose></td>
                         </tr>
                         <tr>
                             <th>Tồn kho</th>
-                            <td>${detail.stock} sản phẩm</td>
+                            <td>${detail.availablePurchaseQuantity} sản phẩm có thể mua</td>
                         </tr>
                         <tr>
                             <th>Đánh giá trung bình</th>
@@ -556,9 +695,22 @@
                 <h3 class="fw-bold border-bottom pb-2 mb-4">Có thể bạn cũng
                     thích</h3>
 
-                <div class="row row-cols-1 row-cols-md-4 g-4">
+                <c:choose>
+                    <c:when test="${empty relatedProducts}">
+                        <div class="text-center text-muted">
+                            <p>Không có sản phẩm liên quan nào.</p>
+                        </div>
+                    </c:when>
+                    <c:otherwise>
+                        <div class="related-carousel" data-related-carousel>
+                            <button type="button" class="related-carousel-control related-carousel-prev"
+                                    data-related-prev aria-label="San pham truoc">
+                                <i class="fas fa-chevron-left"></i>
+                            </button>
+                            <div class="related-carousel-viewport" data-related-viewport>
+                                <div class="related-carousel-track" data-related-track>
                     <c:forEach items="${relatedProducts}" var="rp">
-                        <div class="col">
+                        <div class="related-carousel-slide">
                             <div class="card h-100 related-card">
                                 <a
                                         href="${pageContext.request.contextPath}/product-detail?id=${rp.id}">
@@ -580,9 +732,12 @@
                                         <span class="text-muted">(${rp.reviewCount})</span>
                                     </div>
                                     <p class="text-danger fw-bold mb-0">
-                                        <fmt:formatNumber value="${rp.price}" type="currency"
+                                        <fmt:formatNumber value="${rp.effectivePrice}" type="currency"
                                                           currencySymbol="₫"/>
                                     </p>
+                                    <c:if test="${rp.hasPromotion}">
+                                        <div class="small text-muted text-decoration-line-through">${fn:escapeXml(rp.formattedOldPrice)}</div>
+                                    </c:if>
 
                                     <a
                                             href="${pageContext.request.contextPath}/product-detail?id=${rp.id}"
@@ -592,12 +747,15 @@
                         </div>
                     </c:forEach>
 
-                    <c:if test="${empty relatedProducts}">
-                        <div class="col-12 text-center text-muted">
-                            <p>Không có sản phẩm liên quan nào.</p>
+                                </div>
+                            </div>
+                            <button type="button" class="related-carousel-control related-carousel-next"
+                                    data-related-next aria-label="San pham tiep theo">
+                                <i class="fas fa-chevron-right"></i>
+                            </button>
                         </div>
-                    </c:if>
-                </div>
+                    </c:otherwise>
+                </c:choose>
             </div>
 
         </div>
@@ -609,7 +767,7 @@
         src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 
 <script>
-    const availableStock = ${detail.stock};
+    const availableStock = ${detail.availablePurchaseQuantity};
     const quantityMessages = {
         negative: "Kh\u00f4ng \u0111\u01b0\u1ee3c nh\u1eadp s\u1ed1 \u00e2m.",
         decimal: "Kh\u00f4ng \u0111\u01b0\u1ee3c nh\u1eadp s\u1ed1 th\u1eadp ph\u00e2n.",
@@ -797,7 +955,116 @@
         });
     }
 
+    function initRelatedCarousel() {
+        var carousel = document.querySelector('[data-related-carousel]');
+        if (!carousel) {
+            return;
+        }
+
+        var viewport = carousel.querySelector('[data-related-viewport]');
+        var track = carousel.querySelector('[data-related-track]');
+        var prevButton = carousel.querySelector('[data-related-prev]');
+        var nextButton = carousel.querySelector('[data-related-next]');
+        var slides = Array.prototype.slice.call(carousel.querySelectorAll('.related-carousel-slide'));
+        var currentIndex = 0;
+        var scrollTicking = false;
+
+        function isMobileLayout() {
+            return window.matchMedia('(max-width: 575.98px)').matches;
+        }
+
+        function getGap() {
+            var styles = window.getComputedStyle(track);
+            return parseFloat(styles.columnGap || styles.gap) || 0;
+        }
+
+        function getSlideStep() {
+            if (!slides.length) {
+                return 0;
+            }
+            return slides[0].getBoundingClientRect().width + getGap();
+        }
+
+        function getVisibleCount() {
+            var step = getSlideStep();
+            if (!step) {
+                return slides.length;
+            }
+            return Math.max(1, Math.round((viewport.clientWidth + getGap()) / step));
+        }
+
+        function getMaxIndex() {
+            return Math.max(0, slides.length - getVisibleCount());
+        }
+
+        function updateControls() {
+            var maxIndex = getMaxIndex();
+            var shouldHideControls = slides.length <= getVisibleCount();
+            prevButton.hidden = shouldHideControls || currentIndex <= 0;
+            nextButton.hidden = shouldHideControls || currentIndex >= maxIndex;
+        }
+
+        function applyPosition() {
+            var step = getSlideStep();
+            var maxIndex = getMaxIndex();
+            currentIndex = Math.max(0, Math.min(currentIndex, maxIndex));
+
+            if (isMobileLayout()) {
+                track.style.transform = '';
+            } else {
+                track.style.transform = 'translateX(-' + (currentIndex * step) + 'px)';
+            }
+
+            updateControls();
+        }
+
+        function moveCarousel(direction) {
+            var step = getSlideStep();
+            var visibleCount = getVisibleCount();
+            currentIndex = Math.max(0, Math.min(currentIndex + (direction * visibleCount), getMaxIndex()));
+
+            // On mobile the viewport stays swipeable; buttons scroll the same track.
+            if (isMobileLayout()) {
+                viewport.scrollTo({
+                    left: currentIndex * step,
+                    behavior: 'smooth'
+                });
+                updateControls();
+            } else {
+                applyPosition();
+            }
+        }
+
+        prevButton.addEventListener('click', function () {
+            moveCarousel(-1);
+        });
+
+        nextButton.addEventListener('click', function () {
+            moveCarousel(1);
+        });
+
+        viewport.addEventListener('scroll', function () {
+            if (!isMobileLayout() || scrollTicking) {
+                return;
+            }
+
+            scrollTicking = true;
+            window.requestAnimationFrame(function () {
+                var step = getSlideStep();
+                currentIndex = step ? Math.round(viewport.scrollLeft / step) : 0;
+                currentIndex = Math.max(0, Math.min(currentIndex, getMaxIndex()));
+                updateControls();
+                scrollTicking = false;
+            });
+        });
+
+        window.addEventListener('resize', applyPosition);
+        applyPosition();
+    }
+
+    initRelatedCarousel();
     syncStockUi();
 </script>
+<script src="${pageContext.request.contextPath}/assets/js/wishlist-ajax.js?v=20260612-2"></script>
 </body>
 </html>

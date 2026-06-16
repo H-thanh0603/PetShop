@@ -51,8 +51,10 @@ public class SearchAutocompleteServlet extends HttpServlet {
             item.put("id", p.getId());
             item.put("name", p.getName());
             item.put("image", p.getImage() != null ? p.getImage() : "");
-            item.put("price", p.getPrice());
-            item.put("stock", p.getStock());
+            item.put("price", p.getEffectivePrice());
+            item.put("stock", p.getAvailablePurchaseQuantity());
+            item.put("hasPromotion", p.hasPromotion());
+            item.put("oldPrice", p.getOriginalPrice());
             results.add(item);
         }
         

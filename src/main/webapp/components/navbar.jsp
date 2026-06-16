@@ -429,6 +429,103 @@
         nav#navbar-main .nav-lang-select { display: none !important; }
         body { padding-top: 70px !important; }
     }
+    
+    /* --- NOTIFICATION DROPDOWN STYLES --- */
+    .notification-list {
+        display: flex;
+        flex-direction: column;
+    }
+    .notification-item {
+        padding: 12px 16px !important;
+        border-bottom: 1px solid #f1f5f9 !important;
+        display: flex !important;
+        gap: 12px !important;
+        text-decoration: none !important;
+        color: #334155 !important;
+        transition: background-color 0.2s ease !important;
+        cursor: pointer !important;
+    }
+    .notification-item:hover {
+        background-color: #f8fafc !important;
+        color: #00bfa5 !important;
+    }
+    .notification-item.unread {
+        background-color: #f0fdfa !important;
+    }
+    .notification-item-icon {
+        width: 36px !important;
+        height: 36px !important;
+        border-radius: 50% !important;
+        background-color: #e2fef7 !important;
+        color: #00bfa5 !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        font-size: 1.2rem !important;
+        flex-shrink: 0 !important;
+    }
+    .notification-item-icon.order {
+        background-color: #eff6ff !important;
+        color: #3b82f6 !important;
+    }
+    .notification-item-icon.chat {
+        background-color: #fdf2f8 !important;
+        color: #db2777 !important;
+    }
+    .notification-item-content {
+        flex: 1 !important;
+        min-width: 0 !important;
+    }
+    .notification-item-title {
+        font-weight: 600 !important;
+        font-size: 0.85rem !important;
+        margin-bottom: 2px !important;
+        white-space: nowrap !important;
+        overflow: hidden !important;
+        text-overflow: ellipsis !important;
+        color: #1e293b !important;
+    }
+    .notification-item-desc {
+        font-size: 0.8rem !important;
+        color: #64748b !important;
+        margin-bottom: 4px !important;
+        display: -webkit-box !important;
+        -webkit-line-clamp: 2 !important;
+        -webkit-box-orient: vertical !important;
+        overflow: hidden !important;
+        line-height: 1.4 !important;
+    }
+    .notification-item-time {
+        font-size: 0.7rem !important;
+        color: #94a3b8 !important;
+    }
+    
+    /* Fix text colors inside notification menu to prevent white-out */
+    #notification-menu,
+    #notification-menu .dropdown-menu {
+        color: #334155 !important;
+    }
+    #notification-menu span.text-dark {
+        color: #1e293b !important;
+    }
+    #notification-menu #btn-mark-all-read {
+        color: #00bfa5 !important;
+    }
+    #notification-menu #btn-mark-all-read:hover {
+        color: #008f7a !important;
+    }
+    #notification-menu .text-muted {
+        color: #64748b !important;
+    }
+    #notification-menu .notification-item-title {
+        color: #1e293b !important;
+    }
+    #notification-menu .notification-item-desc {
+        color: #64748b !important;
+    }
+    #notification-menu .notification-item-time {
+        color: #94a3b8 !important;
+    }
 </style>
 
 <nav class="navbar navbar-expand-lg" id="navbar-main">
@@ -502,6 +599,27 @@
         </form>
 
         <div class="d-flex align-items-center gap-3 navbar-nav-buttons">
+            
+            <c:if test="${not empty sessionScope.user}">
+                <div class="dropdown" id="notification-dropdown-wrapper">
+                    <button class="btn-nav-cart dropdown-toggle" id="btn-notification-bell" type="button" aria-expanded="false" style="border: none; background: none; outline: none; box-shadow: none; padding: 8px;">
+                        <i class='bx bx-bell'></i>
+                        <span class="cart-badge bg-danger" id="notification-unread-count" style="display: none;">0</span>
+                    </button>
+                    <div class="dropdown-menu dropdown-menu-end p-0" id="notification-menu" style="width: 340px; border-radius: 16px; overflow: hidden; border: 1px solid #e2e8f0; box-shadow: 0 10px 30px rgba(0,0,0,0.1);">
+                        <div class="p-3 border-bottom d-flex justify-content-between align-items-center bg-light">
+                            <span class="fw-bold text-dark" style="font-size: 0.95rem;"><i class='bx bx-bell me-1 text-primary'></i> Thông báo</span>
+                            <button class="btn btn-sm text-primary p-0 fw-bold" id="btn-mark-all-read" style="font-size: 0.8rem; background: none; border: none; outline: none;">Đánh dấu đã đọc</button>
+                        </div>
+                        <div class="notification-list" id="notification-items-container" style="max-height: 320px; overflow-y: auto;">
+                            <div class="text-center p-4 text-muted" id="notification-empty-msg">
+                                <i class='bx bx-bell-off fs-2 mb-2 d-block text-secondary'></i>
+                                Không có thông báo mới
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </c:if>
             
             <a href="${pageContext.request.contextPath}/cart" class="btn-nav-cart">
                 <i class='bx bx-cart'></i>
@@ -677,12 +795,22 @@ document.addEventListener('DOMContentLoaded', function() {
                             price.className = 'autocomplete-item-price';
                             price.textContent = new Intl.NumberFormat('vi-VN').format(p.price || 0) + 'đ';
 
+                            var oldPrice = null;
+                            if (p.hasPromotion && p.oldPrice && Number(p.oldPrice) > Number(p.price || 0)) {
+                                oldPrice = document.createElement('div');
+                                oldPrice.className = 'small text-muted text-decoration-line-through';
+                                oldPrice.textContent = new Intl.NumberFormat('vi-VN').format(p.oldPrice) + 'đ';
+                            }
+
                             var quantity = document.createElement('div');
                             quantity.className = 'autocomplete-item-quantity';
                             quantity.textContent = 'Số lượng: ' + (p.stock || 0);
 
                             info.appendChild(name);
                             info.appendChild(price);
+                            if (oldPrice) {
+                                info.appendChild(oldPrice);
+                            }
                             info.appendChild(quantity);
 
                             item.appendChild(img);
@@ -711,6 +839,121 @@ document.addEventListener('DOMContentLoaded', function() {
                 autocompleteDropdown.classList.remove('show');
             }, 200);
         });
+    }
+    
+    // ========== USER NOTIFICATION LOGIC ==========
+    const bellBtn = document.getElementById("btn-notification-bell");
+    const notifBadge = document.getElementById("notification-unread-count");
+    const listContainer = document.getElementById("notification-items-container");
+    const markAllReadBtn = document.getElementById("btn-mark-all-read");
+    
+    function updateNotifications() {
+        const contextPath = "${pageContext.request.contextPath}";
+        
+        // Fetch unread count
+        fetch(contextPath + "/notifications/unread-count")
+            .then(res => res.json())
+            .then(data => {
+                if (data && data.unreadCount > 0) {
+                    notifBadge.textContent = data.unreadCount;
+                    notifBadge.style.display = "inline-block";
+                } else {
+                    notifBadge.style.display = "none";
+                }
+            })
+            .catch(err => console.error("Error fetching notification count:", err));
+            
+        // Fetch notifications list
+        loadNotificationList();
+    }
+    
+    function loadNotificationList() {
+        const contextPath = "${pageContext.request.contextPath}";
+        fetch(contextPath + "/notifications/list")
+            .then(res => res.json())
+            .then(data => {
+                if (!data || data.length === 0) {
+                    listContainer.innerHTML = `
+                        <div class="text-center p-4 text-muted" id="notification-empty-msg">
+                            <i class='bx bx-bell-off fs-2 mb-2 d-block text-secondary'></i>
+                            Không có thông báo mới
+                        </div>
+                    `;
+                    return;
+                }
+                
+                listContainer.innerHTML = '';
+                data.forEach(item => {
+                    const notifItem = document.createElement("a");
+                    notifItem.href = item.link || "javascript:void(0)";
+                    notifItem.className = "notification-item" + (item.isRead ? "" : " unread");
+                    
+                    let iconClass = "bx-info-circle";
+                    let typeClass = "";
+                    if (item.type === "order") {
+                        iconClass = "bx-package";
+                        typeClass = "order";
+                    } else if (item.type === "chat") {
+                        iconClass = "bx-message-detail";
+                        typeClass = "chat";
+                    }
+                    
+                    notifItem.innerHTML = `
+                        <div class="notification-item-icon \${typeClass}">
+                            <i class="bx \${iconClass}"></i>
+                        </div>
+                        <div class="notification-item-content">
+                            <div class="notification-item-title">\${item.title}</div>
+                            <div class="notification-item-desc">\${item.message}</div>
+                            <div class="notification-item-time">\${item.createdAt}</div>
+                        </div>
+                    `;
+                    
+                    // Specific handler for chat notifications to trigger chatbot window
+                    if (item.type === "chat") {
+                        notifItem.onclick = function(e) {
+                            e.preventDefault();
+                            const toggleBtn = document.getElementById("ai-chat-toggle");
+                            const chatWindow = document.getElementById("ai-chat-window");
+                            if (toggleBtn && chatWindow) {
+                                if (chatWindow.style.display === "none") {
+                                    toggleBtn.click();
+                                }
+                            }
+                            markAllAsRead();
+                        };
+                    }
+                    
+                    listContainer.appendChild(notifItem);
+                });
+            })
+            .catch(err => console.error("Error loading notifications list:", err));
+    }
+    
+    function markAllAsRead() {
+        const contextPath = "${pageContext.request.contextPath}";
+        fetch(contextPath + "/notifications/mark-read", { method: 'POST' })
+            .then(res => res.json())
+            .then(data => {
+                if (data && data.success) {
+                    notifBadge.style.display = "none";
+                    loadNotificationList();
+                }
+            })
+            .catch(err => console.error("Error marking notifications read:", err));
+    }
+    
+    if (markAllReadBtn) {
+        markAllReadBtn.addEventListener("click", function(e) {
+            e.stopPropagation();
+            markAllAsRead();
+        });
+    }
+    
+    if (bellBtn) {
+        updateNotifications();
+        // Poll every 10 seconds
+        setInterval(updateNotifications, 10000);
     }
 });
 </script>

@@ -6,6 +6,7 @@ import java.math.BigDecimal;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
+import java.sql.SQLSyntaxErrorException;
 import java.sql.Statement;
 import java.sql.Timestamp;
 import java.time.LocalDateTime;
@@ -25,14 +26,21 @@ public class OrderDAO {
 
     private static final Logger log = LoggerFactory.getLogger(OrderDAO.class);
     private final PaymentTransactionDAO paymentTransactionDAO = new PaymentTransactionDAO();
+    private static final String ORDER_SELECT =
+            "SELECT o.*, " +
+            "COALESCE(o.recipient_fullname, o.fullname) AS mapped_recipient_fullname, " +
+            "COALESCE(o.recipient_phone, o.phone) AS mapped_recipient_phone, " +
+            "COALESCE(o.shipping_address, o.address) AS mapped_shipping_address, " +
+            "u.fullname AS customer_fullname, u.phone AS customer_phone " +
+            "FROM orders o JOIN users u ON u.id = o.user_id ";
 
     private Order mapOrder(ResultSet rs) throws Exception {
         Order order = new Order(
                 rs.getInt("id"),
                 rs.getInt("user_id"),
-                rs.getString("fullname"),
-                rs.getString("phone"),
-                rs.getString("address"),
+                rs.getString("mapped_recipient_fullname"),
+                rs.getString("mapped_recipient_phone"),
+                rs.getString("mapped_shipping_address"),
                 rs.getString("note"),
                 rs.getBigDecimal("total_amount"),
                 rs.getString("status"),
@@ -41,6 +49,14 @@ public class OrderDAO {
                 rs.getBoolean("payment_status")
         );
         order.setStatusUpdatedAt(rs.getTimestamp("status_updated_at"));
+        order.setCustomerFullname(rs.getString("customer_fullname"));
+        order.setCustomerPhone(rs.getString("customer_phone"));
+        try {
+            order.setSubtotal(rs.getBigDecimal("subtotal"));
+            order.setShippingFee(rs.getBigDecimal("shipping_fee"));
+            order.setDiscountAmount(rs.getBigDecimal("discount_amount"));
+        } catch (Exception ignored) {
+        }
         return order;
     }
 
@@ -54,25 +70,73 @@ public class OrderDAO {
     }
 
     public int saveOrder(Connection conn, Order order) throws Exception {
-        String query = "INSERT INTO orders (user_id, fullname, phone, address, note, total_amount, status, payment_method, payment_status, createdAt) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+        try {
+            return saveOrderWithOptionalTotals(conn, order);
+        } catch (SQLSyntaxErrorException e) {
+            if (isUnknownColumn(e, "subtotal", "shipping_fee", "discount_amount")) {
+                log.warn("orders total snapshot columns are missing; falling back to legacy order insert");
+                return saveOrderLegacy(conn, order);
+            }
+            throw e;
+        }
+    }
+
+    private int saveOrderWithOptionalTotals(Connection conn, Order order) throws Exception {
+        String query = "INSERT INTO orders (user_id, fullname, phone, address, recipient_fullname, recipient_phone, shipping_address, note, subtotal, shipping_fee, discount_amount, total_amount, status, payment_method, payment_status, createdAt) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
         try (PreparedStatement ps = conn.prepareStatement(query, Statement.RETURN_GENERATED_KEYS)) {
             ps.setInt(1, order.getUserId());
-            ps.setString(2, order.getFullname());
-            ps.setString(3, order.getPhone());
-            ps.setString(4, order.getAddress());
-            ps.setString(5, order.getNote());
-            ps.setBigDecimal(6, order.getTotalAmount());
-            ps.setString(7, "Pending");
-            ps.setString(8, order.getPayment_method());
-            ps.setBoolean(9, order.getPayment_status());
-            ps.setTimestamp(10, order.getCreatedAt());
+            ps.setString(2, order.getRecipientFullname());
+            ps.setString(3, order.getRecipientPhone());
+            ps.setString(4, order.getShippingAddress());
+            ps.setString(5, order.getRecipientFullname());
+            ps.setString(6, order.getRecipientPhone());
+            ps.setString(7, order.getShippingAddress());
+            ps.setString(8, order.getNote());
+            ps.setBigDecimal(9, order.getSubtotal());
+            ps.setBigDecimal(10, order.getShippingFee());
+            ps.setBigDecimal(11, order.getDiscountAmount());
+            ps.setBigDecimal(12, order.getTotalAmount());
+            ps.setString(13, order.getStatus());
+            ps.setString(14, order.getPayment_method());
+            ps.setBoolean(15, order.getPayment_status());
+            ps.setTimestamp(16, order.getCreatedAt());
 
             ps.executeUpdate();
             try (ResultSet rs = ps.getGeneratedKeys()) {
                 if (rs.next()) {
                     int orderId = rs.getInt(1);
                     new OrderLogDAO().insert(conn, orderId, "CUSTOMER", order.getUserId(),
-                            "CREATE_ORDER", null, "Pending", "Khách tạo đơn");
+                            "CREATE_ORDER", null, order.getStatus(), "Khách tạo đơn");
+                    return orderId;
+                }
+            }
+        }
+        return -1;
+    }
+
+    private int saveOrderLegacy(Connection conn, Order order) throws Exception {
+        String query = "INSERT INTO orders (user_id, fullname, phone, address, recipient_fullname, recipient_phone, shipping_address, note, total_amount, status, payment_method, payment_status, createdAt) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+        try (PreparedStatement ps = conn.prepareStatement(query, Statement.RETURN_GENERATED_KEYS)) {
+            ps.setInt(1, order.getUserId());
+            ps.setString(2, order.getRecipientFullname());
+            ps.setString(3, order.getRecipientPhone());
+            ps.setString(4, order.getShippingAddress());
+            ps.setString(5, order.getRecipientFullname());
+            ps.setString(6, order.getRecipientPhone());
+            ps.setString(7, order.getShippingAddress());
+            ps.setString(8, order.getNote());
+            ps.setBigDecimal(9, order.getTotalAmount());
+            ps.setString(10, order.getStatus());
+            ps.setString(11, order.getPayment_method());
+            ps.setBoolean(12, order.getPayment_status());
+            ps.setTimestamp(13, order.getCreatedAt());
+
+            ps.executeUpdate();
+            try (ResultSet rs = ps.getGeneratedKeys()) {
+                if (rs.next()) {
+                    int orderId = rs.getInt(1);
+                    new OrderLogDAO().insert(conn, orderId, "CUSTOMER", order.getUserId(),
+                            "CREATE_ORDER", null, order.getStatus(), "Khách tạo đơn");
                     return orderId;
                 }
             }
@@ -90,19 +154,71 @@ public class OrderDAO {
     }
 
     public boolean saveOrderItem(Connection conn, OrderItem item) throws Exception {
-        String query = "INSERT INTO order_items (order_id, product_id, quantity, price) VALUES (?, ?, ?, ?)";
+        try {
+            return saveOrderItemWithOptionalSnapshots(conn, item);
+        } catch (SQLSyntaxErrorException e) {
+            if (isUnknownColumn(e, "product_name_snapshot", "product_image_snapshot")) {
+                log.warn("order item product snapshot columns are missing; falling back to legacy order item insert");
+                return saveOrderItemLegacy(conn, item);
+            }
+            throw e;
+        }
+    }
+
+    private boolean saveOrderItemWithOptionalSnapshots(Connection conn, OrderItem item) throws Exception {
+        String query = "INSERT INTO order_items (order_id, product_id, quantity, price, original_price, final_price, discount_amount, promotion_id, promotion_name, promotion_type, product_name_snapshot, product_image_snapshot) " +
+                "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
         try (PreparedStatement ps = conn.prepareStatement(query)) {
             ps.setInt(1, item.getOrderId());
             ps.setInt(2, item.getProductId());
             ps.setInt(3, item.getQuantity());
             ps.setBigDecimal(4, item.getPrice());
+            ps.setBigDecimal(5, item.getOriginalPrice());
+            ps.setBigDecimal(6, item.getFinalPrice());
+            ps.setBigDecimal(7, item.getDiscountAmount());
+            ps.setObject(8, item.getPromotionId());
+            ps.setString(9, item.getPromotionName());
+            ps.setString(10, item.getPromotionType());
+            ps.setString(11, item.getProductNameSnapshot());
+            ps.setString(12, item.getProductImageSnapshot());
             return ps.executeUpdate() > 0;
         }
     }
 
+    private boolean saveOrderItemLegacy(Connection conn, OrderItem item) throws Exception {
+        String query = "INSERT INTO order_items (order_id, product_id, quantity, price, original_price, final_price, discount_amount, promotion_id, promotion_name, promotion_type) " +
+                "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+        try (PreparedStatement ps = conn.prepareStatement(query)) {
+            ps.setInt(1, item.getOrderId());
+            ps.setInt(2, item.getProductId());
+            ps.setInt(3, item.getQuantity());
+            ps.setBigDecimal(4, item.getPrice());
+            ps.setBigDecimal(5, item.getOriginalPrice());
+            ps.setBigDecimal(6, item.getFinalPrice());
+            ps.setBigDecimal(7, item.getDiscountAmount());
+            ps.setObject(8, item.getPromotionId());
+            ps.setString(9, item.getPromotionName());
+            ps.setString(10, item.getPromotionType());
+            return ps.executeUpdate() > 0;
+        }
+    }
+
+    private boolean isUnknownColumn(SQLSyntaxErrorException e, String... columnNames) {
+        if (!"42S22".equals(e.getSQLState()) && e.getErrorCode() != 1054) {
+            return false;
+        }
+        String message = e.getMessage() == null ? "" : e.getMessage().toLowerCase();
+        for (String columnName : columnNames) {
+            if (message.contains(columnName.toLowerCase())) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     public List<Order> getAllOrders() {
         List<Order> list = new ArrayList<>();
-        String query = "SELECT * FROM orders ORDER BY createdAt DESC";
+        String query = ORDER_SELECT + "ORDER BY o.createdAt DESC";
         try (Connection conn = DBContext.getConnection();
              PreparedStatement ps = conn.prepareStatement(query);
              ResultSet rs = ps.executeQuery()) {
@@ -125,14 +241,14 @@ public class OrderDAO {
      */
     public List<Order> getOrdersPage(int page, int size, String statusFilter, String keyword) {
         List<Order> list = new ArrayList<>();
-        StringBuilder sql = new StringBuilder("SELECT * FROM orders WHERE 1=1");
+        StringBuilder sql = new StringBuilder(ORDER_SELECT + "WHERE 1=1");
         if (statusFilter != null && !statusFilter.isEmpty() && !"all".equalsIgnoreCase(statusFilter)) {
-            sql.append(" AND status = ?");
+            sql.append(" AND o.status = ?");
         }
         if (keyword != null && !keyword.isEmpty()) {
-            sql.append(" AND (CAST(id AS CHAR) LIKE ? OR fullname LIKE ? OR phone LIKE ? OR address LIKE ?)");
+            sql.append(" AND (CAST(o.id AS CHAR) LIKE ? OR u.fullname LIKE ? OR COALESCE(o.recipient_fullname, o.fullname) LIKE ? OR COALESCE(o.recipient_phone, o.phone) LIKE ? OR COALESCE(o.shipping_address, o.address) LIKE ?)");
         }
-        sql.append(" ORDER BY createdAt DESC LIMIT ? OFFSET ?");
+        sql.append(" ORDER BY o.createdAt DESC LIMIT ? OFFSET ?");
 
         try (Connection conn = DBContext.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql.toString())) {
@@ -145,6 +261,7 @@ public class OrderDAO {
                 String kw = "%" + keyword + "%";
                 ps.setString(idx++, kw); ps.setString(idx++, kw);
                 ps.setString(idx++, kw); ps.setString(idx++, kw);
+                ps.setString(idx++, kw);
             }
             ps.setInt(idx++, size);
             ps.setInt(idx, Math.max(0, (page - 1) * size));
@@ -167,12 +284,12 @@ public class OrderDAO {
     }
 
     public int countOrders(String statusFilter, String keyword) {
-        StringBuilder sql = new StringBuilder("SELECT COUNT(*) FROM orders WHERE 1=1");
+        StringBuilder sql = new StringBuilder("SELECT COUNT(*) FROM orders o JOIN users u ON u.id = o.user_id WHERE 1=1");
         if (statusFilter != null && !statusFilter.isEmpty() && !"all".equalsIgnoreCase(statusFilter)) {
-            sql.append(" AND status = ?");
+            sql.append(" AND o.status = ?");
         }
         if (keyword != null && !keyword.isEmpty()) {
-            sql.append(" AND (CAST(id AS CHAR) LIKE ? OR fullname LIKE ? OR phone LIKE ? OR address LIKE ?)");
+            sql.append(" AND (CAST(o.id AS CHAR) LIKE ? OR u.fullname LIKE ? OR COALESCE(o.recipient_fullname, o.fullname) LIKE ? OR COALESCE(o.recipient_phone, o.phone) LIKE ? OR COALESCE(o.shipping_address, o.address) LIKE ?)");
         }
         try (Connection conn = DBContext.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql.toString())) {
@@ -185,6 +302,7 @@ public class OrderDAO {
                 String kw = "%" + keyword + "%";
                 ps.setString(idx++, kw); ps.setString(idx++, kw);
                 ps.setString(idx++, kw); ps.setString(idx++, kw);
+                ps.setString(idx++, kw);
             }
             try (ResultSet rs = ps.executeQuery()) {
                 if (rs.next()) return rs.getInt(1);
@@ -205,8 +323,8 @@ public class OrderDAO {
             if (i > 0) placeholders.append(",");
             placeholders.append("?");
         }
-        String sql = "SELECT oi.*, p.name as product_name, p.image as product_image " +
-                     "FROM order_items oi JOIN products p ON oi.product_id = p.id " +
+        String sql = "SELECT oi.*, COALESCE(oi.product_name_snapshot, p.name) as product_name, COALESCE(oi.product_image_snapshot, p.image) as product_image " +
+                     "FROM order_items oi LEFT JOIN products p ON oi.product_id = p.id " +
                      "WHERE oi.order_id IN (" + placeholders + ")";
         java.util.Map<Integer, List<OrderItem>> itemMap = new java.util.HashMap<>();
         try (PreparedStatement ps = conn.prepareStatement(sql)) {
@@ -221,6 +339,14 @@ public class OrderDAO {
                     item.setProductId(rs.getInt("product_id"));
                     item.setQuantity(rs.getInt("quantity"));
                     item.setPrice(rs.getBigDecimal("price"));
+                    item.setOriginalPrice(rs.getBigDecimal("original_price"));
+                    item.setFinalPrice(rs.getBigDecimal("final_price"));
+                    item.setDiscountAmount(rs.getBigDecimal("discount_amount"));
+                    item.setPromotionId((Integer) rs.getObject("promotion_id"));
+                    item.setPromotionName(rs.getString("promotion_name"));
+                    item.setPromotionType(rs.getString("promotion_type"));
+                    item.setProductNameSnapshot(rs.getString("product_name"));
+                    item.setProductImageSnapshot(rs.getString("product_image"));
                     Product p = new Product();
                     p.setId(rs.getInt("product_id"));
                     p.setName(rs.getString("product_name"));
@@ -236,7 +362,7 @@ public class OrderDAO {
     }
 
     public Order getOrderById(int orderId) {
-        String query = "SELECT * FROM orders WHERE id = ?";
+        String query = ORDER_SELECT + "WHERE o.id = ?";
         try (Connection conn = DBContext.getConnection();
              PreparedStatement ps = conn.prepareStatement(query)) {
             paymentTransactionDAO.expirePendingTransactions();
@@ -266,8 +392,8 @@ public class OrderDAO {
 
     public List<OrderItem> getOrderItems(Connection conn, int orderId) throws Exception {
         List<OrderItem> list = new ArrayList<>();
-        String query = "SELECT oi.*, p.name as product_name, p.image as product_image " +
-                       "FROM order_items oi JOIN products p ON oi.product_id = p.id " +
+        String query = "SELECT oi.*, COALESCE(oi.product_name_snapshot, p.name) as product_name, COALESCE(oi.product_image_snapshot, p.image) as product_image " +
+                       "FROM order_items oi LEFT JOIN products p ON oi.product_id = p.id " +
                        "WHERE oi.order_id = ?";
         try (PreparedStatement ps = conn.prepareStatement(query)) {
             ps.setInt(1, orderId);
@@ -279,6 +405,14 @@ public class OrderDAO {
                     item.setProductId(rs.getInt("product_id"));
                     item.setQuantity(rs.getInt("quantity"));
                     item.setPrice(rs.getBigDecimal("price"));
+                    item.setOriginalPrice(rs.getBigDecimal("original_price"));
+                    item.setFinalPrice(rs.getBigDecimal("final_price"));
+                    item.setDiscountAmount(rs.getBigDecimal("discount_amount"));
+                    item.setPromotionId((Integer) rs.getObject("promotion_id"));
+                    item.setPromotionName(rs.getString("promotion_name"));
+                    item.setPromotionType(rs.getString("promotion_type"));
+                    item.setProductNameSnapshot(rs.getString("product_name"));
+                    item.setProductImageSnapshot(rs.getString("product_image"));
 
                     Product p = new Product();
                     p.setId(rs.getInt("product_id"));
@@ -300,7 +434,7 @@ public class OrderDAO {
     public boolean updateStatus(int orderId, String status, int changedByUserId) {
         ProductDAO productDAO = new ProductDAO();
         OrderStatusHistoryDAO historyDAO = new OrderStatusHistoryDAO();
-        String lockOrderQuery = "SELECT status, user_id FROM orders WHERE id = ? FOR UPDATE";
+        String lockOrderQuery = "SELECT status, payment_method, payment_status, user_id FROM orders WHERE id = ? FOR UPDATE";
         String updateStatusQuery = "UPDATE orders SET status = ? WHERE id = ?";
 
         try (Connection conn = DBContext.getConnection()) {
@@ -308,12 +442,16 @@ public class OrderDAO {
 
             try {
                 String currentStatus = null;
+                String currentPaymentMethod = null;
+                boolean currentPaymentPaid = false;
                 int orderOwnerId = -1;
                 try (PreparedStatement lockPs = conn.prepareStatement(lockOrderQuery)) {
                     lockPs.setInt(1, orderId);
                     try (ResultSet rs = lockPs.executeQuery()) {
                         if (rs.next()) {
                             currentStatus = rs.getString("status");
+                            currentPaymentMethod = rs.getString("payment_method");
+                            currentPaymentPaid = rs.getBoolean("payment_status");
                             orderOwnerId = rs.getInt("user_id");
                         }
                     }
@@ -332,11 +470,19 @@ public class OrderDAO {
                     conn.rollback();
                     return false;
                 }
+                if (requiresPaidOnlineOrder(currentPaymentMethod, currentPaymentPaid, toStatus)) {
+                    log.warn("Rejected unpaid online order transition: paymentMethod={} paid={} target={} orderId={}",
+                            currentPaymentMethod, currentPaymentPaid, status, orderId);
+                    conn.rollback();
+                    return false;
+                }
                 // --------------------------------
 
                 boolean wasCancelled = "Cancelled".equalsIgnoreCase(currentStatus);
                 boolean willBeCancelled = "Cancelled".equalsIgnoreCase(status);
-                boolean willBeCompleted = "Completed".equalsIgnoreCase(status);
+                boolean willFinalizeCodPayment = isCodPayment(currentPaymentMethod)
+                        && !currentPaymentPaid
+                        && ("Delivered".equalsIgnoreCase(status) || "Completed".equalsIgnoreCase(status));
 
                 // Keep stock and status updates in one transaction so admin actions
                 // cannot leave inventory out of sync with the order state.
@@ -353,7 +499,7 @@ public class OrderDAO {
                             return false;
                         }
                     }
-                } else if (willBeCompleted) {
+                } else if (willFinalizeCodPayment) {
                     if (!finalizeReservedStockForOrder(conn, orderId)) {
                         conn.rollback();
                         return false;
@@ -385,6 +531,10 @@ public class OrderDAO {
                     conn.rollback();
                     return false;
                 }
+                if (willFinalizeCodPayment && !updatePaymentStatus(conn, orderId, true)) {
+                    conn.rollback();
+                    return false;
+                }
 
                 conn.commit();
                 return true;
@@ -398,6 +548,20 @@ public class OrderDAO {
             log.error("DB error", e);
         }
         return false;
+    }
+
+    private boolean requiresPaidOnlineOrder(String paymentMethod, boolean paymentPaid, OrderStatus targetStatus) {
+        if (paymentPaid || isCodPayment(paymentMethod)) {
+            return false;
+        }
+        return targetStatus == OrderStatus.CONFIRMED
+                || targetStatus == OrderStatus.SHIPPING
+                || targetStatus == OrderStatus.DELIVERED
+                || targetStatus == OrderStatus.COMPLETED;
+    }
+
+    private boolean isCodPayment(String paymentMethod) {
+        return paymentMethod == null || paymentMethod.isBlank() || "COD".equalsIgnoreCase(paymentMethod);
     }
 
     public int countPendingOrders() {
@@ -477,6 +641,10 @@ public class OrderDAO {
                 }
 
                 if (paid) {
+                    if (!markAwaitingPaymentOrderPaid(conn, orderId)) {
+                        conn.rollback();
+                        return false;
+                    }
                     if (!finalizeReservedStockForOrder(conn, orderId)) {
                         conn.rollback();
                         return false;
@@ -517,9 +685,26 @@ public class OrderDAO {
         }
     }
 
+    public boolean markAwaitingPaymentOrderPaid(Connection conn, int orderId) throws Exception {
+        try (PreparedStatement ps = conn.prepareStatement(
+                "UPDATE orders SET status = ? WHERE id = ? AND status = ?")) {
+            ps.setString(1, "Paid");
+            ps.setInt(2, orderId);
+            ps.setString(3, "Awaiting Payment");
+            ps.executeUpdate();
+            return true;
+        }
+    }
+
     public boolean releaseReservedStockForOrder(Connection conn, int orderId) throws Exception {
         ProductDAO productDAO = new ProductDAO();
+        PromotionDAO promotionDAO = new PromotionDAO();
         for (OrderItem item : getOrderItems(conn, orderId)) {
+            if ("FLASH_SALE".equalsIgnoreCase(item.getPromotionType()) && item.getPromotionId() != null) {
+                if (!promotionDAO.releaseFlashSaleQuantity(conn, item.getPromotionId(), item.getProductId(), item.getQuantity())) {
+                    return false;
+                }
+            }
             if (!productDAO.releaseReservedStock(conn, item.getProductId(), item.getQuantity())) {
                 return false;
             }
@@ -554,7 +739,7 @@ public class OrderDAO {
     }
 
     private Order getOrderByIdForUpdate(Connection conn, int orderId) throws Exception {
-        String query = "SELECT * FROM orders WHERE id = ? FOR UPDATE";
+        String query = ORDER_SELECT + "WHERE o.id = ? FOR UPDATE";
         try (PreparedStatement ps = conn.prepareStatement(query)) {
             ps.setInt(1, orderId);
             try (ResultSet rs = ps.executeQuery()) {
@@ -568,7 +753,7 @@ public class OrderDAO {
 
     public List<Order> getOrdersByUserId(int userId) {
         List<Order> list = new ArrayList<>();
-        String query = "SELECT * FROM orders WHERE user_id = ? ORDER BY createdAt DESC";
+        String query = ORDER_SELECT + "WHERE o.user_id = ? ORDER BY o.createdAt DESC";
         try (Connection conn = DBContext.getConnection();
              PreparedStatement ps = conn.prepareStatement(query)) {
             paymentTransactionDAO.expirePendingTransactions();
@@ -952,6 +1137,65 @@ public class OrderDAO {
             return false;
         }
     }
+
+    public boolean markOnlinePaymentPaidAndFinalize(int orderId, String paymentMethod) {
+        String lockSql = "SELECT payment_status FROM orders WHERE id = ? FOR UPDATE";
+        String updateSql = """
+        UPDATE orders
+        SET status = ?,
+            payment_method = ?,
+            payment_status = ?
+        WHERE id = ?
+    """;
+
+        try (Connection conn = DBContext.getConnection()) {
+            conn.setAutoCommit(false);
+            try {
+                Boolean alreadyPaid = null;
+                try (PreparedStatement lockPs = conn.prepareStatement(lockSql)) {
+                    lockPs.setInt(1, orderId);
+                    try (ResultSet rs = lockPs.executeQuery()) {
+                        if (rs.next()) {
+                            alreadyPaid = rs.getBoolean("payment_status");
+                        }
+                    }
+                }
+
+                if (alreadyPaid == null) {
+                    conn.rollback();
+                    return false;
+                }
+
+                try (PreparedStatement ps = conn.prepareStatement(updateSql)) {
+                    ps.setString(1, "Paid");
+                    ps.setString(2, paymentMethod);
+                    ps.setBoolean(3, true);
+                    ps.setInt(4, orderId);
+                    if (ps.executeUpdate() <= 0) {
+                        conn.rollback();
+                        return false;
+                    }
+                }
+
+                if (!alreadyPaid && !finalizeReservedStockForOrder(conn, orderId)) {
+                    conn.rollback();
+                    return false;
+                }
+
+                conn.commit();
+                return true;
+            } catch (Exception e) {
+                conn.rollback();
+                throw e;
+            } finally {
+                conn.setAutoCommit(true);
+            }
+        } catch (Exception e) {
+            log.error("DB error", e);
+            return false;
+        }
+    }
+
     public void autoCompleteDeliveredOrders() {
         String sql = "SELECT id FROM orders WHERE status = 'Delivered' " +
                 "AND status_updated_at < NOW() - INTERVAL 1 DAY";
@@ -967,4 +1211,3 @@ public class OrderDAO {
         }
     }
 }
-

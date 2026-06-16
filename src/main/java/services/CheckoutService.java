@@ -1,8 +1,22 @@
 package services;
 
 import Context.DBContext;
-import DAO.*;
-import Model.*;
+import DAO.CartDAO;
+import DAO.CouponDao;
+import DAO.InventoryBatchDAO;
+import DAO.OrderDAO;
+import DAO.PaymentTransactionDAO;
+import DAO.ProductDAO;
+import DAO.PromotionDAO;
+import DAO.UserDAO;
+import Model.CartItem;
+import Model.Coupon;
+import Model.CouponValidationResult;
+import Model.Order;
+import Model.OrderItem;
+import Model.PaymentTransaction;
+import Model.Product;
+import Model.User;
 import Util.AppConfig;
 import services.payment.BankTransferDetails;
 import services.payment.PaymentProvider;
@@ -28,6 +42,8 @@ public class CheckoutService {
     private final CartDAO cartDAO;
     private final OrderEmailService orderEmailService;
     private final InventoryBatchDAO inventoryBatchDAO;
+    private final PromotionDAO promotionDAO;
+    private final ProductPricingService pricingService;
 
     public CheckoutService(ProductDAO productDAO, UserDAO userDAO, CouponDao couponDao,
                            OrderDAO orderDAO, PaymentTransactionDAO paymentTransactionDAO,
@@ -48,6 +64,8 @@ public class CheckoutService {
         this.cartDAO = cartDAO;
         this.orderEmailService = orderEmailService;
         this.inventoryBatchDAO = inventoryBatchDAO;
+        this.promotionDAO = new PromotionDAO();
+        this.pricingService = new ProductPricingService(this.promotionDAO);
     }
 
     public CheckoutResult processCheckout(User user, Map<Integer, CartItem> cart,
@@ -71,27 +89,53 @@ public class CheckoutService {
                                           String paymentMethodKey,
                                           int shippingFee,
                                           String reservedTransferReference) throws Exception {
+        return processCheckout(
+                user,
+                cart,
+                user.getFullname(),
+                user.getPhone(),
+                fullAddress,
+                note,
+                couponState,
+                paymentMethodKey,
+                shippingFee,
+                reservedTransferReference
+        );
+    }
+
+    public CheckoutResult processCheckout(User user, Map<Integer, CartItem> cart,
+                                          String recipientFullname, String recipientPhone,
+                                          String shippingAddress, String note,
+                                          CouponValidationResult couponState,
+                                          String paymentMethodKey,
+                                          int shippingFee,
+                                          String reservedTransferReference) throws Exception {
         BigDecimal totalAmount = calculateCartTotal(cart);
 
         try (Connection conn = DBContext.getConnection()) {
             conn.setAutoCommit(false);
-
             try {
-                // 1. Check stock
                 for (CartItem item : cart.values()) {
                     Product latestProduct = productDAO.getProductByIdForUpdate(conn, item.getProduct().getId());
                     if (latestProduct == null) {
                         conn.rollback();
                         return new CheckoutResult(false, "Có sản phẩm không còn tồn tại.");
                     }
-                    if (latestProduct.getStock() < item.getQuantity()) {
+                    if (latestProduct.getAvailablePurchaseQuantity() < item.getQuantity()) {
                         conn.rollback();
-                        return new CheckoutResult(false, "Sản phẩm \"" + latestProduct.getName() + "\" chỉ còn " + latestProduct.getStock() + " sản phẩm.");
+                        return new CheckoutResult(false, "Sản phẩm \"" + latestProduct.getName() + "\" chỉ còn " + latestProduct.getAvailablePurchaseQuantity() + " sản phẩm có thể mua.");
+                    }
+                    pricingService.applyPricing(conn, latestProduct, Timestamp.valueOf(LocalDateTime.now()));
+                    if (!samePromotion(item.getProduct(), latestProduct)
+                            || item.getProduct().getEffectivePrice().compareTo(latestProduct.getEffectivePrice()) != 0) {
+                        conn.rollback();
+                        return new CheckoutResult(false, "Khuyến mãi của một số sản phẩm đã thay đổi. Vui lòng kiểm tra lại giỏ hàng trước khi đặt hàng.");
                     }
                     item.setProduct(latestProduct);
                 }
 
-                // 2. Process Coupon
+                totalAmount = calculateCartTotal(cart);
+
                 BigDecimal discount = BigDecimal.ZERO;
                 if (couponState != null && couponState.isValid()) {
                     Coupon latestCoupon = couponDao.getValidCouponByCode(conn, couponState.getCoupon().getCode());
@@ -99,8 +143,7 @@ public class CheckoutService {
                         conn.rollback();
                         return new CheckoutResult(false, "Mã giảm giá không hợp lệ hoặc đã hết hạn.");
                     }
-                    if (latestCoupon.getMinOrder() != null
-                            && totalAmount.compareTo(latestCoupon.getMinOrder()) < 0) {
+                    if (latestCoupon.getMinOrder() != null && totalAmount.compareTo(latestCoupon.getMinOrder()) < 0) {
                         conn.rollback();
                         return new CheckoutResult(false, "Đơn hàng chưa đạt giá trị tối thiểu để dùng mã giảm giá.");
                     }
@@ -117,7 +160,6 @@ public class CheckoutService {
 
                 BigDecimal finalTotal = totalAmount.add(BigDecimal.valueOf(shippingFee)).subtract(discount);
 
-                // 3. Resolve Payment
                 PaymentProvider provider = PaymentRegistry.getInstance().get(paymentMethodKey);
                 if (provider == null) {
                     conn.rollback();
@@ -129,18 +171,19 @@ public class CheckoutService {
                     return new CheckoutResult(false, paymentResult.getMessage());
                 }
 
-                // 4. Create Order
-                Order order = new Order();
-                order.setUserId(user.getId());
-                order.setFullname(user.getFullname());
-                order.setPhone(user.getPhone());
-                order.setAddress(fullAddress);
-                order.setNote(note);
-                order.setTotalAmount(finalTotal);
-                order.setStatus("Pending");
-                order.setCreatedAt(Timestamp.valueOf(LocalDateTime.now()));
-                order.setPayment_method(paymentResult.getPaymentMethodDb());
-                order.setPayment_status(paymentResult.isPaymentStatus());
+                Order order = buildOrderSnapshot(
+                        user,
+                        recipientFullname,
+                        recipientPhone,
+                        shippingAddress,
+                        note,
+                        finalTotal,
+                        paymentResult.getPaymentMethodDb(),
+                        paymentResult.isPaymentStatus()
+                );
+                order.setSubtotal(totalAmount);
+                order.setShippingFee(BigDecimal.valueOf(shippingFee));
+                order.setDiscountAmount(discount);
 
                 int orderId = orderDAO.saveOrder(conn, order);
                 if (orderId <= 0) {
@@ -149,24 +192,41 @@ public class CheckoutService {
                 }
 
                 BankTransferDetails bankTransferDetails = BankTransferDetails.fromConfig();
-                if ("BANK_TRANSFER".equalsIgnoreCase(paymentResult.getPaymentMethodDb())
-                        && !bankTransferDetails.isConfigured()) {
+                if ("BANK_TRANSFER".equalsIgnoreCase(paymentResult.getPaymentMethodDb()) && !bankTransferDetails.isConfigured()) {
                     conn.rollback();
                     return new CheckoutResult(false, "Thiếu cấu hình chuyển khoản ngân hàng. Vui lòng liên hệ quản trị viên.");
                 }
 
-                // 5. Reserve Stock and save Order Items
                 for (CartItem ci : cart.values()) {
-                    if (!productDAO.reserveStock(conn, ci.getProduct().getId(), ci.getQuantity())) {
+                    Product product = ci.getProduct();
+                    if (product.isFlashSale()) {
+                        Integer promotionId = product.getActivePromotionId();
+                        Integer remaining = product.getFlashSaleRemainingQuantity();
+                        if (promotionId == null || remaining == null || ci.getQuantity() > remaining
+                                || !promotionDAO.reserveFlashSaleQuantity(conn, promotionId, product.getId(), ci.getQuantity())) {
+                            conn.rollback();
+                            return new CheckoutResult(false, "Khuyến mãi của một số sản phẩm đã thay đổi. Vui lòng kiểm tra lại giỏ hàng trước khi đặt hàng.");
+                        }
+                    }
+
+                    if (!productDAO.reserveStock(conn, product.getId(), ci.getQuantity())) {
                         conn.rollback();
-                        return new CheckoutResult(false, "Sản phẩm \"" + ci.getProduct().getName() + "\" đã hết hàng trong lúc thanh toán.");
+                        return new CheckoutResult(false, "Sản phẩm \"" + product.getName() + "\" đã hết hàng trong lúc thanh toán.");
                     }
 
                     OrderItem orderItem = new OrderItem();
                     orderItem.setOrderId(orderId);
-                    orderItem.setProductId(ci.getProduct().getId());
+                    orderItem.setProductId(product.getId());
                     orderItem.setQuantity(ci.getQuantity());
-                    orderItem.setPrice(ci.getProduct().getPrice());
+                    orderItem.setPrice(product.getEffectivePrice());
+                    orderItem.setOriginalPrice(product.getOriginalPrice());
+                    orderItem.setFinalPrice(product.getEffectivePrice());
+                    orderItem.setDiscountAmount(product.getDiscountAmount());
+                    orderItem.setPromotionId(product.getActivePromotionId());
+                    orderItem.setPromotionName(product.getActivePromotionName());
+                    orderItem.setPromotionType(product.getActivePromotionType());
+                    orderItem.setProductNameSnapshot(product.getName());
+                    orderItem.setProductImageSnapshot(product.getImage());
 
                     if (!orderDAO.saveOrderItem(conn, orderItem)) {
                         conn.rollback();
@@ -174,7 +234,6 @@ public class CheckoutService {
                     }
                 }
 
-                // 6. Save Payment Transaction
                 PaymentTransaction paymentTransaction = buildPaymentTransaction(
                         user, orderId, finalTotal, paymentResult, bankTransferDetails, reservedTransferReference
                 );
@@ -184,11 +243,9 @@ public class CheckoutService {
                     return new CheckoutResult(false, "Không tạo được giao dịch thanh toán.");
                 }
 
-                // 7. Commit Transaction
                 cartDAO.clearCart(conn, user.getId());
                 conn.commit();
 
-                // 8. Fire async tasks
                 sendOrderConfirmationAsync(user, cart, orderId, order);
 
                 CheckoutResult successResult = new CheckoutResult(true, "Đặt hàng thành công!");
@@ -200,7 +257,6 @@ public class CheckoutService {
                 successResult.setDiscount(discount);
                 successResult.setFinalTotal(finalTotal);
                 return successResult;
-
             } catch (Exception e) {
                 conn.rollback();
                 throw e;
@@ -212,8 +268,37 @@ public class CheckoutService {
 
     private BigDecimal calculateCartTotal(Map<Integer, CartItem> cart) {
         return cart.values().stream()
-                .map(item -> item.getProduct().getPrice().multiply(BigDecimal.valueOf(item.getQuantity())))
+                .map(item -> item.getProduct().getEffectivePrice().multiply(BigDecimal.valueOf(item.getQuantity())))
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
+    }
+
+    static Order buildOrderSnapshot(User user, String recipientFullname, String recipientPhone,
+                                    String shippingAddress, String note, BigDecimal finalTotal,
+                                    String paymentMethodDb, boolean paymentStatus) {
+        Order order = new Order();
+        order.setUserId(user.getId());
+        order.setCustomerFullname(user.getFullname());
+        order.setCustomerPhone(user.getPhone());
+        order.setRecipientFullname(recipientFullname);
+        order.setRecipientPhone(recipientPhone);
+        order.setShippingAddress(shippingAddress);
+        order.setNote(note);
+        order.setTotalAmount(finalTotal);
+        order.setStatus(resolveInitialOrderStatus(paymentMethodDb, paymentStatus));
+        order.setCreatedAt(Timestamp.valueOf(LocalDateTime.now()));
+        order.setPayment_method(paymentMethodDb);
+        order.setPayment_status(paymentStatus);
+        return order;
+    }
+
+    private static String resolveInitialOrderStatus(String paymentMethodDb, boolean paymentStatus) {
+        if ("BANK_TRANSFER".equalsIgnoreCase(paymentMethodDb)) {
+            return "Awaiting Payment";
+        }
+        if (paymentStatus && !"COD".equalsIgnoreCase(paymentMethodDb)) {
+            return "Paid";
+        }
+        return "Pending";
     }
 
     private BigDecimal calculateDiscount(BigDecimal cartTotal, Coupon coupon) {
@@ -248,12 +333,12 @@ public class CheckoutService {
         transaction.setAmount(finalTotal);
         transaction.setCurrency(bankTransferDetails.getCurrency());
         transaction.setStatus(paymentResult.getTransactionStatus());
-        transaction.setVerificationStatus(paymentResult.isPendingVerification() ? "PENDING" : "NOT_REQUIRED");
+        transaction.setVerificationStatus(isPendingPaymentVerification(paymentResult) ? "PENDING" : "NOT_REQUIRED");
         transaction.setVerificationMessage(paymentResult.getMessage());
         Timestamp now = Timestamp.valueOf(LocalDateTime.now());
         transaction.setCreatedAt(now);
         transaction.setUpdatedAt(now);
-        if (paymentResult.isPendingVerification()) {
+        if ("BANK_TRANSFER".equalsIgnoreCase(paymentResult.getPaymentMethodDb()) && paymentResult.isPendingVerification()) {
             String transferReference = hasText(reservedTransferReference)
                     ? reservedTransferReference.trim()
                     : bankTransferDetails.buildTransferReference(orderId);
@@ -262,6 +347,12 @@ public class CheckoutService {
             transaction.setExpiresAt(Timestamp.valueOf(LocalDateTime.now().plusMinutes(pendingMinutes)));
         }
         return transaction;
+    }
+
+    private boolean isPendingPaymentVerification(PaymentResult paymentResult) {
+        return paymentResult.isPendingVerification()
+                || ("VNPAY".equalsIgnoreCase(paymentResult.getPaymentMethodDb())
+                && !paymentResult.isPaymentStatus());
     }
 
     private boolean hasText(String value) {
@@ -279,6 +370,8 @@ public class CheckoutService {
                 return "MoMo";
             case "BANK_TRANSFER":
                 return "Bank Transfer";
+            case "VNPAY":
+                return "VNPAY";
             default:
                 return paymentMethodDb;
         }
@@ -291,7 +384,15 @@ public class CheckoutService {
             oi.setOrderId(orderId);
             oi.setProductId(ci.getProduct().getId());
             oi.setQuantity(ci.getQuantity());
-            oi.setPrice(ci.getProduct().getPrice());
+            oi.setPrice(ci.getProduct().getEffectivePrice());
+            oi.setOriginalPrice(ci.getProduct().getOriginalPrice());
+            oi.setFinalPrice(ci.getProduct().getEffectivePrice());
+            oi.setDiscountAmount(ci.getProduct().getDiscountAmount());
+            oi.setPromotionId(ci.getProduct().getActivePromotionId());
+            oi.setPromotionName(ci.getProduct().getActivePromotionName());
+            oi.setPromotionType(ci.getProduct().getActivePromotionType());
+            oi.setProductNameSnapshot(ci.getProduct().getName());
+            oi.setProductImageSnapshot(ci.getProduct().getImage());
             oi.setProduct(ci.getProduct());
             confirmedItems.add(oi);
         });
@@ -301,5 +402,14 @@ public class CheckoutService {
         if (userEmail != null && !userEmail.isEmpty()) {
             orderEmailService.sendOrderConfirmationAsync(userEmail, order, confirmedItems);
         }
+    }
+
+    private boolean samePromotion(Product cartProduct, Product latestProduct) {
+        Integer cartPromotionId = cartProduct == null ? null : cartProduct.getActivePromotionId();
+        Integer latestPromotionId = latestProduct == null ? null : latestProduct.getActivePromotionId();
+        if (cartPromotionId == null && latestPromotionId == null) {
+            return true;
+        }
+        return cartPromotionId != null && cartPromotionId.equals(latestPromotionId);
     }
 }

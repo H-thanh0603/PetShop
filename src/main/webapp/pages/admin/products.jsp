@@ -374,8 +374,11 @@
                     </c:if>
                     <c:forEach items="${products}" var="p" varStatus="loop">
                         <tr data-id="${p.id}" data-name="${fn:escapeXml(p.name)}" data-image="${fn:escapeXml(p.image)}" 
-                            data-price="${p.price}" data-discount="${p.discount}" data-description="${fn:escapeXml(p.description)}"
-                            data-weight="${p.weight}" data-category="${fn:escapeXml(p.category)}" data-pet-type-id="${p.pet_type_id}">
+                            data-price="${p.price}" data-discount="${p.displayDiscountPercent}" data-description="${fn:escapeXml(p.description)}"
+                            data-has-discount="${p.hasPromotion}"
+                            data-stock="${p.stock}" data-weight="${p.weight}" data-category="${fn:escapeXml(p.category)}" data-pet-type-id="${p.pet_type_id}"
+                            data-stock-status="${p.stock == 0 ? 'out-of-stock' : (p.stock < 10 ? 'low-stock' : 'ok')}"
+                            data-expiry-status="${empty inventory ? 'missing-batch' : inventory.expiryStatus}">
                             <td class="row-index"><strong>${loop.index + 1}</strong></td>
                             <td>
                                 <img loading="lazy" src="${fn:startsWith(p.image, 'http') ? fn:escapeXml(p.image) : pageContext.request.contextPath += '/assets/images/shop_pic/' += fn:escapeXml(p.image)}" 
@@ -398,8 +401,8 @@
                             <td><span class="price-current">${fn:escapeXml(p.formattedPrice)}</span></td>
                             <td>
                                 <c:choose>
-                                    <c:when test="${p.discount > 0}">
-                                        <span class="discount-badge">-${p.discount}%</span>
+                                    <c:when test="${p.hasPromotion}">
+                                        <span class="discount-badge">-${p.displayDiscountPercent}%</span>
                                     </c:when>
                                     <c:otherwise>
                                         <span class="no-discount">-</span>
@@ -499,12 +502,7 @@
                             <input type="hidden" name="price" id="formPrice">
                             <div class="price-display" id="pricePreview"></div>
                         </div>
-                        <div class="form-group">
-                            <label class="form-label">Giảm giá (%)</label>
-                            <input type="number" class="form-input" name="discount" id="formDiscount"
-                                   placeholder="VD: 10" min="0" max="100" value="0" step="1">
-                            <div class="input-hint">Nhập phần trăm giảm giá (0-100)</div>
-                        </div>
+                        <input type="hidden" name="discount" id="formDiscount" value="0">
                     </div>
                     
                     <div class="form-group">
@@ -635,7 +633,9 @@
             // 1. Lọc các hàng thỏa mãn điều kiện
             filteredRows = allRows.filter(function(row) {
                 var name = (row.dataset.name || '').toLowerCase();
-                var hasDiscount = parseInt(row.dataset.discount) > 0;
+                var hasDiscount = row.dataset.hasDiscount === "true";
+                var stockStatus = row.dataset.stockStatus || 'ok';
+                var expiryStatus = row.dataset.expiryStatus || 'missing-batch';
                 
                 var matchSearch = !search || name.indexOf(search) > -1;
                 var matchDiscount = !discount || 

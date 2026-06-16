@@ -132,7 +132,7 @@ public class CartServlet extends HttpServlet {
             Map<String, Object> itemData = new HashMap<>();
             itemData.put("productId", item.getProduct().getId());
             itemData.put("quantity", item.getQuantity());
-            itemData.put("stock", item.getProduct().getStock());
+            itemData.put("stock", item.getProduct().getAvailablePurchaseQuantity());
             items.add(itemData);
         }
         result.put("items", items);
@@ -302,7 +302,7 @@ public class CartServlet extends HttpServlet {
                 result.put("success", true);
                 result.put("removed", true);
                 result.put("quantity", 0);
-                result.put("stock", existingItem.getProduct().getStock());
+                result.put("stock", existingItem.getProduct().getAvailablePurchaseQuantity());
                 result.put("totalQuantity", recalculateTotalQuantity(session, cart));
                 writeJson(response, result);
                 return;
@@ -318,7 +318,7 @@ public class CartServlet extends HttpServlet {
                 Map<String, Object> result = new HashMap<>();
                 result.put("success", false);
                 result.put("message", validation.getMessage());
-                result.put("stock", latestProduct != null ? latestProduct.getStock() : 0);
+                result.put("stock", latestProduct != null ? latestProduct.getAvailablePurchaseQuantity() : 0);
                 result.put("outOfStock", validation.isOutOfStock());
 
                 if (validation.isOutOfStock()) {
@@ -357,7 +357,7 @@ public class CartServlet extends HttpServlet {
             Map<String, Object> result = new HashMap<>();
             result.put("success", true);
             result.put("quantity", syncedItem != null ? syncedItem.getQuantity() : validation.getSuggestedQuantity());
-            result.put("stock", syncedItem != null ? syncedItem.getProduct().getStock() : (latestProduct != null ? latestProduct.getStock() : 0));
+            result.put("stock", syncedItem != null ? syncedItem.getProduct().getAvailablePurchaseQuantity() : (latestProduct != null ? latestProduct.getAvailablePurchaseQuantity() : 0));
             result.put("totalQuantity", recalculateTotalQuantity(session, cart));
             writeJson(response, result);
         } catch (Exception e) {

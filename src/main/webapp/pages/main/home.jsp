@@ -1,5 +1,8 @@
 <%@ page language="java" contentType="text/html; charset=UTF-8"
 	pageEncoding="UTF-8"%>
+<%@ taglib prefix="c" uri="jakarta.tags.core" %>
+<%@ taglib prefix="fmt" uri="jakarta.tags.fmt" %>
+<%@ taglib prefix="fn" uri="jakarta.tags.functions" %>
 <!DOCTYPE html>
 <html lang="vi">
 <head>
@@ -163,15 +166,33 @@
 .category-pill:hover {
     color: #00bfa5;
 }
+.flash-sale-section { padding: 0 0 60px; }
+.flash-sale-shell { background: linear-gradient(135deg, #fff7ed, #fff1f2); border: 1px solid #fed7aa; border-radius: 32px; padding: 32px; box-shadow: 0 22px 40px rgba(251,146,60,.12); }
+.flash-sale-head h3 { color: #9a3412; font-weight: 800; margin-bottom: 8px; }
+.flash-sale-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 18px; margin-top: 24px; }
+.flash-card { background: #fff; border-radius: 22px; overflow: hidden; border: 1px solid #ffe4d6; box-shadow: 0 12px 24px rgba(15,23,42,.08); }
+.flash-card img { width: 100%; height: 190px; object-fit: contain; background: #fff8f1; padding: 16px; }
+.flash-card-body { padding: 18px; }
+.flash-pill { display: inline-flex; align-items: center; gap: 6px; background: #ef4444; color: #fff; border-radius: 999px; padding: 6px 12px; font-size: .75rem; font-weight: 700; }
+.flash-title { font-weight: 700; color: #1f2937; min-height: 48px; margin: 12px 0; }
+.flash-prices { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; }
+.flash-price { font-size: 1.3rem; font-weight: 800; color: #be123c; }
+.flash-old { color: #94a3b8; text-decoration: line-through; font-size: .9rem; }
+.flash-meta { display: flex; justify-content: space-between; align-items: center; margin: 12px 0 14px; font-size: .85rem; color: #7c2d12; gap: 10px; }
+.flash-progress { height: 10px; border-radius: 999px; background: #ffe7d6; overflow: hidden; }
+.flash-progress > span { display: block; height: 100%; background: linear-gradient(90deg, #fb7185, #f97316); }
+.flash-timer { font-size: .82rem; font-weight: 700; color: #9a3412; }
 @media (max-width: 991px) {
     .quick-stats {
         grid-template-columns: repeat(2, 1fr);
     }
+    .flash-sale-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
 @media (max-width: 576px) {
     .quick-stats {
         grid-template-columns: 1fr;
     }
+    .flash-sale-grid { grid-template-columns: 1fr; }
 }
 
 /* Button booking */
@@ -279,6 +300,58 @@
             <a href="${pageContext.request.contextPath}/shop" class="btn btn-lg btn-booking p-3 px-5">Đến Cửa Hàng <i class='bx bx-shopping-bag'></i></a>
         </div>
     </section>
+
+    <c:if test="${not empty flashSaleProducts}">
+        <section class="container flash-sale-section">
+            <div class="flash-sale-shell">
+                <div class="flash-sale-head d-flex justify-content-between align-items-end flex-wrap gap-3">
+                    <div>
+                        <div class="text-uppercase small fw-bold" style="color:#ea580c; letter-spacing: 2px;">Flash Sale hôm nay</div>
+                        <h3>Bé cưng mua nhanh, giá đang giảm sâu</h3>
+                        <p class="mb-0 text-muted">Số lượng có hạn, giá sẽ tự trở về bình thường khi hết quota hoặc hết giờ.</p>
+                    </div>
+                    <a href="${pageContext.request.contextPath}/shop?discountOnly=true" class="btn btn-booking">Xem thêm ưu đãi</a>
+                </div>
+                <div class="flash-sale-grid">
+                    <c:forEach items="${flashSaleProducts}" var="p">
+                        <c:set var="remaining" value="${p.flashSaleRemainingQuantity != null ? p.flashSaleRemainingQuantity : 0}" />
+                        <c:set var="sold" value="${remaining > 0 ? 0 : 0}" />
+                        <div class="flash-card">
+                            <a href="${pageContext.request.contextPath}/product-detail?id=${p.id}">
+                                <c:set var="flashImageUrl" value="${fn:startsWith(p.image, 'http') ? p.image : pageContext.request.contextPath}${fn:startsWith(p.image, 'http') ? '' : '/assets/images/shop_pic/'}${fn:startsWith(p.image, 'http') ? '' : p.image}" />
+                                <img src="${fn:escapeXml(flashImageUrl)}"
+                                     alt="${fn:escapeXml(p.name)}"
+                                     onerror="this.src='https://placehold.co/360x240/fef3c7/9a3412?text=Flash+Sale'">
+                            </a>
+                            <div class="flash-card-body">
+                                <span class="flash-pill">Flash Sale</span>
+                                <div class="flash-title">${fn:escapeXml(p.name)}</div>
+                                <div class="flash-prices">
+                                    <div class="flash-price">${fn:escapeXml(p.formattedPrice)}</div>
+                                    <div class="flash-old">${fn:escapeXml(p.formattedOldPrice)}</div>
+                                    <div class="small fw-bold text-danger">-${p.displayDiscountPercent}%</div>
+                                </div>
+                                <div class="flash-meta">
+                                    <span>Còn lại: ${remaining}</span>
+                                    <span class="flash-timer" data-flash-end="${p.promotionEndTime != null ? p.promotionEndTime.time : 0}">Sắp kết thúc</span>
+                                </div>
+                                <div class="flash-progress"><span style="width:${remaining > 0 ? 100 - remaining : 100}%"></span></div>
+                                <div class="mt-3 d-flex gap-2">
+                                    <a href="${pageContext.request.contextPath}/product-detail?id=${p.id}" class="btn btn-outline-dark btn-sm flex-fill">Xem chi tiết</a>
+                                    <form action="${pageContext.request.contextPath}/add-to-cart" method="post" class="flex-fill">
+                                        <input type="hidden" name="csrfToken" value="${csrfToken}">
+                                        <input type="hidden" name="id" value="${p.id}">
+                                        <input type="hidden" name="quantity" value="1">
+                                        <button type="submit" class="btn btn-booking btn-sm w-100" ${remaining <= 0 ? 'disabled' : ''}>Thêm vào giỏ</button>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                    </c:forEach>
+                </div>
+            </div>
+        </section>
+    </c:if>
     <section class="category-strip text-center mb-5">
         <a class="category-pill" href="${pageContext.request.contextPath}/shop?pet=dog"><i class='bx bxs-dog'></i> Mua cho chó</a>
         <a class="category-pill" href="${pageContext.request.contextPath}/shop?pet=cat"><i class='bx bxs-cat'></i> Mua cho mèo</a>
@@ -298,6 +371,26 @@
                     nav.classList.remove('navbar-scrolled'); 
                 }
             }
+        });
+
+        document.querySelectorAll('[data-flash-end]').forEach(function (node) {
+            const endTime = Number(node.getAttribute('data-flash-end') || '0');
+            if (!endTime) {
+                return;
+            }
+            const tick = function () {
+                const remain = Math.max(0, endTime - Date.now());
+                const hours = Math.floor(remain / 3600000);
+                const minutes = Math.floor((remain % 3600000) / 60000);
+                const seconds = Math.floor((remain % 60000) / 1000);
+                if (remain <= 0) {
+                    node.textContent = 'Đã kết thúc';
+                    return;
+                }
+                node.textContent = 'Còn ' + String(hours).padStart(2, '0') + ':' + String(minutes).padStart(2, '0') + ':' + String(seconds).padStart(2, '0');
+            };
+            tick();
+            setInterval(tick, 1000);
         });
     </script>
     

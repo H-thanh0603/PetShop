@@ -35,12 +35,7 @@ public class LogoutServlet extends HttpServlet {
         clearCookie.setHttpOnly(true);
         response.addCookie(clearCookie);
         
-        String from = request.getParameter("from");
-        if ("admin".equals(from)) {
-            response.sendRedirect(request.getContextPath() + "/admin/login");
-        } else {
-            response.sendRedirect(request.getContextPath() + "/home");
-        }
+        response.sendRedirect(request.getContextPath() + "/home");
     }
 
     protected void doPost(HttpServletRequest request, HttpServletResponse response) 

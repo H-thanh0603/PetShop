@@ -43,6 +43,28 @@ dependencies {
     // SLF4J + Logback
     implementation 'org.slf4j:slf4j-api:2.0.13'
     implementation 'ch.qos.logback:logback-classic:1.5.6'
+
+    testImplementation 'org.junit.jupiter:junit-jupiter:5.10.2'
+    testImplementation 'org.mockito:mockito-core:5.12.0'
+    testImplementation 'org.mockito:mockito-junit-jupiter:5.12.0'
+    testImplementation 'org.mockito:mockito-inline:5.2.0'
+    testImplementation 'net.jqwik:jqwik:1.8.4'
+}
+
+configurations.configureEach {
+    resolutionStrategy.force 'com.google.code.gson:gson:2.10.1'
+}
+
+configurations.testCompileClasspath {
+    exclude group: 'io.github.momo-wallet', module: 'momopayment'
+}
+
+configurations.testRuntimeClasspath {
+    exclude group: 'io.github.momo-wallet', module: 'momopayment'
+}
+
+test {
+    useJUnitPlatform()
 }
 
 tasks.withType(JavaCompile).configureEach {
@@ -60,10 +82,13 @@ def deployPassword = prop('deployPassword')
 def deployIdentity = prop('deployIdentity')
 def deployDir = prop('deployDir', '/usr/deploy')
 def appContext = prop('appContext', 'ROOT')
+def appBaseUrl = prop('appBaseUrl')
+def appContextPath = prop('appContextPath', appContext == 'ROOT' ? '' : "/${appContext}")
+def appCookiesSecure = prop('appCookiesSecure', 'true')
 def httpPort = prop('httpPort', '80')
 def dockerNetwork = prop('dockerNetwork', 'petshop-net')
 def tomcatContainer = prop('tomcatContainer', 'tomcat10')
-def tomcatImage = prop('tomcatImage', 'tomcat:10.1')
+def tomcatImage = prop('tomcatImage', 'tomcat:10.1-jdk21')
 def mysqlContainer = prop('mysqlContainer', 'mysql')
 def mysqlImage = prop('mysqlImage', 'mysql:8.0')
 def mysqlRootPassword = prop('mysqlRootPassword', '12345')
@@ -74,6 +99,16 @@ def dbName = prop('dbName', mysqlDatabase)
 def dbUser = prop('dbUser', 'root')
 def dbPassword = prop('dbPassword', mysqlRootPassword)
 def dbOption = prop('dbOption', 'useUnicode=true&characterEncoding=utf-8&useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true')
+def bankId = prop('bankId', 'VPB')
+def bankDisplayName = prop('bankDisplayName', 'VP Bank')
+def bankAccountNumber = prop('bankAccountNumber', '0368600557')
+def bankAccountName = prop('bankAccountName', 'NGUYEN HUU THANH')
+def bankTransferPrefix = prop('bankTransferPrefix', 'PETSH')
+def bankCurrency = prop('bankCurrency', 'VND')
+def bankWebhookSecret = prop('bankWebhookSecret')
+def bankPendingMinutes = prop('bankPendingMinutes', '60')
+def systemTomcatService = prop('systemTomcatService', 'tomcat10')
+def systemTomcatWebapps = prop('systemTomcatWebapps', '/var/lib/tomcat10/webapps')
 
 tasks.named('war') {
     archiveFileName = "${appContext}.war"
@@ -114,6 +149,74 @@ tasks.register('docker_mysql_start') {
                         "-e MYSQL_ROOT_PASSWORD='${mysqlRootPassword}' " +
                         "-e MYSQL_DATABASE='${mysqlDatabase}' " +
                         "${mysqlImage}"
+            }
+        }
+    }
+}
+
+tasks.register('remote_status') {
+    group = 'deployment'
+    description = 'Read-only deployment diagnostics on the remote server.'
+
+    doLast {
+        println 'begin remote_status'
+        ssh.run {
+            session(remotes.webServer) {
+                execute 'set -e; echo HOSTNAME=$(hostname); echo USER=$(whoami); echo PWD=$(pwd)'
+                execute "command -v docker >/dev/null 2>&1 && docker --version || echo DOCKER_MISSING"
+                execute "docker ps -a --format 'table {{.Names}}\t{{.Image}}\t{{.Status}}\t{{.Ports}}' || true"
+                execute "ss -ltnp 2>/dev/null | grep -E ':(80|443|8080|3306) ' || true"
+                execute "ls -la ${deployDir} 2>/dev/null || true"
+                execute "docker inspect petshop-tomcat --format 'tomcat_image={{.Config.Image}} tomcat_mounts={{range .Mounts}}{{.Source}}:{{.Destination}} {{end}} tomcat_networks={{range \$k,\$v := .NetworkSettings.Networks}}{{\$k}} {{end}}' 2>/dev/null || true"
+                execute "docker inspect petshop-mysql --format 'mysql_image={{.Config.Image}} mysql_mounts={{range .Mounts}}{{.Source}}:{{.Destination}} {{end}} mysql_networks={{range \$k,\$v := .NetworkSettings.Networks}}{{\$k}} {{end}}' 2>/dev/null || true"
+                execute "docker exec petshop-tomcat sh -lc 'ls -la /usr/local/tomcat/webapps 2>/dev/null || true' 2>/dev/null || true"
+                execute "grep -R \"melipet\\|proxy_pass\\|server_name\" /etc/nginx/sites-enabled /etc/nginx/conf.d 2>/dev/null || true"
+                execute 'pid=$(ss -ltnp 2>/dev/null | sed -n "s/.*:8080 .*pid=\\([0-9]*\\).*/\\1/p" | head -1); echo PORT_8080_PID=$pid; [ -n "$pid" ] && ps -fp "$pid" || true; [ -n "$pid" ] && readlink -f /proc/$pid/cwd || true; [ -n "$pid" ] && tr "\\000" " " < /proc/$pid/cmdline || true'
+            }
+        }
+    }
+}
+
+tasks.register('remote_app_config_status') {
+    group = 'deployment'
+    description = 'Read deployed Tomcat app config with secrets masked.'
+
+    doLast {
+        println 'begin remote_app_config_status'
+        ssh.run {
+            session(remotes.webServer) {
+                execute 'ls -la /var/lib/tomcat10/webapps 2>/dev/null || true'
+                execute 'for f in /var/lib/tomcat10/webapps/PetShop/WEB-INF/classes/app.properties /var/lib/tomcat10/webapps/PetShop/WEB-INF/classes/db.properties /var/lib/tomcat10/webapps/PetShop/WEB-INF/classes/secrets.properties /var/lib/tomcat10/webapps/ROOT/WEB-INF/classes/app.properties /var/lib/tomcat10/webapps/ROOT/WEB-INF/classes/db.properties /var/lib/tomcat10/webapps/ROOT/WEB-INF/classes/secrets.properties; do echo "--- $f"; [ -f "$f" ] && sed -E "s/(password[[:space:]]*=[[:space:]]*).*/\\1***MASKED***/I; s/(secret[[:space:]]*=[[:space:]]*).*/\\1***MASKED***/I; s/(key[[:space:]]*=[[:space:]]*).*/\\1***MASKED***/I" "$f" || true; done'
+                execute 'systemctl is-active tomcat10 || true'
+                execute 'systemctl cat tomcat10 2>/dev/null | sed -E "s/(PASSWORD|SECRET|KEY)=([^ ]+)/\\1=***MASKED***/g" || true'
+            }
+        }
+    }
+}
+
+tasks.register('remote_payment_debug') {
+    group = 'deployment'
+    description = 'Read-only diagnostics for production bank-transfer reconciliation.'
+
+    doLast {
+        println 'begin remote_payment_debug'
+        ssh.run {
+            session(remotes.webServer) {
+                execute 'DB_ENV=$(systemctl show tomcat10 -p Environment --value); ' +
+                        'DB_HOST=$(printf "%s\n" "$DB_ENV" | tr " " "\n" | sed -n "s/^DB_HOST=//p" | tail -1); ' +
+                        'DB_PORT=$(printf "%s\n" "$DB_ENV" | tr " " "\n" | sed -n "s/^DB_PORT=//p" | tail -1); ' +
+                        'DB_NAME=$(printf "%s\n" "$DB_ENV" | tr " " "\n" | sed -n "s/^DB_NAME=//p" | tail -1); ' +
+                        'DB_USER=$(printf "%s\n" "$DB_ENV" | tr " " "\n" | sed -n "s/^DB_USERNAME=//p" | tail -1); ' +
+                        'DB_PASS=$(printf "%s\n" "$DB_ENV" | tr " " "\n" | sed -n "s/^DB_PASSWORD=//p" | tail -1); ' +
+                        'DB_HOST=${DB_HOST:-127.0.0.1}; DB_PORT=${DB_PORT:-3306}; DB_NAME=${DB_NAME:-petvaccine}; DB_USER=${DB_USER:-root}; ' +
+                        'echo "=== recent payment_transactions ==="; ' +
+                        'mysql -h"$DB_HOST" -P"$DB_PORT" -u"$DB_USER" -p"$DB_PASS" --batch --table "$DB_NAME" -e "SELECT id, order_id, user_id, provider_key, amount, transfer_reference, provider_transaction_id, status, verification_status, verification_message, amount_received, LEFT(bank_content,120) AS bank_content, created_at, updated_at, verified_at, expires_at FROM payment_transactions ORDER BY id DESC LIMIT 10;" 2>/dev/null || true; ' +
+                        'echo "=== recent bank_webhook_events ==="; ' +
+                        'mysql -h"$DB_HOST" -P"$DB_PORT" -u"$DB_USER" -p"$DB_PASS" --batch --table "$DB_NAME" -e "SELECT id, status, provider_transaction_id, amount, LEFT(bank_content,160) AS bank_content, bank_account, payment_transaction_id, received_at FROM bank_webhook_events ORDER BY id DESC LIMIT 20;" 2>/dev/null || true; ' +
+                        'echo "=== recent bank orders ==="; ' +
+                        'mysql -h"$DB_HOST" -P"$DB_PORT" -u"$DB_USER" -p"$DB_PASS" --batch --table "$DB_NAME" -e "SELECT id, user_id, total_amount, payment_method, payment_status, status, created_at FROM orders WHERE payment_method = \\"BANK_TRANSFER\\" ORDER BY id DESC LIMIT 10;" 2>/dev/null || true'
+                execute 'echo "=== tomcat webhook logs ==="; journalctl -u tomcat10 --since "6 hours ago" --no-pager 2>/dev/null | grep -Ei "Bank webhook|bank-webhook|Webhook|Failed to process bank|Invalid bank webhook|ERROR|WARN" | tail -200 || true'
+                execute 'echo "=== nginx webhook access ==="; grep "api/payment/bank-webhook" /var/log/nginx/access.log /var/log/nginx/error.log 2>/dev/null | tail -100 || true'
             }
         }
     }
@@ -169,12 +272,23 @@ tasks.register('docker_app_start') {
                         "--network ${dockerNetwork} " +
                         "-v ${deployDir}:/usr/local/tomcat/webapps " +
                         "-p ${httpPort}:8080 " +
+                        (appBaseUrl ? "-e APP_BASE_URL='${appBaseUrl}' " : "") +
+                        "-e APP_CONTEXT_PATH='${appContextPath}' " +
+                        "-e APP_COOKIES_SECURE='${appCookiesSecure}' " +
                         "-e DB_HOST='${dbHost}' " +
                         "-e DB_PORT='${dbPort}' " +
                         "-e DB_NAME='${dbName}' " +
                         "-e DB_USER='${dbUser}' " +
                         "-e DB_PASSWORD='${dbPassword}' " +
                         "-e DB_OPTION='${dbOption}' " +
+                        "-e PAYMENT_BANK_ID='${bankId}' " +
+                        "-e PAYMENT_BANK_DISPLAY_NAME='${bankDisplayName}' " +
+                        "-e PAYMENT_BANK_ACCOUNT_NUMBER='${bankAccountNumber}' " +
+                        "-e PAYMENT_BANK_ACCOUNT_NAME='${bankAccountName}' " +
+                        "-e PAYMENT_BANK_TRANSFER_PREFIX='${bankTransferPrefix}' " +
+                        "-e PAYMENT_BANK_CURRENCY='${bankCurrency}' " +
+                        "-e PAYMENT_BANK_PENDING_MINUTES='${bankPendingMinutes}' " +
+                        (bankWebhookSecret ? "-e PAYMENT_BANK_WEBHOOK_SECRET='${bankWebhookSecret}' " : "") +
                         "${tomcatImage}"
             }
         }
@@ -188,6 +302,81 @@ tasks.register('docker_deploy') {
     dependsOn tasks.named('build')
     dependsOn tasks.named('docker_upload_file_to_server')
     dependsOn tasks.named('docker_app_start')
+}
+
+tasks.register('system_tomcat_deploy') {
+    group = 'deployment'
+    description = 'Deploy WAR safely to the system Tomcat service used by melipet.shop.'
+    dependsOn tasks.named('war')
+
+    doLast {
+        println 'begin system_tomcat_deploy'
+        def warFile = tasks.named('war').get().archiveFile.get().asFile
+        def runtimeConf = "[Service]\n" +
+                "ReadWritePaths=/var/lib/tomcat10/log4j2\n" +
+                "Environment=\"APP_BASE_URL=${appBaseUrl ?: 'https://melipet.shop/PetShop'}\"\n" +
+                "Environment=\"APP_CONTEXT_PATH=${appContextPath}\"\n" +
+                "Environment=\"APP_COOKIES_SECURE=${appCookiesSecure}\"\n" +
+                "Environment=\"PAYMENT_BANK_ID=${bankId}\"\n" +
+                "Environment=\"PAYMENT_BANK_DISPLAY_NAME=${bankDisplayName}\"\n" +
+                "Environment=\"PAYMENT_BANK_ACCOUNT_NUMBER=${bankAccountNumber}\"\n" +
+                "Environment=\"PAYMENT_BANK_ACCOUNT_NAME=${bankAccountName}\"\n" +
+                "Environment=\"PAYMENT_BANK_TRANSFER_PREFIX=${bankTransferPrefix}\"\n" +
+                "Environment=\"PAYMENT_BANK_CURRENCY=${bankCurrency}\"\n" +
+                "Environment=\"PAYMENT_BANK_PENDING_MINUTES=${bankPendingMinutes}\"\n" +
+                (bankWebhookSecret ? "Environment=\"PAYMENT_BANK_WEBHOOK_SECRET=${bankWebhookSecret}\"\n" : "")
+
+        ssh.run {
+            session(remotes.webServer) {
+                execute 'mkdir -p /tmp/petshop-deploy /var/backups/petshop /etc/systemd/system/tomcat10.service.d /var/lib/tomcat10/log4j2/roll_by_time && chown -R tomcat:tomcat /var/lib/tomcat10/log4j2'
+                put from: warFile, into: "/tmp/petshop-deploy/${appContext}.war"
+                put from: "${project.projectDir}/sql/16_order_recipient_snapshot.sql", into: "/tmp/petshop-deploy/16_order_recipient_snapshot.sql"
+                put from: "${project.projectDir}/sql/17_create_order_logs.sql", into: "/tmp/petshop-deploy/17_create_order_logs.sql"
+                execute "cat > /etc/systemd/system/${systemTomcatService}.service.d/petshop-runtime.conf <<'EOF'\n${runtimeConf}EOF"
+                execute 'DB_ENV=$(systemctl show tomcat10 -p Environment --value); ' +
+                        'DB_HOST=$(printf "%s\n" "$DB_ENV" | tr " " "\n" | sed -n "s/^DB_HOST=//p" | tail -1); ' +
+                        'DB_PORT=$(printf "%s\n" "$DB_ENV" | tr " " "\n" | sed -n "s/^DB_PORT=//p" | tail -1); ' +
+                        'DB_NAME=$(printf "%s\n" "$DB_ENV" | tr " " "\n" | sed -n "s/^DB_NAME=//p" | tail -1); ' +
+                        'DB_USER=$(printf "%s\n" "$DB_ENV" | tr " " "\n" | sed -n "s/^DB_USERNAME=//p" | tail -1); ' +
+                        'DB_PASS=$(printf "%s\n" "$DB_ENV" | tr " " "\n" | sed -n "s/^DB_PASSWORD=//p" | tail -1); ' +
+                        'DB_HOST=${DB_HOST:-127.0.0.1}; DB_PORT=${DB_PORT:-3306}; DB_NAME=${DB_NAME:-petvaccine}; DB_USER=${DB_USER:-root}; ' +
+                        'command -v mysql >/dev/null 2>&1 && ' +
+                        'mysql -h"$DB_HOST" -P"$DB_PORT" -u"$DB_USER" -p"$DB_PASS" "$DB_NAME" < /tmp/petshop-deploy/16_order_recipient_snapshot.sql && ' +
+                        'mysql -h"$DB_HOST" -P"$DB_PORT" -u"$DB_USER" -p"$DB_PASS" "$DB_NAME" < /tmp/petshop-deploy/17_create_order_logs.sql || ' +
+                        'echo MYSQL_CLIENT_OR_MIGRATION_SKIPPED'
+                execute "if [ -f ${systemTomcatWebapps}/${appContext}.war ]; then cp ${systemTomcatWebapps}/${appContext}.war /var/backups/petshop/${appContext}-\$(date +%Y%m%d%H%M%S).war; fi"
+                execute "systemctl stop ${systemTomcatService}"
+                execute "rm -rf ${systemTomcatWebapps}/${appContext} ${systemTomcatWebapps}/${appContext}.war"
+                execute "cp /tmp/petshop-deploy/${appContext}.war ${systemTomcatWebapps}/${appContext}.war"
+                execute "chown tomcat:tomcat ${systemTomcatWebapps}/${appContext}.war"
+                execute 'systemctl daemon-reload'
+                execute "systemctl start ${systemTomcatService}"
+                execute "sleep 12; systemctl is-active ${systemTomcatService}; ss -ltnp 2>/dev/null | grep ':8080 ' || true"
+            }
+        }
+    }
+}
+
+tasks.register('remote_extend_pending_bank_payments') {
+    group = 'deployment'
+    description = 'Extend pending bank-transfer payment windows without marking anything paid.'
+
+    doLast {
+        println 'begin remote_extend_pending_bank_payments'
+        ssh.run {
+            session(remotes.webServer) {
+                execute 'DB_ENV=$(systemctl show tomcat10 -p Environment --value); ' +
+                        'DB_HOST=$(printf "%s\n" "$DB_ENV" | tr " " "\n" | sed -n "s/^DB_HOST=//p" | tail -1); ' +
+                        'DB_PORT=$(printf "%s\n" "$DB_ENV" | tr " " "\n" | sed -n "s/^DB_PORT=//p" | tail -1); ' +
+                        'DB_NAME=$(printf "%s\n" "$DB_ENV" | tr " " "\n" | sed -n "s/^DB_NAME=//p" | tail -1); ' +
+                        'DB_USER=$(printf "%s\n" "$DB_ENV" | tr " " "\n" | sed -n "s/^DB_USERNAME=//p" | tail -1); ' +
+                        'DB_PASS=$(printf "%s\n" "$DB_ENV" | tr " " "\n" | sed -n "s/^DB_PASSWORD=//p" | tail -1); ' +
+                        'DB_HOST=${DB_HOST:-127.0.0.1}; DB_PORT=${DB_PORT:-3306}; DB_NAME=${DB_NAME:-petvaccine}; DB_USER=${DB_USER:-root}; ' +
+                        'mysql -h"$DB_HOST" -P"$DB_PORT" -u"$DB_USER" -p"$DB_PASS" "$DB_NAME" -e "UPDATE payment_transactions SET expires_at = DATE_ADD(NOW(), INTERVAL 60 MINUTE), updated_at = CURRENT_TIMESTAMP WHERE provider_key = \\"BANK_TRANSFER\\" AND status = \\"PENDING_VERIFICATION\\" AND provider_transaction_id IS NULL;" 2>/dev/null; ' +
+                        'mysql -h"$DB_HOST" -P"$DB_PORT" -u"$DB_USER" -p"$DB_PASS" --batch --table "$DB_NAME" -e "SELECT id, order_id, amount, transfer_reference, status, verification_status, expires_at FROM payment_transactions WHERE provider_key = \\"BANK_TRANSFER\\" ORDER BY id DESC LIMIT 10;" 2>/dev/null'
+            }
+        }
+    }
 }
 
 tasks.named('docker_upload_file_to_server') {

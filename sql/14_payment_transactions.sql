@@ -21,6 +21,7 @@ CREATE TABLE IF NOT EXISTS payment_transactions (
     CONSTRAINT fk_payment_transactions_order FOREIGN KEY (order_id) REFERENCES orders(id) ON DELETE CASCADE,
     CONSTRAINT fk_payment_transactions_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
     UNIQUE KEY uk_payment_transactions_provider_transaction_id (provider_transaction_id),
+    UNIQUE KEY uk_payment_transactions_transfer_reference (transfer_reference),
     INDEX idx_payment_transactions_order_id (order_id),
     INDEX idx_payment_transactions_status (status)
 );

@@ -303,4 +303,224 @@ class CheckoutServiceInventoryBatchTest {
         assertTrue(expiresAt.toInstant().isAfter(beforeCheckout.plus(Duration.ofMinutes(9))));
         assertTrue(expiresAt.toInstant().isBefore(beforeCheckout.plus(Duration.ofMinutes(11))));
     }
+
+    @Test
+    void bankTransferCheckoutCreatesAwaitingPaymentOrder() throws Exception {
+        ProductDAO productDAO = mock(ProductDAO.class);
+        UserDAO userDAO = mock(UserDAO.class);
+        CouponDao couponDao = mock(CouponDao.class);
+        OrderDAO orderDAO = mock(OrderDAO.class);
+        PaymentTransactionDAO paymentTransactionDAO = mock(PaymentTransactionDAO.class);
+        CartDAO cartDAO = mock(CartDAO.class);
+        OrderEmailService orderEmailService = mock(OrderEmailService.class);
+        InventoryBatchDAO inventoryBatchDAO = mock(InventoryBatchDAO.class);
+
+        Connection conn = mock(Connection.class);
+        User user = new User();
+        user.setId(7);
+        user.setFullname("Nguyen Van A");
+        user.setPhone("0901234567");
+
+        Product latestProduct = new Product();
+        latestProduct.setId(11);
+        latestProduct.setName("Pate meo");
+        latestProduct.setPrice(new BigDecimal("80000"));
+        latestProduct.setStock(5);
+
+        Product cartProduct = new Product();
+        cartProduct.setId(11);
+        cartProduct.setPrice(new BigDecimal("80000"));
+
+        Map<Integer, CartItem> cart = new HashMap<>();
+        cart.put(11, new CartItem(cartProduct, 2));
+
+        when(productDAO.getProductByIdForUpdate(conn, 11)).thenReturn(latestProduct);
+        when(productDAO.reserveStock(conn, 11, 2)).thenReturn(true);
+        when(orderDAO.saveOrder(eq(conn), any(Order.class))).thenReturn(901);
+        when(orderDAO.saveOrderItem(eq(conn), any())).thenReturn(true);
+        when(paymentTransactionDAO.save(eq(conn), any())).thenReturn(77);
+
+        CheckoutService service = new CheckoutService(
+                productDAO, userDAO, couponDao, orderDAO, paymentTransactionDAO,
+                cartDAO, orderEmailService, inventoryBatchDAO
+        );
+
+        try (MockedStatic<DBContext> mockedDBContext = mockStatic(DBContext.class)) {
+            mockedDBContext.when(DBContext::getConnection).thenReturn(conn);
+
+            CheckoutResult result = service.processCheckout(
+                    user,
+                    cart,
+                    "123 Nguyen Hue, Phuong Ben Nghe, Quan 1, Ho Chi Minh",
+                    "",
+                    CouponValidationResult.empty(),
+                    "bank_transfer",
+                    30000,
+                    "PETSHOP-U7-123456"
+            );
+
+            assertTrue(result.isSuccess());
+        }
+
+        ArgumentCaptor<Order> orderCaptor = ArgumentCaptor.forClass(Order.class);
+        verify(orderDAO).saveOrder(eq(conn), orderCaptor.capture());
+        assertEquals("Awaiting Payment", orderCaptor.getValue().getStatus());
+        assertEquals("BANK_TRANSFER", orderCaptor.getValue().getPayment_method());
+        assertFalse(orderCaptor.getValue().getPayment_status());
+    }
+
+    @Test
+    void vnpayCheckoutCreatesUnpaidVnpayTransaction() throws Exception {
+        ProductDAO productDAO = mock(ProductDAO.class);
+        UserDAO userDAO = mock(UserDAO.class);
+        CouponDao couponDao = mock(CouponDao.class);
+        OrderDAO orderDAO = mock(OrderDAO.class);
+        PaymentTransactionDAO paymentTransactionDAO = mock(PaymentTransactionDAO.class);
+        CartDAO cartDAO = mock(CartDAO.class);
+        OrderEmailService orderEmailService = mock(OrderEmailService.class);
+        InventoryBatchDAO inventoryBatchDAO = mock(InventoryBatchDAO.class);
+
+        Connection conn = mock(Connection.class);
+        User user = new User();
+        user.setId(7);
+        user.setFullname("Nguyen Van A");
+        user.setPhone("0901234567");
+
+        Product latestProduct = new Product();
+        latestProduct.setId(11);
+        latestProduct.setName("Pate meo");
+        latestProduct.setPrice(new BigDecimal("80000"));
+        latestProduct.setStock(5);
+
+        Product cartProduct = new Product();
+        cartProduct.setId(11);
+        cartProduct.setPrice(new BigDecimal("80000"));
+
+        Map<Integer, CartItem> cart = new HashMap<>();
+        cart.put(11, new CartItem(cartProduct, 2));
+
+        when(productDAO.getProductByIdForUpdate(conn, 11)).thenReturn(latestProduct);
+        when(productDAO.reserveStock(conn, 11, 2)).thenReturn(true);
+        when(orderDAO.saveOrder(eq(conn), any(Order.class))).thenReturn(901);
+        when(orderDAO.saveOrderItem(eq(conn), any())).thenReturn(true);
+        when(paymentTransactionDAO.save(eq(conn), any())).thenReturn(77);
+
+        CheckoutService service = new CheckoutService(
+                productDAO, userDAO, couponDao, orderDAO, paymentTransactionDAO,
+                cartDAO, orderEmailService, inventoryBatchDAO
+        );
+
+        try (MockedStatic<DBContext> mockedDBContext = mockStatic(DBContext.class)) {
+            mockedDBContext.when(DBContext::getConnection).thenReturn(conn);
+
+            CheckoutResult result = service.processCheckout(
+                    user,
+                    cart,
+                    "123 Nguyen Hue, Phuong Ben Nghe, Quan 1, Ho Chi Minh",
+                    "",
+                    CouponValidationResult.empty(),
+                    "vnpay",
+                    30000
+            );
+
+            assertTrue(result.isSuccess());
+        }
+
+        ArgumentCaptor<PaymentTransaction> transactionCaptor = ArgumentCaptor.forClass(PaymentTransaction.class);
+        verify(paymentTransactionDAO).save(eq(conn), transactionCaptor.capture());
+        PaymentTransaction transaction = transactionCaptor.getValue();
+        assertEquals("VNPAY", transaction.getProviderKey());
+        assertEquals("CREATED", transaction.getStatus());
+        assertEquals("PENDING", transaction.getVerificationStatus());
+    }
+
+    @Test
+    void processCheckoutPersistsOrderItemProductSnapshot() throws Exception {
+        ProductDAO productDAO = mock(ProductDAO.class);
+        UserDAO userDAO = mock(UserDAO.class);
+        CouponDao couponDao = mock(CouponDao.class);
+        OrderDAO orderDAO = mock(OrderDAO.class);
+        PaymentTransactionDAO paymentTransactionDAO = mock(PaymentTransactionDAO.class);
+        CartDAO cartDAO = mock(CartDAO.class);
+        OrderEmailService orderEmailService = mock(OrderEmailService.class);
+        InventoryBatchDAO inventoryBatchDAO = mock(InventoryBatchDAO.class);
+
+        Connection conn = mock(Connection.class);
+        User user = new User();
+        user.setId(7);
+        user.setFullname("Nguyen Van A");
+        user.setPhone("0901234567");
+
+        Product latestProduct = new Product();
+        latestProduct.setId(11);
+        latestProduct.setName("Pate meo snapshot");
+        latestProduct.setImage("pate.jpg");
+        latestProduct.setPrice(new BigDecimal("80000"));
+        latestProduct.setStock(5);
+
+        Product cartProduct = new Product();
+        cartProduct.setId(11);
+        cartProduct.setPrice(new BigDecimal("80000"));
+
+        Map<Integer, CartItem> cart = new HashMap<>();
+        cart.put(11, new CartItem(cartProduct, 2));
+
+        when(productDAO.getProductByIdForUpdate(conn, 11)).thenReturn(latestProduct);
+        when(productDAO.reserveStock(conn, 11, 2)).thenReturn(true);
+        when(orderDAO.saveOrder(eq(conn), any(Order.class))).thenReturn(901);
+        when(orderDAO.saveOrderItem(eq(conn), any())).thenReturn(true);
+        when(paymentTransactionDAO.save(eq(conn), any())).thenReturn(77);
+
+        CheckoutService service = new CheckoutService(
+                productDAO, userDAO, couponDao, orderDAO, paymentTransactionDAO,
+                cartDAO, orderEmailService, inventoryBatchDAO
+        );
+
+        try (MockedStatic<DBContext> mockedDBContext = mockStatic(DBContext.class)) {
+            mockedDBContext.when(DBContext::getConnection).thenReturn(conn);
+
+            CheckoutResult result = service.processCheckout(
+                    user,
+                    cart,
+                    "123 Nguyen Hue, Phuong Ben Nghe, Quan 1, Ho Chi Minh",
+                    "",
+                    CouponValidationResult.empty(),
+                    "cod",
+                    30000
+            );
+
+            assertTrue(result.isSuccess());
+        }
+
+        ArgumentCaptor<Model.OrderItem> itemCaptor = ArgumentCaptor.forClass(Model.OrderItem.class);
+        verify(orderDAO).saveOrderItem(eq(conn), itemCaptor.capture());
+        assertEquals("Pate meo snapshot", itemCaptor.getValue().getProductNameSnapshot());
+        assertEquals("pate.jpg", itemCaptor.getValue().getProductImageSnapshot());
+    }
+
+    @Test
+    void processCheckoutPersistsRecipientSnapshotSeparateFromAccountProfile() throws Exception {
+        User user = new User();
+        user.setId(7);
+        user.setFullname("Account Owner");
+        user.setPhone("0900000000");
+        user.setEmail("");
+
+        Order savedOrder = CheckoutService.buildOrderSnapshot(
+                user,
+                "Nguyen Van Receiver",
+                "0912345678",
+                "123 Nguyen Trai",
+                "",
+                new BigDecimal("110000"),
+                "COD",
+                false
+        );
+
+        assertEquals(7, savedOrder.getUserId());
+        assertEquals("Nguyen Van Receiver", savedOrder.getRecipientFullname());
+        assertEquals("0912345678", savedOrder.getRecipientPhone());
+        assertEquals("123 Nguyen Trai", savedOrder.getShippingAddress());
+        assertEquals("Account Owner", savedOrder.getCustomerFullname());
+    }
 }

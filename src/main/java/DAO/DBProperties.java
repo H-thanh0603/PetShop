@@ -13,20 +13,24 @@ public class DBProperties {
     }
 
     public static String username() {
-        return AppConfig.getOrDefault("db.username", "root");
+        return AppConfig.getOrDefault("db.username", "root", "DB_USERNAME", "PETSHOP_DB_USERNAME", "MYSQL_USER");
     }
 
     public static String password() {
+        String override = AppConfig.get("petshop.db.password", "PETSHOP_DB_PASSWORD", "DB_PASSWORD", "MYSQL_PASSWORD");
+        if (override != null) {
+            return override.trim();
+        }
+
         String filePw = AppConfig.getOrDefault("db.password", "");
         if (!filePw.isEmpty() && !filePw.equals("YOUR_PASSWORD_HERE")) {
             return filePw;
         }
-        String override = AppConfig.get("petshop.db.password", "PETSHOP_DB_PASSWORD", "MYSQL_PASSWORD");
-        return override != null ? override.trim() : "";
+        return "";
     }
 
     public static String dbname() {
-        return AppConfig.getOrDefault("db.dbname", "petshop");
+        return AppConfig.getOrDefault("db.dbname", "petshop", "DB_NAME", "PETSHOP_DB_NAME", "MYSQL_DATABASE");
     }
 
     public static String option() {

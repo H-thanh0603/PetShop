@@ -104,7 +104,7 @@ public class CheckoutServlet extends HttpServlet {
             logger.error("Top-level unhandled exception in doPost for user id={}", userSession.getId(), e);
             Map<String, Object> errorResult = new HashMap<>();
             errorResult.put("success", false);
-            errorResult.put("message", "Đã có lỗi xảy ra. Vui lòng thử lại.");
+            errorResult.put("message", resolveCheckoutErrorMessage(e));
             write(response, errorResult);
         }
     }
@@ -150,6 +150,7 @@ public class CheckoutServlet extends HttpServlet {
         request.setAttribute("cartItems", new ArrayList<>(checkoutCart.values()));
         request.setAttribute("user", user);
         request.setAttribute("defaultAddress", defaultAddress);
+        request.setAttribute("defaultShippingAddress", defaultAddress != null ? formatFullAddress(defaultAddress) : "");
         request.setAttribute("selectedAddressId", defaultAddress != null ? defaultAddress.getId() : null);
         request.setAttribute("totalAmount", summary.getTotalAmount());
         request.setAttribute("shippingFee", summary.getShippingFee());
@@ -254,12 +255,6 @@ public class CheckoutServlet extends HttpServlet {
 
             List<Address> addressList = addressDAO.getAddressesByUserId(user.getId());
             Address defaultAddress = resolvePrimaryAddress(user.getId(), addressList);
-            if (isBlank(user.getFullname()) || isBlank(user.getPhone())) {
-                result.put("success", false);
-                result.put("message", "Thiếu thông tin người nhận.");
-                write(response, result);
-                return;
-            }
             if (defaultAddress == null) {
                 result.put("success", false);
                 result.put("message", "Bạn chưa có địa chỉ mặc định.");
@@ -298,10 +293,42 @@ public class CheckoutServlet extends HttpServlet {
                 return;
             }
 
-            String fullAddress = defaultAddress.getAddress() + ", "
-                    + defaultAddress.getWard() + ", "
-                    + defaultAddress.getDistrict() + ", "
-                    + defaultAddress.getProvince();
+            String fullAddress = formatFullAddress(defaultAddress);
+            String recipientFullname = normalizeSpaces(resolveParameterOrFallback(
+                    request, "recipientFullname", user.getFullname()));
+            String recipientPhone = resolveParameterOrFallback(
+                    request, "recipientPhone", user.getPhone());
+            String shippingAddress = normalizeSpaces(resolveParameterOrFallback(
+                    request, "shippingAddress", fullAddress));
+
+            String recipientNameError = ValidationUtil.validateRecipientName(recipientFullname);
+            if (recipientNameError != null) {
+                result.put("success", false);
+                result.put("message", recipientNameError);
+                write(response, result);
+                return;
+            }
+
+            String recipientPhoneError = ValidationUtil.validateRecipientPhone(recipientPhone);
+            if (recipientPhoneError != null) {
+                result.put("success", false);
+                result.put("message", recipientPhoneError);
+                write(response, result);
+                return;
+            }
+
+            if (isBlank(shippingAddress)) {
+                result.put("success", false);
+                result.put("message", "Địa chỉ giao hàng không được để trống.");
+                write(response, result);
+                return;
+            }
+            if (!ValidationUtil.validateMaxLength(shippingAddress, 500)) {
+                result.put("success", false);
+                result.put("message", "Địa chỉ giao hàng không được vượt quá 500 ký tự.");
+                write(response, result);
+                return;
+            }
 
             String paymentMethodKey = resolvePaymentMethodKey(request);
             boolean isVnpay = "vnpay".equalsIgnoreCase(paymentMethodKey);
@@ -318,7 +345,7 @@ public class CheckoutServlet extends HttpServlet {
             }
 
             services.CheckoutResult checkoutResult = buildCheckoutService().processCheckout(
-                    user, checkoutCart, fullAddress, note, couponState, servicePaymentMethodKey,
+                    user, checkoutCart, recipientFullname, recipientPhone, shippingAddress, note, couponState, servicePaymentMethodKey,
                     baseSummary.getShippingFee(), reservedTransferReference
             );
 
@@ -332,6 +359,19 @@ public class CheckoutServlet extends HttpServlet {
             completedPaymentMethod = isVnpay ? "VNPAY" : checkoutResult.getPaymentMethodDb();
             completedPaymentTransaction = checkoutResult.getPaymentTransaction();
             completedOrderId = checkoutResult.getOrderId();
+
+            // Create notification for user
+            try {
+                new DAO.NotificationDAO().create(
+                    user.getId(),
+                    "Đặt hàng thành công",
+                    "Đơn hàng #" + completedOrderId + " đã được đặt thành công. Chúng tôi sẽ sớm xử lý.",
+                    "order",
+                    request.getContextPath() + "/my-orders?action=view&id=" + completedOrderId
+                );
+            } catch (Exception e) {
+                logger.error("Error creating order notification", e);
+            }
 
             // Xóa đúng cart theo mode
             if (isBuyNow) {
@@ -400,6 +440,15 @@ public class CheckoutServlet extends HttpServlet {
                 write(response, result);
                 return;
             } else {
+                session.setAttribute("successOrderId", completedOrderId);
+                session.setAttribute("successUser", user);
+                session.setAttribute("successTotalAmount", checkoutResult.getTotalAmount());
+                session.setAttribute("successShippingFee", checkoutResult.getShippingFee());
+                session.setAttribute("successDiscount", checkoutResult.getDiscount());
+                session.setAttribute("successFinalTotal", checkoutResult.getFinalTotal());
+                session.setAttribute("successShippingAddress", shippingAddress);
+                session.setAttribute("successOrderNote", note);
+                session.setAttribute("successOrderItems", new ArrayList<>(checkoutCart.values()));
                 result.put("success", true);
                 result.put("message", "Đặt hàng thành công!");
                 result.put("redirectUrl", request.getContextPath() + "/order-success");
@@ -410,7 +459,7 @@ public class CheckoutServlet extends HttpServlet {
         } catch (Throwable t) {
             logger.error("Unexpected error during checkout for user id={}", userSession.getId(), t);
             result.put("success", false);
-            result.put("message", "Đã có lỗi xảy ra. Vui lòng thử lại.");
+            result.put("message", resolveCheckoutErrorMessage(t));
             write(response, result);
         }
     }
@@ -574,6 +623,35 @@ public class CheckoutServlet extends HttpServlet {
 
     private String trimToEmpty(String value) {
         return value == null ? "" : value.trim();
+    }
+
+    private String resolveParameterOrFallback(HttpServletRequest request, String parameterName, String fallback) {
+        String value = request.getParameter(parameterName);
+        return value == null ? trimToEmpty(fallback) : trimToEmpty(value);
+    }
+
+    private String normalizeSpaces(String value) {
+        return trimToEmpty(value).replaceAll("\\s+", " ");
+    }
+
+    private String resolveCheckoutErrorMessage(Throwable t) {
+        String message = t == null ? "" : String.valueOf(t.getMessage()).toLowerCase();
+        if (message.contains("recipient_fullname")
+                || message.contains("recipient_phone")
+                || message.contains("shipping_address")) {
+            return "Database đơn hàng chưa được cập nhật thông tin người nhận. Vui lòng chạy migration 16_order_recipient_snapshot.sql rồi khởi động lại server.";
+        }
+        return "Đã có lỗi xảy ra. Vui lòng thử lại.";
+    }
+
+    private String formatFullAddress(Address address) {
+        if (address == null) {
+            return "";
+        }
+        return trimToEmpty(address.getAddress()) + ", "
+                + trimToEmpty(address.getWard()) + ", "
+                + trimToEmpty(address.getDistrict()) + ", "
+                + trimToEmpty(address.getProvince());
     }
 
     private String resolvePaymentMethodKey(HttpServletRequest request) {

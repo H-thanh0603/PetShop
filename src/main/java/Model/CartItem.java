@@ -23,6 +23,6 @@ public class CartItem {
     
     // Hàm tính tổng tiền của riêng món này (Giá * Số lượng)
     public BigDecimal getTotalPrice() {
-        return product.getPrice().multiply(BigDecimal.valueOf(quantity));
+        return product.getEffectivePrice().multiply(BigDecimal.valueOf(quantity));
     }
 }
