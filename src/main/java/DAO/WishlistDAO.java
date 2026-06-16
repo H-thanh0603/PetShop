@@ -20,14 +20,28 @@ public class WishlistDAO {
 
     public List<Product> getWishlistProductsByUserId(int userId) {
         List<Product> products = new ArrayList<>();
-        ProductDAO productDAO = new ProductDAO();
+        String sql = "SELECT p.* FROM wishlist w " +
+                "JOIN products p ON w.product_id = p.id " +
+                "WHERE w.user_id = ?";
 
-        for (Integer productId : getWishlistProductIdsByUserId(userId)) {
-            Product product = productDAO.getProductById(productId);
-            if (product != null) {
-                product.setWishlisted(true);
-                products.add(product);
+        try (Connection conn = DBContext.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setInt(1, userId);
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    Product product = new Product();
+                    product.setId(rs.getInt("id"));
+                    product.setName(rs.getString("name"));
+                    product.setPrice(rs.getBigDecimal("price"));
+                    product.setImage(rs.getString("image"));
+                    product.setStock(rs.getInt("stock"));
+
+                    product.setWishlisted(true);
+                    products.add(product);
+                }
             }
+        } catch (Exception e) {
+            logger.error("Error fetching wishlist products for user id={}", userId, e);
         }
         return products;
     }
