@@ -393,4 +393,240 @@ public class ReportDAO {
         review.setCreatedAt(rs.getDate("created_at"));
         return review;
     }
+
+    public BigDecimal getTodayRevenue() {
+        String query = "SELECT COALESCE(SUM(total_amount), 0) FROM orders WHERE status != 'Cancelled' AND createdAt >= CURDATE()";
+        try (Connection conn = DBContext.getConnection();
+             PreparedStatement ps = conn.prepareStatement(query);
+             ResultSet rs = ps.executeQuery()) {
+            if (rs.next()) return rs.getBigDecimal(1);
+        } catch (Exception e) {
+            logger.error("Error getTodayRevenue", e);
+        }
+        return BigDecimal.ZERO;
+    }
+
+    public BigDecimal getYesterdayRevenue() {
+        String query = "SELECT COALESCE(SUM(total_amount), 0) FROM orders WHERE status != 'Cancelled' AND createdAt >= DATE_SUB(CURDATE(), INTERVAL 1 DAY) AND createdAt < CURDATE()";
+        try (Connection conn = DBContext.getConnection();
+             PreparedStatement ps = conn.prepareStatement(query);
+             ResultSet rs = ps.executeQuery()) {
+            if (rs.next()) return rs.getBigDecimal(1);
+        } catch (Exception e) {
+            logger.error("Error getYesterdayRevenue", e);
+        }
+        return BigDecimal.ZERO;
+    }
+
+    public int getTodayOrdersCount() {
+        String query = "SELECT COUNT(*) FROM orders WHERE createdAt >= CURDATE()";
+        try (Connection conn = DBContext.getConnection();
+             PreparedStatement ps = conn.prepareStatement(query);
+             ResultSet rs = ps.executeQuery()) {
+            if (rs.next()) return rs.getInt(1);
+        } catch (Exception e) {
+            logger.error("Error getTodayOrdersCount", e);
+        }
+        return 0;
+    }
+
+    public int getYesterdayOrdersCount() {
+        String query = "SELECT COUNT(*) FROM orders WHERE createdAt >= DATE_SUB(CURDATE(), INTERVAL 1 DAY) AND createdAt < CURDATE()";
+        try (Connection conn = DBContext.getConnection();
+             PreparedStatement ps = conn.prepareStatement(query);
+             ResultSet rs = ps.executeQuery()) {
+            if (rs.next()) return rs.getInt(1);
+        } catch (Exception e) {
+            logger.error("Error getYesterdayOrdersCount", e);
+        }
+        return 0;
+    }
+
+    public int getPendingOrdersCount() {
+        String query = "SELECT COUNT(*) FROM orders WHERE status = 'Pending'";
+        try (Connection conn = DBContext.getConnection();
+             PreparedStatement ps = conn.prepareStatement(query);
+             ResultSet rs = ps.executeQuery()) {
+            if (rs.next()) return rs.getInt(1);
+        } catch (Exception e) {
+            logger.error("Error getPendingOrdersCount", e);
+        }
+        return 0;
+    }
+
+    public int getTodayPendingOrdersCount() {
+        String query = "SELECT COUNT(*) FROM orders WHERE status = 'Pending' AND createdAt >= CURDATE()";
+        try (Connection conn = DBContext.getConnection();
+             PreparedStatement ps = conn.prepareStatement(query);
+             ResultSet rs = ps.executeQuery()) {
+            if (rs.next()) return rs.getInt(1);
+        } catch (Exception e) {
+            logger.error("Error getTodayPendingOrdersCount", e);
+        }
+        return 0;
+    }
+
+    public int getYesterdayPendingOrdersCount() {
+        String query = "SELECT COUNT(*) FROM orders WHERE status = 'Pending' AND createdAt >= DATE_SUB(CURDATE(), INTERVAL 1 DAY) AND createdAt < CURDATE()";
+        try (Connection conn = DBContext.getConnection();
+             PreparedStatement ps = conn.prepareStatement(query);
+             ResultSet rs = ps.executeQuery()) {
+            if (rs.next()) return rs.getInt(1);
+        } catch (Exception e) {
+            logger.error("Error getYesterdayPendingOrdersCount", e);
+        }
+        return 0;
+    }
+
+    public int getAwaitingPaymentOrdersCount() {
+        String query = "SELECT COUNT(*) FROM orders WHERE payment_status = 0 AND status != 'Cancelled'";
+        try (Connection conn = DBContext.getConnection();
+             PreparedStatement ps = conn.prepareStatement(query);
+             ResultSet rs = ps.executeQuery()) {
+            if (rs.next()) return rs.getInt(1);
+        } catch (Exception e) {
+            logger.error("Error getAwaitingPaymentOrdersCount", e);
+        }
+        return 0;
+    }
+
+    public BigDecimal getAwaitingPaymentOrdersAmount() {
+        String query = "SELECT COALESCE(SUM(total_amount), 0) FROM orders WHERE payment_status = 0 AND status != 'Cancelled'";
+        try (Connection conn = DBContext.getConnection();
+             PreparedStatement ps = conn.prepareStatement(query);
+             ResultSet rs = ps.executeQuery()) {
+            if (rs.next()) return rs.getBigDecimal(1);
+        } catch (Exception e) {
+            logger.error("Error getAwaitingPaymentOrdersAmount", e);
+        }
+        return BigDecimal.ZERO;
+    }
+
+    public int getTodayAwaitingPaymentCount() {
+        String query = "SELECT COUNT(*) FROM orders WHERE payment_status = 0 AND status != 'Cancelled' AND createdAt >= CURDATE()";
+        try (Connection conn = DBContext.getConnection();
+             PreparedStatement ps = conn.prepareStatement(query);
+             ResultSet rs = ps.executeQuery()) {
+            if (rs.next()) return rs.getInt(1);
+        } catch (Exception e) {
+            logger.error("Error getTodayAwaitingPaymentCount", e);
+        }
+        return 0;
+    }
+
+    public int getYesterdayAwaitingPaymentCount() {
+        String query = "SELECT COUNT(*) FROM orders WHERE payment_status = 0 AND status != 'Cancelled' AND createdAt >= DATE_SUB(CURDATE(), INTERVAL 1 DAY) AND createdAt < CURDATE()";
+        try (Connection conn = DBContext.getConnection();
+             PreparedStatement ps = conn.prepareStatement(query);
+             ResultSet rs = ps.executeQuery()) {
+            if (rs.next()) return rs.getInt(1);
+        } catch (Exception e) {
+            logger.error("Error getYesterdayAwaitingPaymentCount", e);
+        }
+        return 0;
+    }
+
+    public int getReconciliationOrdersCount() {
+        String query = "SELECT COUNT(*) FROM orders WHERE id IN (SELECT DISTINCT order_id FROM payment_transactions WHERE status = 'PENDING_VERIFICATION' OR status = 'EXPIRED')";
+        try (Connection conn = DBContext.getConnection();
+             PreparedStatement ps = conn.prepareStatement(query);
+             ResultSet rs = ps.executeQuery()) {
+            if (rs.next()) return rs.getInt(1);
+        } catch (Exception e) {
+            logger.error("Error getReconciliationOrdersCount", e);
+        }
+        return 0;
+    }
+
+    public BigDecimal getThisWeekRevenue() {
+        String query = "SELECT COALESCE(SUM(total_amount), 0) FROM orders WHERE status != 'Cancelled' AND createdAt >= DATE_SUB(CURDATE(), INTERVAL 7 DAY)";
+        try (Connection conn = DBContext.getConnection();
+             PreparedStatement ps = conn.prepareStatement(query);
+             ResultSet rs = ps.executeQuery()) {
+            if (rs.next()) return rs.getBigDecimal(1);
+        } catch (Exception e) {
+            logger.error("Error getThisWeekRevenue", e);
+        }
+        return BigDecimal.ZERO;
+    }
+
+    public BigDecimal getLastWeekRevenue() {
+        String query = "SELECT COALESCE(SUM(total_amount), 0) FROM orders WHERE status != 'Cancelled' AND createdAt >= DATE_SUB(CURDATE(), INTERVAL 14 DAY) AND createdAt < DATE_SUB(CURDATE(), INTERVAL 7 DAY)";
+        try (Connection conn = DBContext.getConnection();
+             PreparedStatement ps = conn.prepareStatement(query);
+             ResultSet rs = ps.executeQuery()) {
+            if (rs.next()) return rs.getBigDecimal(1);
+        } catch (Exception e) {
+            logger.error("Error getLastWeekRevenue", e);
+        }
+        return BigDecimal.ZERO;
+    }
+
+    public List<Map<String, Object>> getLast7DaysOrders() {
+        List<Map<String, Object>> list = new ArrayList<>();
+        String query = "SELECT DATE(createdAt) AS order_date, COUNT(*) AS order_count FROM orders WHERE createdAt >= DATE_SUB(CURDATE(), INTERVAL 6 DAY) GROUP BY DATE(createdAt) ORDER BY order_date ASC";
+        try (Connection conn = DBContext.getConnection();
+             PreparedStatement ps = conn.prepareStatement(query);
+             ResultSet rs = ps.executeQuery()) {
+            while (rs.next()) {
+                Map<String, Object> map = new HashMap<>();
+                map.put("date", rs.getDate("order_date").toString());
+                map.put("count", rs.getInt("order_count"));
+                list.add(map);
+            }
+        } catch (Exception e) {
+            logger.error("Error getLast7DaysOrders", e);
+        }
+        return list;
+    }
+
+    public List<Map<String, Object>> getPaymentMethodsCount() {
+        List<Map<String, Object>> list = new ArrayList<>();
+        String query = "SELECT payment_method, COUNT(*) AS count FROM orders GROUP BY payment_method ORDER BY count DESC";
+        try (Connection conn = DBContext.getConnection();
+             PreparedStatement ps = conn.prepareStatement(query);
+             ResultSet rs = ps.executeQuery()) {
+            while (rs.next()) {
+                Map<String, Object> map = new HashMap<>();
+                map.put("method", rs.getString("payment_method"));
+                map.put("count", rs.getInt("count"));
+                list.add(map);
+            }
+        } catch (Exception e) {
+            logger.error("Error getPaymentMethodsCount", e);
+        }
+        return list;
+    }
+
+    public Map<String, Integer> getPaymentStatusOverview() {
+        Map<String, Integer> stats = new HashMap<>();
+        
+        String qPaid = "SELECT COUNT(*) FROM orders WHERE payment_status = 1";
+        String qUnpaid = "SELECT COUNT(*) FROM orders WHERE payment_status = 0 AND status != 'Cancelled' AND id NOT IN (SELECT order_id FROM payment_transactions WHERE status = 'PENDING_VERIFICATION' OR status = 'EXPIRED')";
+        String qReconciliation = "SELECT COUNT(*) FROM orders WHERE id IN (SELECT DISTINCT order_id FROM payment_transactions WHERE status = 'PENDING_VERIFICATION' OR status = 'EXPIRED')";
+        String qFailed = "SELECT COUNT(*) FROM orders WHERE status = 'Cancelled'";
+        String qRefunded = "SELECT COUNT(*) FROM orders WHERE status = 'Refunded' OR status = 'Returned'";
+
+        try (Connection conn = DBContext.getConnection()) {
+            try (PreparedStatement ps = conn.prepareStatement(qPaid); ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) stats.put("paid", rs.getInt(1));
+            }
+            try (PreparedStatement ps = conn.prepareStatement(qUnpaid); ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) stats.put("unpaid", rs.getInt(1));
+            }
+            try (PreparedStatement ps = conn.prepareStatement(qReconciliation); ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) stats.put("reconciliation", rs.getInt(1));
+            }
+            try (PreparedStatement ps = conn.prepareStatement(qFailed); ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) stats.put("failed", rs.getInt(1));
+            }
+            try (PreparedStatement ps = conn.prepareStatement(qRefunded); ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) stats.put("refunded", rs.getInt(1));
+            }
+        } catch (Exception e) {
+            logger.error("Error getPaymentStatusOverview", e);
+        }
+        return stats;
+    }
 }
+
