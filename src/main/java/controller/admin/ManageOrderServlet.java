@@ -27,7 +27,14 @@ public class ManageOrderServlet extends HttpServlet {
         String status = request.getParameter("status");
         String keyword = request.getParameter("keyword");
         HttpSession session = request.getSession();
-        
+
+        //Kiểm tra admin
+        User adminUser = (User) session.getAttribute("user");
+        if (adminUser == null || !"Admin".equalsIgnoreCase(adminUser.getRole())) {
+            response.sendError(HttpServletResponse.SC_FORBIDDEN, "Bạn không có quyền truy cập vùng quản trị.");
+            return;
+        }
+
         if ("view".equals(action)) {
             int orderId;
             try {
@@ -74,8 +81,18 @@ public class ManageOrderServlet extends HttpServlet {
         String action = request.getParameter("action");
         HttpSession session = request.getSession();
         User admin = (User) session.getAttribute("user");
-        int adminId = admin != null ? admin.getId() : 1;
-        String adminRole = admin != null ? admin.getRole() : "";
+        if (admin == null) {
+            response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Vui lòng đăng nhập tài khoản quản trị.");
+            return;
+        }
+
+        String adminRole = admin.getRole();
+        // Chỉ cho phép tài khoản có vai trò Admin hoặc Shiper tương tác với các hành động quản trị đơn hàng
+        if (!"Admin".equalsIgnoreCase(adminRole) && !"shiper".equalsIgnoreCase(adminRole)) {
+            response.sendError(HttpServletResponse.SC_FORBIDDEN, "Bạn không có quyền thực hiện hành động này.");
+            return;
+        }
+        int adminId = admin.getId();
 
         if ("updateStatus".equals(action)) {
             int orderId;
