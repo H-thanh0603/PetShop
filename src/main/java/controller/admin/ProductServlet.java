@@ -45,41 +45,14 @@ public class ProductServlet extends HttpServlet {
 
     protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
         ProductDAO dao = new ProductDAO();
-        InventoryBatchDAO inventoryBatchDAO = new InventoryBatchDAO();
         
         List<Product> products = dao.getAllProducts(); 
         int totalProducts = dao.getTotalProducts();
         int discountedProducts = dao.getDiscountedProducts();
-        Map<Integer, ProductAdminInventoryView> inventoryByProduct = inventoryBatchDAO.getProductAdminInventoryViews(30);
-        int lowStockProducts = 0;
-        int nearExpiryProducts = 0;
-        int expiredProducts = 0;
-        int missingBatchProducts = 0;
-
-        for (Product product : products) {
-            if (product.getStock() > 0 && product.getStock() < 10) {
-                lowStockProducts++;
-            }
-            ProductAdminInventoryView inventory = inventoryByProduct.get(product.getId());
-            if (inventory == null || inventory.getActiveBatchCount() == 0) {
-                missingBatchProducts++;
-                continue;
-            }
-            if (inventory.getExpiredQuantity() > 0) {
-                expiredProducts++;
-            } else if (inventory.getNearExpiryQuantity() > 0) {
-                nearExpiryProducts++;
-            }
-        }
         
         request.setAttribute("products", products);
         request.setAttribute("totalProducts", totalProducts);
         request.setAttribute("discountedProducts", discountedProducts);
-        request.setAttribute("lowStockProducts", lowStockProducts);
-        request.setAttribute("nearExpiryProducts", nearExpiryProducts);
-        request.setAttribute("expiredProducts", expiredProducts);
-        request.setAttribute("missingBatchProducts", missingBatchProducts);
-        request.setAttribute("inventoryByProduct", inventoryByProduct);
         
         List<PetType> petTypes = new PetTypeDAO().getAllPetTypes();
         request.setAttribute("petTypes", petTypes);
@@ -151,26 +124,6 @@ public class ProductServlet extends HttpServlet {
                 return;
             }
             
-            // === VALIDATE STOCK ===
-            String stockStr = request.getParameter("stock");
-            int stock = 0;
-            if (stockStr != null && !stockStr.trim().isEmpty()) {
-                try {
-                    stock = Integer.parseInt(stockStr.trim());
-                    if (stock < 0) {
-                        session.setAttribute("message", "Tồn kho phải là số nguyên không âm.");
-                        session.setAttribute("messageType", "error");
-                        response.sendRedirect(request.getContextPath() + "/pages/admin/products");
-                        return;
-                    }
-                } catch (NumberFormatException e) {
-                    session.setAttribute("message", "Tồn kho phải là số nguyên không âm.");
-                    session.setAttribute("messageType", "error");
-                    response.sendRedirect(request.getContextPath() + "/pages/admin/products");
-                    return;
-                }
-            }
-            
             // === VALIDATE WEIGHT ===
             String weightStr = request.getParameter("weight");
             int weight = 0;
@@ -226,7 +179,7 @@ public class ProductServlet extends HttpServlet {
                 filePart.write(filePath);
             }
             
-            int newProductId = dao.addProductAndReturnId(name, imageName, price, discount, description, stock, weight, category, petTypeId);
+            int newProductId = dao.addProductAndReturnId(name, imageName, price, discount, description, weight, category, petTypeId);
             if (newProductId > 0) {
                 message = "Thêm sản phẩm thành công!";
             } else {
@@ -285,26 +238,6 @@ public class ProductServlet extends HttpServlet {
                 session.setAttribute("messageType", messageType);
                 response.sendRedirect(request.getContextPath() + "/pages/admin/products");
                 return;
-            }
-            
-            // === VALIDATE STOCK ===
-            String stockStr = request.getParameter("stock");
-            int stock = 0;
-            if (stockStr != null && !stockStr.trim().isEmpty()) {
-                try {
-                    stock = Integer.parseInt(stockStr.trim());
-                    if (stock < 0) {
-                        session.setAttribute("message", "Tồn kho phải là số nguyên không âm.");
-                        session.setAttribute("messageType", "error");
-                        response.sendRedirect(request.getContextPath() + "/pages/admin/products");
-                        return;
-                    }
-                } catch (NumberFormatException e) {
-                    session.setAttribute("message", "Tồn kho phải là số nguyên không âm.");
-                    session.setAttribute("messageType", "error");
-                    response.sendRedirect(request.getContextPath() + "/pages/admin/products");
-                    return;
-                }
             }
             
             // === VALIDATE WEIGHT ===
@@ -368,105 +301,11 @@ public class ProductServlet extends HttpServlet {
             if (id == null) {
                 message = "ID sản phẩm không hợp lệ!";
                 messageType = "error";
-            } else if (dao.updateProduct(id, name, imageName, price, discount, description, stock, weight, category, petTypeId)) {
+            } else if (dao.updateProduct(id, name, imageName, price, discount, description, weight, category, petTypeId)) {
                 message = "Cập nhật sản phẩm thành công!";
             } else {
                 message = "Có lỗi xảy ra khi cập nhật!";
                 messageType = "error";
-            }
-        } else if ("import_batch".equals(action)) {
-            String productIdStr = request.getParameter("productId");
-            Integer productId = ValidationUtil.parseIntOrNull(productIdStr);
-            
-            if (productId == null) {
-                message = "ID sản phẩm không hợp lệ!";
-                messageType = "error";
-            } else {
-                String batchCode = trimToEmpty(request.getParameter("batchCode"));
-                String batchQuantityStr = request.getParameter("batchQuantity");
-                String batchUnitCostStr = request.getParameter("batchUnitCost");
-                String batchExpiryDateStr = trimToEmpty(request.getParameter("batchExpiryDate"));
-                String batchNote = trimToEmpty(request.getParameter("batchNote"));
-                
-                int batchQuantity = 0;
-                BigDecimal batchUnitCost = BigDecimal.ZERO;
-                Timestamp batchExpiryDate = null;
-
-                boolean batchValid = true;
-                if (batchQuantityStr == null || batchQuantityStr.trim().isEmpty()) {
-                    message = "Số lượng nhập lô không được để trống.";
-                    messageType = "error";
-                    batchValid = false;
-                } else {
-                    try {
-                        batchQuantity = Integer.parseInt(batchQuantityStr.trim());
-                        if (batchQuantity <= 0) {
-                            message = "Số lượng nhập lô phải lớn hơn 0.";
-                            messageType = "error";
-                            batchValid = false;
-                        }
-                    } catch (NumberFormatException e) {
-                        message = "Số lượng nhập lô không hợp lệ.";
-                        messageType = "error";
-                        batchValid = false;
-                    }
-                }
-
-                if (batchValid && batchUnitCostStr != null && !batchUnitCostStr.trim().isEmpty()) {
-                    try {
-                        batchUnitCost = new BigDecimal(batchUnitCostStr.trim());
-                        if (batchUnitCost.compareTo(BigDecimal.ZERO) < 0) {
-                            message = "Giá vốn lô hàng không được âm.";
-                            messageType = "error";
-                            batchValid = false;
-                        }
-                    } catch (Exception e) {
-                        message = "Giá vốn lô hàng không hợp lệ.";
-                        messageType = "error";
-                        batchValid = false;
-                    }
-                }
-
-                if (batchValid && !batchExpiryDateStr.isEmpty()) {
-                    try {
-                        LocalDate expiryDate = LocalDate.parse(batchExpiryDateStr);
-                        if (expiryDate.isBefore(LocalDate.now())) {
-                            message = "Hạn sử dụng của lô nhập mới không được là ngày đã qua.";
-                            messageType = "error";
-                            batchValid = false;
-                        } else {
-                            batchExpiryDate = Timestamp.valueOf(expiryDate.atStartOfDay());
-                        }
-                    } catch (DateTimeParseException e) {
-                        message = "Hạn sử dụng lô hàng không hợp lệ.";
-                        messageType = "error";
-                        batchValid = false;
-                    }
-                }
-
-                if (batchValid) {
-                    if (batchCode.isEmpty()) {
-                        batchCode = "LOT-" + productId + "-" + System.currentTimeMillis();
-                    }
-
-                    InventoryBatch batch = new InventoryBatch();
-                    batch.setProductId(productId);
-                    batch.setBatchCode(batchCode);
-                    batch.setReceivedQuantity(batchQuantity);
-                    batch.setRemainingQuantity(batchQuantity);
-                    batch.setUnitCost(batchUnitCost);
-                    batch.setExpiryDate(batchExpiryDate);
-                    batch.setNote(batchNote);
-
-                    User admin = (User) session.getAttribute("user");
-                    Integer adminId = admin != null ? admin.getId() : null;
-                    if (new InventoryBatchDAO().recordImportBatch(batch, adminId)) {
-                        message = "Nhập lô " + batchCode + " thành công (" + batchQuantity + " sản phẩm).";
-                    } else {
-                        message = "Nhập lô hàng thất bại. Kiểm tra mã lô có bị trùng không.";
-                        messageType = "error";
-                    }
-                }
             }
         } else if ("delete".equals(action)) {
             String idStr = request.getParameter("id");

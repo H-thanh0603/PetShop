@@ -314,23 +314,7 @@
             </div>
             <div class="stat-card purple">
                 <h3><i class='bx bx-store'></i> ${totalProducts}</h3>
-                <p>Đang bán</p>
-            </div>
-            <div class="stat-card yellow" onclick="filterByInventory('low-stock')">
-                <h3><i class='bx bx-error'></i> ${lowStockProducts}</h3>
-                <p>Sắp hết hàng</p>
-            </div>
-            <div class="stat-card orange" onclick="filterByInventory('near-expiry')">
-                <h3><i class='bx bx-time-five'></i> ${nearExpiryProducts}</h3>
-                <p>Sắp hết hạn</p>
-            </div>
-            <div class="stat-card red" onclick="filterByInventory('expired')">
-                <h3><i class='bx bx-alarm-exclamation'></i> ${expiredProducts}</h3>
-                <p>Đã hết hạn</p>
-            </div>
-            <div class="stat-card slate" onclick="filterByInventory('missing-batch')">
-                <h3><i class='bx bx-barcode'></i> ${missingBatchProducts}</h3>
-                <p>Chưa có lô hàng</p>
+                <p>Tổng sản phẩm</p>
             </div>
         </div>
         <!-- Filter Section -->
@@ -340,21 +324,16 @@
                 <input type="text" id="searchInput" placeholder="Tìm theo tên sản phẩm..." onkeyup="applyFilters()">
             </div>
             <select class="filter-select" id="filterDiscount" onchange="applyFilters()">
-                <option value="">Tất cả</option>
+                <option value="">Tất cả giảm giá</option>
                 <option value="yes">Đang giảm giá</option>
                 <option value="no">Không giảm giá</option>
-            </select>
-            <select class="filter-select" id="filterInventory" onchange="applyFilters()">
-                <option value="">Tất cả tình trạng</option>
-                <option value="low-stock">Sắp hết hàng</option>
-                <option value="out-of-stock">Hết hàng</option>
-                <option value="near-expiry">Sắp hết hạn</option>
-                <option value="expired">Đã hết hạn</option>
-                <option value="missing-batch">Chưa có lô hàng</option>
             </select>
             <button class="btn-reset" id="resetBtn" onclick="resetFilters()">
                 <i class='bx bx-x'></i> Xóa bộ lọc
             </button>
+            <a href="${pageContext.request.contextPath}/admin/inventory" class="btn btn-outline-primary ms-auto" style="text-decoration: none; display: flex; align-items: center; gap: 8px;">
+                <i class='bx bxs-box'></i> Quản lý Kho
+            </a>
         </div>
 
         <!-- Table Section -->
@@ -375,13 +354,11 @@
                         <th style="width: 50px;">#</th>
                         <th style="width: 90px;">Ảnh</th>
                         <th>Tên sản phẩm</th>
-                        <th style="width: 200px;">Mô tả</th>
+                        <th style="width: 250px;">Mô tả</th>
                         <th style="width: 130px;">Giá bán</th>
                         <th style="width: 90px;">Giảm giá</th>
-                        <th style="width: 90px;">Tồn kho</th>
                         <th style="width: 120px;">Danh mục</th>
                         <th style="width: 110px;">Thao tác</th>
-                        <th style="width: 150px;">Hạn dùng</th>
                     </tr>
                 </thead>
                 <tbody id="productsBody">
@@ -396,12 +373,9 @@
                         </tr>
                     </c:if>
                     <c:forEach items="${products}" var="p" varStatus="loop">
-                        <c:set var="inventory" value="${inventoryByProduct[p.id]}" />
                         <tr data-id="${p.id}" data-name="${fn:escapeXml(p.name)}" data-image="${fn:escapeXml(p.image)}" 
                             data-price="${p.price}" data-discount="${p.discount}" data-description="${fn:escapeXml(p.description)}"
-                            data-stock="${p.stock}" data-weight="${p.weight}" data-category="${fn:escapeXml(p.category)}" data-pet-type-id="${p.pet_type_id}"
-                            data-stock-status="${p.stock == 0 ? 'out-of-stock' : (p.stock < 10 ? 'low-stock' : 'ok')}"
-                            data-expiry-status="${empty inventory ? 'missing-batch' : inventory.expiryStatus}">
+                            data-weight="${p.weight}" data-category="${fn:escapeXml(p.category)}" data-pet-type-id="${p.pet_type_id}">
                             <td class="row-index"><strong>${loop.index + 1}</strong></td>
                             <td>
                                 <img loading="lazy" src="${fn:startsWith(p.image, 'http') ? fn:escapeXml(p.image) : pageContext.request.contextPath += '/assets/images/shop_pic/' += fn:escapeXml(p.image)}" 
@@ -434,16 +408,6 @@
                             </td>
                             <td>
                                 <c:choose>
-                                    <c:when test="${p.stock == 0}">
-                                        <span style="display:inline-block;padding:4px 10px;background:#fee2e2;color:#dc2626;border-radius:12px;font-size:0.8rem;font-weight:600;">Hết hàng</span>
-                                    </c:when>
-                                    <c:otherwise>
-                                        ${p.stock}
-                                    </c:otherwise>
-                                </c:choose>
-                            </td>
-                            <td>
-                                <c:choose>
                                     <c:when test="${not empty p.category}">
                                         ${fn:escapeXml(p.category)}
                                     </c:when>
@@ -454,10 +418,6 @@
                             </td>
                             <td>
                                 <div class="table-actions">
-                                    <button class="action-btn import" onclick="openImportModal(this.closest('tr'))" title="Nhập kho" 
-                                            style="color: #059669; background: #ecfdf5;">
-                                        <i class='bx bx-plus-circle'></i>
-                                    </button>
                                     <button class="action-btn edit" onclick="openEditModal(this.closest('tr'))" title="Sửa">
                                         <i class='bx bx-edit-alt'></i>
                                     </button>
@@ -465,27 +425,6 @@
                                         <i class='bx bx-trash'></i>
                                     </button>
                                 </div>
-                            </td>
-                            <td>
-                                <c:choose>
-                                    <c:when test="${empty inventory}">
-                                        <span class="expiry-badge no-batch"><i class='bx bx-barcode'></i> Chưa có lô</span>
-                                    </c:when>
-                                    <c:otherwise>
-                                        <span class="expiry-badge ${inventory.expiryStatus}">
-                                            <i class='bx bx-calendar'></i> ${inventory.expiryStatusLabel}
-                                        </span>
-                                        <span class="batch-meta">
-                                            <c:choose>
-                                                <c:when test="${not empty inventory.formattedEarliestExpiryDate}">
-                                                    HSD gần nhất: ${inventory.formattedEarliestExpiryDate}
-                                                </c:when>
-                                                <c:otherwise>Chưa khai báo HSD</c:otherwise>
-                                            </c:choose>
-                                            <br>Lô: ${empty inventory.earliestBatchCode ? '—' : fn:escapeXml(inventory.earliestBatchCode)}
-                                        </span>
-                                    </c:otherwise>
-                                </c:choose>
                             </td>
                         </tr>
                     </c:forEach>
@@ -576,23 +515,18 @@
                     
                     <div class="form-row">
                         <div class="form-group">
-                            <label class="form-label">Tồn kho</label>
-                            <input type="number" class="form-input" name="stock" id="formStock" 
-                                   placeholder="VD: 100" min="0" value="0" step="1">
-                        </div>
-                        <div class="form-group">
                             <label class="form-label">Trọng lượng (gram)</label>
                             <input type="number" class="form-input" name="weight" id="formWeight" 
                                    placeholder="VD: 500" min="0" value="0" step="1">
                         </div>
-                    </div>
-                    
-                    <div class="form-row">
                         <div class="form-group">
                             <label class="form-label">Danh mục</label>
                             <input type="text" class="form-input" name="category" id="formCategory" 
                                    placeholder="VD: Thức ăn, Phụ kiện...">
                         </div>
+                    </div>
+                    
+                    <div class="form-row">
                         <div class="form-group">
                             <label class="form-label">Loại thú cưng</label>
                             <select class="form-input" name="petTypeId" id="formPetTypeId">
@@ -612,64 +546,6 @@
                     <button type="submit" class="btn btn-primary">
                         <i class='bx bx-save'></i> Lưu sản phẩm
                     </button>
-                </div>
-            </form>
-        </div>
-    </div>
-
-    <!-- Import Batch Modal -->
-    <div class="modal-overlay" id="importBatchModal">
-        <div class="modal-box">
-            <div class="modal-header">
-                <h3 class="modal-title">Nhập kho sản phẩm</h3>
-                <button class="modal-close" onclick="closeImportModal()"><i class='bx bx-x'></i></button>
-            </div>
-            
-            <form id="importBatchForm" method="post">
-                <input type="hidden" name="csrfToken" value="${csrfToken}" />
-                <input type="hidden" name="action" value="import_batch">
-                <input type="hidden" name="productId" id="importProductId">
-                
-                <div class="modal-body">
-                    <div class="form-group" style="margin-bottom: 15px; padding: 10px; background: #f8fafc; border-radius: 8px; border: 1px solid #e2e8f0;">
-                        <label class="form-label" style="margin-bottom: 4px; color: #64748b; font-size: 0.8rem;">Sản phẩm nhập kho:</label>
-                        <div id="importProductName" style="font-weight: 700; color: #0f172a; font-size: 1rem;"></div>
-                    </div>
-
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label class="form-label">Mã lô</label>
-                            <input type="text" class="form-input" name="batchCode" id="importBatchCode"
-                                   placeholder="VD: LOT-CAT-2026-05">
-                            <div class="input-hint">Bỏ trống để hệ thống tự tạo mã lô.</div>
-                        </div>
-                        <div class="form-group">
-                            <label class="form-label">Số lượng nhập <span class="required">*</span></label>
-                            <input type="number" class="form-input" name="batchQuantity" id="importBatchQuantity"
-                                   placeholder="VD: 50" min="1" value="1" step="1" required>
-                        </div>
-                    </div>
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label class="form-label">Giá vốn / sản phẩm</label>
-                            <input type="number" class="form-input" name="batchUnitCost" id="importBatchUnitCost"
-                                   placeholder="VD: 85000" min="0" value="0" step="1000">
-                        </div>
-                        <div class="form-group">
-                            <label class="form-label">Hạn sử dụng</label>
-                            <input type="date" class="form-input" name="batchExpiryDate" id="importBatchExpiryDate">
-                        </div>
-                    </div>
-                    <div class="form-group">
-                        <label class="form-label">Ghi chú lô hàng</label>
-                        <input type="text" class="form-input" name="batchNote" id="importBatchNote"
-                               placeholder="VD: Nhập từ nhà cung cấp A...">
-                    </div>
-                </div>
-                
-                <div class="modal-footer">
-                    <button type="button" class="btn-secondary" onclick="closeImportModal()">Hủy</button>
-                    <button type="submit" class="btn-primary">Xác nhận nhập kho</button>
                 </div>
             </form>
         </div>
@@ -753,29 +629,20 @@
         function applyFilters() {
             var search = document.getElementById('searchInput').value.toLowerCase();
             var discount = document.getElementById('filterDiscount').value;
-            var inventory = document.getElementById('filterInventory').value;
             var allRows = Array.from(document.querySelectorAll('#productsBody tr[data-id]'));
-            var hasFilter = search || discount || inventory;
+            var hasFilter = search || discount;
             
             // 1. Lọc các hàng thỏa mãn điều kiện
             filteredRows = allRows.filter(function(row) {
                 var name = (row.dataset.name || '').toLowerCase();
                 var hasDiscount = parseInt(row.dataset.discount) > 0;
-                var stockStatus = row.dataset.stockStatus || 'ok';
-                var expiryStatus = row.dataset.expiryStatus || 'missing-batch';
                 
                 var matchSearch = !search || name.indexOf(search) > -1;
                 var matchDiscount = !discount || 
                     (discount === 'yes' && hasDiscount) || 
                     (discount === 'no' && !hasDiscount);
-                var matchInventory = !inventory ||
-                    (inventory === stockStatus) ||
-                    (inventory === 'missing-batch' && expiryStatus === 'no-batch') ||
-                    (inventory === 'missing-batch' && expiryStatus === 'missing-batch') ||
-                    (inventory === 'near-expiry' && expiryStatus === 'near-expiry') ||
-                    (inventory === 'expired' && expiryStatus === 'expired');
                 
-                return matchSearch && matchDiscount && matchInventory;
+                return matchSearch && matchDiscount;
             });
 
             // Ẩn tất cả các hàng trước
@@ -890,24 +757,9 @@
             document.querySelector('.table-section').scrollIntoView({ behavior: 'smooth', block: 'start' });
         }
 
-        function filterByDiscount(value) {
-            document.getElementById('filterDiscount').value = value;
-            document.getElementById('filterInventory').value = '';
-            document.getElementById('searchInput').value = '';
-            applyFilters();
-        }
-
-        function filterByInventory(value) {
-            document.getElementById('filterInventory').value = value;
-            document.getElementById('filterDiscount').value = '';
-            document.getElementById('searchInput').value = '';
-            applyFilters();
-        }
-
         function resetFilters() {
             document.getElementById('searchInput').value = '';
             document.getElementById('filterDiscount').value = '';
-            document.getElementById('filterInventory').value = '';
             applyFilters();
         }
 
@@ -922,7 +774,6 @@
             document.getElementById('formPrice').value = '';
             document.getElementById('formDiscount').value = '0';
             document.getElementById('formDescription').value = '';
-            document.getElementById('formStock').value = '0';
             document.getElementById('formWeight').value = '0';
             document.getElementById('formCategory').value = '';
             document.getElementById('formPetTypeId').value = '0';
@@ -949,7 +800,6 @@
             document.getElementById('formDiscount').value = row.dataset.discount || '0';
             
             // Populate new fields
-            document.getElementById('formStock').value = row.dataset.stock || '0';
             document.getElementById('formWeight').value = row.dataset.weight || '0';
             document.getElementById('formCategory').value = row.dataset.category || '';
             document.getElementById('formPetTypeId').value = row.dataset.petTypeId || '0';
@@ -968,21 +818,6 @@
 
         function closeModal() {
             document.getElementById('productModal').classList.remove('show');
-        }
-
-        function openImportModal(row) {
-            document.getElementById('importProductId').value = row.dataset.id;
-            document.getElementById('importProductName').textContent = row.dataset.name || '';
-            document.getElementById('importBatchCode').value = '';
-            document.getElementById('importBatchQuantity').value = '1';
-            document.getElementById('importBatchUnitCost').value = '0';
-            document.getElementById('importBatchExpiryDate').value = '';
-            document.getElementById('importBatchNote').value = '';
-            document.getElementById('importBatchModal').classList.add('show');
-        }
-
-        function closeImportModal() {
-            document.getElementById('importBatchModal').classList.remove('show');
         }
 
         function openDeleteModal(row) {
@@ -1004,7 +839,6 @@
             if (e.key === 'Escape') {
                 closeModal();
                 closeDeleteModal();
-                closeImportModal();
             }
         });
 

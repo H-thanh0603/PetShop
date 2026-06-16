@@ -525,6 +525,21 @@ public class ProductDAO {
         return false;
     }
 
+    public int addProductAndReturnId(String name, String image, BigDecimal price, int discount, String description, int weight, String category, int petTypeId) {
+        String query = "INSERT INTO products (name, image, price, discount, description, stock, weight, category, pet_type_id, is_active) VALUES (?, ?, ?, ?, ?, 0, ?, ?, ?, 1)";
+        try (Connection conn = DBContext.getConnection(); PreparedStatement ps = conn.prepareStatement(query, Statement.RETURN_GENERATED_KEYS)) {
+            ps.setString(1, name); ps.setString(2, image); ps.setBigDecimal(3, price);
+            ps.setInt(4, discount); ps.setString(5, description);
+            ps.setInt(6, weight); ps.setString(7, category); ps.setInt(8, petTypeId);
+            if (ps.executeUpdate() > 0) {
+                try (ResultSet rs = ps.getGeneratedKeys()) {
+                    if (rs.next()) return rs.getInt(1);
+                }
+            }
+        } catch (Exception e) { log.error("Error adding product without stock", e); }
+        return -1;
+    }
+
     public int addProductAndReturnId(String name, String image, BigDecimal price, int discount, String description, int stock, int weight, String category, int petTypeId) {
         String query = "INSERT INTO products (name, image, price, discount, description, stock, weight, category, pet_type_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
         try (Connection conn = DBContext.getConnection();
@@ -557,6 +572,23 @@ public class ProductDAO {
             ps.setInt(4, discount); ps.setString(5, description); ps.setInt(6, id);
             return ps.executeUpdate() > 0;
         } catch (Exception e) { log.error("Error updating product id={}", id, e); }
+        return false;
+    }
+
+    public boolean updateProduct(int id, String name, String image, BigDecimal price, int discount, String description, int weight, String category, int petTypeId) {
+        String query = "UPDATE products SET name=?, image=?, price=?, discount=?, description=?, weight=?, category=?, pet_type_id=? WHERE id=?";
+        try (Connection conn = DBContext.getConnection(); PreparedStatement ps = conn.prepareStatement(query)) {
+            ps.setString(1, name);
+            ps.setString(2, image);
+            ps.setBigDecimal(3, price);
+            ps.setInt(4, discount);
+            ps.setString(5, description);
+            ps.setInt(6, weight);
+            ps.setString(7, category);
+            ps.setInt(8, petTypeId);
+            ps.setInt(9, id);
+            return ps.executeUpdate() > 0;
+        } catch (Exception e) { log.error("Error updating product without stock id={}", id, e); }
         return false;
     }
 
