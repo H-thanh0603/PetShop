@@ -105,6 +105,18 @@ public class ManageOrderServlet extends HttpServlet {
             if (orderDAO.updateStatus(orderId, newStatus, adminId)) {
                 actionLog.log(adminId, "UPDATE_ORDER_STATUS", "order", orderId,
                         "Status changed from " + oldStatus + " to " + newStatus);
+                
+                // Send notification to user
+                if (existing != null) {
+                    new DAO.NotificationDAO().create(
+                        existing.getUserId(),
+                        "Cập nhật đơn hàng #" + orderId,
+                        "Đơn hàng của bạn đã được chuyển trạng thái sang '" + getStatusLabelVietnamese(newStatus) + "'.",
+                        "order",
+                        request.getContextPath() + "/my-orders?action=view&id=" + orderId
+                    );
+                }
+                
                 session.setAttribute("message", "Cập nhật trạng thái đơn hàng thành công!");
                 session.setAttribute("messageType", "success");
             } else {
@@ -142,5 +154,16 @@ public class ManageOrderServlet extends HttpServlet {
             return;
         }
         response.sendRedirect(request.getContextPath() + "/admin/orders");
+    }
+
+    private String getStatusLabelVietnamese(String status) {
+        if ("Pending".equals(status)) return "Chờ xử lý";
+        if ("Confirmed".equals(status)) return "Đã xác nhận";
+        if ("Paid".equals(status)) return "Đã thanh toán";
+        if ("Shipping".equals(status)) return "Đang giao";
+        if ("Delivered".equals(status)) return "Đã giao hàng";
+        if ("Completed".equals(status)) return "Hoàn thành";
+        if ("Cancelled".equals(status)) return "Đã hủy";
+        return status;
     }
 }

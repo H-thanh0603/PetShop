@@ -59,6 +59,10 @@
             <a href="${pageContext.request.contextPath}/admin/reports" class="<%= "reports".equals(currentPage) ? "active" : "" %>">
                 <i class='bx bxs-report'></i> Báo cáo vận hành
             </a>
+            <a href="${pageContext.request.contextPath}/admin/ai-support" class="<%= "ai-support".equals(currentPage) ? "active" : "" %>" style="display: flex; align-items: center; justify-content: space-between; gap: 8px;">
+                <span><i class='bx bxs-bot'></i> AI Customer Support</span>
+                <span class="badge bg-danger rounded-pill d-none" id="admin-ai-badge" style="font-size: 0.75rem; padding: 4px 8px; font-weight: bold; border: 1.5px solid white;">0</span>
+            </a>
         </c:if>
         
         <c:if test="${sessionScope.user.role == 'admin' || sessionScope.user.role == 'staff'}">
@@ -71,6 +75,50 @@
         <a href="${pageContext.request.contextPath}/logout?from=admin">
             <i class='bx bx-log-out'></i> Đăng xuất
         </a>
+        <script>
+        (function() {
+            let lastNeedSupportCount = -1;
+            
+            function checkAdminSupportNotifications() {
+                const contextPath = "${pageContext.request.contextPath}";
+                fetch(contextPath + '/admin/ai-support/dashboard')
+                    .then(res => {
+                        if (res.status === 401 || res.status === 403) return null;
+                        return res.json();
+                    })
+                    .then(data => {
+                        if (!data) return;
+                        const badge = document.getElementById('admin-ai-badge');
+                        const count = data.needAdminSupport || 0;
+                        
+                        if (badge) {
+                            if (count > 0) {
+                                badge.textContent = count;
+                                badge.classList.remove('d-none');
+                            } else {
+                                badge.classList.add('d-none');
+                            }
+                        }
+                        
+                        // Trigger toast notification if count increases and it's not the initial check
+                        if (lastNeedSupportCount !== -1 && count > lastNeedSupportCount) {
+                            if (typeof showAdminToast === 'function') {
+                                showAdminToast('warning', 'Có yêu cầu hỗ trợ mới từ khách hàng cần quản trị viên phản hồi!');
+                            }
+                        }
+                        
+                        lastNeedSupportCount = count;
+                    })
+                    .catch(err => console.error("Error checking AI support notifications:", err));
+            }
+            
+            document.addEventListener('DOMContentLoaded', function() {
+                checkAdminSupportNotifications();
+                // Check every 15 seconds
+                setInterval(checkAdminSupportNotifications, 15000);
+            });
+        })();
+        </script>
     </nav>
 </aside>
 

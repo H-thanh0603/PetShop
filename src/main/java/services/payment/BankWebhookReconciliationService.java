@@ -208,6 +208,7 @@ public class BankWebhookReconciliationService {
                         verifiedAt
                 );
                 if (!orderDAO.updatePaymentStatus(conn, transaction.getOrderId(), true)
+                        || !orderDAO.markAwaitingPaymentOrderPaid(conn, transaction.getOrderId())
                         || !orderDAO.finalizeReservedStockForOrder(conn, transaction.getOrderId())
                         || !orderLogDAO.insert(conn, transaction.getOrderId(), "WEBHOOK", null,
                         "BANK_WEBHOOK_VERIFIED", transaction.getStatus(), "VERIFIED",

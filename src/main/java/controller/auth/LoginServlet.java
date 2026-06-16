@@ -99,11 +99,25 @@ public class LoginServlet extends HttpServlet {
         moveFlashMessage(session, request, "error");
         moveFlashMessage(session, request, "warning");
 
+        // Read rememberEmail cookie if present
+        String savedEmail = null;
+        Cookie[] cookies = request.getCookies();
+        if (cookies != null) {
+            for (Cookie cookie : cookies) {
+                if ("rememberEmail".equals(cookie.getName())) {
+                    savedEmail = cookie.getValue();
+                    break;
+                }
+            }
+        }
+
         // Kiểm tra email từ đăng ký mới
         String registeredEmail = (String) session.getAttribute("registeredEmail");
         if (registeredEmail != null) {
             request.setAttribute("savedEmail", registeredEmail);
             session.removeAttribute("registeredEmail"); // Xóa sau khi dùng
+        } else if (savedEmail != null) {
+            request.setAttribute("savedEmail", savedEmail);
         }
         populateLoginViewData(request);
         
@@ -285,7 +299,7 @@ public class LoginServlet extends HttpServlet {
             }
             session.setAttribute("totalQuantity", totalQuantity);
             
-            // Xử lý "Ghi nhớ đăng nhập" - secure token-based
+            // Xử lý "Ghi nhớ đăng nhập" - secure token-based and email cookie
             if ("on".equals(rememberMe)) {
                 String plainToken = generateSecureToken();
                 rememberTokenDAO.saveToken(user.getId(), plainToken);
@@ -293,6 +307,12 @@ public class LoginServlet extends HttpServlet {
                 response.addCookie(tokenCookie);
                 applySameSiteToRememberCookie(response,
                         request.getContextPath().isEmpty() ? "/" : request.getContextPath());
+
+                // Also save rememberEmail cookie
+                Cookie emailCookie = new Cookie("rememberEmail", email);
+                emailCookie.setMaxAge(30 * 24 * 60 * 60); // 30 days
+                emailCookie.setPath(request.getContextPath().isEmpty() ? "/" : request.getContextPath());
+                response.addCookie(emailCookie);
             } else {
                 // Clear any existing remember_token cookie
                 Cookie clearCookie = new Cookie("remember_token", "");
@@ -301,6 +321,12 @@ public class LoginServlet extends HttpServlet {
                 clearCookie.setHttpOnly(true);
                 clearCookie.setSecure(shouldUseSecureCookies(request));
                 response.addCookie(clearCookie);
+
+                // Also clear rememberEmail cookie
+                Cookie clearEmailCookie = new Cookie("rememberEmail", "");
+                clearEmailCookie.setMaxAge(0);
+                clearEmailCookie.setPath(request.getContextPath().isEmpty() ? "/" : request.getContextPath());
+                response.addCookie(clearEmailCookie);
             }
             
             // Redirect theo role hoặc về trang trước

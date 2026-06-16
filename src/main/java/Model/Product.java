@@ -16,6 +16,8 @@ public class Product {
     private String category;
     private int weight;
     private int stock;
+    private int reservedQuantity;
+    private int soldQuantity;
     private int pet_type_id;
     private String brand;
     private double averageRating;
@@ -63,7 +65,7 @@ public class Product {
     public void setImage(String image) { this.image = image; }
     public BigDecimal getPrice() { return price; }
     public void setPrice(BigDecimal price) { this.price = price != null ? price : BigDecimal.ZERO; }
-    public int getDiscount() { return discount; }
+    public int getDiscount() { return 0; } // ALWAYS return 0 to ignore legacy discount
     public void setDiscount(int discount) { this.discount = discount; }
     public String getDescription() { return description; }
     public void setDescription(String description) { this.description = description; }
@@ -73,6 +75,10 @@ public class Product {
     public void setWeight(int weight) { this.weight = weight; }
     public int getStock() { return stock; }
     public void setStock(int stock) { this.stock = stock; }
+    public int getReservedQuantity() { return reservedQuantity; }
+    public void setReservedQuantity(int reservedQuantity) { this.reservedQuantity = Math.max(0, reservedQuantity); }
+    public int getSoldQuantity() { return soldQuantity; }
+    public void setSoldQuantity(int soldQuantity) { this.soldQuantity = Math.max(0, soldQuantity); }
     public int getPet_type_id() { return pet_type_id; }
     public void setPet_type_id(int pet_type_id) { this.pet_type_id = pet_type_id; }
     public String getBrand() { return brand; }
@@ -228,7 +234,7 @@ public class Product {
     }
 
     public int getAvailablePurchaseQuantity() {
-        int available = Math.max(0, stock);
+        int available = Math.max(0, stock - reservedQuantity);
         if (isFlashSale() && flashSaleRemainingQuantity != null) {
             available = Math.min(available, Math.max(0, flashSaleRemainingQuantity));
         }

@@ -360,6 +360,19 @@ public class CheckoutServlet extends HttpServlet {
             completedPaymentTransaction = checkoutResult.getPaymentTransaction();
             completedOrderId = checkoutResult.getOrderId();
 
+            // Create notification for user
+            try {
+                new DAO.NotificationDAO().create(
+                    user.getId(),
+                    "Đặt hàng thành công",
+                    "Đơn hàng #" + completedOrderId + " đã được đặt thành công. Chúng tôi sẽ sớm xử lý.",
+                    "order",
+                    request.getContextPath() + "/my-orders?action=view&id=" + completedOrderId
+                );
+            } catch (Exception e) {
+                logger.error("Error creating order notification", e);
+            }
+
             // Xóa đúng cart theo mode
             if (isBuyNow) {
                 session.removeAttribute("buyNowCart");
@@ -436,7 +449,6 @@ public class CheckoutServlet extends HttpServlet {
                 session.setAttribute("successShippingAddress", shippingAddress);
                 session.setAttribute("successOrderNote", note);
                 session.setAttribute("successOrderItems", new ArrayList<>(checkoutCart.values()));
-
                 result.put("success", true);
                 result.put("message", "Đặt hàng thành công!");
                 result.put("redirectUrl", request.getContextPath() + "/order-success");

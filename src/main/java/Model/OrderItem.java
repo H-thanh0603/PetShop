@@ -14,6 +14,8 @@ public class OrderItem {
     private Integer promotionId;
     private String promotionName;
     private String promotionType;
+    private String productNameSnapshot;
+    private String productImageSnapshot;
     private Product product;
 
     public OrderItem() {
@@ -54,6 +56,30 @@ public class OrderItem {
     public void setPromotionName(String promotionName) { this.promotionName = promotionName; }
     public String getPromotionType() { return promotionType; }
     public void setPromotionType(String promotionType) { this.promotionType = promotionType; }
+    public String getProductNameSnapshot() { return productNameSnapshot; }
+    public void setProductNameSnapshot(String productNameSnapshot) { this.productNameSnapshot = productNameSnapshot; }
+    public String getProductImageSnapshot() { return productImageSnapshot; }
+    public void setProductImageSnapshot(String productImageSnapshot) { this.productImageSnapshot = productImageSnapshot; }
+
+    public String getProductName() {
+        if (productNameSnapshot != null && !productNameSnapshot.isEmpty()) {
+            return productNameSnapshot;
+        }
+        if (product != null) {
+            return product.getName();
+        }
+        return "Sản phẩm";
+    }
+
+    public String getProductImage() {
+        if (productImageSnapshot != null && !productImageSnapshot.isEmpty()) {
+            return productImageSnapshot;
+        }
+        if (product != null) {
+            return product.getImage();
+        }
+        return "";
+    }
 
     public Product getProduct() {
         return product;
