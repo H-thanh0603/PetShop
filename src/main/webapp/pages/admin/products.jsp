@@ -527,12 +527,7 @@
                             <input type="hidden" name="price" id="formPrice">
                             <div class="price-display" id="pricePreview"></div>
                         </div>
-                        <div class="form-group">
-                            <label class="form-label">Giảm giá (%)</label>
-                            <input type="number" class="form-input" name="discount" id="formDiscount"
-                                   placeholder="VD: 10" min="0" max="100" value="0" step="1">
-                            <div class="input-hint">Nhập phần trăm giảm giá (0-100)</div>
-                        </div>
+                        <input type="hidden" name="discount" id="formDiscount" value="0">
                     </div>
                     
                     <div class="form-group">
@@ -665,7 +660,7 @@
             
             rows.forEach(function(row) {
                 var name = (row.dataset.name || '').toLowerCase();
-                var hasDiscount = parseInt(row.dataset.discount) > 0;
+                var hasDiscount = row.dataset.hasDiscount === "true";
                 var stockStatus = row.dataset.stockStatus || 'ok';
                 var expiryStatus = row.dataset.expiryStatus || 'missing-batch';
                 

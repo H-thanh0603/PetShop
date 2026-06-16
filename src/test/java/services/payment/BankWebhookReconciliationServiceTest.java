@@ -46,6 +46,7 @@ class BankWebhookReconciliationServiceTest {
                 eq(new BigDecimal("258000")), eq("Thanh toan PETSHOP-U7-123456"), eq("{}"),
                 eq("VERIFIED"), eq("VERIFIED"), any(), any())).thenReturn(true);
         when(orderDAO.updatePaymentStatus(conn, 456, true)).thenReturn(true);
+        when(orderDAO.markAwaitingPaymentOrderPaid(conn, 456)).thenReturn(true);
         when(orderDAO.finalizeReservedStockForOrder(conn, 456)).thenReturn(true);
         when(orderLogDAO.insert(conn, 456, "WEBHOOK", null,
                 "BANK_WEBHOOK_VERIFIED", "PENDING_VERIFICATION", "VERIFIED",
@@ -66,6 +67,7 @@ class BankWebhookReconciliationServiceTest {
         }
 
         verify(orderDAO).updatePaymentStatus(conn, 456, true);
+        verify(orderDAO).markAwaitingPaymentOrderPaid(conn, 456);
         verify(orderDAO).finalizeReservedStockForOrder(conn, 456);
         verify(conn).commit();
     }

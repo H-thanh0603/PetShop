@@ -12,6 +12,7 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.Statement;
 import java.sql.Timestamp;
+import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -183,6 +184,54 @@ public class PaymentTransactionDAO {
             ps.setTimestamp(8, verifiedAt);
             ps.setInt(9, transactionId);
             return ps.executeUpdate() > 0;
+        }
+    }
+
+    public boolean updateLatestProviderResultForOrder(int orderId, String providerKey,
+                                                      String providerTransactionId,
+                                                      java.math.BigDecimal amountReceived,
+                                                      String providerMetadata,
+                                                      String transactionStatus,
+                                                      String verificationStatus,
+                                                      String verificationMessage) {
+        try (Connection conn = DBContext.getConnection()) {
+            conn.setAutoCommit(false);
+            try {
+                PaymentTransaction transaction = getLatestByOrderIdForUpdate(conn, orderId);
+                if (transaction == null || !providerKey.equalsIgnoreCase(transaction.getProviderKey())) {
+                    conn.rollback();
+                    return false;
+                }
+                Timestamp verifiedAt = "VERIFIED".equalsIgnoreCase(verificationStatus)
+                        ? Timestamp.valueOf(LocalDateTime.now())
+                        : null;
+                boolean updated = applyWebhookResult(
+                        conn,
+                        transaction.getId(),
+                        providerTransactionId,
+                        amountReceived,
+                        null,
+                        providerMetadata,
+                        transactionStatus,
+                        verificationStatus,
+                        verificationMessage,
+                        verifiedAt
+                );
+                if (!updated) {
+                    conn.rollback();
+                    return false;
+                }
+                conn.commit();
+                return true;
+            } catch (Exception e) {
+                conn.rollback();
+                throw e;
+            } finally {
+                conn.setAutoCommit(true);
+            }
+        } catch (Exception e) {
+            log.error("Failed to update provider result for order id={}", orderId, e);
+            return false;
         }
     }
 

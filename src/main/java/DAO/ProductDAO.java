@@ -5,6 +5,7 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.Statement;
+import java.sql.SQLSyntaxErrorException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ThreadLocalRandom;
@@ -213,6 +214,106 @@ public class ProductDAO {
         return list;
     }
 
+    public List<Product> searchProductsForAdvice(String message, int limit) {
+        List<Product> results = new ArrayList<>();
+        String lowerMessage = message.toLowerCase();
+        
+        // Determine pet type if mentioned
+        String petType = null;
+        if (lowerMessage.contains("mèo") || lowerMessage.contains("cat")) {
+            petType = "cat";
+        } else if (lowerMessage.contains("chó") || lowerMessage.contains("dog") || lowerMessage.contains("poodle")) {
+            petType = "dog";
+        }
+        
+        // Look for specific product keywords
+        String[] keywords = {"hạt", "pate", "cát", "sữa tắm", "shampoo", "đồ chơi", "bát", "nhà", "chuồng", "vòng cổ", "dây dắt", "sữa", "snack", "thức ăn", "xương"};
+        List<String> matchedKeywords = new ArrayList<>();
+        for (String kw : keywords) {
+            if (lowerMessage.contains(kw)) {
+                matchedKeywords.add(kw);
+            }
+        }
+        
+        // If no specific keywords, use the whole message words (excluding short words)
+        if (matchedKeywords.isEmpty()) {
+            String query = message.replaceAll("[^a-zA-Z0-9ăâđêôơưàảãáạằẳẵắặầẩẫấậèẻẽéẹềểễếệìỉĩíịòỏõóọồổỗốộờởỡớợùủũúụừửữứựỳỷỹýỵ\\s]", "");
+            String[] words = query.split("\\s+");
+            for (String word : words) {
+                if (word.length() > 2 && !"cho".equals(word) && !"mèo".equals(word) && !"chó".equals(word) && !"bán".equals(word) && !"mua".equals(word) && !"shop".equals(word)) {
+                    matchedKeywords.add(word);
+                }
+            }
+        }
+        
+        // Build SQL query to search in DB
+        StringBuilder sql = new StringBuilder(
+            "SELECT p.*, COALESCE(AVG(r.rating), 0) AS average_rating, COUNT(r.id) AS review_count " +
+            "FROM products p " +
+            "LEFT JOIN reviews r ON r.product_id = p.id " +
+            "LEFT JOIN pet_types pt ON p.pet_type_id = pt.id " +
+            "WHERE p.is_active = 1 AND p.stock > 0 AND p.price > 0 "
+        );
+        
+        if (petType != null) {
+            sql.append("AND pt.code = ? ");
+        }
+        
+        if (!matchedKeywords.isEmpty()) {
+            sql.append("AND (");
+            for (int i = 0; i < matchedKeywords.size(); i++) {
+                if (i > 0) sql.append(" OR ");
+                sql.append("p.name LIKE ? OR p.description LIKE ? OR p.category LIKE ?");
+            }
+            sql.append(") ");
+        }
+        
+        sql.append("GROUP BY p.id ORDER BY p.id DESC LIMIT ?");
+        
+        try (Connection conn = DBContext.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql.toString())) {
+            int paramIdx = 1;
+            if (petType != null) {
+                ps.setString(paramIdx++, petType);
+            }
+            for (String kw : matchedKeywords) {
+                String searchPattern = "%" + kw + "%";
+                ps.setString(paramIdx++, searchPattern);
+                ps.setString(paramIdx++, searchPattern);
+                ps.setString(paramIdx++, searchPattern);
+            }
+            ps.setInt(paramIdx, limit);
+            
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    results.add(mapProduct(rs));
+                }
+            }
+        } catch (Exception e) {
+            log.error("Error searching products for advice", e);
+        }
+        
+        // Fallback: if no products found, just return some active in-stock products
+        if (results.isEmpty()) {
+            String fallbackSql = "SELECT p.*, COALESCE(AVG(r.rating), 0) AS average_rating, COUNT(r.id) AS review_count " +
+                    "FROM products p LEFT JOIN reviews r ON r.product_id = p.id " +
+                    "WHERE p.is_active = 1 AND p.stock > 0 AND p.price > 0 " +
+                    "GROUP BY p.id ORDER BY p.id DESC LIMIT ?";
+            try (Connection conn = DBContext.getConnection();
+                 PreparedStatement ps = conn.prepareStatement(fallbackSql)) {
+                ps.setInt(1, limit);
+                try (ResultSet rs = ps.executeQuery()) {
+                    while (rs.next()) {
+                        results.add(mapProduct(rs));
+                    }
+                }
+            } catch (Exception e) {
+                log.error("Error in advice fallback", e);
+            }
+        }
+        return results;
+    }
+
     public List<Product> getFilteredProductsPage(ProductFilterCriteria criteria) {
         List<Product> list = new ArrayList<>();
         FilterQueryParts parts = buildFilteredQuery(criteria, false);
@@ -272,7 +373,7 @@ public class ProductDAO {
 
     public List<Product> getDiscountedProductsList() {
         List<Product> list = new ArrayList<>();
-        String query = PRODUCT_SELECT_WITH_REVIEWS + "WHERE (p.discount > 0 OR " + ACTIVE_PROMOTION_EXISTS_SQL + ") AND p.is_active = 1 GROUP BY p.id ORDER BY p.discount DESC, p.id DESC";
+        String query = PRODUCT_SELECT_WITH_REVIEWS + "WHERE " + ACTIVE_PROMOTION_EXISTS_SQL + " AND p.is_active = 1 GROUP BY p.id ORDER BY COALESCE((SELECT CASE WHEN prm.discount_type = 'PERCENT' THEN prm.discount_value ELSE ROUND(prm.discount_value * 100 / p.price, 0) END FROM promotions prm JOIN promotion_products ppm ON ppm.promotion_id = prm.id WHERE ppm.product_id = p.id AND prm.status = 'ACTIVE' AND NOW() BETWEEN prm.start_date AND prm.end_date LIMIT 1), 0) DESC, p.id DESC";
         try (Connection conn = DBContext.getConnection(); PreparedStatement ps = conn.prepareStatement(query); ResultSet rs = ps.executeQuery()) {
             while (rs.next()) { list.add(mapProduct(rs)); }
         } catch (Exception e) { log.error("Error fetching discounted products list", e); }
@@ -281,7 +382,7 @@ public class ProductDAO {
 
     public List<Product> getDiscountedProductsPage(int page, int size) {
         List<Product> list = new ArrayList<>();
-        String query = PRODUCT_SELECT_WITH_REVIEWS + "WHERE (p.discount > 0 OR " + ACTIVE_PROMOTION_EXISTS_SQL + ") AND p.is_active = 1 GROUP BY p.id ORDER BY p.discount DESC, p.id DESC LIMIT ? OFFSET ?";
+        String query = PRODUCT_SELECT_WITH_REVIEWS + "WHERE " + ACTIVE_PROMOTION_EXISTS_SQL + " AND p.is_active = 1 GROUP BY p.id ORDER BY COALESCE((SELECT CASE WHEN prm.discount_type = 'PERCENT' THEN prm.discount_value ELSE ROUND(prm.discount_value * 100 / p.price, 0) END FROM promotions prm JOIN promotion_products ppm ON ppm.promotion_id = prm.id WHERE ppm.product_id = p.id AND prm.status = 'ACTIVE' AND NOW() BETWEEN prm.start_date AND prm.end_date LIMIT 1), 0) DESC, p.id DESC LIMIT ? OFFSET ?";
         try (Connection conn = DBContext.getConnection(); PreparedStatement ps = conn.prepareStatement(query)) {
             ps.setInt(1, size); ps.setInt(2, Math.max(0, (page - 1) * size));
             ResultSet rs = ps.executeQuery(); while (rs.next()) { list.add(mapProduct(rs)); }
@@ -290,7 +391,7 @@ public class ProductDAO {
     }
 
     public int getTotalDiscountedProductsCount() {
-        String query = "SELECT COUNT(*) FROM products p WHERE (p.discount > 0 OR " + ACTIVE_PROMOTION_EXISTS_SQL + ") AND p.is_active = 1";
+        String query = "SELECT COUNT(*) FROM products p WHERE " + ACTIVE_PROMOTION_EXISTS_SQL + " AND p.is_active = 1";
         try (Connection conn = DBContext.getConnection(); PreparedStatement ps = conn.prepareStatement(query); ResultSet rs = ps.executeQuery()) {
             if (rs.next()) return rs.getInt(1);
         } catch (Exception e) { log.error("Error counting discounted products", e); }
@@ -332,7 +433,7 @@ public class ProductDAO {
                 "  FROM reviews GROUP BY product_id " +
                 ") rv ON rv.product_id = p.id " +
                 "WHERE p.is_active = 1 " +
-                "ORDER BY total_sold DESC, p.discount DESC, p.id DESC LIMIT ? OFFSET ?";
+                "ORDER BY total_sold DESC, COALESCE((SELECT CASE WHEN prm.discount_type = 'PERCENT' THEN prm.discount_value ELSE ROUND(prm.discount_value * 100 / p.price, 0) END FROM promotions prm JOIN promotion_products ppm ON ppm.promotion_id = prm.id WHERE ppm.product_id = p.id AND prm.status = 'ACTIVE' AND NOW() BETWEEN prm.start_date AND prm.end_date LIMIT 1), 0) DESC, p.id DESC LIMIT ? OFFSET ?";
         try (Connection conn = DBContext.getConnection(); PreparedStatement ps = conn.prepareStatement(query)) {
             ps.setInt(1, size); ps.setInt(2, Math.max(0, (page - 1) * size));
             ResultSet rs = ps.executeQuery(); while (rs.next()) { list.add(mapProduct(rs)); }
@@ -405,7 +506,7 @@ public class ProductDAO {
             where.append(" AND (p.name LIKE ? OR p.description LIKE ?)");
         }
         if (criteria.isDiscountOnly()) {
-            where.append(" AND (p.discount > 0 OR ").append(ACTIVE_PROMOTION_EXISTS_SQL).append(")");
+            where.append(" AND ").append(ACTIVE_PROMOTION_EXISTS_SQL);
         }
         if (criteria.getPriceRange() != null && !criteria.getPriceRange().isBlank()) {
             switch (criteria.getPriceRange()) {
@@ -451,7 +552,7 @@ public class ProductDAO {
             case "price-desc":
                 return "p.price DESC, p.id DESC";
             case "discount":
-                return "p.discount DESC, p.id DESC";
+                return "COALESCE((SELECT CASE WHEN prm.discount_type = 'PERCENT' THEN prm.discount_value ELSE ROUND(prm.discount_value * 100 / p.price, 0) END FROM promotions prm JOIN promotion_products ppm ON ppm.promotion_id = prm.id WHERE ppm.product_id = p.id AND prm.status = 'ACTIVE' AND NOW() BETWEEN prm.start_date AND prm.end_date LIMIT 1), 0) DESC, p.id DESC";
             case "name":
                 return "p.name ASC, p.id DESC";
             case "rating":
@@ -614,7 +715,7 @@ public class ProductDAO {
     }
 
     public int getDiscountedProducts() {
-        String query = "SELECT COUNT(*) FROM products WHERE discount > 0 AND is_active = 1";
+        String query = "SELECT COUNT(*) FROM products p WHERE " + ACTIVE_PROMOTION_EXISTS_SQL + " AND p.is_active = 1";
         try (Connection conn = DBContext.getConnection(); PreparedStatement ps = conn.prepareStatement(query); ResultSet rs = ps.executeQuery()) {
             if (rs.next()) return rs.getInt(1);
         } catch (Exception e) { log.error("Error counting discounted products", e); }
@@ -744,6 +845,27 @@ public class ProductDAO {
         if (quantity <= 0) {
             return false;
         }
+        String query = "UPDATE products " +
+                "SET reserved_quantity = reserved_quantity + ? " +
+                "WHERE id = ? AND (stock - reserved_quantity) >= ?";
+        try (PreparedStatement ps = conn.prepareStatement(query)) {
+            ps.setInt(1, quantity);
+            ps.setInt(2, productId);
+            ps.setInt(3, quantity);
+            return ps.executeUpdate() > 0;
+        } catch (SQLSyntaxErrorException e) {
+            if (isUnknownColumn(e, "reserved_quantity")) {
+                log.warn("products.reserved_quantity is missing; falling back to legacy stock decrement for product id={}", productId);
+                return reserveStockLegacy(conn, productId, quantity);
+            }
+            log.error("Error reserving stock for product id={}", productId, e);
+        } catch (Exception e) {
+            log.error("Error reserving stock for product id={}", productId, e);
+        }
+        return false;
+    }
+
+    private boolean reserveStockLegacy(Connection conn, int productId, int quantity) {
         String query = "UPDATE products SET stock = stock - ? WHERE id = ? AND stock >= ?";
         try (PreparedStatement ps = conn.prepareStatement(query)) {
             ps.setInt(1, quantity);
@@ -751,7 +873,7 @@ public class ProductDAO {
             ps.setInt(3, quantity);
             return ps.executeUpdate() > 0;
         } catch (Exception e) {
-            log.error("Error reserving stock for product id={}", productId, e);
+            log.error("Error reserving stock with legacy schema for product id={}", productId, e);
         }
         return false;
     }
@@ -760,13 +882,34 @@ public class ProductDAO {
         if (quantity <= 0) {
             return false;
         }
-        String query = "UPDATE products SET stock = stock + ? WHERE id = ? AND stock >= 0";
+        String query = "UPDATE products " +
+                "SET reserved_quantity = reserved_quantity - ? " +
+                "WHERE id = ? AND reserved_quantity >= ?";
+        try (PreparedStatement ps = conn.prepareStatement(query)) {
+            ps.setInt(1, quantity);
+            ps.setInt(2, productId);
+            ps.setInt(3, quantity);
+            return ps.executeUpdate() > 0;
+        } catch (SQLSyntaxErrorException e) {
+            if (isUnknownColumn(e, "reserved_quantity")) {
+                log.warn("products.reserved_quantity is missing; falling back to legacy stock release for product id={}", productId);
+                return releaseReservedStockLegacy(conn, productId, quantity);
+            }
+            log.error("Error releasing reserved stock for product id={}", productId, e);
+        } catch (Exception e) {
+            log.error("Error releasing reserved stock for product id={}", productId, e);
+        }
+        return false;
+    }
+
+    private boolean releaseReservedStockLegacy(Connection conn, int productId, int quantity) {
+        String query = "UPDATE products SET stock = stock + ? WHERE id = ?";
         try (PreparedStatement ps = conn.prepareStatement(query)) {
             ps.setInt(1, quantity);
             ps.setInt(2, productId);
             return ps.executeUpdate() > 0;
         } catch (Exception e) {
-            log.error("Error releasing reserved stock for product id={}", productId, e);
+            log.error("Error releasing reserved stock with legacy schema for product id={}", productId, e);
         }
         return false;
     }
@@ -776,18 +919,52 @@ public class ProductDAO {
             return false;
         }
         String query = "UPDATE products " +
-                "SET reserved_quantity = reserved_quantity - ?, sold_quantity = sold_quantity + ? " +
-                "WHERE id = ? AND reserved_quantity >= ?";
+                "SET stock = stock - ?, reserved_quantity = reserved_quantity - ?, sold_quantity = sold_quantity + ? " +
+                "WHERE id = ? AND reserved_quantity >= ? AND stock >= ?";
+        try (PreparedStatement ps = conn.prepareStatement(query)) {
+            ps.setInt(1, quantity);
+            ps.setInt(2, quantity);
+            ps.setInt(3, quantity);
+            ps.setInt(4, productId);
+            ps.setInt(5, quantity);
+            ps.setInt(6, quantity);
+            return ps.executeUpdate() > 0;
+        } catch (SQLSyntaxErrorException e) {
+            if (isUnknownColumn(e, "reserved_quantity")) {
+                log.warn("products.reserved_quantity is missing; legacy reserve already decremented stock for product id={}", productId);
+                return true;
+            }
+            if (isUnknownColumn(e, "sold_quantity")) {
+                return finalizeReservedStockWithoutSoldQuantity(conn, productId, quantity);
+            }
+            log.error("Error finalizing reserved stock for product id={}", productId, e);
+        } catch (Exception e) {
+            log.error("Error finalizing reserved stock for product id={}", productId, e);
+        }
+        return false;
+    }
+
+    private boolean finalizeReservedStockWithoutSoldQuantity(Connection conn, int productId, int quantity) {
+        String query = "UPDATE products " +
+                "SET stock = stock - ?, reserved_quantity = reserved_quantity - ? " +
+                "WHERE id = ? AND reserved_quantity >= ? AND stock >= ?";
         try (PreparedStatement ps = conn.prepareStatement(query)) {
             ps.setInt(1, quantity);
             ps.setInt(2, quantity);
             ps.setInt(3, productId);
             ps.setInt(4, quantity);
+            ps.setInt(5, quantity);
             return ps.executeUpdate() > 0;
         } catch (Exception e) {
-            log.error("Error finalizing reserved stock for product id={}", productId, e);
+            log.error("Error finalizing reserved stock without sold quantity for product id={}", productId, e);
         }
         return false;
+    }
+
+    private boolean isUnknownColumn(SQLSyntaxErrorException e, String columnName) {
+        String message = e.getMessage() == null ? "" : e.getMessage().toLowerCase();
+        return ("42S22".equals(e.getSQLState()) || e.getErrorCode() == 1054)
+                && message.contains(columnName.toLowerCase());
     }
 
     public boolean increaseStock(int productId, int quantity) {

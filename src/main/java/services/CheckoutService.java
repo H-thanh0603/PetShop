@@ -181,6 +181,9 @@ public class CheckoutService {
                         paymentResult.getPaymentMethodDb(),
                         paymentResult.isPaymentStatus()
                 );
+                order.setSubtotal(totalAmount);
+                order.setShippingFee(BigDecimal.valueOf(shippingFee));
+                order.setDiscountAmount(discount);
 
                 int orderId = orderDAO.saveOrder(conn, order);
                 if (orderId <= 0) {
@@ -222,6 +225,8 @@ public class CheckoutService {
                     orderItem.setPromotionId(product.getActivePromotionId());
                     orderItem.setPromotionName(product.getActivePromotionName());
                     orderItem.setPromotionType(product.getActivePromotionType());
+                    orderItem.setProductNameSnapshot(product.getName());
+                    orderItem.setProductImageSnapshot(product.getImage());
 
                     if (!orderDAO.saveOrderItem(conn, orderItem)) {
                         conn.rollback();
@@ -279,11 +284,21 @@ public class CheckoutService {
         order.setShippingAddress(shippingAddress);
         order.setNote(note);
         order.setTotalAmount(finalTotal);
-        order.setStatus("Pending");
+        order.setStatus(resolveInitialOrderStatus(paymentMethodDb, paymentStatus));
         order.setCreatedAt(Timestamp.valueOf(LocalDateTime.now()));
         order.setPayment_method(paymentMethodDb);
         order.setPayment_status(paymentStatus);
         return order;
+    }
+
+    private static String resolveInitialOrderStatus(String paymentMethodDb, boolean paymentStatus) {
+        if ("BANK_TRANSFER".equalsIgnoreCase(paymentMethodDb)) {
+            return "Awaiting Payment";
+        }
+        if (paymentStatus && !"COD".equalsIgnoreCase(paymentMethodDb)) {
+            return "Paid";
+        }
+        return "Pending";
     }
 
     private BigDecimal calculateDiscount(BigDecimal cartTotal, Coupon coupon) {
@@ -318,12 +333,12 @@ public class CheckoutService {
         transaction.setAmount(finalTotal);
         transaction.setCurrency(bankTransferDetails.getCurrency());
         transaction.setStatus(paymentResult.getTransactionStatus());
-        transaction.setVerificationStatus(paymentResult.isPendingVerification() ? "PENDING" : "NOT_REQUIRED");
+        transaction.setVerificationStatus(isPendingPaymentVerification(paymentResult) ? "PENDING" : "NOT_REQUIRED");
         transaction.setVerificationMessage(paymentResult.getMessage());
         Timestamp now = Timestamp.valueOf(LocalDateTime.now());
         transaction.setCreatedAt(now);
         transaction.setUpdatedAt(now);
-        if (paymentResult.isPendingVerification()) {
+        if ("BANK_TRANSFER".equalsIgnoreCase(paymentResult.getPaymentMethodDb()) && paymentResult.isPendingVerification()) {
             String transferReference = hasText(reservedTransferReference)
                     ? reservedTransferReference.trim()
                     : bankTransferDetails.buildTransferReference(orderId);
@@ -332,6 +347,12 @@ public class CheckoutService {
             transaction.setExpiresAt(Timestamp.valueOf(LocalDateTime.now().plusMinutes(pendingMinutes)));
         }
         return transaction;
+    }
+
+    private boolean isPendingPaymentVerification(PaymentResult paymentResult) {
+        return paymentResult.isPendingVerification()
+                || ("VNPAY".equalsIgnoreCase(paymentResult.getPaymentMethodDb())
+                && !paymentResult.isPaymentStatus());
     }
 
     private boolean hasText(String value) {
@@ -349,6 +370,8 @@ public class CheckoutService {
                 return "MoMo";
             case "BANK_TRANSFER":
                 return "Bank Transfer";
+            case "VNPAY":
+                return "VNPAY";
             default:
                 return paymentMethodDb;
         }
@@ -368,6 +391,8 @@ public class CheckoutService {
             oi.setPromotionId(ci.getProduct().getActivePromotionId());
             oi.setPromotionName(ci.getProduct().getActivePromotionName());
             oi.setPromotionType(ci.getProduct().getActivePromotionType());
+            oi.setProductNameSnapshot(ci.getProduct().getName());
+            oi.setProductImageSnapshot(ci.getProduct().getImage());
             oi.setProduct(ci.getProduct());
             confirmedItems.add(oi);
         });

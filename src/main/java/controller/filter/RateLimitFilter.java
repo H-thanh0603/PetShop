@@ -215,5 +215,6 @@ public class RateLimitFilter implements Filter {
         endpointLimits.put("/api/search-autocomplete", AppConfig.getInt("ratelimit.search-autocomplete", 8));
         endpointLimits.put("/shop", 30);
         endpointLimits.put("/add-to-cart", 20);
+        endpointLimits.put("/ai-support/chat", 10);
     }
 }
