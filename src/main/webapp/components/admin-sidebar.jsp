@@ -53,6 +53,9 @@
             <a href="${pageContext.request.contextPath}/admin/statistics" class="<%= "statistics".equals(currentPage) ? "active" : "" %>">
                 <i class='bx bxs-bar-chart-alt-2'></i> Thống kê doanh thu
             </a>
+            <a href="https://sandbox.vnpayment.vn/merchantv2/" target="_blank">
+                <i class='bx bx-credit-card'></i> Quản lý vnpay
+            </a>
             <a href="${pageContext.request.contextPath}/admin/reports" class="<%= "reports".equals(currentPage) ? "active" : "" %>">
                 <i class='bx bxs-report'></i> Báo cáo vận hành
             </a>
