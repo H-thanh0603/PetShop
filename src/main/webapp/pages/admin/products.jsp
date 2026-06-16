@@ -374,9 +374,12 @@
                     </c:if>
                     <c:forEach items="${products}" var="p" varStatus="loop">
                         <tr data-id="${p.id}" data-name="${fn:escapeXml(p.name)}" data-image="${fn:escapeXml(p.image)}" 
-                            data-price="${p.price}" data-discount="${p.discount}" data-description="${fn:escapeXml(p.description)}"
-                            data-weight="${p.weight}" data-category="${fn:escapeXml(p.category)}" data-pet-type-id="${p.pet_type_id}">
-                            <td class="row-index"><strong>${loop.index + 1}</strong></td>
+                            data-price="${p.price}" data-discount="${p.displayDiscountPercent}" data-description="${fn:escapeXml(p.description)}"
+                            data-has-discount="${p.hasPromotion}"
+                            data-stock="${p.stock}" data-weight="${p.weight}" data-category="${fn:escapeXml(p.category)}" data-pet-type-id="${p.pet_type_id}"
+                            data-stock-status="${p.stock == 0 ? 'out-of-stock' : (p.stock < 10 ? 'low-stock' : 'ok')}"
+                            data-expiry-status="${empty inventory ? 'missing-batch' : inventory.expiryStatus}">
+                            <td><strong>${loop.index + 1}</strong></td>
                             <td>
                                 <img loading="lazy" src="${fn:startsWith(p.image, 'http') ? fn:escapeXml(p.image) : pageContext.request.contextPath += '/assets/images/shop_pic/' += fn:escapeXml(p.image)}" 
                                      alt="" class="product-thumb"
@@ -398,8 +401,8 @@
                             <td><span class="price-current">${fn:escapeXml(p.formattedPrice)}</span></td>
                             <td>
                                 <c:choose>
-                                    <c:when test="${p.discount > 0}">
-                                        <span class="discount-badge">-${p.discount}%</span>
+                                    <c:when test="${p.hasPromotion}">
+                                        <span class="discount-badge">-${p.displayDiscountPercent}%</span>
                                     </c:when>
                                     <c:otherwise>
                                         <span class="no-discount">-</span>

@@ -52,6 +52,7 @@ Các khóa quan trọng nên điền:
 - `payment.bank.transfer-prefix`
 - `payment.bank.currency`
 - `payment.bank.verification-mode`
+- `payment.bank.webhook-secret`
 - `payment.momo.mode`
 
 Thứ tự ưu tiên config hiện tại là:
@@ -75,6 +76,7 @@ copy src\main\resources\secrets.properties.example src\main\resources\secrets.pr
 - `GOOGLE_CLIENT_SECRET`
 - `facebook_client_id`
 - `facebook_client_secret`
+- `payment.bank.webhook-secret`
 
 Hoặc dùng environment variables tương ứng.
 

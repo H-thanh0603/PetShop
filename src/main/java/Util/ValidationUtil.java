@@ -16,6 +16,9 @@ public class ValidationUtil {
     private static final Pattern PHONE_PATTERN = Pattern.compile(
         "^(0|\\+84)[0-9]{9,10}$"
     );
+    private static final Pattern STRICT_RECIPIENT_PHONE_PATTERN = Pattern.compile(
+        "^0\\d{9}$"
+    );
     private static final Pattern USERNAME_PATTERN = Pattern.compile(
         "^[a-zA-Z0-9_]{3,20}$"
     );
@@ -66,6 +69,39 @@ public class ValidationUtil {
         if (isEmpty(phone)) return false;
         String normalized = normalizePhone(phone);
         return PHONE_PATTERN.matcher(normalized).matches();
+    }
+
+    public static String validateRecipientPhone(String phone) {
+        if (phone == null || phone.isEmpty()) {
+            return "Số điện thoại người nhận không được để trống.";
+        }
+        if (!phone.trim().equals(phone) || phone.matches(".*\\s+.*")) {
+            return "Số điện thoại người nhận không được chứa khoảng trắng.";
+        }
+        if (!phone.matches("\\d+")) {
+            return "Số điện thoại người nhận chỉ được nhập số.";
+        }
+        if (!phone.startsWith("0")) {
+            return "Số điện thoại người nhận phải bắt đầu bằng số 0.";
+        }
+        if (phone.length() != 10) {
+            return "Số điện thoại người nhận phải có đúng 10 chữ số.";
+        }
+        if (!STRICT_RECIPIENT_PHONE_PATTERN.matcher(phone).matches()) {
+            return "Số điện thoại người nhận phải bắt đầu bằng 0 và có đúng 10 chữ số.";
+        }
+        return null;
+    }
+
+    public static String validateRecipientName(String fullname) {
+        String input = sanitizeInput(fullname).replaceAll("\\s+", " ");
+        if (input.isEmpty()) {
+            return "Họ và tên người nhận không được để trống.";
+        }
+        if (input.length() > 100) {
+            return "Họ và tên người nhận không được vượt quá 100 ký tự.";
+        }
+        return null;
     }
     
     /**

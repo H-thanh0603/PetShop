@@ -677,12 +677,22 @@ document.addEventListener('DOMContentLoaded', function() {
                             price.className = 'autocomplete-item-price';
                             price.textContent = new Intl.NumberFormat('vi-VN').format(p.price || 0) + 'đ';
 
+                            var oldPrice = null;
+                            if (p.hasPromotion && p.oldPrice && Number(p.oldPrice) > Number(p.price || 0)) {
+                                oldPrice = document.createElement('div');
+                                oldPrice.className = 'small text-muted text-decoration-line-through';
+                                oldPrice.textContent = new Intl.NumberFormat('vi-VN').format(p.oldPrice) + 'đ';
+                            }
+
                             var quantity = document.createElement('div');
                             quantity.className = 'autocomplete-item-quantity';
                             quantity.textContent = 'Số lượng: ' + (p.stock || 0);
 
                             info.appendChild(name);
                             info.appendChild(price);
+                            if (oldPrice) {
+                                info.appendChild(oldPrice);
+                            }
                             info.appendChild(quantity);
 
                             item.appendChild(img);

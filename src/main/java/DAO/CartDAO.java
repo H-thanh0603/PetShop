@@ -36,7 +36,7 @@ public class CartDAO {
     // Cập nhật số lượng (cộng thêm)
     public void addToCart(int userId, int productId, int quantityToAdd) {
         Product product = productDAO.getProductById(productId);
-        if (product == null || product.getStock() <= 0 || quantityToAdd <= 0) {
+        if (product == null || product.getAvailablePurchaseQuantity() <= 0 || quantityToAdd <= 0) {
             return;
         }
 
@@ -52,7 +52,7 @@ public class CartDAO {
                 try (ResultSet rs = checkPs.executeQuery()) {
                     if (rs.next()) {
                         int currentQuantity = rs.getInt("quantity");
-                        int newQuantity = Math.min(currentQuantity + quantityToAdd, product.getStock());
+                        int newQuantity = Math.min(currentQuantity + quantityToAdd, product.getAvailablePurchaseQuantity());
 
                         // Đã có, cập nhật số lượng
                         try (PreparedStatement updatePs = conn.prepareStatement(updateQuery)) {
@@ -62,7 +62,7 @@ public class CartDAO {
                             updatePs.executeUpdate();
                         }
                     } else {
-                        int quantityToSave = Math.min(quantityToAdd, product.getStock());
+                        int quantityToSave = Math.min(quantityToAdd, product.getAvailablePurchaseQuantity());
                         if (quantityToSave <= 0) {
                             return;
                         }
@@ -103,7 +103,7 @@ public class CartDAO {
              PreparedStatement ps = conn.prepareStatement(query)) {
 
             Product product = productDAO.getProductById(productId);
-            if (product == null || product.getStock() <= 0) {
+            if (product == null || product.getAvailablePurchaseQuantity() <= 0) {
                 return false;
             }
 
@@ -113,8 +113,8 @@ public class CartDAO {
             }
 
             // Backstop ở tầng DAO để quantity trong DB không vượt stock hiện tại.
-            if (newQuantity > product.getStock()) {
-                newQuantity = product.getStock();
+            if (newQuantity > product.getAvailablePurchaseQuantity()) {
+                newQuantity = product.getAvailablePurchaseQuantity();
             }
 
             ps.setInt(1, newQuantity);
@@ -166,14 +166,14 @@ public class CartDAO {
                     int quantity = rs.getInt("quantity");
 
                     Product product = productDAO.getProductById(conn, productId);
-                    if (product == null || product.getStock() <= 0) {
+                    if (product == null || product.getAvailablePurchaseQuantity() <= 0) {
                         deletePs.setInt(1, userId);
                         deletePs.setInt(2, productId);
                         deletePs.executeUpdate();
                         continue;
                     }
 
-                    int safeQuantity = Math.max(1, Math.min(quantity, product.getStock()));
+                    int safeQuantity = Math.max(1, Math.min(quantity, product.getAvailablePurchaseQuantity()));
                     if (safeQuantity != quantity) {
                         updatePs.setInt(1, safeQuantity);
                         updatePs.setInt(2, userId);
@@ -213,12 +213,12 @@ public class CartDAO {
         
         for (Map.Entry<Integer, CartItem> entry : sessionCart.entrySet()) {
             Product product = productDAO.getProductById(entry.getKey());
-            if (product == null || product.getStock() <= 0) {
+            if (product == null || product.getAvailablePurchaseQuantity() <= 0) {
                 continue;
             }
 
             // Khi sync từ session sau login, chỉ đẩy lên DB phần số lượng còn hợp lệ theo tồn kho hiện tại.
-            int quantityToSync = Math.min(entry.getValue().getQuantity(), product.getStock());
+            int quantityToSync = Math.min(entry.getValue().getQuantity(), product.getAvailablePurchaseQuantity());
             if (quantityToSync > 0) {
                 addToCart(userId, entry.getKey(), quantityToSync);
             }

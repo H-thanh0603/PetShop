@@ -90,13 +90,17 @@ public final class AppConfig {
             return envValue;
         }
 
-        String normalizedEnvKey = key.toUpperCase().replace('.', '_');
+        String normalizedEnvKey = normalizeEnvKey(key);
         envValue = System.getenv(normalizedEnvKey);
         if (hasText(envValue)) {
             return envValue;
         }
 
         return properties.getProperty(key);
+    }
+
+    private static String normalizeEnvKey(String key) {
+        return key.toUpperCase().replaceAll("[^A-Z0-9]", "_");
     }
 
     private static void loadOptionalProperties(String fileName) {

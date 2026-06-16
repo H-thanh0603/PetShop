@@ -124,17 +124,25 @@
                                                 <div>
                                                     <p class="fw-bold mb-0">${fn:escapeXml(item.product.name)}</p>
                                                     <small class="text-muted">ID: ${item.product.id}</small>
-                                                    <c:if test="${item.product.stock > 0 and item.product.stock < 10}">
-                                                        <div><small class="text-warning fw-semibold">Còn lại: ${item.product.stock} sản phẩm</small></div>
+                                                    <c:if test="${not empty item.product.activePromotionName}">
+                                                        <div><small class="text-danger fw-semibold">${fn:escapeXml(item.product.activePromotionName)}</small></div>
+                                                    </c:if>
+                                                    <c:if test="${item.product.availablePurchaseQuantity > 0 and item.product.availablePurchaseQuantity < 10}">
+                                                        <div><small class="text-warning fw-semibold">Còn lại: ${item.product.availablePurchaseQuantity} sản phẩm có thể mua</small></div>
                                                     </c:if>
                                                 </div>
                                             </div>
                                         </td>
-                                        <td class="text-center fw-bold text-secondary" data-price="${item.product.price}">
-                                            <fmt:formatNumber value="${item.product.price}" type="currency" currencySymbol="đ" maxFractionDigits="0"/>
+                                        <td class="text-center fw-bold text-secondary" data-price="${item.product.effectivePrice}">
+                                            <div><fmt:formatNumber value="${item.product.effectivePrice}" type="currency" currencySymbol="đ" maxFractionDigits="0"/></div>
+                                            <c:if test="${item.product.hasPromotion}">
+                                                <small class="text-muted text-decoration-line-through">
+                                                    <fmt:formatNumber value="${item.product.originalPrice}" type="currency" currencySymbol="đ" maxFractionDigits="0"/>
+                                                </small>
+                                            </c:if>
                                         </td>
                                         <td class="text-center">
-                                            <input type="number" min="1" max="${item.product.stock}" value="${item.quantity}" data-product-id="${item.product.id}"
+                                            <input type="number" min="1" max="${item.product.availablePurchaseQuantity}" value="${item.quantity}" data-product-id="${item.product.id}"
                                                    data-last-valid-quantity="${item.quantity}"
                                                    class="form-control qty-input d-inline-block"
                                                    oninput="updateCart(this)">

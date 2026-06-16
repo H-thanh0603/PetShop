@@ -66,10 +66,59 @@ BEGIN
     IF NOT EXISTS (SELECT 1 FROM information_schema.COLUMNS WHERE TABLE_SCHEMA=DATABASE() AND TABLE_NAME='orders' AND COLUMN_NAME='createdAt') THEN
         ALTER TABLE orders ADD COLUMN createdAt TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP;
     END IF;
+    IF NOT EXISTS (SELECT 1 FROM information_schema.COLUMNS WHERE TABLE_SCHEMA=DATABASE() AND TABLE_NAME='orders' AND COLUMN_NAME='recipient_fullname') THEN
+        ALTER TABLE orders ADD COLUMN recipient_fullname VARCHAR(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NULL AFTER address;
+    END IF;
+    IF NOT EXISTS (SELECT 1 FROM information_schema.COLUMNS WHERE TABLE_SCHEMA=DATABASE() AND TABLE_NAME='orders' AND COLUMN_NAME='recipient_phone') THEN
+        ALTER TABLE orders ADD COLUMN recipient_phone VARCHAR(20) NULL AFTER recipient_fullname;
+    END IF;
+    IF NOT EXISTS (SELECT 1 FROM information_schema.COLUMNS WHERE TABLE_SCHEMA=DATABASE() AND TABLE_NAME='orders' AND COLUMN_NAME='shipping_address') THEN
+        ALTER TABLE orders ADD COLUMN shipping_address VARCHAR(500) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NULL AFTER recipient_phone;
+    END IF;
+    IF EXISTS (SELECT 1 FROM information_schema.TABLES WHERE TABLE_SCHEMA=DATABASE() AND TABLE_NAME='order_items')
+       AND NOT EXISTS (SELECT 1 FROM information_schema.COLUMNS WHERE TABLE_SCHEMA=DATABASE() AND TABLE_NAME='order_items' AND COLUMN_NAME='original_price') THEN
+        ALTER TABLE order_items ADD COLUMN original_price DECIMAL(18,0) NOT NULL DEFAULT 0 AFTER price;
+    END IF;
+    IF EXISTS (SELECT 1 FROM information_schema.TABLES WHERE TABLE_SCHEMA=DATABASE() AND TABLE_NAME='order_items')
+       AND NOT EXISTS (SELECT 1 FROM information_schema.COLUMNS WHERE TABLE_SCHEMA=DATABASE() AND TABLE_NAME='order_items' AND COLUMN_NAME='final_price') THEN
+        ALTER TABLE order_items ADD COLUMN final_price DECIMAL(18,0) NOT NULL DEFAULT 0 AFTER original_price;
+    END IF;
+    IF EXISTS (SELECT 1 FROM information_schema.TABLES WHERE TABLE_SCHEMA=DATABASE() AND TABLE_NAME='order_items')
+       AND NOT EXISTS (SELECT 1 FROM information_schema.COLUMNS WHERE TABLE_SCHEMA=DATABASE() AND TABLE_NAME='order_items' AND COLUMN_NAME='discount_amount') THEN
+        ALTER TABLE order_items ADD COLUMN discount_amount DECIMAL(18,0) NOT NULL DEFAULT 0 AFTER final_price;
+    END IF;
+    IF EXISTS (SELECT 1 FROM information_schema.TABLES WHERE TABLE_SCHEMA=DATABASE() AND TABLE_NAME='order_items')
+       AND NOT EXISTS (SELECT 1 FROM information_schema.COLUMNS WHERE TABLE_SCHEMA=DATABASE() AND TABLE_NAME='order_items' AND COLUMN_NAME='promotion_id') THEN
+        ALTER TABLE order_items ADD COLUMN promotion_id INT NULL AFTER discount_amount;
+    END IF;
+    IF EXISTS (SELECT 1 FROM information_schema.TABLES WHERE TABLE_SCHEMA=DATABASE() AND TABLE_NAME='order_items')
+       AND NOT EXISTS (SELECT 1 FROM information_schema.COLUMNS WHERE TABLE_SCHEMA=DATABASE() AND TABLE_NAME='order_items' AND COLUMN_NAME='promotion_name') THEN
+        ALTER TABLE order_items ADD COLUMN promotion_name VARCHAR(255) NULL AFTER promotion_id;
+    END IF;
+    IF EXISTS (SELECT 1 FROM information_schema.TABLES WHERE TABLE_SCHEMA=DATABASE() AND TABLE_NAME='order_items')
+       AND NOT EXISTS (SELECT 1 FROM information_schema.COLUMNS WHERE TABLE_SCHEMA=DATABASE() AND TABLE_NAME='order_items' AND COLUMN_NAME='promotion_type') THEN
+        ALTER TABLE order_items ADD COLUMN promotion_type VARCHAR(50) NULL AFTER promotion_name;
+    END IF;
 END$$
 DELIMITER ;
 CALL sp_add_col();
 DROP PROCEDURE IF EXISTS sp_add_col;
+
+UPDATE orders
+SET recipient_fullname = COALESCE(NULLIF(recipient_fullname, ''), fullname),
+    recipient_phone = COALESCE(NULLIF(recipient_phone, ''), phone),
+    shipping_address = COALESCE(NULLIF(shipping_address, ''), address)
+WHERE recipient_fullname IS NULL
+   OR recipient_fullname = ''
+   OR recipient_phone IS NULL
+   OR recipient_phone = ''
+   OR shipping_address IS NULL
+   OR shipping_address = '';
+
+ALTER TABLE orders
+    MODIFY recipient_fullname VARCHAR(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+    MODIFY recipient_phone VARCHAR(20) NOT NULL,
+    MODIFY shipping_address VARCHAR(500) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL;
 
 -- ============================================================
 -- BƯỚC 2: Tạo bảng mới
@@ -214,6 +263,36 @@ CREATE TABLE IF NOT EXISTS coupon_locks (
     FOREIGN KEY (order_id) REFERENCES orders(id) ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+CREATE TABLE IF NOT EXISTS promotions (
+    id INT NOT NULL AUTO_INCREMENT,
+    name VARCHAR(255) NOT NULL,
+    description TEXT NULL,
+    promotion_type VARCHAR(50) NOT NULL DEFAULT 'NORMAL',
+    discount_type VARCHAR(20) NOT NULL DEFAULT 'PERCENT',
+    discount_value DECIMAL(18,0) NOT NULL DEFAULT 0,
+    start_date DATETIME NOT NULL,
+    end_date DATETIME NOT NULL,
+    status VARCHAR(20) NOT NULL DEFAULT 'INACTIVE',
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    PRIMARY KEY (id),
+    KEY idx_promotions_status_dates (status, start_date, end_date)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS promotion_products (
+    id INT NOT NULL AUTO_INCREMENT,
+    promotion_id INT NOT NULL,
+    product_id INT NOT NULL,
+    sale_quantity INT NULL,
+    sold_quantity INT NULL,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (id),
+    UNIQUE KEY uq_promotion_products_pair (promotion_id, product_id),
+    KEY idx_promotion_products_product (product_id),
+    FOREIGN KEY (promotion_id) REFERENCES promotions(id) ON DELETE CASCADE,
+    FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
 CREATE TABLE IF NOT EXISTS admin_action_log (
     id INT AUTO_INCREMENT PRIMARY KEY,
     admin_id INT NOT NULL,
@@ -297,6 +376,13 @@ INSERT IGNORE INTO products (id, name, image, price, discount, description, cate
 (18, 'Nhà Cào Móng Cho Mèo Dạng Trụ',                'prod_scratch1.jpg',  185000, 10, 'Trụ cào móng bằng dây thừng tự nhiên, cao 45cm',                 'Đồ Chơi Cho Mèo',              30,  800,  1, (SELECT id FROM pet_types WHERE code='cat' LIMIT 1)),
 (19, 'Thức Ăn Hạt Cho Chó Royal Canin Medium Adult', 'prod_rc_dog1.jpg',   320000, 0,  'Thức ăn hạt cao cấp cho chó cỡ vừa từ 1-7 tuổi',                'Thức Ăn Cho Chó',              35,  1000, 1, (SELECT id FROM pet_types WHERE code='dog' LIMIT 1)),
 (20, 'Dây Dắt Chó Có Tay Cầm Chống Trượt 1.5m',     'prod_leash1.jpg',    75000,  0,  'Dây dắt chó bền chắc, tay cầm bọc cao su chống trượt',           'Phụ Kiện Cho Chó',             50,  250,  1, (SELECT id FROM pet_types WHERE code='dog' LIMIT 1));
+
+UPDATE order_items
+SET original_price = COALESCE(NULLIF(original_price, 0), price),
+    final_price = COALESCE(NULLIF(final_price, 0), price),
+    discount_amount = GREATEST(COALESCE(original_price, price) - COALESCE(final_price, price), 0)
+WHERE original_price = 0
+   OR final_price = 0;
 
 -- ============================================================
 -- BƯỚC 5: Tài khoản demo

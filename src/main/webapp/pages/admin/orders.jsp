@@ -111,9 +111,10 @@
                         <tr>
                             <td><span class="order-id">#${o.id}</span></td>
                             <td class="customer-info">
-                                <p><strong>${fn:escapeXml(o.fullname)}</strong></p>
-                                <p class="text-muted"><i class='bx bx-phone'></i> ${fn:escapeXml(o.phone)}</p>
-                                <p class="text-muted small">${fn:escapeXml(o.address)}</p>
+                                <p><strong>Tài khoản: ${fn:escapeXml(o.customerFullname)}</strong></p>
+                                <p>Người nhận: ${fn:escapeXml(o.recipientFullname)}</p>
+                                <p class="text-muted"><i class='bx bx-phone'></i> ${fn:escapeXml(o.recipientPhone)}</p>
+                                <p class="text-muted small">${fn:escapeXml(o.shippingAddress)}</p>
                             </td>
                             <td><span class="badge bg-light text-dark">${o.itemCount} SP</span></td>
                             <td>
