@@ -231,6 +231,59 @@
             margin-top: 4px;
             font-weight: 500;
         }
+
+        /* Pagination Styles */
+        .pagination-container {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-top: 24px;
+            padding: 16px 24px;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+        }
+        .pagination-info {
+            color: #64748b;
+            font-size: 0.9rem;
+        }
+        .pagination-controls {
+            display: flex;
+            gap: 8px;
+        }
+        .page-link {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-width: 38px;
+            height: 38px;
+            padding: 0 8px;
+            border-radius: 8px;
+            border: 1px solid #e2e8f0;
+            background: white;
+            color: #475569;
+            text-decoration: none;
+            font-weight: 500;
+            transition: all 0.2s;
+        }
+        .page-link:hover:not(.disabled) {
+            background: #f1f5f9;
+            border-color: #cbd5e1;
+            color: #0f172a;
+        }
+        .page-link.active {
+            background: #3b82f6;
+            border-color: #3b82f6;
+            color: white;
+        }
+        .page-link.disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            background: #f8fafc;
+        }
+        .page-link i {
+            font-size: 1.2rem;
+        }
     </style>
 </head>
 <body>
@@ -261,23 +314,7 @@
             </div>
             <div class="stat-card purple">
                 <h3><i class='bx bx-store'></i> ${totalProducts}</h3>
-                <p>Đang bán</p>
-            </div>
-            <div class="stat-card yellow" onclick="filterByInventory('low-stock')">
-                <h3><i class='bx bx-error'></i> ${lowStockProducts}</h3>
-                <p>Sắp hết hàng</p>
-            </div>
-            <div class="stat-card orange" onclick="filterByInventory('near-expiry')">
-                <h3><i class='bx bx-time-five'></i> ${nearExpiryProducts}</h3>
-                <p>Sắp hết hạn</p>
-            </div>
-            <div class="stat-card red" onclick="filterByInventory('expired')">
-                <h3><i class='bx bx-alarm-exclamation'></i> ${expiredProducts}</h3>
-                <p>Đã hết hạn</p>
-            </div>
-            <div class="stat-card slate" onclick="filterByInventory('missing-batch')">
-                <h3><i class='bx bx-barcode'></i> ${missingBatchProducts}</h3>
-                <p>Chưa có lô hàng</p>
+                <p>Tổng sản phẩm</p>
             </div>
         </div>
         <!-- Filter Section -->
@@ -287,21 +324,16 @@
                 <input type="text" id="searchInput" placeholder="Tìm theo tên sản phẩm..." onkeyup="applyFilters()">
             </div>
             <select class="filter-select" id="filterDiscount" onchange="applyFilters()">
-                <option value="">Tất cả</option>
+                <option value="">Tất cả giảm giá</option>
                 <option value="yes">Đang giảm giá</option>
                 <option value="no">Không giảm giá</option>
-            </select>
-            <select class="filter-select" id="filterInventory" onchange="applyFilters()">
-                <option value="">Tất cả tình trạng</option>
-                <option value="low-stock">Sắp hết hàng</option>
-                <option value="out-of-stock">Hết hàng</option>
-                <option value="near-expiry">Sắp hết hạn</option>
-                <option value="expired">Đã hết hạn</option>
-                <option value="missing-batch">Chưa có lô hàng</option>
             </select>
             <button class="btn-reset" id="resetBtn" onclick="resetFilters()">
                 <i class='bx bx-x'></i> Xóa bộ lọc
             </button>
+            <a href="${pageContext.request.contextPath}/admin/inventory" class="btn btn-outline-primary ms-auto" style="text-decoration: none; display: flex; align-items: center; gap: 8px;">
+                <i class='bx bxs-box'></i> Quản lý Kho
+            </a>
         </div>
 
         <!-- Table Section -->
@@ -322,13 +354,11 @@
                         <th style="width: 50px;">#</th>
                         <th style="width: 90px;">Ảnh</th>
                         <th>Tên sản phẩm</th>
-                        <th style="width: 200px;">Mô tả</th>
+                        <th style="width: 250px;">Mô tả</th>
                         <th style="width: 130px;">Giá bán</th>
                         <th style="width: 90px;">Giảm giá</th>
-                        <th style="width: 90px;">Tồn kho</th>
                         <th style="width: 120px;">Danh mục</th>
                         <th style="width: 110px;">Thao tác</th>
-                        <th style="width: 150px;">Hạn dùng</th>
                     </tr>
                 </thead>
                 <tbody id="productsBody">
@@ -343,13 +373,10 @@
                         </tr>
                     </c:if>
                     <c:forEach items="${products}" var="p" varStatus="loop">
-                        <c:set var="inventory" value="${inventoryByProduct[p.id]}" />
                         <tr data-id="${p.id}" data-name="${fn:escapeXml(p.name)}" data-image="${fn:escapeXml(p.image)}" 
                             data-price="${p.price}" data-discount="${p.discount}" data-description="${fn:escapeXml(p.description)}"
-                            data-stock="${p.stock}" data-weight="${p.weight}" data-category="${fn:escapeXml(p.category)}" data-pet-type-id="${p.pet_type_id}"
-                            data-stock-status="${p.stock == 0 ? 'out-of-stock' : (p.stock < 10 ? 'low-stock' : 'ok')}"
-                            data-expiry-status="${empty inventory ? 'missing-batch' : inventory.expiryStatus}">
-                            <td><strong>${loop.index + 1}</strong></td>
+                            data-weight="${p.weight}" data-category="${fn:escapeXml(p.category)}" data-pet-type-id="${p.pet_type_id}">
+                            <td class="row-index"><strong>${loop.index + 1}</strong></td>
                             <td>
                                 <img loading="lazy" src="${fn:startsWith(p.image, 'http') ? fn:escapeXml(p.image) : pageContext.request.contextPath += '/assets/images/shop_pic/' += fn:escapeXml(p.image)}" 
                                      alt="" class="product-thumb"
@@ -381,16 +408,6 @@
                             </td>
                             <td>
                                 <c:choose>
-                                    <c:when test="${p.stock == 0}">
-                                        <span style="display:inline-block;padding:4px 10px;background:#fee2e2;color:#dc2626;border-radius:12px;font-size:0.8rem;font-weight:600;">Hết hàng</span>
-                                    </c:when>
-                                    <c:otherwise>
-                                        ${p.stock}
-                                    </c:otherwise>
-                                </c:choose>
-                            </td>
-                            <td>
-                                <c:choose>
                                     <c:when test="${not empty p.category}">
                                         ${fn:escapeXml(p.category)}
                                     </c:when>
@@ -409,31 +426,20 @@
                                     </button>
                                 </div>
                             </td>
-                            <td>
-                                <c:choose>
-                                    <c:when test="${empty inventory}">
-                                        <span class="expiry-badge no-batch"><i class='bx bx-barcode'></i> Chưa có lô</span>
-                                    </c:when>
-                                    <c:otherwise>
-                                        <span class="expiry-badge ${inventory.expiryStatus}">
-                                            <i class='bx bx-calendar'></i> ${inventory.expiryStatusLabel}
-                                        </span>
-                                        <span class="batch-meta">
-                                            <c:choose>
-                                                <c:when test="${not empty inventory.formattedEarliestExpiryDate}">
-                                                    HSD gần nhất: ${inventory.formattedEarliestExpiryDate}
-                                                </c:when>
-                                                <c:otherwise>Chưa khai báo HSD</c:otherwise>
-                                            </c:choose>
-                                            <br>Lô: ${empty inventory.earliestBatchCode ? '—' : fn:escapeXml(inventory.earliestBatchCode)}
-                                        </span>
-                                    </c:otherwise>
-                                </c:choose>
-                            </td>
                         </tr>
                     </c:forEach>
                 </tbody>
             </table>
+            
+            <!-- Pagination -->
+            <div id="paginationContainer" class="pagination-container" style="display: none;">
+                <div class="pagination-info" id="paginationInfo">
+                    <!-- Sẽ được điền bởi JS -->
+                </div>
+                <div class="pagination-controls" id="paginationControls">
+                    <!-- Sẽ được điền bởi JS -->
+                </div>
+            </div>
         </div>
     </main>
 
@@ -482,39 +488,6 @@
                             <span class="input-hint">Chấp nhận: JPG, PNG, GIF, WebP. Tối đa 5MB</span>
                         </div>
                     </div>
-                    <div class="form-section-title">
-                        <i class='bx bx-barcode'></i> Nhập lô hàng / hạn sử dụng
-                    </div>
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label class="form-label">Mã lô</label>
-                            <input type="text" class="form-input" name="batchCode" id="formBatchCode"
-                                   placeholder="VD: LOT-CAT-2026-05">
-                            <div class="input-hint">Bỏ trống để hệ thống tự tạo mã lô.</div>
-                        </div>
-                        <div class="form-group">
-                            <label class="form-label">Số lượng nhập</label>
-                            <input type="number" class="form-input" name="batchQuantity" id="formBatchQuantity"
-                                   placeholder="VD: 50" min="0" value="0" step="1">
-                        </div>
-                    </div>
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label class="form-label">Giá vốn / sản phẩm</label>
-                            <input type="number" class="form-input" name="batchUnitCost" id="formBatchUnitCost"
-                                   placeholder="VD: 85000" min="0" value="0" step="1000">
-                        </div>
-                        <div class="form-group">
-                            <label class="form-label">Hạn sử dụng</label>
-                            <input type="date" class="form-input" name="batchExpiryDate" id="formBatchExpiryDate">
-                        </div>
-                    </div>
-                    <div class="form-group">
-                        <label class="form-label">Ghi chú lô hàng</label>
-                        <input type="text" class="form-input" name="batchNote" id="formBatchNote"
-                               placeholder="VD: Nhập từ nhà cung cấp A, ưu tiên bán trước...">
-                    </div>
-
                     <div class="form-row">
                         <div class="form-group">
                             <label class="form-label">Giá bán <span class="required">*</span></label>
@@ -542,23 +515,18 @@
                     
                     <div class="form-row">
                         <div class="form-group">
-                            <label class="form-label">Tồn kho</label>
-                            <input type="number" class="form-input" name="stock" id="formStock" 
-                                   placeholder="VD: 100" min="0" value="0" step="1">
-                        </div>
-                        <div class="form-group">
                             <label class="form-label">Trọng lượng (gram)</label>
                             <input type="number" class="form-input" name="weight" id="formWeight" 
                                    placeholder="VD: 500" min="0" value="0" step="1">
                         </div>
-                    </div>
-                    
-                    <div class="form-row">
                         <div class="form-group">
                             <label class="form-label">Danh mục</label>
                             <input type="text" class="form-input" name="category" id="formCategory" 
                                    placeholder="VD: Thức ăn, Phụ kiện...">
                         </div>
+                    </div>
+                    
+                    <div class="form-row">
                         <div class="form-group">
                             <label class="form-label">Loại thú cưng</label>
                             <select class="form-input" name="petTypeId" id="formPetTypeId">
@@ -644,72 +612,154 @@
             }
         }
         
-        // ========== FILTER FUNCTIONS ==========
+        // ========== FILTER & PAGINATION FUNCTIONS ==========
+        var currentPage = 1;
+        var pageSize = 10; // Mỗi trang 10-15 sản phẩm theo yêu cầu
+        var filteredRows = [];
+
         document.addEventListener('DOMContentLoaded', function() {
-            updateResultCount();
+            // Khởi tạo danh sách hàng ban đầu
+            applyFilters();
         });
 
-        function updateResultCount() {
-            var visible = document.querySelectorAll('#productsBody tr[data-id]:not([style*="display: none"])').length;
-            var total = document.querySelectorAll('#productsBody tr[data-id]').length;
+        function updateResultCount(visible, total) {
             document.getElementById('resultCount').textContent = '(' + visible + '/' + total + ')';
         }
 
         function applyFilters() {
             var search = document.getElementById('searchInput').value.toLowerCase();
             var discount = document.getElementById('filterDiscount').value;
-            var inventory = document.getElementById('filterInventory').value;
-            var rows = document.querySelectorAll('#productsBody tr[data-id]');
-            var hasFilter = search || discount || inventory;
+            var allRows = Array.from(document.querySelectorAll('#productsBody tr[data-id]'));
+            var hasFilter = search || discount;
             
-            rows.forEach(function(row) {
+            // 1. Lọc các hàng thỏa mãn điều kiện
+            filteredRows = allRows.filter(function(row) {
                 var name = (row.dataset.name || '').toLowerCase();
                 var hasDiscount = parseInt(row.dataset.discount) > 0;
-                var stockStatus = row.dataset.stockStatus || 'ok';
-                var expiryStatus = row.dataset.expiryStatus || 'missing-batch';
                 
                 var matchSearch = !search || name.indexOf(search) > -1;
                 var matchDiscount = !discount || 
                     (discount === 'yes' && hasDiscount) || 
                     (discount === 'no' && !hasDiscount);
-                var matchInventory = !inventory ||
-                    (inventory === stockStatus) ||
-                    (inventory === 'missing-batch' && expiryStatus === 'no-batch') ||
-                    (inventory === 'missing-batch' && expiryStatus === 'missing-batch') ||
-                    (inventory === 'near-expiry' && expiryStatus === 'near-expiry') ||
-                    (inventory === 'expired' && expiryStatus === 'expired');
                 
-                row.style.display = (matchSearch && matchDiscount && matchInventory) ? '' : 'none';
+                return matchSearch && matchDiscount;
             });
-            
+
+            // Ẩn tất cả các hàng trước
+            allRows.forEach(row => row.style.display = 'none');
+
+            // 2. Cập nhật trạng thái nút Reset
             var resetBtn = document.getElementById('resetBtn');
             if (hasFilter) {
                 resetBtn.classList.add('show');
             } else {
                 resetBtn.classList.remove('show');
             }
+
+            // 3. Reset về trang 1 khi lọc
+            currentPage = 1;
             
-            updateResultCount();
+            // 4. Hiển thị trang hiện tại
+            renderPagination();
+            showCurrentPage();
+            
+            updateResultCount(filteredRows.length, allRows.length);
         }
 
-        function filterByDiscount(value) {
-            document.getElementById('filterDiscount').value = value;
-            document.getElementById('filterInventory').value = '';
-            document.getElementById('searchInput').value = '';
-            applyFilters();
+        function showCurrentPage() {
+            var start = (currentPage - 1) * pageSize;
+            var end = start + pageSize;
+            var pageRows = filteredRows.slice(start, end);
+
+            // Chỉ hiển thị các hàng thuộc trang hiện tại
+            pageRows.forEach(function(row, index) {
+                row.style.display = '';
+                // Cập nhật STT hiển thị
+                var indexCell = row.querySelector('.row-index strong');
+                if (indexCell) {
+                    indexCell.textContent = start + index + 1;
+                }
+            });
         }
 
-        function filterByInventory(value) {
-            document.getElementById('filterInventory').value = value;
-            document.getElementById('filterDiscount').value = '';
-            document.getElementById('searchInput').value = '';
-            applyFilters();
+        function renderPagination() {
+            var totalPages = Math.ceil(filteredRows.length / pageSize);
+            var container = document.getElementById('paginationContainer');
+            var info = document.getElementById('paginationInfo');
+            var controls = document.getElementById('paginationControls');
+
+            if (totalPages <= 1) {
+                container.style.display = 'none';
+                return;
+            }
+
+            container.style.display = 'flex';
+            
+            // Info
+            var start = (currentPage - 1) * pageSize + 1;
+            var end = Math.min(currentPage * pageSize, filteredRows.length);
+            info.innerHTML = 'Hiển thị <strong>' + start + '</strong> - <strong>' + end + '</strong> trên tổng số <strong>' + filteredRows.length + '</strong> sản phẩm';
+
+            // Controls
+            var html = '';
+            
+            // Prev
+            html += '<button onclick="goToPage(' + (currentPage - 1) + ')" class="page-link ' + (currentPage === 1 ? 'disabled' : '') + '"><i class=\'bx bx-chevron-left\'></i></button>';
+
+            // Pages
+            if (totalPages <= 7) {
+                for (var i = 1; i <= totalPages; i++) {
+                    html += '<button onclick="goToPage(' + i + ')" class="page-link ' + (i === currentPage ? 'active' : '') + '">' + i + '</button>';
+                }
+            } else {
+                if (currentPage <= 4) {
+                    for (var i = 1; i <= 5; i++) {
+                        html += '<button onclick="goToPage(' + i + ')" class="page-link ' + (i === currentPage ? 'active' : '') + '">' + i + '</button>';
+                    }
+                    html += '<span class="page-link disabled">...</span>';
+                    html += '<button onclick="goToPage(' + totalPages + ')" class="page-link">' + totalPages + '</button>';
+                } else if (currentPage >= totalPages - 3) {
+                    html += '<button onclick="goToPage(1)" class="page-link">1</button>';
+                    html += '<span class="page-link disabled">...</span>';
+                    for (var i = totalPages - 4; i <= totalPages; i++) {
+                        html += '<button onclick="goToPage(' + i + ')" class="page-link ' + (i === currentPage ? 'active' : '') + '">' + i + '</button>';
+                    }
+                } else {
+                    html += '<button onclick="goToPage(1)" class="page-link">1</button>';
+                    html += '<span class="page-link disabled">...</span>';
+                    html += '<button onclick="goToPage(' + (currentPage - 1) + ')" class="page-link">' + (currentPage - 1) + '</button>';
+                    html += '<button onclick="goToPage(' + currentPage + ')" class="page-link active">' + currentPage + '</button>';
+                    html += '<button onclick="goToPage(' + (currentPage + 1) + ')" class="page-link">' + (currentPage + 1) + '</button>';
+                    html += '<span class="page-link disabled">...</span>';
+                    html += '<button onclick="goToPage(' + totalPages + ')" class="page-link">' + totalPages + '</button>';
+                }
+            }
+
+            // Next
+            html += '<button onclick="goToPage(' + (currentPage + 1) + ')" class="page-link ' + (currentPage === totalPages ? 'disabled' : '') + '"><i class=\'bx bx-chevron-right\'></i></button>';
+
+            controls.innerHTML = html;
+        }
+
+        function goToPage(page) {
+            var totalPages = Math.ceil(filteredRows.length / pageSize);
+            if (page < 1 || page > totalPages || page === currentPage) return;
+            
+            currentPage = page;
+            
+            // Ẩn tất cả hàng
+            document.querySelectorAll('#productsBody tr[data-id]').forEach(row => row.style.display = 'none');
+            
+            showCurrentPage();
+            renderPagination();
+            
+            // Cuộn lên đầu bảng
+            document.querySelector('.table-section').scrollIntoView({ behavior: 'smooth', block: 'start' });
         }
 
         function resetFilters() {
             document.getElementById('searchInput').value = '';
             document.getElementById('filterDiscount').value = '';
-            document.getElementById('filterInventory').value = '';
             applyFilters();
         }
 
@@ -724,11 +774,9 @@
             document.getElementById('formPrice').value = '';
             document.getElementById('formDiscount').value = '0';
             document.getElementById('formDescription').value = '';
-            document.getElementById('formStock').value = '0';
             document.getElementById('formWeight').value = '0';
             document.getElementById('formCategory').value = '';
             document.getElementById('formPetTypeId').value = '0';
-            resetBatchFields();
             document.getElementById('pricePreview').textContent = '';
             resetImagePreview();
             document.getElementById('productModal').classList.add('show');
@@ -752,11 +800,9 @@
             document.getElementById('formDiscount').value = row.dataset.discount || '0';
             
             // Populate new fields
-            document.getElementById('formStock').value = row.dataset.stock || '0';
             document.getElementById('formWeight').value = row.dataset.weight || '0';
             document.getElementById('formCategory').value = row.dataset.category || '';
             document.getElementById('formPetTypeId').value = row.dataset.petTypeId || '0';
-            resetBatchFields();
             
             // Show existing image
             var existingImage = row.dataset.image;
@@ -772,14 +818,6 @@
 
         function closeModal() {
             document.getElementById('productModal').classList.remove('show');
-        }
-
-        function resetBatchFields() {
-            document.getElementById('formBatchCode').value = '';
-            document.getElementById('formBatchQuantity').value = '0';
-            document.getElementById('formBatchUnitCost').value = '0';
-            document.getElementById('formBatchExpiryDate').value = '';
-            document.getElementById('formBatchNote').value = '';
         }
 
         function openDeleteModal(row) {
