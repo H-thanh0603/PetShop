@@ -434,7 +434,6 @@ public class OrderDAO {
     public boolean updateStatus(int orderId, String status, int changedByUserId) {
         ProductDAO productDAO = new ProductDAO();
         OrderStatusHistoryDAO historyDAO = new OrderStatusHistoryDAO();
-<<<<<<< HEAD
         String lockOrderQuery = "SELECT status, payment_method, payment_status, user_id FROM orders WHERE id = ? FOR UPDATE";
         String updateStatusQuery = "UPDATE orders SET status = ? WHERE id = ?";
 
