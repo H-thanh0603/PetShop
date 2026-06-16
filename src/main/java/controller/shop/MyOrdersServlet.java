@@ -62,6 +62,24 @@ public class MyOrdersServlet extends HttpServlet {
         int countPending = orderDAO.countPendingOrdersByUserId(user.getId());
         int countCompleted = orderDAO.countCompletedOrdersByUserId(user.getId());
         List<Order> allOrders = dao.getOrdersByUserId(user.getId());
+        //Tự động quét và huỷ đơn hàng treo quá 2h
+        if (allOrders != null) {
+            long currentTime = System.currentTimeMillis();
+            long twoHoursInMilliseconds = 2 * 60 * 60 * 1000;
+
+            for (Order o : allOrders) {
+                // Kiểm tra trạng thái chờ thanh toán (ở đây là "Awaiting Payment")
+                if ("Awaiting Payment".equalsIgnoreCase(o.getStatus()) && o.getCreatedAt() != null) {
+                    long creationTime = o.getCreatedAt().getTime();
+
+                    if (currentTime - creationTime > twoHoursInMilliseconds) {
+                        // Gọi hàm cập nhật trạng thái trong OrderDAO sang 'Cancelled'
+                        dao.updateStatus(o.getId(), "Cancelled");
+                        o.setStatus("Cancelled"); // Cập nhật trực tiếp trên object để hiển thị giao diện đồng bộ
+                    }
+                }
+            }
+        }
         List<Order> list = filterOrders(allOrders, statusFilter, keyword);
         List<CustomerRepurchaseSuggestion> repurchaseSuggestions =
                 dao.getRepurchaseSuggestions(user.getId(), 30, 5);
