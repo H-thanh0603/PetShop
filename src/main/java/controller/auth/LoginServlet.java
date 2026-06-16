@@ -231,6 +231,8 @@ public class LoginServlet extends HttpServlet {
         if (user != null) {
             // Reset failed attempts on successful login
             dao.resetFailedAttempts(email);
+            securityEventDAO.log("LOGIN_SUCCESS", email, request.getRemoteAddr(),
+                    "User logged in successfully. Session regenerated.");
             
             // Check if user account is deactivated
             if (!user.getStatus()) {
