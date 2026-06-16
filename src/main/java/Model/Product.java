@@ -1,6 +1,7 @@
 package Model;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.sql.Timestamp;
 import java.text.DecimalFormat;
 import java.util.Locale;
@@ -92,6 +93,13 @@ public class Product {
     public void setActive(boolean isActive) { this.isActive = isActive; }
 
     public BigDecimal getLegacyOriginalPrice() {
+        if (discount > 0 && discount < 100) {
+            return price.divide(
+                    BigDecimal.ONE.subtract(BigDecimal.valueOf(discount).divide(BigDecimal.valueOf(100), 10, RoundingMode.HALF_UP)),
+                    0,
+                    RoundingMode.HALF_UP
+            );
+        }
         return price != null ? price : BigDecimal.ZERO;
     }
 
@@ -238,7 +246,7 @@ public class Product {
     }
 
     public int getDisplayDiscountPercent() {
-        return promotionDiscountPercent;
+        return promotionDiscountPercent > 0 ? promotionDiscountPercent : Math.max(0, discount);
     }
 
     public void clearPromotionState() {

@@ -391,7 +391,7 @@ public class ProductDAO {
     }
 
     public int getTotalDiscountedProductsCount() {
-        String query = "SELECT COUNT(*) FROM products p WHERE " + ACTIVE_PROMOTION_EXISTS_SQL + " AND p.is_active = 1";
+        String query = "SELECT COUNT(*) FROM products p WHERE (p.discount > 0 OR " + ACTIVE_PROMOTION_EXISTS_SQL + ") AND p.is_active = 1";
         try (Connection conn = DBContext.getConnection(); PreparedStatement ps = conn.prepareStatement(query); ResultSet rs = ps.executeQuery()) {
             if (rs.next()) return rs.getInt(1);
         } catch (Exception e) { log.error("Error counting discounted products", e); }
@@ -506,7 +506,7 @@ public class ProductDAO {
             where.append(" AND (p.name LIKE ? OR p.description LIKE ?)");
         }
         if (criteria.isDiscountOnly()) {
-            where.append(" AND ").append(ACTIVE_PROMOTION_EXISTS_SQL);
+            where.append(" AND (p.discount > 0 OR ").append(ACTIVE_PROMOTION_EXISTS_SQL).append(")");
         }
         if (criteria.getPriceRange() != null && !criteria.getPriceRange().isBlank()) {
             switch (criteria.getPriceRange()) {

@@ -141,8 +141,12 @@ public class ProductPricingService {
         BigDecimal finalPrice = product != null && product.getPrice() != null ? product.getPrice() : BigDecimal.ZERO;
         pricing.setOriginalPrice(originalPrice);
         pricing.setFinalPrice(finalPrice);
-        pricing.setDiscountAmount(BigDecimal.ZERO);
-        pricing.setDiscountPercent(0);
+        pricing.setDiscountAmount(originalPrice.subtract(finalPrice).max(BigDecimal.ZERO));
+        pricing.setDiscountPercent(calculateDiscountPercent(originalPrice, pricing.getDiscountAmount()));
+        if (product != null && product.getDiscount() > 0 && pricing.getDiscountAmount().compareTo(BigDecimal.ZERO) > 0) {
+            pricing.setPromotionType("LEGACY_DISCOUNT");
+            pricing.setPromotionName("Giảm giá hiện có");
+        }
         return pricing;
     }
 
