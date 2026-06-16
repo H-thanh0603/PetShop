@@ -92,7 +92,6 @@ public class MyOrdersServlet extends HttpServlet {
 
         List<Order> list = orderDAO.getOrdersByUserIdWithPagination(user.getId(), statusFilter, offset, PAGE_SIZE);
 
-        // 4. ĐẨY DỮ LIỆU SANG JSP
         request.setAttribute("countPending", countPending);
         request.setAttribute("countCompleted", countCompleted);
         request.setAttribute("orders", list);
