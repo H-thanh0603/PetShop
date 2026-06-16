@@ -335,7 +335,7 @@ public class DBContext {
                 if (rs.next() && rs.getInt(1) == 0) {
                     stmt.execute("INSERT INTO ai_support_settings (setting_key, setting_value) VALUES " +
                             "('AI_SUPPORT_ENABLED', 'true')," +
-                            "('DEEPSEEK_MODEL', 'deepseek-v4-flash')," +
+                            "('DEEPSEEK_MODEL', 'deepseek-chat')," +
                             "('MAX_PRODUCTS_IN_CONTEXT', '5')," +
                             "('MAX_ORDERS_IN_CONTEXT', '3')," +
                             "('AUTO_ESCALATE_TO_ADMIN', 'true')," +
