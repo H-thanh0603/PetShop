@@ -66,6 +66,15 @@ BEGIN
     IF NOT EXISTS (SELECT 1 FROM information_schema.COLUMNS WHERE TABLE_SCHEMA=DATABASE() AND TABLE_NAME='orders' AND COLUMN_NAME='createdAt') THEN
         ALTER TABLE orders ADD COLUMN createdAt TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP;
     END IF;
+    IF NOT EXISTS (SELECT 1 FROM information_schema.COLUMNS WHERE TABLE_SCHEMA=DATABASE() AND TABLE_NAME='orders' AND COLUMN_NAME='subtotal') THEN
+        ALTER TABLE orders ADD COLUMN subtotal DECIMAL(18,0) NOT NULL DEFAULT 0 AFTER note;
+    END IF;
+    IF NOT EXISTS (SELECT 1 FROM information_schema.COLUMNS WHERE TABLE_SCHEMA=DATABASE() AND TABLE_NAME='orders' AND COLUMN_NAME='shipping_fee') THEN
+        ALTER TABLE orders ADD COLUMN shipping_fee DECIMAL(18,0) NOT NULL DEFAULT 0 AFTER subtotal;
+    END IF;
+    IF NOT EXISTS (SELECT 1 FROM information_schema.COLUMNS WHERE TABLE_SCHEMA=DATABASE() AND TABLE_NAME='orders' AND COLUMN_NAME='discount_amount') THEN
+        ALTER TABLE orders ADD COLUMN discount_amount DECIMAL(18,0) NOT NULL DEFAULT 0 AFTER shipping_fee;
+    END IF;
     IF NOT EXISTS (SELECT 1 FROM information_schema.COLUMNS WHERE TABLE_SCHEMA=DATABASE() AND TABLE_NAME='orders' AND COLUMN_NAME='recipient_fullname') THEN
         ALTER TABLE orders ADD COLUMN recipient_fullname VARCHAR(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NULL AFTER address;
     END IF;
@@ -98,6 +107,14 @@ BEGIN
     IF EXISTS (SELECT 1 FROM information_schema.TABLES WHERE TABLE_SCHEMA=DATABASE() AND TABLE_NAME='order_items')
        AND NOT EXISTS (SELECT 1 FROM information_schema.COLUMNS WHERE TABLE_SCHEMA=DATABASE() AND TABLE_NAME='order_items' AND COLUMN_NAME='promotion_type') THEN
         ALTER TABLE order_items ADD COLUMN promotion_type VARCHAR(50) NULL AFTER promotion_name;
+    END IF;
+    IF EXISTS (SELECT 1 FROM information_schema.TABLES WHERE TABLE_SCHEMA=DATABASE() AND TABLE_NAME='order_items')
+       AND NOT EXISTS (SELECT 1 FROM information_schema.COLUMNS WHERE TABLE_SCHEMA=DATABASE() AND TABLE_NAME='order_items' AND COLUMN_NAME='product_name_snapshot') THEN
+        ALTER TABLE order_items ADD COLUMN product_name_snapshot VARCHAR(255) NULL AFTER promotion_type;
+    END IF;
+    IF EXISTS (SELECT 1 FROM information_schema.TABLES WHERE TABLE_SCHEMA=DATABASE() AND TABLE_NAME='order_items')
+       AND NOT EXISTS (SELECT 1 FROM information_schema.COLUMNS WHERE TABLE_SCHEMA=DATABASE() AND TABLE_NAME='order_items' AND COLUMN_NAME='product_image_snapshot') THEN
+        ALTER TABLE order_items ADD COLUMN product_image_snapshot VARCHAR(255) NULL AFTER product_name_snapshot;
     END IF;
 END$$
 DELIMITER ;

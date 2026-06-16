@@ -58,6 +58,9 @@ CREATE TABLE `orders` (
   `recipient_phone` varchar(20) NOT NULL,
   `shipping_address` varchar(500) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
   `note` text CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci,
+  `subtotal` decimal(18,0) NOT NULL DEFAULT 0,
+  `shipping_fee` decimal(18,0) NOT NULL DEFAULT 0,
+  `discount_amount` decimal(18,0) NOT NULL DEFAULT 0,
   `total_amount` decimal(18,0) NOT NULL,
   `status` varchar(50) DEFAULT 'Pending',
   `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
@@ -79,6 +82,8 @@ CREATE TABLE `order_items` (
   `promotion_id` int DEFAULT NULL,
   `promotion_name` varchar(255) DEFAULT NULL,
   `promotion_type` varchar(50) DEFAULT NULL,
+  `product_name_snapshot` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `product_image_snapshot` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
   PRIMARY KEY (`id`),
   FOREIGN KEY (`order_id`) REFERENCES `orders`(`id`) ON DELETE CASCADE,
   FOREIGN KEY (`product_id`) REFERENCES `products`(`id`) ON DELETE CASCADE

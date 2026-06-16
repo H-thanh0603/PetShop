@@ -333,7 +333,7 @@ public class CheckoutServlet extends HttpServlet {
             String paymentMethodKey = resolvePaymentMethodKey(request);
             boolean isVnpay = "vnpay".equalsIgnoreCase(paymentMethodKey);
 
-            String servicePaymentMethodKey = isVnpay ? "cod" : paymentMethodKey;
+            String servicePaymentMethodKey = paymentMethodKey;
 
             String reservedTransferReference = null;
             if ("bank_transfer".equalsIgnoreCase(servicePaymentMethodKey)) {

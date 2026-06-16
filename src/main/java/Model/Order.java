@@ -17,6 +17,9 @@ public class Order {
     private String customerFullname;
     private String customerPhone;
     private String note;
+    private BigDecimal subtotal = BigDecimal.ZERO;
+    private BigDecimal shippingFee = BigDecimal.ZERO;
+    private BigDecimal discountAmount = BigDecimal.ZERO;
     private BigDecimal totalAmount;
     private String status; // Pending, Confirmed, Shipping, Delivered, Completed, Cancelled
     private String payment_method;
@@ -123,6 +126,12 @@ public class Order {
 
     public BigDecimal getTotalAmount() { return totalAmount; }
     public void setTotalAmount(BigDecimal totalAmount) { this.totalAmount = totalAmount != null ? totalAmount : BigDecimal.ZERO; }
+    public BigDecimal getSubtotal() { return subtotal != null ? subtotal : BigDecimal.ZERO; }
+    public void setSubtotal(BigDecimal subtotal) { this.subtotal = subtotal != null ? subtotal : BigDecimal.ZERO; }
+    public BigDecimal getShippingFee() { return shippingFee != null ? shippingFee : BigDecimal.ZERO; }
+    public void setShippingFee(BigDecimal shippingFee) { this.shippingFee = shippingFee != null ? shippingFee : BigDecimal.ZERO; }
+    public BigDecimal getDiscountAmount() { return discountAmount != null ? discountAmount : BigDecimal.ZERO; }
+    public void setDiscountAmount(BigDecimal discountAmount) { this.discountAmount = discountAmount != null ? discountAmount : BigDecimal.ZERO; }
 
     public String getStatus() { return status; }
     public void setStatus(String status) { this.status = status; }
