@@ -34,7 +34,17 @@
         <div class="error-container">
             <h1>403</h1>
             <p>Rất tiếc, bạn không có quyền truy cập vào trang này.</p>
-            <a href="${pageContext.request.contextPath}/" class="btn btn-primary">Quay về trang chủ</a>
+            <c:choose>
+                <c:when test="${sessionScope.user.role == 'shiper'}">
+                    <a href="${pageContext.request.contextPath}/admin/orders" class="btn btn-primary">Quay về trang đơn hàng</a>
+                </c:when>
+                <c:when test="${not empty sessionScope.user.role}">
+                    <a href="${pageContext.request.contextPath}/pages/admin/dashboard" class="btn btn-primary">Quay về Dashboard</a>
+                </c:when>
+                <c:otherwise>
+                    <a href="${pageContext.request.contextPath}/" class="btn btn-primary">Quay về trang chủ</a>
+                </c:otherwise>
+            </c:choose>
         </div>
     </div>
 </body>

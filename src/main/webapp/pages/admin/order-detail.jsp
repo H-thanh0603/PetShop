@@ -160,13 +160,22 @@
                         <input type="hidden" name="returnTo" value="detail">
                         <div class="col-md-8">
                             <select name="status" class="form-select">
-                                <option value="Awaiting Payment" ${order.status == 'Awaiting Payment' ? 'selected' : ''}>Chờ thanh toán</option>
-                                <option value="Paid" ${order.status == 'Paid' ? 'selected' : ''}>Đã thanh toán</option>
-                                <option value="Pending" ${order.status == 'Pending' ? 'selected' : ''}>Chờ xử lý</option>
-                                <option value="Confirmed" ${order.status == 'Confirmed' ? 'selected' : ''}>Xác nhận đơn hàng</option>
-                                <option value="Shipping" ${order.status == 'Shipping' ? 'selected' : ''}>Đang giao hàng</option>
-                                <option value="Completed" ${order.status == 'Completed' ? 'selected' : ''}>Đã hoàn thành</option>
-                                <option value="Cancelled" ${order.status == 'Cancelled' ? 'selected' : ''}>Hủy đơn hàng</option>
+                                <c:choose>
+                                    <c:when test="${sessionScope.user.role == 'shiper'}">
+                                        <option value="Shipping" ${order.status == 'Shipping' ? 'selected' : ''}>Đang giao hàng</option>
+                                        <option value="Delivered" ${order.status == 'Delivered' ? 'selected' : ''}>Đã giao hàng</option>
+                                    </c:when>
+                                    <c:otherwise>
+                                        <option value="Awaiting Payment" ${order.status == 'Awaiting Payment' ? 'selected' : ''}>Chờ thanh toán</option>
+                                        <option value="Paid" ${order.status == 'Paid' ? 'selected' : ''}>Đã thanh toán</option>
+                                        <option value="Pending" ${order.status == 'Pending' ? 'selected' : ''}>Chờ xử lý</option>
+                                        <option value="Confirmed" ${order.status == 'Confirmed' ? 'selected' : ''}>Xác nhận đơn hàng</option>
+                                        <option value="Shipping" ${order.status == 'Shipping' ? 'selected' : ''}>Đang giao hàng</option>
+                                        <option value="Delivered" ${order.status == 'Delivered' ? 'selected' : ''}>Đã giao hàng</option>
+                                        <option value="Completed" ${order.status == 'Completed' ? 'selected' : ''}>Đã hoàn thành</option>
+                                        <option value="Cancelled" ${order.status == 'Cancelled' ? 'selected' : ''}>Hủy đơn hàng</option>
+                                    </c:otherwise>
+                                </c:choose>
                             </select>
                         </div>
                         <div class="col-md-4">

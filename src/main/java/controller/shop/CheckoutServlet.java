@@ -372,19 +372,21 @@ public class CheckoutServlet extends HttpServlet {
             session.removeAttribute("checkoutNote");
             session.removeAttribute(BANK_TRANSFER_REFERENCE_SESSION_KEY);
 
+            // Set shared success data for orderSuccess.jsp
+            session.setAttribute("successOrderId", completedOrderId);
+            session.setAttribute("successUser", user);
+            session.setAttribute("successTotalAmount", checkoutResult.getTotalAmount());
+            session.setAttribute("successShippingFee", checkoutResult.getShippingFee());
+            session.setAttribute("successDiscount", checkoutResult.getDiscount());
+            session.setAttribute("successFinalTotal", checkoutResult.getFinalTotal());
+            session.setAttribute("successShippingAddress", fullAddress);
+            session.setAttribute("successOrderNote", note);
+            session.setAttribute("successOrderItems", new ArrayList<>(checkoutCart.values()));
+            session.setAttribute("paymentMethod", completedPaymentMethod);
+
             if ("VNPAY".equalsIgnoreCase(completedPaymentMethod)) {
                 orderDAO.markOnlinePaymentAwaiting(completedOrderId, "VNPAY");
-                session.setAttribute("paymentMethod", "VNPAY");
-                session.setAttribute("successOrderId", completedOrderId);
-                session.setAttribute("successUser", user);
-                session.setAttribute("successTotalAmount", checkoutResult.getTotalAmount());
-                session.setAttribute("successShippingFee", checkoutResult.getShippingFee());
-                session.setAttribute("successDiscount", checkoutResult.getDiscount());
-                session.setAttribute("successFinalTotal", checkoutResult.getFinalTotal());
-                session.setAttribute("successShippingAddress", fullAddress);
-                session.setAttribute("successOrderNote", note);
                 session.setAttribute("paymentStatus", 0);
-                session.setAttribute("successOrderItems", new ArrayList<>(checkoutCart.values()));
 
                 String vnpayUrl = VnpayUtil.createPaymentUrl(
                         request,
@@ -399,11 +401,22 @@ public class CheckoutServlet extends HttpServlet {
             }
 
             if ("BANK_TRANSFER".equalsIgnoreCase(completedPaymentMethod) && completedPaymentTransaction != null) {
-                // Giữ nguyên JSON response cho bank transfer (FE cần hiển thị QR + countdown)
+                BankTransferDetails bankTransferDetails = BankTransferDetails.fromConfig();
+
+                // Extra data for orderSuccess.jsp if user navigates there
+                session.setAttribute("pendingVerification", true);
+                session.setAttribute("transferReference", completedPaymentTransaction.getTransferReference());
+                session.setAttribute("paymentExpiresAt", completedPaymentTransaction.getExpiresAt());
+                session.setAttribute("bankId", bankTransferDetails.getBankId());
+                session.setAttribute("bankDisplayName", bankTransferDetails.getDisplayName());
+                session.setAttribute("bankAccountNumber", bankTransferDetails.getAccountNumber());
+                session.setAttribute("bankAccountName", bankTransferDetails.getAccountName());
+                session.setAttribute("paymentTtlSeconds", AppConfig.getInt("payment.bank.pending-minutes", 10) * 60);
+
+                // JSON response for immediate display on checkout page
                 result.put("success", true);
                 result.put("pendingVerification", true);
                 result.put("orderId", completedOrderId);
-                BankTransferDetails bankTransferDetails = BankTransferDetails.fromConfig();
                 result.put("bankDisplayName", bankTransferDetails.getDisplayName());
                 result.put("bankId", bankTransferDetails.getBankId());
                 result.put("bankAccountNumber", bankTransferDetails.getAccountNumber());
@@ -412,6 +425,7 @@ public class CheckoutServlet extends HttpServlet {
                 result.put("paymentExpiresAt", completedPaymentTransaction.getExpiresAt());
                 result.put("paymentTtlSeconds", AppConfig.getInt("payment.bank.pending-minutes", 10) * 60);
                 write(response, result);
+                return;
             } else {
                 session.setAttribute("successOrderId", completedOrderId);
                 session.setAttribute("successUser", user);

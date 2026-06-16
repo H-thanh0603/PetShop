@@ -3,6 +3,7 @@ package controller.shop;
 import DAO.OrderDAO;
 import Model.CustomerRepurchaseSuggestion;
 import Model.Order;
+import Model.OrderStatus;
 import Model.User;
 import Util.VnpayUtil;
 import services.ReorderService;
@@ -61,6 +62,7 @@ public class MyOrdersServlet extends HttpServlet {
         }
         int countPending = orderDAO.countPendingOrdersByUserId(user.getId());
         int countCompleted = orderDAO.countCompletedOrdersByUserId(user.getId());
+        dao.autoCompleteDeliveredOrders();
         List<Order> allOrders = dao.getOrdersByUserId(user.getId());
         List<Order> list = filterOrders(allOrders, statusFilter, keyword);
         List<CustomerRepurchaseSuggestion> repurchaseSuggestions =
@@ -90,42 +92,62 @@ public class MyOrdersServlet extends HttpServlet {
                 int orderId = Integer.parseInt(request.getParameter("orderId"));
                 // Check cancellation window first for a clear error message
                 if (!orderDAO.isWithinCancellationWindow(orderId)) {
-                    session.setAttribute("error", "Đã quá thời gian hủy đơn hàng.");
+                    session.setAttribute("toastMessage", "Đã quá thời gian hủy đơn hàng (1 giờ kể từ khi đặt).");
+                    session.setAttribute("toastType", "warning");
                 } else if (orderDAO.cancelOrderByUser(orderId, user.getId())) {
-                    session.setAttribute("success", "Đơn hàng đã được hủy thành công.");
+                    session.setAttribute("toastMessage", "Đơn hàng đã được hủy thành công.");
+                    session.setAttribute("toastType", "success");
                 } else {
-                    session.setAttribute("error", "Không thể hủy đơn hàng này.");
+                    session.setAttribute("toastMessage", "Không thể hủy đơn hàng này. Có thể trạng thái đơn hàng đã thay đổi.");
+                    session.setAttribute("toastType", "error");
                 }
             } catch (Exception e) {
-                session.setAttribute("error", "Có lỗi xảy ra khi hủy đơn hàng.");
+                session.setAttribute("toastMessage", "Có lỗi xảy ra khi hủy đơn hàng.");
+                session.setAttribute("toastType", "error");
             }
         } else if ("reorder".equals(action)) {
             try {
                 int orderId = Integer.parseInt(request.getParameter("orderId"));
                 if (reorderService.reorderToCart(user.getId(), orderId)) {
-                    session.setAttribute("success", "Đã thêm lại sản phẩm từ đơn cũ vào giỏ hàng.");
+                    session.setAttribute("toastMessage", "Đã thêm lại sản phẩm từ đơn cũ vào giỏ hàng.");
+                    session.setAttribute("toastType", "success");
                     response.sendRedirect(request.getContextPath() + "/cart");
                     return;
                 }
-                session.setAttribute("error", "Không thể mua lại đơn hàng này.");
+                session.setAttribute("toastMessage", "Không thể mua lại đơn hàng này.");
+                session.setAttribute("toastType", "error");
             } catch (Exception e) {
-                session.setAttribute("error", "Có lỗi xảy ra khi mua lại đơn hàng.");
+                session.setAttribute("toastMessage", "Có lỗi xảy ra khi mua lại đơn hàng.");
+                session.setAttribute("toastType", "error");
             }
         } else if ("confirmReceipt".equals(action)) {
             try {
                 int orderId = Integer.parseInt(request.getParameter("orderId"));
                 Order order = orderDAO.getOrderById(orderId);
-                if (order != null && order.getUserId() == user.getId() && "Delivered".equals(order.getStatus())) {
-                    if (orderDAO.updateStatus(orderId, "Completed", user.getId())) {
-                        session.setAttribute("success", "Cảm ơn bạn đã xác nhận. Đơn hàng đã được hoàn tất.");
+                if (order != null && order.getUserId() == user.getId()) {
+                    OrderStatus currentStatus = OrderStatus.fromString(order.getStatus());
+                    if (currentStatus == OrderStatus.DELIVERED) {
+                        if (orderDAO.updateStatus(orderId, OrderStatus.COMPLETED.getDisplayName(), user.getId())) {
+                            session.setAttribute("toastMessage", "Cảm ơn bạn đã xác nhận. Đơn hàng đã được hoàn tất.");
+                            session.setAttribute("toastType", "success");
+                        } else {
+                            session.setAttribute("toastMessage", "Không thể xác nhận đơn hàng này. Vui lòng thử lại sau.");
+                            session.setAttribute("toastType", "error");
+                        }
+                    } else if (currentStatus == OrderStatus.COMPLETED) {
+                        session.setAttribute("toastMessage", "Đơn hàng này đã được hoàn thành trước đó.");
+                        session.setAttribute("toastType", "info");
                     } else {
-                        session.setAttribute("error", "Không thể xác nhận đơn hàng này.");
+                        session.setAttribute("toastMessage", "Hành động không hợp lệ. Đơn hàng chưa ở trạng thái 'Đã giao hàng'.");
+                        session.setAttribute("toastType", "warning");
                     }
                 } else {
-                    session.setAttribute("error", "Hành động không hợp lệ.");
+                    session.setAttribute("toastMessage", "Không tìm thấy đơn hàng hoặc bạn không có quyền thực hiện hành động này.");
+                    session.setAttribute("toastType", "error");
                 }
             } catch (Exception e) {
-                session.setAttribute("error", "Có lỗi xảy ra khi xác nhận đơn hàng.");
+                session.setAttribute("toastMessage", "Có lỗi xảy ra khi xác nhận đơn hàng.");
+                session.setAttribute("toastType", "error");
             }
         } else if ("repay".equals(action)) {
             try {
@@ -135,7 +157,8 @@ public class MyOrdersServlet extends HttpServlet {
                 // Bảo mật + trạng thái: chỉ chủ đơn mới được thanh toán lại,
                 // và đơn phải còn trong điều kiện thanh toán lại (chưa trả, còn hạn).
                 if (order == null || order.getUserId() != user.getId() || !order.isRepayable()) {
-                    session.setAttribute("error", "Đơn hàng không thể thanh toán lại.");
+                    session.setAttribute("toastMessage", "Đơn hàng không thể thanh toán lại.");
+                    session.setAttribute("toastType", "error");
                     response.sendRedirect(request.getContextPath() + "/my-orders");
                     return;
                 }

@@ -333,7 +333,7 @@ public class OrderDAO {
     public boolean updateStatus(int orderId, String status, int changedByUserId) {
         ProductDAO productDAO = new ProductDAO();
         OrderStatusHistoryDAO historyDAO = new OrderStatusHistoryDAO();
-        String lockOrderQuery = "SELECT status FROM orders WHERE id = ? FOR UPDATE";
+        String lockOrderQuery = "SELECT status, user_id FROM orders WHERE id = ? FOR UPDATE";
         String updateStatusQuery = "UPDATE orders SET status = ? WHERE id = ?";
 
         try (Connection conn = DBContext.getConnection()) {
@@ -341,11 +341,13 @@ public class OrderDAO {
 
             try {
                 String currentStatus = null;
+                int orderOwnerId = -1;
                 try (PreparedStatement lockPs = conn.prepareStatement(lockOrderQuery)) {
                     lockPs.setInt(1, orderId);
                     try (ResultSet rs = lockPs.executeQuery()) {
                         if (rs.next()) {
                             currentStatus = rs.getString("status");
+                            orderOwnerId = rs.getInt("user_id");
                         }
                     }
                 }
@@ -402,11 +404,16 @@ public class OrderDAO {
 
                 // Record audit trail
                 int actor = changedByUserId > 0 ? changedByUserId : 1; // fallback to system user
+                String actorType = "SYSTEM";
+                if (changedByUserId > 0) {
+                    actorType = (changedByUserId == orderOwnerId) ? "CUSTOMER" : "ADMIN";
+                }
+
                 if (!historyDAO.insertHistory(conn, orderId, currentStatus, status, actor)) {
                     conn.rollback();
                     return false;
                 }
-                if (!new OrderLogDAO().insert(conn, orderId, changedByUserId > 0 ? "ADMIN" : "SYSTEM",
+                if (!new OrderLogDAO().insert(conn, orderId, actorType,
                         actor, "UPDATE_STATUS", currentStatus, status, "Cập nhật trạng thái đơn hàng")) {
                     conn.rollback();
                     return false;
@@ -568,16 +575,18 @@ public class OrderDAO {
             if (!productDAO.finalizeReservedStock(conn, item.getProductId(), item.getQuantity())) {
                 return false;
             }
-            if (inventoryBatchDAO.hasTrackedBatchesForProduct(conn, item.getProductId())
-                    && !inventoryBatchDAO.consumeProductStock(
+            if (inventoryBatchDAO.hasTrackedBatchesForProduct(conn, item.getProductId())) {
+                boolean consumed = inventoryBatchDAO.consumeProductStock(
                     conn,
                     item.getProductId(),
                     item.getQuantity(),
                     orderId,
                     actorUserId,
                     "Finalize reserved stock for order #" + orderId
-            )) {
-                return false;
+                );
+                if (!consumed) {
+                    log.warn("Insufficient batch stock for product id={} while finalizing order #{}. Proceeding anyway.", item.getProductId(), orderId);
+                }
             }
         }
         return true;
@@ -612,19 +621,6 @@ public class OrderDAO {
             if (!list.isEmpty()) {
                 loadItemsForOrders(conn, list);
                 paymentTransactionDAO.attachLatestToOrders(conn, list);
-            }
-
-            // Auto-complete delivered orders after 1 day
-            long oneDayInMillis = 24 * 60 * 60 * 1000;
-            long now = System.currentTimeMillis();
-            for (Order order : list) {
-                if ("Delivered".equals(order.getStatus()) && order.getStatusUpdatedAt() != null) {
-                    if (now - order.getStatusUpdatedAt().getTime() > oneDayInMillis) {
-                        if (this.updateStatus(order.getId(), "Completed", 1)) { // 1 = System User
-                            order.setStatus("Completed"); // Update object in list for immediate UI consistency
-                        }
-                    }
-                }
             }
 
         } catch (Exception e) {
@@ -993,6 +989,20 @@ public class OrderDAO {
         } catch (Exception e) {
             e.printStackTrace();
             return false;
+        }
+    }
+    public void autoCompleteDeliveredOrders() {
+        String sql = "SELECT id FROM orders WHERE status = 'Delivered' " +
+                "AND status_updated_at < NOW() - INTERVAL 1 DAY";
+        try (Connection conn = DBContext.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql);
+             ResultSet rs = ps.executeQuery()) {
+            while (rs.next()) {
+                int orderId = rs.getInt("id");
+                updateStatus(orderId, "Completed", 1);
+            }
+        } catch (Exception e) {
+            log.error("Auto-complete delivered orders error", e);
         }
     }
 }
