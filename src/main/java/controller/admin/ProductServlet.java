@@ -46,7 +46,8 @@ public class ProductServlet extends HttpServlet {
     protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
         ProductDAO dao = new ProductDAO();
         InventoryBatchDAO inventoryBatchDAO = new InventoryBatchDAO();
-        List<Product> products = dao.getAllProducts();
+        
+        List<Product> products = dao.getAllProducts(); 
         int totalProducts = dao.getTotalProducts();
         int discountedProducts = dao.getDiscountedProducts();
         Map<Integer, ProductAdminInventoryView> inventoryByProduct = inventoryBatchDAO.getProductAdminInventoryViews(30);

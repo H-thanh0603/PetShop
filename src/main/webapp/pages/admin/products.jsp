@@ -231,6 +231,59 @@
             margin-top: 4px;
             font-weight: 500;
         }
+
+        /* Pagination Styles */
+        .pagination-container {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-top: 24px;
+            padding: 16px 24px;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+        }
+        .pagination-info {
+            color: #64748b;
+            font-size: 0.9rem;
+        }
+        .pagination-controls {
+            display: flex;
+            gap: 8px;
+        }
+        .page-link {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-width: 38px;
+            height: 38px;
+            padding: 0 8px;
+            border-radius: 8px;
+            border: 1px solid #e2e8f0;
+            background: white;
+            color: #475569;
+            text-decoration: none;
+            font-weight: 500;
+            transition: all 0.2s;
+        }
+        .page-link:hover:not(.disabled) {
+            background: #f1f5f9;
+            border-color: #cbd5e1;
+            color: #0f172a;
+        }
+        .page-link.active {
+            background: #3b82f6;
+            border-color: #3b82f6;
+            color: white;
+        }
+        .page-link.disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            background: #f8fafc;
+        }
+        .page-link i {
+            font-size: 1.2rem;
+        }
     </style>
 </head>
 <body>
@@ -349,7 +402,7 @@
                             data-stock="${p.stock}" data-weight="${p.weight}" data-category="${fn:escapeXml(p.category)}" data-pet-type-id="${p.pet_type_id}"
                             data-stock-status="${p.stock == 0 ? 'out-of-stock' : (p.stock < 10 ? 'low-stock' : 'ok')}"
                             data-expiry-status="${empty inventory ? 'missing-batch' : inventory.expiryStatus}">
-                            <td><strong>${loop.index + 1}</strong></td>
+                            <td class="row-index"><strong>${loop.index + 1}</strong></td>
                             <td>
                                 <img loading="lazy" src="${fn:startsWith(p.image, 'http') ? fn:escapeXml(p.image) : pageContext.request.contextPath += '/assets/images/shop_pic/' += fn:escapeXml(p.image)}" 
                                      alt="" class="product-thumb"
@@ -434,6 +487,16 @@
                     </c:forEach>
                 </tbody>
             </table>
+            
+            <!-- Pagination -->
+            <div id="paginationContainer" class="pagination-container" style="display: none;">
+                <div class="pagination-info" id="paginationInfo">
+                    <!-- Sẽ được điền bởi JS -->
+                </div>
+                <div class="pagination-controls" id="paginationControls">
+                    <!-- Sẽ được điền bởi JS -->
+                </div>
+            </div>
         </div>
     </main>
 
@@ -644,14 +707,17 @@
             }
         }
         
-        // ========== FILTER FUNCTIONS ==========
+        // ========== FILTER & PAGINATION FUNCTIONS ==========
+        var currentPage = 1;
+        var pageSize = 10; // Mỗi trang 10-15 sản phẩm theo yêu cầu
+        var filteredRows = [];
+
         document.addEventListener('DOMContentLoaded', function() {
-            updateResultCount();
+            // Khởi tạo danh sách hàng ban đầu
+            applyFilters();
         });
 
-        function updateResultCount() {
-            var visible = document.querySelectorAll('#productsBody tr[data-id]:not([style*="display: none"])').length;
-            var total = document.querySelectorAll('#productsBody tr[data-id]').length;
+        function updateResultCount(visible, total) {
             document.getElementById('resultCount').textContent = '(' + visible + '/' + total + ')';
         }
 
@@ -659,10 +725,11 @@
             var search = document.getElementById('searchInput').value.toLowerCase();
             var discount = document.getElementById('filterDiscount').value;
             var inventory = document.getElementById('filterInventory').value;
-            var rows = document.querySelectorAll('#productsBody tr[data-id]');
+            var allRows = Array.from(document.querySelectorAll('#productsBody tr[data-id]'));
             var hasFilter = search || discount || inventory;
             
-            rows.forEach(function(row) {
+            // 1. Lọc các hàng thỏa mãn điều kiện
+            filteredRows = allRows.filter(function(row) {
                 var name = (row.dataset.name || '').toLowerCase();
                 var hasDiscount = parseInt(row.dataset.discount) > 0;
                 var stockStatus = row.dataset.stockStatus || 'ok';
@@ -679,17 +746,119 @@
                     (inventory === 'near-expiry' && expiryStatus === 'near-expiry') ||
                     (inventory === 'expired' && expiryStatus === 'expired');
                 
-                row.style.display = (matchSearch && matchDiscount && matchInventory) ? '' : 'none';
+                return matchSearch && matchDiscount && matchInventory;
             });
-            
+
+            // Ẩn tất cả các hàng trước
+            allRows.forEach(row => row.style.display = 'none');
+
+            // 2. Cập nhật trạng thái nút Reset
             var resetBtn = document.getElementById('resetBtn');
             if (hasFilter) {
                 resetBtn.classList.add('show');
             } else {
                 resetBtn.classList.remove('show');
             }
+
+            // 3. Reset về trang 1 khi lọc
+            currentPage = 1;
             
-            updateResultCount();
+            // 4. Hiển thị trang hiện tại
+            renderPagination();
+            showCurrentPage();
+            
+            updateResultCount(filteredRows.length, allRows.length);
+        }
+
+        function showCurrentPage() {
+            var start = (currentPage - 1) * pageSize;
+            var end = start + pageSize;
+            var pageRows = filteredRows.slice(start, end);
+
+            // Chỉ hiển thị các hàng thuộc trang hiện tại
+            pageRows.forEach(function(row, index) {
+                row.style.display = '';
+                // Cập nhật STT hiển thị
+                var indexCell = row.querySelector('.row-index strong');
+                if (indexCell) {
+                    indexCell.textContent = start + index + 1;
+                }
+            });
+        }
+
+        function renderPagination() {
+            var totalPages = Math.ceil(filteredRows.length / pageSize);
+            var container = document.getElementById('paginationContainer');
+            var info = document.getElementById('paginationInfo');
+            var controls = document.getElementById('paginationControls');
+
+            if (totalPages <= 1) {
+                container.style.display = 'none';
+                return;
+            }
+
+            container.style.display = 'flex';
+            
+            // Info
+            var start = (currentPage - 1) * pageSize + 1;
+            var end = Math.min(currentPage * pageSize, filteredRows.length);
+            info.innerHTML = 'Hiển thị <strong>' + start + '</strong> - <strong>' + end + '</strong> trên tổng số <strong>' + filteredRows.length + '</strong> sản phẩm';
+
+            // Controls
+            var html = '';
+            
+            // Prev
+            html += '<button onclick="goToPage(' + (currentPage - 1) + ')" class="page-link ' + (currentPage === 1 ? 'disabled' : '') + '"><i class=\'bx bx-chevron-left\'></i></button>';
+
+            // Pages
+            if (totalPages <= 7) {
+                for (var i = 1; i <= totalPages; i++) {
+                    html += '<button onclick="goToPage(' + i + ')" class="page-link ' + (i === currentPage ? 'active' : '') + '">' + i + '</button>';
+                }
+            } else {
+                if (currentPage <= 4) {
+                    for (var i = 1; i <= 5; i++) {
+                        html += '<button onclick="goToPage(' + i + ')" class="page-link ' + (i === currentPage ? 'active' : '') + '">' + i + '</button>';
+                    }
+                    html += '<span class="page-link disabled">...</span>';
+                    html += '<button onclick="goToPage(' + totalPages + ')" class="page-link">' + totalPages + '</button>';
+                } else if (currentPage >= totalPages - 3) {
+                    html += '<button onclick="goToPage(1)" class="page-link">1</button>';
+                    html += '<span class="page-link disabled">...</span>';
+                    for (var i = totalPages - 4; i <= totalPages; i++) {
+                        html += '<button onclick="goToPage(' + i + ')" class="page-link ' + (i === currentPage ? 'active' : '') + '">' + i + '</button>';
+                    }
+                } else {
+                    html += '<button onclick="goToPage(1)" class="page-link">1</button>';
+                    html += '<span class="page-link disabled">...</span>';
+                    html += '<button onclick="goToPage(' + (currentPage - 1) + ')" class="page-link">' + (currentPage - 1) + '</button>';
+                    html += '<button onclick="goToPage(' + currentPage + ')" class="page-link active">' + currentPage + '</button>';
+                    html += '<button onclick="goToPage(' + (currentPage + 1) + ')" class="page-link">' + (currentPage + 1) + '</button>';
+                    html += '<span class="page-link disabled">...</span>';
+                    html += '<button onclick="goToPage(' + totalPages + ')" class="page-link">' + totalPages + '</button>';
+                }
+            }
+
+            // Next
+            html += '<button onclick="goToPage(' + (currentPage + 1) + ')" class="page-link ' + (currentPage === totalPages ? 'disabled' : '') + '"><i class=\'bx bx-chevron-right\'></i></button>';
+
+            controls.innerHTML = html;
+        }
+
+        function goToPage(page) {
+            var totalPages = Math.ceil(filteredRows.length / pageSize);
+            if (page < 1 || page > totalPages || page === currentPage) return;
+            
+            currentPage = page;
+            
+            // Ẩn tất cả hàng
+            document.querySelectorAll('#productsBody tr[data-id]').forEach(row => row.style.display = 'none');
+            
+            showCurrentPage();
+            renderPagination();
+            
+            // Cuộn lên đầu bảng
+            document.querySelector('.table-section').scrollIntoView({ behavior: 'smooth', block: 'start' });
         }
 
         function filterByDiscount(value) {
