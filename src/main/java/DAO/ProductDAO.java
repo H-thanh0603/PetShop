@@ -765,11 +765,12 @@ public class ProductDAO {
         if (quantity <= 0) {
             return false;
         }
-        String query = "UPDATE products SET stock = stock - ? WHERE id = ? AND stock >= ?";
+        String query = "UPDATE products SET stock = stock - ?, reserved_quantity = reserved_quantity + ? WHERE id = ? AND stock >= ?";
         try (PreparedStatement ps = conn.prepareStatement(query)) {
             ps.setInt(1, quantity);
-            ps.setInt(2, productId);
-            ps.setInt(3, quantity);
+            ps.setInt(2, quantity);
+            ps.setInt(3, productId);
+            ps.setInt(4, quantity);
             return ps.executeUpdate() > 0;
         } catch (Exception e) {
             log.error("Error reserving stock for product id={}", productId, e);
@@ -781,10 +782,12 @@ public class ProductDAO {
         if (quantity <= 0) {
             return false;
         }
-        String query = "UPDATE products SET stock = stock + ? WHERE id = ? AND stock >= 0";
+        String query = "UPDATE products SET stock = stock + ?, reserved_quantity = reserved_quantity - ? WHERE id = ? AND reserved_quantity >= ?";
         try (PreparedStatement ps = conn.prepareStatement(query)) {
             ps.setInt(1, quantity);
-            ps.setInt(2, productId);
+            ps.setInt(2, quantity);
+            ps.setInt(3, productId);
+            ps.setInt(4, quantity);
             return ps.executeUpdate() > 0;
         } catch (Exception e) {
             log.error("Error releasing reserved stock for product id={}", productId, e);
@@ -796,14 +799,17 @@ public class ProductDAO {
         if (quantity <= 0) {
             return false;
         }
+        // Use a more lenient update that handles legacy orders where reserved_quantity might be 0
+        // or cases where reserved_quantity was not correctly tracked.
         String query = "UPDATE products " +
-                "SET reserved_quantity = reserved_quantity - ?, sold_quantity = sold_quantity + ? " +
-                "WHERE id = ? AND reserved_quantity >= ?";
+                "SET reserved_quantity = CASE WHEN reserved_quantity >= ? THEN reserved_quantity - ? ELSE 0 END, " +
+                "sold_quantity = sold_quantity + ? " +
+                "WHERE id = ?";
         try (PreparedStatement ps = conn.prepareStatement(query)) {
             ps.setInt(1, quantity);
             ps.setInt(2, quantity);
-            ps.setInt(3, productId);
-            ps.setInt(4, quantity);
+            ps.setInt(3, quantity);
+            ps.setInt(4, productId);
             return ps.executeUpdate() > 0;
         } catch (Exception e) {
             log.error("Error finalizing reserved stock for product id={}", productId, e);

@@ -49,6 +49,16 @@
                 </div>
             </div>
             <div class="d-flex gap-2 flex-wrap">
+                <c:if test="${order.status == 'Delivered' || order.status == 'Completed'}">
+                    <form action="${pageContext.request.contextPath}/my-orders" method="post">
+                        <input type="hidden" name="csrfToken" value="${csrfToken}" />
+                        <input type="hidden" name="action" value="confirmReceipt">
+                        <input type="hidden" name="orderId" value="${order.id}">
+                        <button type="submit" class="btn btn-success text-white" ${order.status == 'Completed' ? 'disabled' : ''}>
+                            <i class='bx bx-check-double'></i> Đã nhận hàng
+                        </button>
+                    </form>
+                </c:if>
                 <c:if test="${order.repayable}">
                     <form action="${pageContext.request.contextPath}/my-orders" method="post">
                         <input type="hidden" name="csrfToken" value="${csrfToken}" />
