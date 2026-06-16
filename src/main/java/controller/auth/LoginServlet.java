@@ -236,6 +236,9 @@ public class LoginServlet extends HttpServlet {
             
             // Check if user account is deactivated
             if (!user.getStatus()) {
+                // Ghi nhận cảnh báo bảo mật khi tài khoản vô hiệu hóa cố tình truy cập
+                securityEventDAO.log("DEACTIVATED_ACCOUNT_ACCESS", email, request.getRemoteAddr(),
+                        "Attempted login to a deactivated account.");
                 form.addGeneralError("Tài khoản của bạn đã bị vô hiệu hóa. Vui lòng liên hệ quản trị viên.");
                 form.applyToRequest();
                 populateLoginViewData(request);
