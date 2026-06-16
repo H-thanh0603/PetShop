@@ -184,6 +184,9 @@ public class LoginServlet extends HttpServlet {
         FormHelper form = new FormHelper(request);
         
         String email = form.get("email");
+        if (email != null) {
+            email = email.trim().toLowerCase();
+        }
         String password = form.getRaw("password");
         String rememberMe = request.getParameter("rememberMe");
         
