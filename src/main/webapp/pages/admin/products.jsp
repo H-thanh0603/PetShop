@@ -454,6 +454,10 @@
                             </td>
                             <td>
                                 <div class="table-actions">
+                                    <button class="action-btn import" onclick="openImportModal(this.closest('tr'))" title="Nhập kho" 
+                                            style="color: #059669; background: #ecfdf5;">
+                                        <i class='bx bx-plus-circle'></i>
+                                    </button>
                                     <button class="action-btn edit" onclick="openEditModal(this.closest('tr'))" title="Sửa">
                                         <i class='bx bx-edit-alt'></i>
                                     </button>
@@ -545,39 +549,6 @@
                             <span class="input-hint">Chấp nhận: JPG, PNG, GIF, WebP. Tối đa 5MB</span>
                         </div>
                     </div>
-                    <div class="form-section-title">
-                        <i class='bx bx-barcode'></i> Nhập lô hàng / hạn sử dụng
-                    </div>
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label class="form-label">Mã lô</label>
-                            <input type="text" class="form-input" name="batchCode" id="formBatchCode"
-                                   placeholder="VD: LOT-CAT-2026-05">
-                            <div class="input-hint">Bỏ trống để hệ thống tự tạo mã lô.</div>
-                        </div>
-                        <div class="form-group">
-                            <label class="form-label">Số lượng nhập</label>
-                            <input type="number" class="form-input" name="batchQuantity" id="formBatchQuantity"
-                                   placeholder="VD: 50" min="0" value="0" step="1">
-                        </div>
-                    </div>
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label class="form-label">Giá vốn / sản phẩm</label>
-                            <input type="number" class="form-input" name="batchUnitCost" id="formBatchUnitCost"
-                                   placeholder="VD: 85000" min="0" value="0" step="1000">
-                        </div>
-                        <div class="form-group">
-                            <label class="form-label">Hạn sử dụng</label>
-                            <input type="date" class="form-input" name="batchExpiryDate" id="formBatchExpiryDate">
-                        </div>
-                    </div>
-                    <div class="form-group">
-                        <label class="form-label">Ghi chú lô hàng</label>
-                        <input type="text" class="form-input" name="batchNote" id="formBatchNote"
-                               placeholder="VD: Nhập từ nhà cung cấp A, ưu tiên bán trước...">
-                    </div>
-
                     <div class="form-row">
                         <div class="form-group">
                             <label class="form-label">Giá bán <span class="required">*</span></label>
@@ -641,6 +612,64 @@
                     <button type="submit" class="btn btn-primary">
                         <i class='bx bx-save'></i> Lưu sản phẩm
                     </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Import Batch Modal -->
+    <div class="modal-overlay" id="importBatchModal">
+        <div class="modal-box">
+            <div class="modal-header">
+                <h3 class="modal-title">Nhập kho sản phẩm</h3>
+                <button class="modal-close" onclick="closeImportModal()"><i class='bx bx-x'></i></button>
+            </div>
+            
+            <form id="importBatchForm" method="post">
+                <input type="hidden" name="csrfToken" value="${csrfToken}" />
+                <input type="hidden" name="action" value="import_batch">
+                <input type="hidden" name="productId" id="importProductId">
+                
+                <div class="modal-body">
+                    <div class="form-group" style="margin-bottom: 15px; padding: 10px; background: #f8fafc; border-radius: 8px; border: 1px solid #e2e8f0;">
+                        <label class="form-label" style="margin-bottom: 4px; color: #64748b; font-size: 0.8rem;">Sản phẩm nhập kho:</label>
+                        <div id="importProductName" style="font-weight: 700; color: #0f172a; font-size: 1rem;"></div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label">Mã lô</label>
+                            <input type="text" class="form-input" name="batchCode" id="importBatchCode"
+                                   placeholder="VD: LOT-CAT-2026-05">
+                            <div class="input-hint">Bỏ trống để hệ thống tự tạo mã lô.</div>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Số lượng nhập <span class="required">*</span></label>
+                            <input type="number" class="form-input" name="batchQuantity" id="importBatchQuantity"
+                                   placeholder="VD: 50" min="1" value="1" step="1" required>
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label">Giá vốn / sản phẩm</label>
+                            <input type="number" class="form-input" name="batchUnitCost" id="importBatchUnitCost"
+                                   placeholder="VD: 85000" min="0" value="0" step="1000">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Hạn sử dụng</label>
+                            <input type="date" class="form-input" name="batchExpiryDate" id="importBatchExpiryDate">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Ghi chú lô hàng</label>
+                        <input type="text" class="form-input" name="batchNote" id="importBatchNote"
+                               placeholder="VD: Nhập từ nhà cung cấp A...">
+                    </div>
+                </div>
+                
+                <div class="modal-footer">
+                    <button type="button" class="btn-secondary" onclick="closeImportModal()">Hủy</button>
+                    <button type="submit" class="btn-primary">Xác nhận nhập kho</button>
                 </div>
             </form>
         </div>
@@ -897,7 +926,6 @@
             document.getElementById('formWeight').value = '0';
             document.getElementById('formCategory').value = '';
             document.getElementById('formPetTypeId').value = '0';
-            resetBatchFields();
             document.getElementById('pricePreview').textContent = '';
             resetImagePreview();
             document.getElementById('productModal').classList.add('show');
@@ -925,7 +953,6 @@
             document.getElementById('formWeight').value = row.dataset.weight || '0';
             document.getElementById('formCategory').value = row.dataset.category || '';
             document.getElementById('formPetTypeId').value = row.dataset.petTypeId || '0';
-            resetBatchFields();
             
             // Show existing image
             var existingImage = row.dataset.image;
@@ -943,12 +970,19 @@
             document.getElementById('productModal').classList.remove('show');
         }
 
-        function resetBatchFields() {
-            document.getElementById('formBatchCode').value = '';
-            document.getElementById('formBatchQuantity').value = '0';
-            document.getElementById('formBatchUnitCost').value = '0';
-            document.getElementById('formBatchExpiryDate').value = '';
-            document.getElementById('formBatchNote').value = '';
+        function openImportModal(row) {
+            document.getElementById('importProductId').value = row.dataset.id;
+            document.getElementById('importProductName').textContent = row.dataset.name || '';
+            document.getElementById('importBatchCode').value = '';
+            document.getElementById('importBatchQuantity').value = '1';
+            document.getElementById('importBatchUnitCost').value = '0';
+            document.getElementById('importBatchExpiryDate').value = '';
+            document.getElementById('importBatchNote').value = '';
+            document.getElementById('importBatchModal').classList.add('show');
+        }
+
+        function closeImportModal() {
+            document.getElementById('importBatchModal').classList.remove('show');
         }
 
         function openDeleteModal(row) {
@@ -970,6 +1004,7 @@
             if (e.key === 'Escape') {
                 closeModal();
                 closeDeleteModal();
+                closeImportModal();
             }
         });
 
