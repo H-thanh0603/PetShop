@@ -90,6 +90,10 @@ public class DashboardServlet extends HttpServlet {
         List<Map<String, Object>> filled7Days = fillLast7Days(raw7Days);
         request.setAttribute("last7DaysJson", toJson7Days(filled7Days));
 
+        // 1. Chart 1: Orders by Month (Bar Chart)
+        List<Map<String, Object>> monthlyOrders = reportDAO.getOrdersByMonthWithStatus(year);
+        request.setAttribute("monthlyOrdersJson", toJsonMonthlyOrders(monthlyOrders));
+
         // 2. Chart 2: Order status (Existing)
         List<Map<String, Object>> orderStatus = reportDAO.getOrdersByStatus();
         request.setAttribute("orderStatusJson", toJsonCount(orderStatus, "status"));
@@ -177,6 +181,18 @@ public class DashboardServlet extends HttpServlet {
             map.getOrDefault("failed", 0),
             map.getOrDefault("refunded", 0)
         );
+    }
+
+    private String toJsonMonthlyOrders(List<Map<String, Object>> list) {
+        StringBuilder sb = new StringBuilder("[");
+        for (int i = 0; i < list.size(); i++) {
+            Map<String, Object> item = list.get(i);
+            sb.append("{\"month\":").append(item.get("month"))
+              .append(",\"count\":").append(item.get("total") != null ? item.get("total") : 0).append("}");
+            if (i < list.size() - 1) sb.append(",");
+        }
+        sb.append("]");
+        return sb.toString();
     }
 
     private String toJsonRevenue(List<Map<String, Object>> list) {

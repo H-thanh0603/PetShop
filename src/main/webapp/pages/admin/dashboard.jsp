@@ -101,10 +101,10 @@
         .stat-card-modern .info-block .trend.down { color: #ef4444; }
         .stat-card-modern .info-block .trend .muted-text { color: #94a3b8; font-weight: 400; }
 
-        /* Charts Grid */
+        /* Charts Grid - 2x2 Layout as requested */
         .charts-grid {
             display: grid;
-            grid-template-columns: repeat(4, 1fr);
+            grid-template-columns: repeat(2, 1fr);
             gap: 20px;
             margin-bottom: 24px;
         }
@@ -137,23 +137,10 @@
             gap: 8px;
         }
         
-        .chart-card-modern .chart-header .time-filter {
-            font-size: 11px;
-            font-weight: 600;
-            color: #64748b;
-            background: #f1f5f9;
-            padding: 4px 8px;
-            border-radius: 6px;
-            display: flex;
-            align-items: center;
-            gap: 2px;
-            cursor: pointer;
-        }
-        
         .chart-card-modern .chart-body {
             padding: 20px;
             position: relative;
-            height: 220px;
+            height: 300px; /* Taller charts for better readability */
             display: flex;
             align-items: center;
             justify-content: center;
@@ -166,7 +153,7 @@
         
         .doughnut-center {
             position: absolute;
-            top: 50%;
+            top: 45%; /* Slightly offset upward to account for the bottom legend */
             left: 50%;
             transform: translate(-50%, -50%);
             text-align: center;
@@ -175,11 +162,10 @@
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            margin-top: -5px; /* Offset for canvas padding */
         }
         
         .doughnut-center .num {
-            font-size: 24px;
+            font-size: 26px;
             font-weight: 800;
             color: #0f172a;
             line-height: 1;
@@ -434,16 +420,13 @@
         }
 
         /* Responsive */
-        @media (max-width: 1500px) {
-            .charts-grid { grid-template-columns: repeat(2, 1fr); }
-        }
         @media (max-width: 1150px) {
             .stats-grid { grid-template-columns: repeat(2, 1fr); }
+            .charts-grid { grid-template-columns: 1fr; }
             .bottom-grid { grid-template-columns: 1fr; }
         }
         @media (max-width: 768px) {
             .stats-grid { grid-template-columns: 1fr; }
-            .charts-grid { grid-template-columns: 1fr; }
         }
     </style>
 </head>
@@ -540,20 +523,19 @@
         </a>
     </div>
 
-    <!-- 2. CHARTS GRID -->
+    <!-- 2. CHARTS GRID (2x2 Layout with Taller Charts) -->
     <div class="charts-grid">
-        <!-- Chart 1: Orders Trend -->
+        <!-- Chart 1: Orders by Month (Bar Chart - Upgraded from Daily Line Chart) -->
         <div class="chart-card-modern">
             <div class="chart-header">
-                <h5><i class='bx bx-line-chart'></i> Đơn hàng theo ngày</h5>
-                <span class="time-filter">7 ngày qua <i class='bx bx-chevron-down'></i></span>
+                <h5><i class='bx bx-bar-chart-square'></i> Đơn hàng theo tháng</h5>
             </div>
             <div class="chart-body">
-                <canvas id="dashOrdersTrendChart"></canvas>
+                <canvas id="dashOrdersMonthlyChart"></canvas>
             </div>
         </div>
         
-        <!-- Chart 2: Order Status -->
+        <!-- Chart 2: Order Status with Legend -->
         <div class="chart-card-modern">
             <div class="chart-header">
                 <h5><i class='bx bx-pie-chart-alt-2'></i> Trạng thái đơn hàng</h5>
@@ -577,7 +559,7 @@
             </div>
         </div>
         
-        <!-- Chart 4: Payment Status -->
+        <!-- Chart 4: Payment Status with Legend -->
         <div class="chart-card-modern">
             <div class="chart-header">
                 <h5><i class='bx bx-doughnut-chart'></i> Trạng thái thanh toán</h5>
@@ -747,33 +729,27 @@
 <jsp:include page="/components/scripts.jsp" />
 <script>
 (function() {
-    // 1. Chart 1: Đơn hàng theo ngày (Line Chart)
-    const raw7DaysData = ${last7DaysJson};
-    const labels7Days = raw7DaysData.map(item => item.date);
-    const counts7Days = raw7DaysData.map(item => item.count);
-    
-    // Create gradient fill
-    const canvasTrend = document.getElementById('dashOrdersTrendChart');
-    const ctxTrend = canvasTrend.getContext('2d');
-    const gradientTrend = ctxTrend.createLinearGradient(0, 0, 0, 200);
-    gradientTrend.addColorStop(0, 'rgba(37, 99, 235, 0.2)');
-    gradientTrend.addColorStop(1, 'rgba(37, 99, 235, 0)');
+    var monthLabels = ['T1','T2','T3','T4','T5','T6','T7','T8','T9','T10','T11','T12'];
 
-    new Chart(canvasTrend, {
-        type: 'line',
+    // 1. Chart 1: Đơn hàng theo tháng (Bar Chart - Upgraded from Daily Line Chart)
+    const rawMonthlyData = ${monthlyOrdersJson};
+    const monthlyCounts = new Array(12).fill(0);
+    rawMonthlyData.forEach(item => {
+        if (item.month >= 1 && item.month <= 12) {
+            monthlyCounts[item.month - 1] = item.count;
+        }
+    });
+
+    new Chart(document.getElementById('dashOrdersMonthlyChart'), {
+        type: 'bar',
         data: {
-            labels: labels7Days,
+            labels: monthLabels,
             datasets: [{
                 label: 'Số đơn hàng',
-                data: counts7Days,
-                borderColor: '#2563eb',
-                borderWidth: 3,
-                backgroundColor: gradientTrend,
-                fill: true,
-                tension: 0.4,
-                pointBackgroundColor: '#2563eb',
-                pointHoverRadius: 6,
-                pointRadius: 3
+                data: monthlyCounts,
+                backgroundColor: 'rgba(37, 99, 235, 0.85)',
+                borderRadius: 6,
+                barThickness: 16
             }]
         },
         options: {
@@ -791,14 +767,14 @@
         }
     });
 
-    // 2. Chart 2: Trạng thái đơn hàng (Doughnut Chart)
+    // 2. Chart 2: Trạng thái đơn hàng (Doughnut Chart with Legend at bottom)
     const statusData = ${orderStatusJson};
     const statusLabelsMap = {
         'Pending': 'Chờ xác nhận',
         'Awaiting Payment': 'Chờ thanh toán',
         'Confirmed': 'Đã xác nhận',
         'Shipping': 'Đang giao',
-        'Completed': 'Đã giao',
+        'Completed': 'Đã hoàn thành',
         'Cancelled': 'Đã hủy',
         'Paid': 'Đã thanh toán',
         'Delivered': 'Đã giao hàng'
@@ -839,7 +815,16 @@
             maintainAspectRatio: false,
             cutout: '72%',
             plugins: { 
-                legend: { display: false }
+                legend: { 
+                    display: true,
+                    position: 'bottom',
+                    labels: {
+                        usePointStyle: true,
+                        pointStyle: 'circle',
+                        padding: 15,
+                        font: { size: 11 }
+                    }
+                }
             }
         }
     });
@@ -885,7 +870,7 @@
         }
     });
 
-    // 4. Chart 4: Trạng thái thanh toán (Doughnut Chart)
+    // 4. Chart 4: Trạng thái thanh toán (Doughnut Chart with Legend at bottom)
     const payStatusData = ${paymentStatusJson};
     const labelsPayStatus = ['Đã thanh toán', 'Chờ thanh toán', 'Chờ đối soát', 'Thất bại', 'Hoàn tiền'];
     const countsPayStatus = [
@@ -917,7 +902,16 @@
             maintainAspectRatio: false,
             cutout: '72%',
             plugins: { 
-                legend: { display: false }
+                legend: { 
+                    display: true,
+                    position: 'bottom',
+                    labels: {
+                        usePointStyle: true,
+                        pointStyle: 'circle',
+                        padding: 15,
+                        font: { size: 11 }
+                    }
+                }
             }
         }
     });
