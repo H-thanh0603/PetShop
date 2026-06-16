@@ -956,5 +956,19 @@ public class OrderDAO {
             return false;
         }
     }
+    // Hàm cập nhật trạng thái đơn hàng tự động hết hạn sau 2 giờ treo
+    public boolean updateOrderStatus(int orderId, String status) {
+        String sql = "UPDATE orders SET status = ?, status_updated_at = ? WHERE id = ?";
+        try (Connection conn = Context.DBContext.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setString(1, status);
+            ps.setTimestamp(2, new java.sql.Timestamp(System.currentTimeMillis()));
+            ps.setInt(3, orderId);
+            return ps.executeUpdate() > 0;
+        } catch (Exception e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
 }
 
