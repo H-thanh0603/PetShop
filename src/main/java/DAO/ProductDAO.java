@@ -637,6 +637,21 @@ public class ProductDAO {
         return false;
     }
 
+    public int addProductAndReturnId(String name, String image, BigDecimal price, int discount, String description, int weight, String category, int petTypeId) {
+        String query = "INSERT INTO products (name, image, price, discount, description, stock, weight, category, pet_type_id, is_active) VALUES (?, ?, ?, ?, ?, 0, ?, ?, ?, 1)";
+        try (Connection conn = DBContext.getConnection(); PreparedStatement ps = conn.prepareStatement(query, Statement.RETURN_GENERATED_KEYS)) {
+            ps.setString(1, name); ps.setString(2, image); ps.setBigDecimal(3, price);
+            ps.setInt(4, discount); ps.setString(5, description);
+            ps.setInt(6, weight); ps.setString(7, category); ps.setInt(8, petTypeId);
+            if (ps.executeUpdate() > 0) {
+                try (ResultSet rs = ps.getGeneratedKeys()) {
+                    if (rs.next()) return rs.getInt(1);
+                }
+            }
+        } catch (Exception e) { log.error("Error adding product without stock", e); }
+        return -1;
+    }
+
     public int addProductAndReturnId(String name, String image, BigDecimal price, int discount, String description, int stock, int weight, String category, int petTypeId) {
         String query = "INSERT INTO products (name, image, price, discount, description, stock, weight, category, pet_type_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
         try (Connection conn = DBContext.getConnection();
@@ -669,6 +684,23 @@ public class ProductDAO {
             ps.setInt(4, discount); ps.setString(5, description); ps.setInt(6, id);
             return ps.executeUpdate() > 0;
         } catch (Exception e) { log.error("Error updating product id={}", id, e); }
+        return false;
+    }
+
+    public boolean updateProduct(int id, String name, String image, BigDecimal price, int discount, String description, int weight, String category, int petTypeId) {
+        String query = "UPDATE products SET name=?, image=?, price=?, discount=?, description=?, weight=?, category=?, pet_type_id=? WHERE id=?";
+        try (Connection conn = DBContext.getConnection(); PreparedStatement ps = conn.prepareStatement(query)) {
+            ps.setString(1, name);
+            ps.setString(2, image);
+            ps.setBigDecimal(3, price);
+            ps.setInt(4, discount);
+            ps.setString(5, description);
+            ps.setInt(6, weight);
+            ps.setString(7, category);
+            ps.setInt(8, petTypeId);
+            ps.setInt(9, id);
+            return ps.executeUpdate() > 0;
+        } catch (Exception e) { log.error("Error updating product without stock id={}", id, e); }
         return false;
     }
 
@@ -845,13 +877,12 @@ public class ProductDAO {
         if (quantity <= 0) {
             return false;
         }
-        String query = "UPDATE products " +
-                "SET reserved_quantity = reserved_quantity + ? " +
-                "WHERE id = ? AND (stock - reserved_quantity) >= ?";
+        String query = "UPDATE products SET stock = stock - ?, reserved_quantity = reserved_quantity + ? WHERE id = ? AND stock >= ?";
         try (PreparedStatement ps = conn.prepareStatement(query)) {
             ps.setInt(1, quantity);
-            ps.setInt(2, productId);
-            ps.setInt(3, quantity);
+            ps.setInt(2, quantity);
+            ps.setInt(3, productId);
+            ps.setInt(4, quantity);
             return ps.executeUpdate() > 0;
         } catch (SQLSyntaxErrorException e) {
             if (isUnknownColumn(e, "reserved_quantity")) {
@@ -882,13 +913,12 @@ public class ProductDAO {
         if (quantity <= 0) {
             return false;
         }
-        String query = "UPDATE products " +
-                "SET reserved_quantity = reserved_quantity - ? " +
-                "WHERE id = ? AND reserved_quantity >= ?";
+        String query = "UPDATE products SET stock = stock + ?, reserved_quantity = reserved_quantity - ? WHERE id = ? AND reserved_quantity >= ?";
         try (PreparedStatement ps = conn.prepareStatement(query)) {
             ps.setInt(1, quantity);
-            ps.setInt(2, productId);
-            ps.setInt(3, quantity);
+            ps.setInt(2, quantity);
+            ps.setInt(3, productId);
+            ps.setInt(4, quantity);
             return ps.executeUpdate() > 0;
         } catch (SQLSyntaxErrorException e) {
             if (isUnknownColumn(e, "reserved_quantity")) {
@@ -919,15 +949,14 @@ public class ProductDAO {
             return false;
         }
         String query = "UPDATE products " +
-                "SET stock = stock - ?, reserved_quantity = reserved_quantity - ?, sold_quantity = sold_quantity + ? " +
-                "WHERE id = ? AND reserved_quantity >= ? AND stock >= ?";
+                "SET reserved_quantity = CASE WHEN reserved_quantity >= ? THEN reserved_quantity - ? ELSE 0 END, " +
+                "sold_quantity = sold_quantity + ? " +
+                "WHERE id = ?";
         try (PreparedStatement ps = conn.prepareStatement(query)) {
             ps.setInt(1, quantity);
             ps.setInt(2, quantity);
             ps.setInt(3, quantity);
             ps.setInt(4, productId);
-            ps.setInt(5, quantity);
-            ps.setInt(6, quantity);
             return ps.executeUpdate() > 0;
         } catch (SQLSyntaxErrorException e) {
             if (isUnknownColumn(e, "reserved_quantity")) {
@@ -946,14 +975,12 @@ public class ProductDAO {
 
     private boolean finalizeReservedStockWithoutSoldQuantity(Connection conn, int productId, int quantity) {
         String query = "UPDATE products " +
-                "SET stock = stock - ?, reserved_quantity = reserved_quantity - ? " +
-                "WHERE id = ? AND reserved_quantity >= ? AND stock >= ?";
+                "SET reserved_quantity = CASE WHEN reserved_quantity >= ? THEN reserved_quantity - ? ELSE 0 END " +
+                "WHERE id = ?";
         try (PreparedStatement ps = conn.prepareStatement(query)) {
             ps.setInt(1, quantity);
             ps.setInt(2, quantity);
             ps.setInt(3, productId);
-            ps.setInt(4, quantity);
-            ps.setInt(5, quantity);
             return ps.executeUpdate() > 0;
         } catch (Exception e) {
             log.error("Error finalizing reserved stock without sold quantity for product id={}", productId, e);

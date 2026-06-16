@@ -33,7 +33,16 @@ public class OrderSuccessServlet extends HttpServlet {
         request.setAttribute("shippingAddress", session.getAttribute("successShippingAddress"));
         request.setAttribute("orderNote", session.getAttribute("successOrderNote"));
         request.setAttribute("orderItems", session.getAttribute("successOrderItems"));
-        request.setAttribute("pendingVerification", false);
+        request.setAttribute("paymentMethod", session.getAttribute("paymentMethod"));
+        Object pending = session.getAttribute("pendingVerification");
+        request.setAttribute("pendingVerification", pending != null && (Boolean) pending);
+        request.setAttribute("transferReference", session.getAttribute("transferReference"));
+        request.setAttribute("paymentExpiresAt", session.getAttribute("paymentExpiresAt"));
+        request.setAttribute("bankId", session.getAttribute("bankId"));
+        request.setAttribute("bankDisplayName", session.getAttribute("bankDisplayName"));
+        request.setAttribute("bankAccountNumber", session.getAttribute("bankAccountNumber"));
+        request.setAttribute("bankAccountName", session.getAttribute("bankAccountName"));
+        request.setAttribute("paymentTtlSeconds", session.getAttribute("paymentTtlSeconds"));
 
         // Xóa session sau khi đã dùng (tránh hiện lại khi F5)
         session.removeAttribute("successOrderId");
@@ -45,6 +54,15 @@ public class OrderSuccessServlet extends HttpServlet {
         session.removeAttribute("successShippingAddress");
         session.removeAttribute("successOrderNote");
         session.removeAttribute("successOrderItems");
+        session.removeAttribute("paymentMethod");
+        session.removeAttribute("pendingVerification");
+        session.removeAttribute("transferReference");
+        session.removeAttribute("paymentExpiresAt");
+        session.removeAttribute("bankId");
+        session.removeAttribute("bankDisplayName");
+        session.removeAttribute("bankAccountNumber");
+        session.removeAttribute("bankAccountName");
+        session.removeAttribute("paymentTtlSeconds");
 
         request.getRequestDispatcher("/pages/shop/orderSuccess.jsp")
                 .forward(request, response);

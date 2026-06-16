@@ -22,6 +22,11 @@
             <a href="${pageContext.request.contextPath}/pages/admin/products" class="<%= "products".equals(currentPage) ? "active" : "" %>">
                 <i class='bx bxs-shopping-bag'></i> Quản lý Sản phẩm
             </a>
+            <c:if test="${sessionScope.user.role == 'admin'}">
+                <a href="${pageContext.request.contextPath}/admin/inventory" class="<%= "inventory".equals(currentPage) ? "active" : "" %>">
+                    <i class='bx bxs-box'></i> Quản lý Kho
+                </a>
+            </c:if>
             <a href="${pageContext.request.contextPath}/pages/admin/pet-types" class="<%= "pet-types".equals(currentPage) ? "active" : "" %>">
                 <i class='bx bxs-dog'></i> Loại Thú Cưng
             </a>

@@ -41,7 +41,7 @@ public class OrderStatusHistoryDAO {
                      "FROM order_status_history h " +
                      "JOIN users u ON h.changedBy = u.id " +
                      "WHERE h.order_id = ? " +
-                     "ORDER BY h.changed_at DESC";
+                     "ORDER BY h.changedAt DESC";
         try (Connection conn = DBContext.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setInt(1, orderId);
@@ -54,7 +54,7 @@ public class OrderStatusHistoryDAO {
                     h.setNewStatus(rs.getString("new_status"));
                     h.setChangedBy(rs.getInt("changedBy"));
                     h.setChangedByName(rs.getString("changed_by_name"));
-                    h.setChangedAt(rs.getTimestamp("changed_at"));
+                    h.setChangedAt(rs.getTimestamp("changedAt"));
                     list.add(h);
                 }
             }

@@ -72,8 +72,12 @@ public class AdminLoginServlet extends HttpServlet {
                 session.setAttribute("username", user.getUsername());
                 session.setAttribute("role", user.getRole());
 
-                // Redirect to admin dashboard
-                response.sendRedirect(request.getContextPath() + "/pages/admin/dashboard");
+                // Redirect based on role
+                if ("shiper".equals(role)) {
+                    response.sendRedirect(request.getContextPath() + "/admin/orders");
+                } else {
+                    response.sendRedirect(request.getContextPath() + "/pages/admin/dashboard");
+                }
             } else {
                 // Wrong role or inactive account
                 securityEventDAO.log("AUTH_FAIL", email, request.getRemoteAddr(), "User with role '" + role + "' tried to access admin panel.");

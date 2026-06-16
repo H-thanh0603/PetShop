@@ -34,7 +34,9 @@ class ProductDAOStockReservationTest {
         assertTrue(sql[0].contains("reserved_quantity"),
                 "reserveStock must increase reserved_quantity so finalize/release operate on the same stock model");
         verify(ps).setInt(1, 2);
-        verify(ps).setInt(2, 11);
+        verify(ps).setInt(2, 2);
+        verify(ps).setInt(3, 11);
+        verify(ps).setInt(4, 2);
     }
 
     @Test

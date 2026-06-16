@@ -387,13 +387,13 @@
                                             <i class='bx bx-cart-add'></i> Mua lại
                                         </button>
                                     </form>
-                                    <c:if test="${o.status == 'Delivered'}">
+                                    <c:if test="${o.status == 'Delivered' || o.status == 'Completed'}">
                                         <form action="${pageContext.request.contextPath}/my-orders" method="post">
                                             <input type="hidden" name="csrfToken" value="${csrfToken}" />
                                             <input type="hidden" name="action" value="confirmReceipt">
                                             <input type="hidden" name="orderId" value="${o.id}">
-                                            <button type="submit" class="btn btn-success text-white">
-                                                <i class='bx bx-check-double'></i> Đã nhận hàng
+                                            <button type="submit" class="btn btn-success text-white" ${o.status == 'Completed' ? 'disabled' : ''}>
+                                                <i class='bx bx-check-double'></i> ${o.status == 'Completed' ? 'Đã nhận hàng' : 'Đã nhận hàng'}
                                             </button>
                                         </form>
                                     </c:if>
