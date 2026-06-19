@@ -81,6 +81,42 @@
                         <span class="badge ${order.statusCssClass}">${fn:escapeXml(order.statusLabel)}</span>
                     </div>
 
+                    <%-- GHN Shipping Info --%>
+                    <div class="info-label">GHN Tracking</div>
+                    <div class="info-value">
+                        <c:choose>
+                            <c:when test="${not empty order.ghnOrderId}">
+                                <div><strong>Mã đơn GHN:</strong> ${fn:escapeXml(order.ghnOrderId)}</div>
+                                <c:if test="${not empty order.ghnTrackingCode}">
+                                    <div><strong>Mã vận đơn:</strong> ${fn:escapeXml(order.ghnTrackingCode)}</div>
+                                </c:if>
+                                <c:if test="${not empty order.ghnStatus}">
+                                    <div><strong>Trạng thái GHN:</strong>
+                                        <span class="badge bg-info">${fn:escapeXml(order.ghnStatus)}</span>
+                                    </div>
+                                </c:if>
+                                <c:if test="${not empty order.ghnPushedAt}">
+                                    <div class="text-muted small">
+                                        Đẩy lúc: <fmt:formatDate value="${order.ghnPushedAt}" pattern="dd/MM/yyyy HH:mm:ss"/>
+                                    </div>
+                                </c:if>
+                                <c:if test="${not empty order.ghnLastSyncAt}">
+                                    <div class="text-muted small">
+                                        Sync lúc: <fmt:formatDate value="${order.ghnLastSyncAt}" pattern="dd/MM/yyyy HH:mm:ss"/>
+                                    </div>
+                                </c:if>
+                                <c:if test="${not empty order.ghnErrorMessage}">
+                                    <div class="text-danger small mt-1">
+                                        <i class='bx bx-error-circle'></i> ${fn:escapeXml(order.ghnErrorMessage)}
+                                    </div>
+                                </c:if>
+                            </c:when>
+                            <c:otherwise>
+                                <span class="text-muted">Chưa đẩy lên GHN</span>
+                            </c:otherwise>
+                        </c:choose>
+                    </div>
+
                     <div class="info-label">Ghi chú</div>
                     <div class="info-value">${empty order.note ? 'Không có ghi chú.' : fn:escapeXml(order.note)}</div>
                 </div>
@@ -182,6 +218,53 @@
                             <button type="submit" class="btn btn-primary w-100">Cập nhật</button>
                         </div>
                     </form>
+                </div>
+
+                <%-- GHN Push & Sync --%>
+                <div class="order-info-card">
+                    <h5 class="mb-4 fw-bold"><i class='bx bx-truck'></i> GHN Vận chuyển</h5>
+                    <div class="row g-3">
+                        <%-- Push to GHN --%>
+                        <c:if test="${empty order.ghnOrderId and (order.status == 'Confirmed' or order.status == 'Shipping')}">
+                            <div class="col-md-6">
+                                <form action="${pageContext.request.contextPath}/admin/orders" method="post">
+                                    <input type="hidden" name="csrfToken" value="${csrfToken}" />
+                                    <input type="hidden" name="action" value="pushToGhn" />
+                                    <input type="hidden" name="orderId" value="${order.id}" />
+                                    <input type="hidden" name="returnTo" value="detail" />
+                                    <button type="submit" class="btn btn-success w-100">
+                                        <i class='bx bx-upload'></i> Đẩy đơn lên GHN
+                                    </button>
+                                </form>
+                            </div>
+                        </c:if>
+                        <%-- Sync GHN status --%>
+                        <c:if test="${not empty order.ghnOrderId and order.status != 'Delivered' and order.status != 'Completed' and order.status != 'Cancelled'}">
+                            <div class="col-md-6">
+                                <form action="${pageContext.request.contextPath}/admin/orders" method="post">
+                                    <input type="hidden" name="csrfToken" value="${csrfToken}" />
+                                    <input type="hidden" name="action" value="syncGhnStatus" />
+                                    <input type="hidden" name="orderId" value="${order.id}" />
+                                    <input type="hidden" name="returnTo" value="detail" />
+                                    <button type="submit" class="btn btn-info w-100 text-white">
+                                        <i class='bx bx-refresh'></i> Đồng bộ trạng thái GHN
+                                    </button>
+                                </form>
+                            </div>
+                        </c:if>
+                        <c:if test="${not empty order.ghnOrderId}">
+                            <div class="col-16">
+                                <div class="alert alert-light border mb-0">
+                                    <small>
+                                        <strong>GHN:</strong>
+                                        <c:if test="${not empty order.ghnOrderId}">Mã: ${fn:escapeXml(order.ghnOrderId)} | </c:if>
+                                        <c:if test="${not empty order.ghnTrackingCode}">Vận đơn: ${fn:escapeXml(order.ghnTrackingCode)} | </c:if>
+                                        <c:if test="${not empty order.ghnStatus}">Trạng thái: <span class="badge bg-info">${fn:escapeXml(order.ghnStatus)}</span></c:if>
+                                    </small>
+                                </div>
+                            </div>
+                        </c:if>
+                    </div>
                 </div>
 
                 <c:if test="${order.bankTransferPayment}">
