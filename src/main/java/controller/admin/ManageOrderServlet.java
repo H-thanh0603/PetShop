@@ -14,12 +14,15 @@ import Model.Order;
 import Model.OrderLog;
 import Model.OrderStatusHistory;
 import Model.User;
+import services.ShippingService;
+import com.google.gson.JsonObject;
 
 @WebServlet("/admin/orders")
 public class ManageOrderServlet extends HttpServlet {
     private static final long serialVersionUID = 1L;
     private AdminActionLogDAO actionLog = new AdminActionLogDAO();
     private OrderDAO orderDAO = new OrderDAO();
+    private ShippingService shippingService = new ShippingService();
 
     protected void doGet(HttpServletRequest request, HttpServletResponse response) 
             throws ServletException, IOException {
@@ -90,7 +93,7 @@ public class ManageOrderServlet extends HttpServlet {
             String newStatus = request.getParameter("status");
 
             // Role-based validation for shippers
-            if ("shiper".equals(adminRole)) {
+            if ("shipper".equals(adminRole)) {
                 if (!"Shipping".equals(newStatus) && !"Delivered".equals(newStatus)) {
                     session.setAttribute("message", "Shipper chỉ có thể cập nhật trạng thái là 'Đang giao' hoặc 'Đã giao hàng'.");
                     session.setAttribute("messageType", "error");
@@ -122,6 +125,94 @@ public class ManageOrderServlet extends HttpServlet {
             } else {
                 session.setAttribute("message", "Cập nhật trạng thái thất bại!");
                 session.setAttribute("messageType", "error");
+            }
+        }
+
+        if ("pushToGhn".equals(action)) {
+            int orderId;
+            try {
+                orderId = Integer.parseInt(request.getParameter("orderId"));
+            } catch (NumberFormatException e) {
+                session.setAttribute("message", "Mã đơn hàng không hợp lệ.");
+                session.setAttribute("messageType", "error");
+                response.sendRedirect(request.getContextPath() + "/admin/orders");
+                return;
+            }
+
+            Order order = orderDAO.getOrderById(orderId);
+            if (order == null) {
+                session.setAttribute("message", "Không tìm thấy đơn hàng.");
+                session.setAttribute("messageType", "error");
+                response.sendRedirect(request.getContextPath() + "/admin/orders");
+                return;
+            }
+
+            if (order.getGhnOrderId() != null) {
+                session.setAttribute("message", "Đơn hàng đã được đẩy lên GHN rồi.");
+                session.setAttribute("messageType", "warning");
+            } else {
+                try {
+                    JsonObject ghnResult = shippingService.createGhnOrder(order);
+                    String ghnOrderId = ghnResult.get("order_code") != null
+                            ? ghnResult.get("order_code").getAsString() : "";
+                    String ghnTrackingCode = ghnResult.get("sort_code") != null
+                            ? ghnResult.get("sort_code").getAsString() : "";
+                    String ghnStatus = "picking";
+
+                    orderDAO.updateGhnInfo(orderId, ghnOrderId, ghnTrackingCode, ghnStatus, null);
+                    actionLog.log(adminId, "PUSH_TO_GHN", "order", orderId,
+                            "Pushed to GHN: order_code=" + ghnOrderId);
+
+                    session.setAttribute("message", "Đẩy đơn hàng lên GHN thành công! Mã GHN: " + ghnOrderId);
+                    session.setAttribute("messageType", "success");
+                } catch (Exception ex) {
+                    orderDAO.updateGhnInfo(orderId, null, null, null, ex.getMessage());
+                    actionLog.log(adminId, "PUSH_TO_GHN_FAILED", "order", orderId,
+                            "Failed: " + ex.getMessage());
+                    session.setAttribute("message", "Đẩy lên GHN thất bại: " + ex.getMessage());
+                    session.setAttribute("messageType", "error");
+                }
+            }
+        }
+
+        if ("syncGhnStatus".equals(action)) {
+            int orderId;
+            try {
+                orderId = Integer.parseInt(request.getParameter("orderId"));
+            } catch (NumberFormatException e) {
+                session.setAttribute("message", "Mã đơn hàng không hợp lệ.");
+                session.setAttribute("messageType", "error");
+                response.sendRedirect(request.getContextPath() + "/admin/orders");
+                return;
+            }
+
+            Order order = orderDAO.getOrderById(orderId);
+            if (order == null || order.getGhnOrderId() == null) {
+                session.setAttribute("message", "Đơn hàng chưa được đẩy lên GHN.");
+                session.setAttribute("messageType", "warning");
+            } else {
+                try {
+                    String ghnStatus = shippingService.syncGhnStatus(order.getGhnOrderId());
+                    String localStatus = ShippingService.mapGhnStatusToLocal(ghnStatus);
+
+                    orderDAO.updateGhnStatus(orderId, ghnStatus, null);
+
+                    if (localStatus != null && !localStatus.equals(order.getStatus())) {
+                        orderDAO.updateStatus(orderId, localStatus, adminId);
+                        actionLog.log(adminId, "SYNC_GHN_STATUS", "order", orderId,
+                                "GHN status: " + ghnStatus + " -> local: " + localStatus);
+                    } else {
+                        actionLog.log(adminId, "SYNC_GHN_STATUS", "order", orderId,
+                                "GHN status: " + ghnStatus + " (no local change)");
+                    }
+
+                    session.setAttribute("message", "Đồng bộ GHN thành công! Trạng thái: " + ghnStatus);
+                    session.setAttribute("messageType", "success");
+                } catch (Exception ex) {
+                    orderDAO.updateGhnInfo(orderId, null, null, null, ex.getMessage());
+                    session.setAttribute("message", "Đồng bộ GHN thất bại: " + ex.getMessage());
+                    session.setAttribute("messageType", "error");
+                }
             }
         }
 

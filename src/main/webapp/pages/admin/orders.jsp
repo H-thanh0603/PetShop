@@ -98,6 +98,7 @@
                         <th style="width: 130px;">Tổng tiền</th>
                         <th style="width: 150px;">Ngày đặt</th>
                         <th style="width: 140px;">Trạng thái</th>
+                        <th style="width: 120px;">GHN</th>
                         <th style="width: 100px;">Thao tác</th>
                     </tr>
                 </thead>
@@ -138,11 +139,24 @@
                                 <span class="status-badge ${o.statusCssClass}">${fn:escapeXml(o.statusLabel)}</span>
                             </td>
                             <td>
+                                <c:choose>
+                                    <c:when test="${not empty o.ghnOrderId}">
+                                        <span class="badge bg-success" title="GHN: ${fn:escapeXml(o.ghnStatus)}">${fn:escapeXml(o.ghnTrackingCode)}</span>
+                                    </c:when>
+                                    <c:when test="${o.status == 'Confirmed' or o.status == 'Shipping'}">
+                                        <span class="badge bg-warning text-dark">Chờ đẩy</span>
+                                    </c:when>
+                                    <c:otherwise>
+                                        <span class="badge bg-secondary">-</span>
+                                    </c:otherwise>
+                                </c:choose>
+                            </td>
+                            <td>
                                 <div class="table-actions">
                                     <a href="${pageContext.request.contextPath}/admin/orders?action=view&id=${o.id}" class="action-btn edit" title="Xem chi tiết">
                                         <i class='bx bx-show'></i>
                                     </a>
-                                    <c:if test="${sessionScope.user.role != 'shiper'}">
+                                    <c:if test="${sessionScope.user.role != 'shipper'}">
                                         <c:if test="${o.awaitingPaymentReview}">
                                             <button class="action-btn edit" onclick="openPaymentModal(${o.id}, '${fn:escapeXml(o.paymentVerificationStatus)}', '${fn:escapeXml(o.paymentReference)}')" title="Đối soát thanh toán">
                                                 <i class='bx bx-check-circle'></i>

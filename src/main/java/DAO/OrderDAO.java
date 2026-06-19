@@ -57,6 +57,16 @@ public class OrderDAO {
             order.setDiscountAmount(rs.getBigDecimal("discount_amount"));
         } catch (Exception ignored) {
         }
+        // GHN shipping fields
+        try {
+            order.setGhnOrderId(rs.getString("ghn_order_id"));
+            order.setGhnTrackingCode(rs.getString("ghn_tracking_code"));
+            order.setGhnStatus(rs.getString("ghn_status"));
+            order.setGhnPushedAt(rs.getTimestamp("ghn_pushed_at"));
+            order.setGhnLastSyncAt(rs.getTimestamp("ghn_last_sync_at"));
+            order.setGhnErrorMessage(rs.getString("ghn_error_message"));
+        } catch (Exception ignored) {
+        }
         return order;
     }
 
@@ -1194,6 +1204,119 @@ public class OrderDAO {
             log.error("DB error", e);
             return false;
         }
+    }
+
+    // ========== GHN shipping integration ==========
+
+    /**
+     * Update GHN shipping info after pushing order to GHN.
+     */
+    public boolean updateGhnInfo(int orderId, String ghnOrderId, String ghnTrackingCode,
+                                  String ghnStatus, String errorMessage) {
+        String sql = """
+            UPDATE orders
+            SET ghn_order_id = ?,
+                ghn_tracking_code = ?,
+                ghn_status = ?,
+                ghn_pushed_at = CASE WHEN ? IS NOT NULL THEN NOW() ELSE ghn_pushed_at END,
+                ghn_last_sync_at = NOW(),
+                ghn_error_message = ?
+            WHERE id = ?
+        """;
+
+        try (Connection conn = DBContext.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setString(1, ghnOrderId);
+            ps.setString(2, ghnTrackingCode);
+            ps.setString(3, ghnStatus);
+            ps.setString(4, ghnOrderId);
+            ps.setString(5, errorMessage);
+            ps.setInt(6, orderId);
+            return ps.executeUpdate() > 0;
+        } catch (Exception e) {
+            log.error("updateGhnInfo error for order {}", orderId, e);
+            return false;
+        }
+    }
+
+    /**
+     * Update GHN status from sync/callback.
+     */
+    public boolean updateGhnStatus(int orderId, String ghnStatus, String ghnTrackingCode) {
+        String sql = """
+            UPDATE orders
+            SET ghn_status = ?,
+                ghn_tracking_code = COALESCE(?, ghn_tracking_code),
+                ghn_last_sync_at = NOW()
+            WHERE id = ?
+        """;
+
+        try (Connection conn = DBContext.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setString(1, ghnStatus);
+            ps.setString(2, ghnTrackingCode);
+            ps.setInt(3, orderId);
+            return ps.executeUpdate() > 0;
+        } catch (Exception e) {
+            log.error("updateGhnStatus error for order {}", orderId, e);
+            return false;
+        }
+    }
+
+    /**
+     * Find orders that need to be pushed to GHN (Confirmed status, not yet pushed).
+     */
+    public List<Order> getOrdersPendingGhnPush() {
+        List<Order> list = new ArrayList<>();
+        String sql = """
+            SELECT o.*,
+                   u.fullname AS customer_fullname,
+                   u.phone AS customer_phone
+            FROM orders o
+            LEFT JOIN users u ON o.user_id = u.id
+            WHERE o.status = 'Confirmed'
+              AND o.ghn_order_id IS NULL
+            ORDER BY o.createdAt ASC
+        """;
+
+        try (Connection conn = DBContext.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql);
+             ResultSet rs = ps.executeQuery()) {
+            while (rs.next()) {
+                list.add(mapOrder(rs));
+            }
+        } catch (Exception e) {
+            log.error("getOrdersPendingGhnPush error", e);
+        }
+        return list;
+    }
+
+    /**
+     * Find orders already pushed to GHN that need status sync.
+     */
+    public List<Order> getOrdersForGhnSync() {
+        List<Order> list = new ArrayList<>();
+        String sql = """
+            SELECT o.*,
+                   u.fullname AS customer_fullname,
+                   u.phone AS customer_phone
+            FROM orders o
+            LEFT JOIN users u ON o.user_id = u.id
+            WHERE o.ghn_order_id IS NOT NULL
+              AND o.status NOT IN ('Delivered', 'Completed', 'Cancelled')
+            ORDER BY o.ghn_last_sync_at ASC
+        """;
+
+        try (Connection conn = DBContext.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql);
+             ResultSet rs = ps.executeQuery()) {
+            while (rs.next()) {
+                list.add(mapOrder(rs));
+            }
+        } catch (Exception e) {
+            log.error("getOrdersForGhnSync error", e);
+        }
+        return list;
     }
 
     public void autoCompleteDeliveredOrders() {

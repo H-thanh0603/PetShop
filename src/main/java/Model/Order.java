@@ -31,6 +31,12 @@ public class Order {
     private Timestamp paymentVerifiedAt;
     private Timestamp createdAt;
     private Timestamp statusUpdatedAt;
+    private String ghnOrderId;
+    private String ghnTrackingCode;
+    private String ghnStatus;
+    private Timestamp ghnPushedAt;
+    private Timestamp ghnLastSyncAt;
+    private String ghnErrorMessage;
     private List<OrderItem> items;
 
     public Order() {
@@ -427,4 +433,23 @@ public class Order {
                 return "payment-unpaid";
         }
     }
+
+    // GHN shipping fields
+    public String getGhnOrderId() { return ghnOrderId; }
+    public void setGhnOrderId(String ghnOrderId) { this.ghnOrderId = ghnOrderId; }
+
+    public String getGhnTrackingCode() { return ghnTrackingCode; }
+    public void setGhnTrackingCode(String ghnTrackingCode) { this.ghnTrackingCode = ghnTrackingCode; }
+
+    public String getGhnStatus() { return ghnStatus; }
+    public void setGhnStatus(String ghnStatus) { this.ghnStatus = ghnStatus; }
+
+    public Timestamp getGhnPushedAt() { return ghnPushedAt; }
+    public void setGhnPushedAt(Timestamp ghnPushedAt) { this.ghnPushedAt = ghnPushedAt; }
+
+    public Timestamp getGhnLastSyncAt() { return ghnLastSyncAt; }
+    public void setGhnLastSyncAt(Timestamp ghnLastSyncAt) { this.ghnLastSyncAt = ghnLastSyncAt; }
+
+    public String getGhnErrorMessage() { return ghnErrorMessage; }
+    public void setGhnErrorMessage(String ghnErrorMessage) { this.ghnErrorMessage = ghnErrorMessage; }
 }
