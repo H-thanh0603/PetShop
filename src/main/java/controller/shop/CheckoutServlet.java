@@ -451,6 +451,10 @@ public class CheckoutServlet extends HttpServlet {
                 session.setAttribute("successOrderItems", new ArrayList<>(checkoutCart.values()));
                 result.put("success", true);
                 result.put("message", "Đặt hàng thành công!");
+                result.put("orderId", completedOrderId);
+                result.put("orderHash", checkoutResult.getOrderHash());
+                result.put("privateKeyBase64", checkoutResult.getPrivateKeyBase64());
+                result.put("toolUrl", checkoutResult.getToolUrl());
                 result.put("redirectUrl", request.getContextPath() + "/order-success");
                 write(response, result);
                 return;
