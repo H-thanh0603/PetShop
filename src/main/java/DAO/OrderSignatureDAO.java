@@ -8,7 +8,6 @@ import org.slf4j.LoggerFactory;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
-import java.util.Objects;
 
 public class OrderSignatureDAO {
 
@@ -16,23 +15,35 @@ public class OrderSignatureDAO {
             LoggerFactory.getLogger(OrderSignatureDAO.class);
 
     private OrderSignature mapOrderSignature(ResultSet rs) throws Exception {
-        return new OrderSignature(
-                rs.getInt("id"),
-                rs.getInt("order_id"),
-                rs.getInt("user_id"),
-                rs.getString("signature"),
-                rs.getString("verify_status"),
-                rs.getString("verify_message"),
-                rs.getTimestamp("verified_at"),
+
+        OrderSignature signature = new OrderSignature();
+
+        signature.setId(rs.getInt("id"));
+        signature.setOrderId(rs.getInt("order_id"));
+        signature.setUserId(rs.getInt("user_id"));
+        signature.setSignature(rs.getString("signature"));
+
+        signature.setVerifyStatus(
+                OrderSignature.VerifyStatus.valueOf(
+                        rs.getString("verify_status")
+                )
+        );
+
+        signature.setVerifyMessage(
+                rs.getString("verify_message")
+        );
+
+        signature.setVerifiedAt(
+                rs.getTimestamp("verified_at")
+        );
+
+        signature.setCreatedAt(
                 rs.getTimestamp("created_at")
         );
+
+        return signature;
     }
 
-    /**
-     * ISSUE #6
-     * Save uploaded signature
-     * verify_status = pending
-     */
     public boolean save(int orderId,
                         int userId,
                         String signatureBase64) {
@@ -66,24 +77,22 @@ public class OrderSignatureDAO {
         }
     }
 
-    /**
-     * Update verify result
-     */
-    public boolean updateVerifyStatus(int orderId,
-                                      String status,
-                                      String message) {
+    public boolean updateVerifyStatus(
+            int orderId,
+            OrderSignature.VerifyStatus status,
+            String message) {
 
         String query =
                 "UPDATE order_signatures " +
                 "SET verify_status = ?, " +
-                "    verify_message = ?, " +
-                "    verified_at = CURRENT_TIMESTAMP " +
+                "verify_message = ?, " +
+                "verified_at = CURRENT_TIMESTAMP " +
                 "WHERE order_id = ?";
 
         try (Connection conn = DBContext.getConnection();
              PreparedStatement ps = conn.prepareStatement(query)) {
 
-            ps.setString(1, status);
+            ps.setString(1, status.name());
             ps.setString(2, message);
             ps.setInt(3, orderId);
 
@@ -96,9 +105,6 @@ public class OrderSignatureDAO {
         return false;
     }
 
-    /**
-     * Find signature by order
-     */
     public OrderSignature findByOrderId(int orderId) {
 
         String query =
@@ -112,6 +118,7 @@ public class OrderSignatureDAO {
             ps.setInt(1, orderId);
 
             try (ResultSet rs = ps.executeQuery()) {
+
                 if (rs.next()) {
                     return mapOrderSignature(rs);
                 }
