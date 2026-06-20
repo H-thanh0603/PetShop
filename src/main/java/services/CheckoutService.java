@@ -5,6 +5,8 @@ import DAO.CartDAO;
 import DAO.CouponDao;
 import DAO.InventoryBatchDAO;
 import DAO.OrderDAO;
+import DAO.OrderSignDAO;
+import DAO.CertificateDAO;
 import DAO.PaymentTransactionDAO;
 import DAO.ProductDAO;
 import DAO.PromotionDAO;
@@ -18,6 +20,9 @@ import Model.PaymentTransaction;
 import Model.Product;
 import Model.User;
 import Util.AppConfig;
+import Util.CertificateGenerator;
+import Util.DigitalSigner;
+import Util.RSAKeyGenerator;
 import services.payment.BankTransferDetails;
 import services.payment.PaymentProvider;
 import services.payment.PaymentRegistry;
@@ -25,6 +30,9 @@ import services.payment.PaymentResult;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.security.KeyPair;
+import java.security.PrivateKey;
+import java.security.PublicKey;
 import java.sql.Connection;
 import java.sql.Timestamp;
 import java.time.LocalDateTime;
@@ -44,18 +52,31 @@ public class CheckoutService {
     private final InventoryBatchDAO inventoryBatchDAO;
     private final PromotionDAO promotionDAO;
     private final ProductPricingService pricingService;
+    private final OrderSignDAO orderSignDAO;
+    private final CertificateDAO certificateDAO;
 
     public CheckoutService(ProductDAO productDAO, UserDAO userDAO, CouponDao couponDao,
                            OrderDAO orderDAO, PaymentTransactionDAO paymentTransactionDAO,
                            CartDAO cartDAO, OrderEmailService orderEmailService) {
         this(productDAO, userDAO, couponDao, orderDAO, paymentTransactionDAO,
-                cartDAO, orderEmailService, new InventoryBatchDAO());
+                cartDAO, orderEmailService, new InventoryBatchDAO(),
+                new OrderSignDAO(), new CertificateDAO());
     }
 
     public CheckoutService(ProductDAO productDAO, UserDAO userDAO, CouponDao couponDao,
                            OrderDAO orderDAO, PaymentTransactionDAO paymentTransactionDAO,
                            CartDAO cartDAO, OrderEmailService orderEmailService,
                            InventoryBatchDAO inventoryBatchDAO) {
+        this(productDAO, userDAO, couponDao, orderDAO, paymentTransactionDAO,
+                cartDAO, orderEmailService, inventoryBatchDAO,
+                new OrderSignDAO(), new CertificateDAO());
+    }
+
+    public CheckoutService(ProductDAO productDAO, UserDAO userDAO, CouponDao couponDao,
+                           OrderDAO orderDAO, PaymentTransactionDAO paymentTransactionDAO,
+                           CartDAO cartDAO, OrderEmailService orderEmailService,
+                           InventoryBatchDAO inventoryBatchDAO,
+                           OrderSignDAO orderSignDAO, CertificateDAO certificateDAO) {
         this.productDAO = productDAO;
         this.userDAO = userDAO;
         this.couponDao = couponDao;
@@ -66,6 +87,8 @@ public class CheckoutService {
         this.inventoryBatchDAO = inventoryBatchDAO;
         this.promotionDAO = new PromotionDAO();
         this.pricingService = new ProductPricingService(this.promotionDAO);
+        this.orderSignDAO = orderSignDAO;
+        this.certificateDAO = certificateDAO;
     }
 
     public CheckoutResult processCheckout(User user, Map<Integer, CartItem> cart,
@@ -244,6 +267,24 @@ public class CheckoutService {
                 }
 
                 cartDAO.clearCart(conn, user.getId());
+
+                RSAKeyGenerator rsa = new RSAKeyGenerator();
+                PublicKey publicKey = rsa.getPublicKey();
+                PrivateKey privateKey = rsa.getPrivateKey();
+                String privateKeyBase64 = rsa.encodePrivateKey();
+                String publicKeyBase64 = rsa.encodePublicKey();
+
+                String orderData = buildOrderDataForSign(order, orderId, user);
+                String orderHash = DigitalSigner.hashOrderData(orderData);
+
+                String toolUrl = "/tools/CryptoToolMVC.exe";
+
+                orderSignDAO.save(orderId, user.getId(), orderData, orderHash, publicKeyBase64);
+
+                java.security.cert.X509Certificate cert = CertificateGenerator.generateX509(publicKey, privateKey, orderId, user.getId());
+                String certPem = CertificateGenerator.encodeCertificate(cert);
+                certificateDAO.save(orderId, user.getId(), String.valueOf(orderId), certPem, cert.getSubjectX500Principal().getName(), Timestamp.from(cert.getNotAfter().toInstant()));
+
                 conn.commit();
 
                 sendOrderConfirmationAsync(user, cart, orderId, order);
@@ -256,6 +297,9 @@ public class CheckoutService {
                 successResult.setShippingFee(shippingFee);
                 successResult.setDiscount(discount);
                 successResult.setFinalTotal(finalTotal);
+                successResult.setPrivateKeyBase64(privateKeyBase64);
+                successResult.setOrderHash(orderHash);
+                successResult.setToolUrl(toolUrl);
                 return successResult;
             } catch (Exception e) {
                 conn.rollback();
@@ -289,6 +333,19 @@ public class CheckoutService {
         order.setPayment_method(paymentMethodDb);
         order.setPayment_status(paymentStatus);
         return order;
+    }
+
+    private String buildOrderDataForSign(Order order, int orderId, User user) {
+        StringBuilder sb = new StringBuilder();
+        sb.append("orderId=").append(orderId);
+        sb.append("&userId=").append(user.getId());
+        sb.append("&totalAmount=").append(order.getTotalAmount().toPlainString());
+        sb.append("&paymentMethod=").append(order.getPayment_method());
+        sb.append("&createdAt=").append(order.getCreatedAt().toString());
+        sb.append("&shippingAddress=").append(order.getShippingAddress());
+        sb.append("&recipientName=").append(order.getRecipientFullname());
+        sb.append("&recipientPhone=").append(order.getRecipientPhone());
+        return sb.toString();
     }
 
     private static String resolveInitialOrderStatus(String paymentMethodDb, boolean paymentStatus) {
