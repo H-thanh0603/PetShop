@@ -16,10 +16,6 @@ public class CheckoutResult {
     private BigDecimal discount;
     private BigDecimal finalTotal;
 
-    private String privateKeyBase64;
-    private String orderHash;
-    private String toolUrl;
-
     public CheckoutResult(boolean success, String message) {
         this.success = success;
         this.message = message;
@@ -75,13 +71,4 @@ public class CheckoutResult {
 
     public BigDecimal getFinalTotal() { return finalTotal; }
     public void setFinalTotal(BigDecimal finalTotal) { this.finalTotal = finalTotal; }
-
-    public String getPrivateKeyBase64() { return privateKeyBase64; }
-    public void setPrivateKeyBase64(String privateKeyBase64) { this.privateKeyBase64 = privateKeyBase64; }
-
-    public String getOrderHash() { return orderHash; }
-    public void setOrderHash(String orderHash) { this.orderHash = orderHash; }
-
-    public String getToolUrl() { return toolUrl; }
-    public void setToolUrl(String toolUrl) { this.toolUrl = toolUrl; }
 }
