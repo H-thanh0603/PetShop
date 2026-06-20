@@ -4,11 +4,17 @@ import java.sql.Timestamp;
 
 public class OrderSignature {
 
+    public enum VerifyStatus {
+        pending,
+        verified,
+        failed
+    }
+
     private int id;
     private int orderId;
     private int userId;
     private String signature;
-    private String verifyStatus;
+    private VerifyStatus verifyStatus;
     private String verifyMessage;
     private Timestamp verifiedAt;
     private Timestamp createdAt;
@@ -16,8 +22,11 @@ public class OrderSignature {
     public OrderSignature() {
     }
 
-    public OrderSignature(int id, int orderId, int userId,
-                          String signature, String verifyStatus,
+    public OrderSignature(int id,
+                          int orderId,
+                          int userId,
+                          String signature,
+                          VerifyStatus verifyStatus,
                           String verifyMessage,
                           Timestamp verifiedAt,
                           Timestamp createdAt) {
@@ -31,27 +40,67 @@ public class OrderSignature {
         this.createdAt = createdAt;
     }
 
-    public int getId() { return id; }
-    public void setId(int id) { this.id = id; }
+    public int getId() {
+        return id;
+    }
 
-    public int getOrderId() { return orderId; }
-    public void setOrderId(int orderId) { this.orderId = orderId; }
+    public void setId(int id) {
+        this.id = id;
+    }
 
-    public int getUserId() { return userId; }
-    public void setUserId(int userId) { this.userId = userId; }
+    public int getOrderId() {
+        return orderId;
+    }
 
-    public String getSignature() { return signature; }
-    public void setSignature(String signature) { this.signature = signature; }
+    public void setOrderId(int orderId) {
+        this.orderId = orderId;
+    }
 
-    public String getVerifyStatus() { return verifyStatus; }
-    public void setVerifyStatus(String verifyStatus) { this.verifyStatus = verifyStatus; }
+    public int getUserId() {
+        return userId;
+    }
 
-    public String getVerifyMessage() { return verifyMessage; }
-    public void setVerifyMessage(String verifyMessage) { this.verifyMessage = verifyMessage; }
+    public void setUserId(int userId) {
+        this.userId = userId;
+    }
 
-    public Timestamp getVerifiedAt() { return verifiedAt; }
-    public void setVerifiedAt(Timestamp verifiedAt) { this.verifiedAt = verifiedAt; }
+    public String getSignature() {
+        return signature;
+    }
 
-    public Timestamp getCreatedAt() { return createdAt; }
-    public void setCreatedAt(Timestamp createdAt) { this.createdAt = createdAt; }
+    public void setSignature(String signature) {
+        this.signature = signature;
+    }
+
+    public VerifyStatus getVerifyStatus() {
+        return verifyStatus;
+    }
+
+    public void setVerifyStatus(VerifyStatus verifyStatus) {
+        this.verifyStatus = verifyStatus;
+    }
+
+    public String getVerifyMessage() {
+        return verifyMessage;
+    }
+
+    public void setVerifyMessage(String verifyMessage) {
+        this.verifyMessage = verifyMessage;
+    }
+
+    public Timestamp getVerifiedAt() {
+        return verifiedAt;
+    }
+
+    public void setVerifiedAt(Timestamp verifiedAt) {
+        this.verifiedAt = verifiedAt;
+    }
+
+    public Timestamp getCreatedAt() {
+        return createdAt;
+    }
+
+    public void setCreatedAt(Timestamp createdAt) {
+        this.createdAt = createdAt;
+    }
 }
