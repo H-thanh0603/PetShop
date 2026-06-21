@@ -4,25 +4,31 @@ import DAO.CertificateDAO;
 import DAO.OrderDAO;
 import DAO.OrderSignDAO;
 import DAO.OrderSignatureDAO;
+
 import Model.Certificate;
 import Model.OrderSign;
 import Model.OrderSignature;
+import Model.User;
+
 import Util.CertificateGenerator;
 import Util.DigitalSigner;
-import com.google.gson.Gson;
-import jakarta.servlet.ServletException;
-import jakarta.servlet.annotation.WebServlet;
-import jakarta.servlet.http.HttpServlet;
-import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpServletResponse;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
+import com.google.gson.Gson;
+
+import javax.servlet.ServletException;
+import javax.servlet.annotation.WebServlet;
+import javax.servlet.http.HttpServlet;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import javax.servlet.http.HttpSession;
+
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
-import java.security.PublicKey;
 import java.security.KeyFactory;
-import java.security.spec.X509EncodedKeySpec;
+import java.security.PublicKey;
+import java.security.cert.CertificateFactory;
 import java.security.cert.X509Certificate;
+import java.security.spec.X509EncodedKeySpec;
 import java.util.Base64;
 import java.util.HashMap;
 import java.util.Map;
@@ -30,170 +36,185 @@ import java.util.Map;
 @WebServlet("/user/upload-signature")
 public class UploadSignatureServlet extends HttpServlet {
 
-    private static final Logger log =
-            LoggerFactory.getLogger(UploadSignatureServlet.class);
+```
+private final OrderSignDAO orderSignDAO = new OrderSignDAO();
+private final OrderSignatureDAO orderSignatureDAO = new OrderSignatureDAO();
+private final CertificateDAO certificateDAO = new CertificateDAO();
+private final OrderDAO orderDAO = new OrderDAO();
 
-    private final OrderSignDAO orderSignDAO = new OrderSignDAO();
-    private final CertificateDAO certificateDAO = new CertificateDAO();
-    private final OrderSignatureDAO orderSignatureDAO = new OrderSignatureDAO();
-    private final OrderDAO orderDAO = new OrderDAO();
+@Override
+protected void doPost(HttpServletRequest request,
+                      HttpServletResponse response)
+        throws ServletException, IOException {
 
-    @Override
-    protected void doPost(HttpServletRequest request,
-                          HttpServletResponse response)
-            throws ServletException, IOException {
+    Map<String, Object> result = new HashMap<>();
 
-        Map<String, Object> result = new HashMap<>();
+    try {
 
-        try {
+        HttpSession session = request.getSession(false);
 
-            String orderIdRaw = request.getParameter("orderId");
-            String signature = request.getParameter("signature");
-
-            if (orderIdRaw == null || orderIdRaw.trim().isEmpty()) {
-                result.put("success", false);
-                result.put("message", "Thiếu orderId");
-                writeJson(response, result);
-                return;
-            }
-
-            if (signature == null || signature.trim().isEmpty()) {
-                result.put("success", false);
-                result.put("message", "Chưa cung cấp chữ ký số");
-                writeJson(response, result);
-                return;
-            }
-
-            int orderId = Integer.parseInt(orderIdRaw);
-
-            // 1. Lấy order sign
-            OrderSign orderSign =
-                    orderSignDAO.findByOrderId(orderId);
-
-            if (orderSign == null) {
-                result.put("success", false);
-                result.put("message", "Không tìm thấy dữ liệu ký đơn hàng");
-                writeJson(response, result);
-                return;
-            }
-
-            // 2. Lấy certificate
-            Certificate certificate =
-                    certificateDAO.findByOrderId(orderId);
-
-            if (certificate == null) {
-                result.put("success", false);
-                result.put("message", "Không tìm thấy chứng thư số");
-                writeJson(response, result);
-                return;
-            }
-
-            // 3. Verify Signature
-            boolean signatureValid =
-                    DigitalSigner.verifySignature(
-                            orderSign.getOrderHash(),
-                            signature,
-                            orderSign.getPublicKey()
-                    );
-
-            // 4. Verify Certificate
-            X509Certificate cert =
-                    CertificateGenerator.decodeCertificate(
-                            certificate.getCertificateData()
-                    );
-
-            byte[] publicKeyBytes =
-                    Base64.getDecoder()
-                            .decode(orderSign.getPublicKey());
-
-            PublicKey publicKey =
-                    KeyFactory.getInstance("RSA")
-                            .generatePublic(
-                                    new X509EncodedKeySpec(publicKeyBytes)
-                            );
-
-            boolean certificateValid =
-                    CertificateGenerator.verifyCertificate(
-                            cert,
-                            publicKey
-                    );
-
-            // Lưu chữ ký nếu chưa tồn tại
-            if (orderSignatureDAO.findByOrderId(orderId) == null) {
-                orderSignatureDAO.save(
-                        orderId,
-                        orderSign.getUserId(),
-                        signature
-                );
-            }
-
-            // 5. Cập nhật kết quả
-            if (signatureValid && certificateValid) {
-
-                orderSignatureDAO.updateVerifyStatus(
-                        orderId,
-                        OrderSignature.VerifyStatus.verified,
-                        "Xác thực thành công"
-                );
-
-                // Theo yêu cầu ISSUE
-                orderDAO.updateStatus(
-                        orderId,
-                        "Paid"
-                );
-
-                result.put("success", true);
-                result.put("message", "Xác thực thành công");
-
-            } else {
-
-                String reason;
-
-                if (!signatureValid && !certificateValid) {
-                    reason = "Chữ ký và chứng thư đều không hợp lệ";
-                } else if (!signatureValid) {
-                    reason = "Chữ ký không hợp lệ";
-                } else {
-                    reason = "Chứng thư số không hợp lệ";
-                }
-
-                orderSignatureDAO.updateVerifyStatus(
-                        orderId,
-                        OrderSignature.VerifyStatus.failed,
-                        reason
-                );
-
-                // Theo đặc tả ISSUE
-                orderSignatureDAO.updateVerifyStatus(
-                        orderId,
-                        OrderSignature.VerifyStatus.failed,
-                        "Chữ ký không hợp lệ"
-                );
-
-                result.put("success", false);
-                result.put("message", reason);
-            }
-
-        } catch (Exception e) {
-
-            log.error("Upload signature error", e);
-
+        if (session == null || session.getAttribute("user") == null) {
             result.put("success", false);
-            result.put("message", "Lỗi xử lý xác thực chữ ký");
+            result.put("message", "Vui lòng đăng nhập.");
+            write(response, result);
+            return;
         }
 
-        writeJson(response, result);
+        User user = (User) session.getAttribute("user");
+
+        String orderIdRaw = request.getParameter("orderId");
+        String signatureBase64 = request.getParameter("signature");
+
+        if (orderIdRaw == null || orderIdRaw.trim().isEmpty()) {
+            result.put("success", false);
+            result.put("message", "Thiếu orderId.");
+            write(response, result);
+            return;
+        }
+
+        if (signatureBase64 == null || signatureBase64.trim().isEmpty()) {
+            result.put("success", false);
+            result.put("message", "Thiếu chữ ký điện tử.");
+            write(response, result);
+            return;
+        }
+
+        int orderId = Integer.parseInt(orderIdRaw);
+
+        OrderSign orderSign = orderSignDAO.findByOrderId(orderId);
+
+        if (orderSign == null) {
+            result.put("success", false);
+            result.put("message", "Không tìm thấy dữ liệu ký của đơn hàng.");
+            write(response, result);
+            return;
+        }
+
+        Certificate certificate =
+                certificateDAO.findByOrderId(orderId);
+
+        if (certificate == null) {
+            result.put("success", false);
+            result.put("message", "Không tìm thấy chứng thư số.");
+            write(response, result);
+            return;
+        }
+
+        /*
+         * Nếu chưa có record trong order_signatures
+         * thì tạo mới trước khi verify
+         */
+        OrderSignature existing =
+                orderSignatureDAO.findByOrderId(orderId);
+
+        if (existing == null) {
+
+            orderSignatureDAO.save(
+                    orderId,
+                    user.getId(),
+                    signatureBase64
+            );
+        }
+
+        boolean signatureValid =
+                DigitalSigner.verifySignature(
+                        orderSign.getOrderHash(),
+                        signatureBase64,
+                        orderSign.getPublicKey()
+                );
+
+        boolean certificateValid =
+                verifyCertificate(
+                        certificate.getCertificateData(),
+                        orderSign.getPublicKey()
+                );
+
+        if (signatureValid && certificateValid) {
+
+            orderSignatureDAO.updateVerifyStatus(
+                    orderId,
+                    OrderSignature.VerifyStatus.verified,
+                    "Xác thực thành công"
+            );
+
+            /*
+             * Đơn chuyển khoản:
+             * Awaiting Payment -> Paid
+             */
+
+            orderDAO.markOrderAsPaid(orderId);
+
+            result.put("success", true);
+            result.put("message", "Xác thực chữ ký điện tử thành công.");
+
+        } else {
+
+            orderSignatureDAO.updateVerifyStatus(
+                    orderId,
+                    OrderSignature.VerifyStatus.failed,
+                    "Chữ ký điện tử hoặc chứng thư số không hợp lệ."
+            );
+
+            result.put("success", false);
+            result.put("message",
+                    "Chữ ký điện tử hoặc chứng thư số không hợp lệ.");
+        }
+
+    } catch (Exception e) {
+
+        result.put("success", false);
+        result.put("message", e.getMessage());
     }
 
-    private void writeJson(HttpServletResponse response,
-                           Map<String, Object> data)
-            throws IOException {
+    write(response, result);
+}
 
-        response.setContentType("application/json;charset=UTF-8");
-        response.setCharacterEncoding("UTF-8");
+private boolean verifyCertificate(String certificatePem,
+                                  String publicKeyBase64) {
 
-        response.getWriter().write(
-                new Gson().toJson(data)
+    try {
+
+        CertificateFactory certificateFactory =
+                CertificateFactory.getInstance("X.509");
+
+        X509Certificate cert =
+                (X509Certificate) certificateFactory
+                        .generateCertificate(
+                                new ByteArrayInputStream(
+                                        certificatePem.getBytes()
+                                )
+                        );
+
+        byte[] publicKeyBytes =
+                Base64.getDecoder().decode(publicKeyBase64);
+
+        PublicKey publicKey =
+                KeyFactory.getInstance("RSA")
+                        .generatePublic(
+                                new X509EncodedKeySpec(
+                                        publicKeyBytes
+                                )
+                        );
+
+        return CertificateGenerator.verifyCertificate(
+                cert,
+                publicKey
         );
+
+    } catch (Exception e) {
+        return false;
     }
+}
+
+private void write(HttpServletResponse response,Map<String, Object> data)throws IOException {
+    response.setContentType(
+            "application/json;charset=UTF-8"
+    );
+    response.setCharacterEncoding("UTF-8");
+    response.getWriter().write(
+            new Gson().toJson(data)
+    );
+}
+
+
 }
