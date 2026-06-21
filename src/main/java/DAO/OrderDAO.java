@@ -1333,4 +1333,25 @@ public class OrderDAO {
             log.error("Auto-complete delivered orders error", e);
         }
     }
+    public boolean markOrderAsPaid(int orderId) {
+
+    String sql =
+            "UPDATE orders " +
+            "SET status = 'Paid', " +
+            "payment_status = TRUE " +
+            "WHERE id = ?";
+
+    try (Connection conn = DBContext.getConnection();
+         PreparedStatement ps = conn.prepareStatement(sql)) {
+
+        ps.setInt(1, orderId);
+
+        return ps.executeUpdate() > 0;
+
+    } catch (Exception e) {
+        log.error("DB error", e);
+    }
+
+    return false;
+}
 }
