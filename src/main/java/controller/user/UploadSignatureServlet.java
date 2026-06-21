@@ -164,9 +164,10 @@ public class UploadSignatureServlet extends HttpServlet {
                 );
 
                 // Theo đặc tả ISSUE
-                orderDAO.updateStatus(
+                orderSignatureDAO.updateVerifyStatus(
                         orderId,
-                        "Verification Failed"
+                        OrderSignature.VerifyStatus.failed,
+                        "Chữ ký không hợp lệ"
                 );
 
                 result.put("success", false);
