@@ -1333,4 +1333,72 @@ public class OrderDAO {
             log.error("Auto-complete delivered orders error", e);
         }
     }
+    public boolean markOrderAsPaid(int orderId) {
+
+    String sql =
+            "UPDATE orders " +
+            "SET status = 'Paid', " +
+            "payment_status = TRUE " +
+            "WHERE id = ?";
+
+    try (Connection conn = DBContext.getConnection();
+         PreparedStatement ps = conn.prepareStatement(sql)) {
+
+        ps.setInt(1, orderId);
+
+        return ps.executeUpdate() > 0;
+
+    } catch (Exception e) {
+        log.error("DB error", e);
+    }
+
+    return false;
+}
+    public boolean updateOrderStatusRaw(int orderId, String status) {
+
+    String sql = "UPDATE orders SET status = ? WHERE id = ?";
+
+    try (Connection conn = DBContext.getConnection();
+         PreparedStatement ps = conn.prepareStatement(sql)) {
+
+        ps.setString(1, status);
+        ps.setInt(2, orderId);
+
+        return ps.executeUpdate() > 0;
+
+    } catch (Exception e) {
+        log.error("DB error", e);
+    }
+
+    return false;
+}
+   public boolean updateOrderStatus(Connection conn,
+                                 int orderId,
+                                 String status) throws Exception {
+
+    String sql =
+            "UPDATE orders SET status = ? WHERE id = ?";
+
+    try (PreparedStatement ps = conn.prepareStatement(sql)) {
+
+        ps.setString(1, status);
+        ps.setInt(2, orderId);
+
+        return ps.executeUpdate() > 0;
+    }
+}
+
+public boolean updateOrderStatus(int orderId,
+                                 String status) {
+
+    try (Connection conn = DBContext.getConnection()) {
+
+        return updateOrderStatus(conn, orderId, status);
+
+    } catch (Exception e) {
+        log.error("DB error", e);
+    }
+
+    return false;
+}
 }

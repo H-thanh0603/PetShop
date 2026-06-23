@@ -130,4 +130,12 @@ public class OrderSignatureDAO {
 
         return null;
     }
+    public List<OrderSignature> findByUserId(int userId) {
+    List<OrderSignature> list = new ArrayList<>();
+
+    String sql =
+        "SELECT * FROM order_signatures " +
+        "WHERE user_id=? " +
+        "ORDER BY created_at DESC";
+    }
 }
