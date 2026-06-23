@@ -37,6 +37,9 @@ public class Order {
     private Timestamp ghnPushedAt;
     private Timestamp ghnLastSyncAt;
     private String ghnErrorMessage;
+    private String signatureStatus;
+    private String signatureStatusCssClass;
+    private String signatureStatusLabel;
     private List<OrderItem> items;
 
     public Order() {
@@ -452,4 +455,13 @@ public class Order {
 
     public String getGhnErrorMessage() { return ghnErrorMessage; }
     public void setGhnErrorMessage(String ghnErrorMessage) { this.ghnErrorMessage = ghnErrorMessage; }
+
+    public String getSignatureStatus() { return signatureStatus; }
+    public void setSignatureStatus(String signatureStatus) { this.signatureStatus = signatureStatus; }
+
+    public String getSignatureStatusCssClass() { return signatureStatusCssClass; }
+    public void setSignatureStatusCssClass(String signatureStatusCssClass) { this.signatureStatusCssClass = signatureStatusCssClass; }
+
+    public String getSignatureStatusLabel() { return signatureStatusLabel; }
+    public void setSignatureStatusLabel(String signatureStatusLabel) { this.signatureStatusLabel = signatureStatusLabel; }
 }

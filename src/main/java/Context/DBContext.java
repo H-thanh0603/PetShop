@@ -94,6 +94,7 @@ public class DBContext {
             addColumnIfMissing(conn, stmt, "order_items", "promotion_type", "VARCHAR(30) NULL");
             addColumnIfMissing(conn, stmt, "order_items", "product_name_snapshot", "VARCHAR(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NULL");
             addColumnIfMissing(conn, stmt, "order_items", "product_image_snapshot", "VARCHAR(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NULL");
+            addColumnIfMissing(conn, stmt, "order_signs", "private_key", "TEXT NULL");
             addColumnIfMissing(conn, stmt, "ai_chat_messages", "is_read", "TINYINT(1) NOT NULL DEFAULT 0");
             executeIgnore(stmt, "UPDATE orders SET createdAt = created_at WHERE createdAt IS NULL AND created_at IS NOT NULL");
             executeIgnore(stmt, "UPDATE orders SET recipient_fullname = COALESCE(NULLIF(recipient_fullname, ''), fullname), " +

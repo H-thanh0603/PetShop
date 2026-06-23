@@ -43,17 +43,25 @@ public class DigitalSigner {
         if (privateKeyBase64 == null || privateKeyBase64.isEmpty())
             throw new IllegalArgumentException("privateKeyBase64 không được null hoặc rỗng");
         try {
-            byte[] privateKeyBytes = Base64.getDecoder().decode(privateKeyBase64);
-            // tuong tu modulus + exponent (d) + p + q
-            PKCS8EncodedKeySpec spec = new PKCS8EncodedKeySpec(privateKeyBytes);
-            PrivateKey privateKey = KeyFactory.getInstance("RSA").generatePrivate(spec);
-
-            Signature signature = Signature.getInstance("SHA256withRSA");
-            signature.initSign(privateKey);
-            signature.update(orderHash.getBytes(StandardCharsets.UTF_8));
-            return Base64.getEncoder().encodeToString(signature.sign());
+            String[] parts = privateKeyBase64.split(":");
+            java.math.BigInteger d, n;
+            if (parts.length == 2) {
+                d = new java.math.BigInteger(parts[0].trim(), 16);
+                n = new java.math.BigInteger(parts[1].trim(), 16);
+            } else {
+                byte[] privateKeyBytes = Base64.getDecoder().decode(privateKeyBase64);
+                PKCS8EncodedKeySpec spec = new PKCS8EncodedKeySpec(privateKeyBytes);
+                java.security.interfaces.RSAPrivateKey privateKey = (java.security.interfaces.RSAPrivateKey) java.security.KeyFactory.getInstance("RSA").generatePrivate(spec);
+                d = privateKey.getPrivateExponent();
+                n = privateKey.getModulus();
+            }
+            java.math.BigInteger hashInt = new java.math.BigInteger(orderHash.trim(), 16);
+            if (hashInt.compareTo(n) >= 0)
+                throw new IllegalArgumentException("Hash quá lớn so với key size");
+            java.math.BigInteger signature = hashInt.modPow(d, n);
+            return signature.toString(16);
         } catch (IllegalArgumentException e) {
-            throw new RuntimeException("privateKeyBase64 không hợp lệ: không phải Base64", e);
+            throw new RuntimeException("privateKey không hợp lệ: " + e.getMessage(), e);
         } catch (Exception e) {
             throw new RuntimeException("Lỗi ký số: " + e.getMessage(), e);
         }
@@ -64,22 +72,30 @@ public class DigitalSigner {
     // xac thuc chu ky so
     // Input:  orderHash (hex string), signatureBase64 (chu ky can xac thuc), publicKeyBase64 (Base64 cua public key)
     // Output: true neu chu ky hop le, false neu khong hop le (moi loi deu tra ve false)
-    public static boolean verifySignature(String orderHash, String signatureBase64, String publicKeyBase64) {
+    public static boolean verifySignature(String orderHash, String signatureHex, String publicKeyBase64) {
         if (orderHash == null || orderHash.isEmpty()
-                || signatureBase64 == null || signatureBase64.isEmpty()
+                || signatureHex == null || signatureHex.isEmpty()
                 || publicKeyBase64 == null || publicKeyBase64.isEmpty()) {
             return false;
         }
         try {
-            byte[] publicKeyBytes = Base64.getDecoder().decode(publicKeyBase64);
-            X509EncodedKeySpec spec = new X509EncodedKeySpec(publicKeyBytes);
-            PublicKey publicKey = KeyFactory.getInstance("RSA").generatePublic(spec);
-
-            Signature signature = Signature.getInstance("SHA256withRSA");
-            signature.initVerify(publicKey);
-            signature.update(orderHash.getBytes(StandardCharsets.UTF_8));
-            return signature.verify(Base64.getDecoder().decode(signatureBase64));
-        } catch (Exception e) {
+            java.math.BigInteger e, n;
+            String[] parts = publicKeyBase64.split(":");
+            if (parts.length == 2) {
+                e = new java.math.BigInteger(parts[0].trim(), 16);
+                n = new java.math.BigInteger(parts[1].trim(), 16);
+            } else {
+                byte[] publicKeyBytes = Base64.getDecoder().decode(publicKeyBase64);
+                X509EncodedKeySpec spec = new X509EncodedKeySpec(publicKeyBytes);
+                java.security.interfaces.RSAPublicKey publicKey = (java.security.interfaces.RSAPublicKey) java.security.KeyFactory.getInstance("RSA").generatePublic(spec);
+                e = publicKey.getPublicExponent();
+                n = publicKey.getModulus();
+            }
+            java.math.BigInteger hashInt = new java.math.BigInteger(orderHash.trim(), 16);
+            java.math.BigInteger sigInt = new java.math.BigInteger(signatureHex.trim(), 16);
+            java.math.BigInteger recovered = sigInt.modPow(e, n);
+            return recovered.equals(hashInt);
+        } catch (Exception ex) {
             return false;
         }
     }

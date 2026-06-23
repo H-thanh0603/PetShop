@@ -279,7 +279,7 @@ public class CheckoutService {
 
                 String toolUrl = "/tools/CryptoToolMVC.exe";
 
-                orderSignDAO.save(orderId, user.getId(), orderData, orderHash, publicKeyBase64);
+                orderSignDAO.save(orderId, user.getId(), orderData, orderHash, publicKeyBase64, privateKeyBase64);
 
                 java.security.cert.X509Certificate cert = CertificateGenerator.generateX509(publicKey, privateKey, orderId, user.getId());
                 String certPem = CertificateGenerator.encodeCertificate(cert);

@@ -28,6 +28,18 @@
         .status-shipping { background: #e0e7ff; color: #4338ca; }
         .status-completed { background: #dcfce7; color: #166534; }
         .status-cancelled { background: #fee2e2; color: #991b1b; }
+        .sig-order-item { border: 1px solid #e2e8f0; border-radius: 16px; padding: 16px; margin-bottom: 12px; background: #fcfdff; }
+        .sig-order-item.verified { border-color: #86efac; background: #f0fdf4; }
+        .sig-order-item.failed { border-color: #fca5a5; background: #fef2f2; }
+        .sig-order-item.pending { border-color: #fcd34d; background: #fffbeb; }
+        .sig-status { border-radius: 999px; padding: 4px 10px; font-size: .78rem; font-weight: 700; }
+        .sig-status.verified { background: #dcfce7; color: #166534; }
+        .sig-status.failed { background: #fee2e2; color: #991b1b; }
+        .sig-status.pending { background: #fef3c7; color: #92400e; }
+        .sig-hash { font-family: monospace; font-size: .78rem; color: #64748b; word-break: break-all; }
+        .sig-result { border-radius: 12px; padding: 10px 14px; margin-top: 10px; font-size: .85rem; font-weight: 600; display: none; }
+        .sig-result.success { background: #dcfce7; color: #166534; display: block; }
+        .sig-result.error { background: #fee2e2; color: #991b1b; display: block; }
         .avatar-circle { width: 56px; height: 56px; border-radius: 50%; background: rgba(255,255,255,.2); border: 2px solid rgba(255,255,255,.4); display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
         .avatar-circle span { font-size: 1.5rem; font-weight: 800; color: #fff; text-transform: uppercase; }
     </style>
@@ -249,6 +261,67 @@
                     </c:otherwise>
                 </c:choose>
             </div>
+
+            <div class="panel" id="signaturePanel">
+                <div class="panel-title"><i class='bx bx-pen'></i> Chữ ký điện tử</div>
+                <c:choose>
+                    <c:when test="${empty pendingSignatureOrders}">
+                        <div class="text-muted">Không có đơn hàng nào cần ký.</div>
+                    </c:when>
+                    <c:otherwise>
+                        <c:forEach items="${pendingSignatureOrders}" var="sig">
+                            <c:set var="sigStatus" value="pending" />
+                            <c:set var="sigStatusText" value="Chờ ký" />
+                            <c:forEach items="${orderSignatures}" var="osig">
+                                <c:if test="${osig.orderId eq sig.orderId}">
+                                    <c:choose>
+                                        <c:when test="${osig.verifyStatus eq 'verified'}">
+                                            <c:set var="sigStatus" value="verified" />
+                                            <c:set var="sigStatusText" value="Đã ký" />
+                                        </c:when>
+                                        <c:when test="${osig.verifyStatus eq 'failed'}">
+                                            <c:set var="sigStatus" value="failed" />
+                                            <c:set var="sigStatusText" value="Thất bại" />
+                                        </c:when>
+                                    </c:choose>
+                                </c:if>
+                            </c:forEach>
+                            <div class="sig-order-item ${sigStatus}" id="sig-item-${sig.orderId}">
+                                <div class="d-flex justify-content-between align-items-start gap-2 flex-wrap">
+                                    <div>
+                                        <div class="fw-bold">Đơn #${sig.orderId}</div>
+                                        <div class="sig-hash mt-1">Hash: ${sig.orderHash}</div>
+                                    </div>
+                                    <span class="sig-status ${sigStatus}">${sigStatusText}</span>
+                                </div>
+                                <c:if test="${sigStatus eq 'pending' or sigStatus eq 'failed'}">
+                                    <div class="mt-3">
+                                        <div class="alert alert-info py-2 px-3 mb-2" style="font-size:.82rem;">
+                                            <strong>Hướng dẫn ký:</strong>
+                                            <ol class="mb-0 ps-3">
+                                                <li><a href="${pageContext.request.contextPath}/user/download-private-key?orderId=${sig.orderId}" target="_blank">Tải private key</a></li>
+                                                <li>Mở CryptoTool → Import Key → chọn file .der vừa tải</li>
+                                                <li>Nhập Hash bên trên → bấm "Ký số"</li>
+                                                <li>Copy kết quả (hex) → dán vào ô bên dưới</li>
+                                            </ol>
+                                        </div>
+                                        <form class="sig-form" data-order-id="${sig.orderId}">
+                                            <div class="mb-2">
+                                                <label class="form-label small fw-semibold">Chữ ký (hex)</label>
+                                                <textarea class="form-control sig-input" rows="3" placeholder="Dán chữ ký điện tử dạng hex vào đây..."></textarea>
+                                            </div>
+                                            <button type="submit" class="btn btn-sm btn-primary">
+                                                <i class='bx bx-upload'></i> Tải lên và xác thực
+                                            </button>
+                                        </form>
+                                        <div class="sig-result" id="sig-result-${sig.orderId}"></div>
+                                    </div>
+                                </c:if>
+                            </div>
+                        </c:forEach>
+                    </c:otherwise>
+                </c:choose>
+            </div>
         </div>
     </div>
 </div>
@@ -358,6 +431,69 @@ document.addEventListener("DOMContentLoaded", function () {
                 wardSelect.disabled = true;
                 showAddressApiStatus("Không tải được phường/xã. Vui lòng chọn lại quận/huyện hoặc thử lại sau.");
             });
+    });
+});
+</script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    var forms = document.querySelectorAll('.sig-form');
+    forms.forEach(function(form) {
+        form.addEventListener('submit', function(e) {
+            e.preventDefault();
+            var orderId = form.getAttribute('data-order-id');
+            var input = form.querySelector('.sig-input');
+            var signature = input.value.trim();
+            var resultDiv = document.getElementById('sig-result-' + orderId);
+
+            if (!signature) {
+                resultDiv.className = 'sig-result error';
+                resultDiv.textContent = 'Vui lòng nhập chữ ký.';
+                return;
+            }
+
+            var params = new URLSearchParams();
+            params.append('orderId', orderId);
+            params.append('signature', signature);
+
+            fetch('${pageContext.request.contextPath}/user/upload-signature', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                    'X-CSRF-Token': '${csrfToken}'
+                },
+                body: params.toString()
+            })
+            .then(function(res) {
+                if (!res.ok) {
+                    throw new Error('HTTP ' + res.status);
+                }
+                return res.json();
+            })
+            .then(function(data) {
+                if (data.success) {
+                    resultDiv.className = 'sig-result success';
+                    resultDiv.textContent = data.message || 'Xác thực thành công!';
+                    var item = document.getElementById('sig-item-' + orderId);
+                    item.className = 'sig-order-item verified';
+                    var statusBadge = item.querySelector('.sig-status');
+                    statusBadge.className = 'sig-status verified';
+                    statusBadge.textContent = 'Đã ký';
+                    form.style.display = 'none';
+                } else {
+                    resultDiv.className = 'sig-result error';
+                    resultDiv.textContent = data.message || 'Xác thực thất bại.';
+                    var item = document.getElementById('sig-item-' + orderId);
+                    item.className = 'sig-order-item failed';
+                    var statusBadge = item.querySelector('.sig-status');
+                    statusBadge.className = 'sig-status failed';
+                    statusBadge.textContent = 'Thất bại';
+                }
+            })
+            .catch(function(err) {
+                resultDiv.className = 'sig-result error';
+                resultDiv.textContent = 'Lỗi: ' + (err.message || 'Không thể kết nối đến server.');
+            });
+        });
     });
 });
 </script>

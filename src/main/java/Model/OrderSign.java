@@ -10,6 +10,7 @@ public class OrderSign {
     private String orderData;
     private String orderHash;
     private String publicKey;
+    private String privateKey;
     private Timestamp createdAt;
 
     public OrderSign() {
@@ -44,6 +45,9 @@ public class OrderSign {
 
     public String getPublicKey() { return publicKey; }
     public void setPublicKey(String publicKey) { this.publicKey = publicKey; }
+
+    public String getPrivateKey() { return privateKey; }
+    public void setPrivateKey(String privateKey) { this.privateKey = privateKey; }
 
     public Timestamp getCreatedAt() { return createdAt; }
     public void setCreatedAt(Timestamp createdAt) { this.createdAt = createdAt; }

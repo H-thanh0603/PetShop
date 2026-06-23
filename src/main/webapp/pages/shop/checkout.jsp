@@ -488,6 +488,9 @@
                     </a>
                 </div>
             </div>
+            <div class="modal-footer" style="border-top:1px solid #eee;">
+                <button type="button" class="btn btn-primary" id="btnSignatureModalClose">Đóng</button>
+            </div>
         </div>
     </div>
 </div>

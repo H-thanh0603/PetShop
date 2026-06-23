@@ -70,6 +70,58 @@ public class OrderDAO {
         return order;
     }
 
+    private void attachSignatureStatusToOrders(Connection conn, List<Order> orders) throws Exception {
+        StringBuilder sql = new StringBuilder(
+            "SELECT o.id, " +
+            "os.id AS sign_id, " +
+            "osig.verify_status " +
+            "FROM orders o " +
+            "LEFT JOIN order_signs os ON os.order_id = o.id " +
+            "LEFT JOIN order_signatures osig ON osig.order_id = o.id " +
+            "WHERE o.id IN ("
+        );
+        for (int i = 0; i < orders.size(); i++) {
+            if (i > 0) sql.append(",");
+            sql.append("?");
+        }
+        sql.append(")");
+
+        try (PreparedStatement ps = conn.prepareStatement(sql.toString())) {
+            for (int i = 0; i < orders.size(); i++) {
+                ps.setInt(i + 1, orders.get(i).getId());
+            }
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    int orderId = rs.getInt("id");
+                    String signId = rs.getString("sign_id");
+                    String verifyStatus = rs.getString("verify_status");
+                    for (Order o : orders) {
+                        if (o.getId() == orderId) {
+                            if (signId == null) {
+                                o.setSignatureStatus("none");
+                                o.setSignatureStatusCssClass("text-muted");
+                                o.setSignatureStatusLabel("—");
+                            } else if ("verified".equalsIgnoreCase(verifyStatus)) {
+                                o.setSignatureStatus("verified");
+                                o.setSignatureStatusCssClass("text-success");
+                                o.setSignatureStatusLabel("Đã ký ✓");
+                            } else if ("failed".equalsIgnoreCase(verifyStatus)) {
+                                o.setSignatureStatus("failed");
+                                o.setSignatureStatusCssClass("text-danger");
+                                o.setSignatureStatusLabel("Thất bại ✗");
+                            } else {
+                                o.setSignatureStatus("pending");
+                                o.setSignatureStatusCssClass("text-warning");
+                                o.setSignatureStatusLabel("Chờ ký");
+                            }
+                            break;
+                        }
+                    }
+                }
+            }
+        }
+    }
+
     public int saveOrder(Order order) {
         try (Connection conn = DBContext.getConnection()) {
             return saveOrder(conn, order);
@@ -286,6 +338,7 @@ public class OrderDAO {
             if (!list.isEmpty()) {
                 loadItemsForOrders(conn, list);
                 paymentTransactionDAO.attachLatestToOrders(conn, list);
+                attachSignatureStatusToOrders(conn, list);
             }
         } catch (Exception e) {
             log.error("DB error", e);
