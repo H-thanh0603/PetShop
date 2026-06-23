@@ -423,7 +423,6 @@
      data-bank-transfer-prefix="${fn:escapeXml(bankTransferPrefix)}"
      data-bank-transfer-reference="${fn:escapeXml(bankTransferReference)}"
      data-bank-payment-ttl-seconds="${fn:escapeXml(bankPaymentTtlSeconds)}"></div>
-<script src="${pageContext.request.contextPath}/assets/js/checkout.js"></script>
 <jsp:include page="/components/footer.jsp"/>
 <%--        modal cập nhật thông tin--%>
 <div class="modal fade" id="profileModal">
@@ -461,5 +460,37 @@
         </div>
     </div>
 </div>
+
+<div class="modal fade" id="signatureModal" tabindex="-1" aria-labelledby="signatureModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content" style="border-radius:16px;padding:10px;">
+            <div class="modal-header" style="border-bottom:1px solid #eee;">
+                <h5 class="modal-title" id="signatureModalLabel" style="font-weight:700;">Tải công cụ ký điện tử</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Đóng"></button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-3">
+                    <label class="form-label" style="font-weight:600;">Order Hash</label>
+                    <div class="input-group">
+                        <input type="text" id="modalOrderHash" class="form-control" readonly style="font-family:monospace;font-size:0.85rem;">
+                        <button class="btn btn-outline-primary" type="button" id="btnCopyHash" onclick="navigator.clipboard.writeText(document.getElementById('modalOrderHash').value);this.innerText='Đã copy!';setTimeout(()=>this.innerText='Copy',2000);">Copy</button>
+                    </div>
+                </div>
+                <p style="font-size:0.9rem;color:#555;margin-bottom:16px;">
+                    Mở tool, nhập hash + private key, bấm <strong>Tạo chữ ký</strong>, rồi quay lại trang cá nhân để upload.
+                </p>
+                <div class="d-flex gap-2 flex-wrap">
+                    <a id="btnDownloadKey" href="#" class="btn btn-outline-danger" style="flex:1;min-width:160px;">
+                        🔑 Tải Private Key
+                    </a>
+                    <a id="btnDownloadTool" href="#" class="btn btn-gradient" style="background:linear-gradient(45deg,#4a6cf7,#6f8cff);color:#fff;flex:1;min-width:160px;">
+                        ⬇ Tải Crypto Tool
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<script src="${pageContext.request.contextPath}/assets/js/checkout.js?v=2"></script>
 </body>
 </html>

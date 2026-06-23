@@ -88,6 +88,7 @@ public class VnpayUtil {
             String fieldValue = request.getParameter(fieldName);
 
             if (fieldValue != null && !fieldValue.isEmpty()
+                    && fieldName.startsWith("vnp_")
                     && !"vnp_SecureHash".equals(fieldName)
                     && !"vnp_SecureHashType".equals(fieldName)) {
                 fields.put(fieldName, fieldValue);
@@ -99,17 +100,21 @@ public class VnpayUtil {
 
         StringBuilder hashData = new StringBuilder();
 
-        for (int i = 0; i < fieldNames.size(); i++) {
-            String fieldName = fieldNames.get(i);
-            String fieldValue = fields.get(fieldName);
+        try {
+            for (int i = 0; i < fieldNames.size(); i++) {
+                String fieldName = fieldNames.get(i);
+                String fieldValue = fields.get(fieldName);
 
-            if (i > 0) {
-                hashData.append("&");
+                if (i > 0) {
+                    hashData.append("&");
+                }
+
+                hashData.append(fieldName)
+                        .append("=")
+                        .append(URLEncoder.encode(fieldValue, "US-ASCII"));
             }
-
-            hashData.append(fieldName)
-                    .append("=")
-                    .append(URLEncoder.encode(fieldValue, StandardCharsets.US_ASCII));
+        } catch (Exception e) {
+            // Should not happen for US-ASCII
         }
 
         String secureHash = request.getParameter("vnp_SecureHash");

@@ -44,6 +44,12 @@ public class OrderSuccessServlet extends HttpServlet {
         request.setAttribute("bankAccountName", session.getAttribute("bankAccountName"));
         request.setAttribute("paymentTtlSeconds", session.getAttribute("paymentTtlSeconds"));
 
+        // Chữ ký số (Digital Signature)
+        request.setAttribute("orderHash", session.getAttribute("orderHash"));
+        request.setAttribute("privateKeyBase64", session.getAttribute("privateKeyBase64"));
+        request.setAttribute("toolUrl", session.getAttribute("toolUrl"));
+        request.setAttribute("showSignatureModal", session.getAttribute("showSignatureModal"));
+
         // Xóa session sau khi đã dùng (tránh hiện lại khi F5)
         session.removeAttribute("successOrderId");
         session.removeAttribute("successUser");
@@ -63,6 +69,10 @@ public class OrderSuccessServlet extends HttpServlet {
         session.removeAttribute("bankAccountNumber");
         session.removeAttribute("bankAccountName");
         session.removeAttribute("paymentTtlSeconds");
+        session.removeAttribute("orderHash");
+        session.removeAttribute("privateKeyBase64");
+        session.removeAttribute("toolUrl");
+        session.removeAttribute("showSignatureModal");
 
         request.getRequestDispatcher("/pages/shop/orderSuccess.jsp")
                 .forward(request, response);

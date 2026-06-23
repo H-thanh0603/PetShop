@@ -18,6 +18,8 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
     <style>
         *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -686,7 +688,51 @@
 
 </div>
 
+<!-- Modal chữ ký số -->
+<div class="modal fade" id="signatureModal" tabindex="-1" aria-labelledby="signatureModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content" style="border-radius:16px;padding:10px; color: #1a1a1a;">
+            <div class="modal-header" style="border-bottom:1px solid #eee;">
+                <h5 class="modal-title" id="signatureModalLabel" style="font-weight:700;">Tải công cụ ký điện tử</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Đóng"></button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-3 text-start">
+                    <label class="form-label" style="font-weight:600; display: block; margin-bottom: 8px;">Order Hash</label>
+                    <div style="display: flex; gap: 8px;">
+                        <input type="text" id="modalOrderHash" class="form-control" readonly value="${orderHash}" style="flex: 1; font-family:monospace;font-size:0.85rem;">
+                        <button class="btn btn-outline-primary" type="button" id="btnCopyHash" onclick="navigator.clipboard.writeText(document.getElementById('modalOrderHash').value);this.innerText='Đã copy!';setTimeout(()=>this.innerText='Copy',2000);">Copy</button>
+                    </div>
+                </div>
+                <p style="font-size:0.9rem;color:#555;margin-bottom:16px; text-align: left;">
+                    Mở tool, nhập hash + private key, bấm <strong>Tạo chữ ký</strong>, rồi quay lại trang cá nhân để upload.
+                </p>
+                <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+                    <a id="btnDownloadKey" href="data:application/octet-stream;base64,${privateKeyBase64}" download="private_key_${orderId}.pem" class="btn btn-outline-danger" style="flex: 1; min-width: 160px; padding: 12px; border-radius: 8px;">
+                        🔑 Tải Private Key
+                    </a>
+                    <a id="btnDownloadTool" href="${toolUrl}" class="btn btn-primary" style="flex: 1; min-width: 160px; padding: 12px; border-radius: 8px; background: linear-gradient(45deg,#4a6cf7,#6f8cff); border: none;">
+                        ⬇ Tải Crypto Tool
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
 <script>
+    <%-- Tự động hiện modal chữ ký nếu có --%>
+    document.addEventListener("DOMContentLoaded", function() {
+        const showModal = "${showSignatureModal}";
+        if (showModal === "true") {
+            const modalEl = document.getElementById('signatureModal');
+            if (modalEl && typeof bootstrap !== 'undefined') {
+                const modalInstance = bootstrap.Modal.getOrCreateInstance(modalEl);
+                modalInstance.show();
+            }
+        }
+    });
+
     <%-- Copy to clipboard --%>
     function copyText(elementId, btn) {
         const el = document.getElementById(elementId);
