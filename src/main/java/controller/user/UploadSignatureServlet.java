@@ -22,11 +22,9 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 
-import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.security.KeyFactory;
 import java.security.PublicKey;
-import java.security.cert.CertificateFactory;
 import java.security.cert.X509Certificate;
 import java.security.spec.X509EncodedKeySpec;
 import java.util.Base64;
@@ -35,8 +33,6 @@ import java.util.Map;
 
 @WebServlet("/user/upload-signature")
 public class UploadSignatureServlet extends HttpServlet {
-
-```
 private final OrderSignDAO orderSignDAO = new OrderSignDAO();
 private final OrderSignatureDAO orderSignatureDAO = new OrderSignatureDAO();
 private final CertificateDAO certificateDAO = new CertificateDAO();
@@ -100,10 +96,6 @@ protected void doPost(HttpServletRequest request,
             return;
         }
 
-        /*
-         * Nếu chưa có record trong order_signatures
-         * thì tạo mới trước khi verify
-         */
         OrderSignature existing =
                 orderSignatureDAO.findByOrderId(orderId);
 
@@ -137,15 +129,18 @@ protected void doPost(HttpServletRequest request,
                     "Xác thực thành công"
             );
 
-            /*
-             * Đơn chuyển khoản:
-             * Awaiting Payment -> Paid
-             */
-
+            // cập nhật thanh toán
             orderDAO.markOrderAsPaid(orderId);
 
+            // cập nhật trạng thái đơn
+            orderDAO.updateOrderStatus(
+                    orderId,
+                    "Paid"
+            );
+
             result.put("success", true);
-            result.put("message", "Xác thực chữ ký điện tử thành công.");
+            result.put("message",
+                    "Xác thực chữ ký điện tử thành công.");
 
         } else {
 
@@ -155,12 +150,19 @@ protected void doPost(HttpServletRequest request,
                     "Chữ ký điện tử hoặc chứng thư số không hợp lệ."
             );
 
+            orderDAO.updateOrderStatus(
+                    orderId,
+                    "Verification Failed"
+            );
+
             result.put("success", false);
             result.put("message",
                     "Chữ ký điện tử hoặc chứng thư số không hợp lệ.");
         }
 
     } catch (Exception e) {
+
+        e.printStackTrace();
 
         result.put("success", false);
         result.put("message", e.getMessage());
@@ -174,16 +176,10 @@ private boolean verifyCertificate(String certificatePem,
 
     try {
 
-        CertificateFactory certificateFactory =
-                CertificateFactory.getInstance("X.509");
-
         X509Certificate cert =
-                (X509Certificate) certificateFactory
-                        .generateCertificate(
-                                new ByteArrayInputStream(
-                                        certificatePem.getBytes()
-                                )
-                        );
+                CertificateGenerator.decodeCertificate(
+                        certificatePem
+                );
 
         byte[] publicKeyBytes =
                 Base64.getDecoder().decode(publicKeyBase64);
@@ -206,15 +202,19 @@ private boolean verifyCertificate(String certificatePem,
     }
 }
 
-private void write(HttpServletResponse response,Map<String, Object> data)throws IOException {
+private void write(HttpServletResponse response,
+                   Map<String, Object> data)
+        throws IOException {
+
     response.setContentType(
             "application/json;charset=UTF-8"
     );
+
     response.setCharacterEncoding("UTF-8");
+
     response.getWriter().write(
             new Gson().toJson(data)
     );
 }
-
 
 }
