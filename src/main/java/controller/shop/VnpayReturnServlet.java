@@ -1,8 +1,10 @@
 package controller.shop;
 
+import Context.DBContext;
 import DAO.OrderDAO;
 import DAO.PaymentTransactionDAO;
 import Model.Order;
+import Model.PaymentTransaction;
 import Util.VnpayUtil;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
@@ -14,6 +16,9 @@ import jakarta.servlet.http.HttpSession;
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.sql.Connection;
+import java.sql.Timestamp;
+import java.time.LocalDateTime;
 
 @WebServlet("/vnpay-return")
 public class VnpayReturnServlet extends HttpServlet {
@@ -41,7 +46,7 @@ public class VnpayReturnServlet extends HttpServlet {
 
         int orderId = Integer.parseInt(orderIdRaw);
         Order order = orderDAO.getOrderById(orderId);
-        if (order == null || amount == null || amount.compareTo(order.getTotalAmount().setScale(0, RoundingMode.HALF_UP)) != 0) {
+        if (order == null || amount == null || amount.setScale(2, RoundingMode.HALF_UP).compareTo(order.getTotalAmount().setScale(2, RoundingMode.HALF_UP)) != 0) {
             paymentTransactionDAO.updateLatestProviderResultForOrder(
                     orderId,
                     "VNPAY",
@@ -60,7 +65,7 @@ public class VnpayReturnServlet extends HttpServlet {
         }
 
         if ("00".equals(responseCode) && "00".equals(transactionStatus)) {
-            if (!paymentTransactionDAO.updateLatestProviderResultForOrder(
+            boolean recorded = paymentTransactionDAO.updateLatestProviderResultForOrder(
                     orderId,
                     "VNPAY",
                     providerTransactionId,
@@ -69,11 +74,26 @@ public class VnpayReturnServlet extends HttpServlet {
                     "VERIFIED",
                     "VERIFIED",
                     "VNPAY payment verified."
-            )) {
-                request.setAttribute("paymentStatus", "failed");
-                request.setAttribute("paymentMessage", "Khong ghi nhan duoc giao dich VNPay.");
-                request.getRequestDispatcher("/pages/shop/payment-failed.jsp").forward(request, response);
-                return;
+            );
+            if (!recorded) {
+                try (Connection conn = DBContext.getConnection()) {
+                    PaymentTransaction newTx = new PaymentTransaction();
+                    newTx.setOrderId(orderId);
+                    newTx.setProviderKey("VNPAY");
+                    newTx.setAmount(amount);
+                    newTx.setAmountReceived(amount);
+                    newTx.setCurrency("VND");
+                    newTx.setProviderTransactionId(providerTransactionId);
+                    newTx.setProviderMetadata(buildProviderMetadata(request));
+                    newTx.setStatus("VERIFIED");
+                    newTx.setVerificationStatus("VERIFIED");
+                    newTx.setVerificationMessage("VNPAY payment verified on return.");
+                    newTx.setCreatedAt(Timestamp.valueOf(LocalDateTime.now()));
+                    newTx.setUpdatedAt(Timestamp.valueOf(LocalDateTime.now()));
+                    paymentTransactionDAO.save(conn, newTx);
+                } catch (Exception ex) {
+                    ex.printStackTrace();
+                }
             }
             if (!orderDAO.markOnlinePaymentPaidAndFinalize(orderId, "VNPAY")) {
                 request.setAttribute("paymentStatus", "failed");
@@ -113,7 +133,7 @@ public class VnpayReturnServlet extends HttpServlet {
             return null;
         }
         try {
-            return new BigDecimal(rawAmount).divide(BigDecimal.valueOf(100), 0, RoundingMode.UNNECESSARY);
+            return new BigDecimal(rawAmount).divide(BigDecimal.valueOf(100), 2, RoundingMode.HALF_UP);
         } catch (Exception e) {
             return null;
         }
