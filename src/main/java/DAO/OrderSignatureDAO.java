@@ -131,11 +131,28 @@ public class OrderSignatureDAO {
         return null;
     }
     public List<OrderSignature> findByUserId(int userId) {
-    List<OrderSignature> list = new ArrayList<>();
+        List<OrderSignature> list = new ArrayList<>();
 
-    String sql =
-        "SELECT * FROM order_signatures " +
-        "WHERE user_id=? " +
-        "ORDER BY created_at DESC";
+        String sql =
+            "SELECT * FROM order_signatures " +
+            "WHERE user_id=? " +
+            "ORDER BY created_at DESC";
+
+        try (Connection conn = DBContext.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+
+            ps.setInt(1, userId);
+
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    list.add(mapOrderSignature(rs));
+                }
+            }
+
+        } catch (Exception e) {
+            log.error("DB error", e);
+        }
+
+        return list;
     }
 }
