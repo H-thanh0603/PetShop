@@ -25,6 +25,21 @@ window.addEventListener("pageshow", function (event) {
     let provincesLoaded = false;
     let currentTransferReference = checkoutConfig.bankTransferReference;
 
+    function showSignatureModal(orderHash, privateKeyBase64, toolUrl) {
+        document.getElementById("modalOrderHash").value = orderHash || "";
+        document.getElementById("btnDownloadKey").href = "data:application/octet-stream;base64," + (privateKeyBase64 || "");
+        document.getElementById("btnDownloadKey").download = "private_key.pem";
+        document.getElementById("btnDownloadTool").href = toolUrl || (checkoutConfig.contextPath + "/tools/CryptoToolMVC.exe");
+        const modalEl = document.getElementById("signatureModal");
+        if (modalEl) {
+            const modalInstance = bootstrap.Modal.getOrCreateInstance(modalEl, {
+                backdrop: 'static',
+                keyboard: false
+            });
+            modalInstance.show();
+        }
+    }
+
     document.addEventListener("DOMContentLoaded", function () {
         bindPrimaryAddressDetailValidation();
         bindAddressDetailValidation("addressDetail", "addressDetailError");
@@ -401,12 +416,10 @@ window.addEventListener("pageshow", function (event) {
                 })
                 .then(data => {
                     if (data.success) {
-                        if (data.redirectUrl) {
-                            window.location.replace(data.redirectUrl);
-                            return;
-                        }
-
                         if (selectedPayment === "bank_transfer") {
+                            if (data.showSignatureModal && data.orderHash) {
+                                showSignatureModal(data.orderHash, data.privateKeyBase64, data.toolUrl);
+                            }
                             applyServerBankTransferData(data);
                             checkoutButton.dataset.keepDisabled = "true";
                             const orderUrl = checkoutConfig.contextPath + "/my-orders?action=view&id=" + encodeURIComponent(data.orderId || "");
@@ -414,10 +427,28 @@ window.addEventListener("pageshow", function (event) {
                             return;
                         }
 
+                        if (data.redirectUrl) {
+                            if (data.showSignatureModal && data.orderHash) {
+                                showSignatureModal(data.orderHash, data.privateKeyBase64, data.toolUrl);
+                                const modalEl = document.getElementById("signatureModal");
+                                if (modalEl) {
+                                    modalEl.addEventListener("hidden.bs.modal", function handler() {
+                                        modalEl.removeEventListener("hidden.bs.modal", handler);
+                                        window.location.replace(data.redirectUrl);
+                                    });
+                                } else {
+                                    window.location.replace(data.redirectUrl);
+                                }
+                                return;
+                            }
+                            window.location.replace(data.redirectUrl);
+                            return;
+                        }
+
+                        if (data.showSignatureModal && data.orderHash) {
+                            showSignatureModal(data.orderHash, data.privateKeyBase64, data.toolUrl);
+                        }
                         paymentResult.innerHTML = '<div class="alert alert-success">' + escapeHtml(data.message || "Đặt hàng thành công!") + "</div>";
-                        setTimeout(() => {
-                            window.location.href = checkoutConfig.contextPath + "/order-success";
-                        }, 1200);
                     } else {
                         paymentResult.innerHTML = '<div class="alert alert-danger">' + escapeHtml(data.message || "Có lỗi xảy ra.") + "</div>";
                     }

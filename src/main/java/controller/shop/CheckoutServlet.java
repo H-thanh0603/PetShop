@@ -407,8 +407,15 @@ public class CheckoutServlet extends HttpServlet {
                         checkoutResult.getFinalTotal()
                 );
 
+                // Lưu thông tin chữ ký vào session để dùng ở trang order-success
+                session.setAttribute("orderHash", checkoutResult.getOrderHash());
+                session.setAttribute("privateKeyBase64", checkoutResult.getPrivateKeyBase64());
+                session.setAttribute("toolUrl", checkoutResult.getToolUrl());
+                session.setAttribute("showSignatureModal", true);
+
                 result.put("success", true);
                 result.put("redirectUrl", vnpayUrl);
+                // Với VNPay, không trả về showSignatureModal trong JSON để tránh hiện modal ngay lập tức
                 write(response, result);
                 return;
             }
@@ -437,6 +444,12 @@ public class CheckoutServlet extends HttpServlet {
                 result.put("transferReference", completedPaymentTransaction.getTransferReference());
                 result.put("paymentExpiresAt", completedPaymentTransaction.getExpiresAt());
                 result.put("paymentTtlSeconds", AppConfig.getInt("payment.bank.pending-minutes", 10) * 60);
+                result.put("orderHash", checkoutResult.getOrderHash());
+                result.put("privateKeyBase64", checkoutResult.getPrivateKeyBase64());
+                result.put("toolUrl", checkoutResult.getToolUrl());
+
+                // Modal signature cho bank_transfer: dùng button "Tải chữ ký" thay vì popup
+                result.put("showSignatureModal", true);
                 write(response, result);
                 return;
             } else {
@@ -455,6 +468,7 @@ public class CheckoutServlet extends HttpServlet {
                 result.put("orderHash", checkoutResult.getOrderHash());
                 result.put("privateKeyBase64", checkoutResult.getPrivateKeyBase64());
                 result.put("toolUrl", checkoutResult.getToolUrl());
+                result.put("showSignatureModal", true);
                 result.put("redirectUrl", request.getContextPath() + "/order-success");
                 write(response, result);
                 return;
