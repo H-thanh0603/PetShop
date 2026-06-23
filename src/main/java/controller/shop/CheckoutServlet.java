@@ -462,14 +462,15 @@ public class CheckoutServlet extends HttpServlet {
                 session.setAttribute("successShippingAddress", shippingAddress);
                 session.setAttribute("successOrderNote", note);
                 session.setAttribute("successOrderItems", new ArrayList<>(checkoutCart.values()));
+                session.setAttribute("orderHash", checkoutResult.getOrderHash());
+                session.setAttribute("privateKeyBase64", checkoutResult.getPrivateKeyBase64());
+                session.setAttribute("toolUrl", checkoutResult.getToolUrl());
+                session.setAttribute("showSignatureModal", true);
                 result.put("success", true);
                 result.put("message", "Đặt hàng thành công!");
                 result.put("orderId", completedOrderId);
-                result.put("orderHash", checkoutResult.getOrderHash());
-                result.put("privateKeyBase64", checkoutResult.getPrivateKeyBase64());
-                result.put("toolUrl", checkoutResult.getToolUrl());
-                result.put("showSignatureModal", true);
                 result.put("redirectUrl", request.getContextPath() + "/order-success");
+                System.out.println("DEBUG COD redirectUrl=" + result.get("redirectUrl"));
                 write(response, result);
                 return;
             }

@@ -25,7 +25,7 @@ window.addEventListener("pageshow", function (event) {
     let provincesLoaded = false;
     let currentTransferReference = checkoutConfig.bankTransferReference;
 
-    function showSignatureModal(orderHash, privateKeyBase64, toolUrl) {
+    function showSignatureModal(orderHash, privateKeyBase64, toolUrl, redirectUrl) {
         document.getElementById("modalOrderHash").value = orderHash || "";
         document.getElementById("btnDownloadKey").href = "data:application/octet-stream;base64," + (privateKeyBase64 || "");
         document.getElementById("btnDownloadKey").download = "private_key.pem";
@@ -37,6 +37,31 @@ window.addEventListener("pageshow", function (event) {
                 keyboard: false
             });
             modalInstance.show();
+
+            if (redirectUrl) {
+                const doRedirect = function() {
+                    window.location.href = redirectUrl;
+                };
+                const closeBtn = document.getElementById("btnSignatureModalClose");
+                if (closeBtn) {
+                    closeBtn.onclick = function() {
+                        modalInstance.hide();
+                        setTimeout(doRedirect, 500);
+                    };
+                }
+                const headerCloseBtn = modalEl.querySelector(".btn-close");
+                if (headerCloseBtn) {
+                    headerCloseBtn.removeAttribute("data-bs-dismiss");
+                    headerCloseBtn.onclick = function() {
+                        modalInstance.hide();
+                        setTimeout(doRedirect, 500);
+                    };
+                }
+                modalEl.addEventListener("hidden.bs.modal", function onHidden() {
+                    modalEl.removeEventListener("hidden.bs.modal", onHidden);
+                    doRedirect();
+                });
+            }
         }
     }
 
@@ -415,6 +440,7 @@ window.addEventListener("pageshow", function (event) {
                     return response.json();
                 })
                 .then(data => {
+                    console.log('Checkout response:', data, 'selectedPayment:', selectedPayment);
                     if (data.success) {
                         if (selectedPayment === "bank_transfer") {
                             if (data.showSignatureModal && data.orderHash) {
@@ -428,20 +454,12 @@ window.addEventListener("pageshow", function (event) {
                         }
 
                         if (data.redirectUrl) {
+                            console.log('Redirecting to:', data.redirectUrl);
                             if (data.showSignatureModal && data.orderHash) {
-                                showSignatureModal(data.orderHash, data.privateKeyBase64, data.toolUrl);
-                                const modalEl = document.getElementById("signatureModal");
-                                if (modalEl) {
-                                    modalEl.addEventListener("hidden.bs.modal", function handler() {
-                                        modalEl.removeEventListener("hidden.bs.modal", handler);
-                                        window.location.replace(data.redirectUrl);
-                                    });
-                                } else {
-                                    window.location.replace(data.redirectUrl);
-                                }
+                                showSignatureModal(data.orderHash, data.privateKeyBase64, data.toolUrl, data.redirectUrl);
                                 return;
                             }
-                            window.location.replace(data.redirectUrl);
+                            window.location.href = data.redirectUrl;
                             return;
                         }
 
@@ -454,6 +472,7 @@ window.addEventListener("pageshow", function (event) {
                     }
                 })
                 .catch(error => {
+                    console.error('Checkout error:', error);
                     paymentResult.innerHTML = '<div class="alert alert-danger">Có lỗi xảy ra: ' + escapeHtml(String(error)) + "</div>";
                 })
                 .finally(() => {

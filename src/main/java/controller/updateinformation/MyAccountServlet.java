@@ -2,8 +2,12 @@ package controller.updateinformation;
 
 import DAO.AddressDao;
 import DAO.OrderDAO;
+import DAO.OrderSignDAO;
+import DAO.OrderSignatureDAO;
 import DAO.UserDAO;
 import Model.Address;
+import Model.OrderSign;
+import Model.OrderSignature;
 import Model.User;
 import Util.PasswordUtil;
 import Util.ValidationUtil;
@@ -22,6 +26,8 @@ public class MyAccountServlet extends HttpServlet {
     private final AddressDao addressDao = new AddressDao();
     private final OrderDAO orderDAO = new OrderDAO();
     private final UserDAO userDAO = new UserDAO();
+    private final OrderSignDAO orderSignDAO = new OrderSignDAO();
+    private final OrderSignatureDAO orderSignatureDAO = new OrderSignatureDAO();
 
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
@@ -53,6 +59,12 @@ public class MyAccountServlet extends HttpServlet {
             recentOrders = recentOrders.subList(0, 3);
         }
         request.setAttribute("recentOrders", recentOrders);
+
+        List<OrderSign> pendingSignatureOrders = orderSignDAO.findPendingByUserId(user.getId());
+        request.setAttribute("pendingSignatureOrders", pendingSignatureOrders);
+        List<OrderSignature> orderSignatures = orderSignatureDAO.findByUserId(user.getId());
+        request.setAttribute("orderSignatures", orderSignatures);
+
         moveFlashAttribute(session, request, "success");
         moveFlashAttribute(session, request, "error");
         moveFlashAttribute(session, request, "pwSuccess");

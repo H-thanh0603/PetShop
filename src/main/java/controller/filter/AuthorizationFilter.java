@@ -64,7 +64,7 @@ public class AuthorizationFilter implements Filter {
                     res.sendRedirect(req.getContextPath() + "/pages/error/403.jsp");
                 }
                 break;
-            case "shiper":
+            case "shipper":
                  // Shipper can only access orders
                 if (isPathAllowed(path, shipperAllowedPaths)) {
                     chain.doFilter(request, response);

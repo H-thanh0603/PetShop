@@ -15,12 +15,12 @@ import Util.DigitalSigner;
 
 import com.google.gson.Gson;
 
-import javax.servlet.ServletException;
-import javax.servlet.annotation.WebServlet;
-import javax.servlet.http.HttpServlet;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-import javax.servlet.http.HttpSession;
+import jakarta.servlet.ServletException;
+import jakarta.servlet.annotation.WebServlet;
+import jakarta.servlet.http.HttpServlet;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
+import jakarta.servlet.http.HttpSession;
 
 import java.io.IOException;
 import java.security.KeyFactory;
@@ -108,18 +108,29 @@ protected void doPost(HttpServletRequest request,
             );
         }
 
-        boolean signatureValid =
-                DigitalSigner.verifySignature(
-                        orderSign.getOrderHash(),
-                        signatureBase64,
-                        orderSign.getPublicKey()
-                );
+        boolean signatureValid = false;
+        boolean certificateValid = false;
+        String sigError = "";
+        String certError = "";
 
-        boolean certificateValid =
-                verifyCertificate(
-                        certificate.getCertificateData(),
-                        orderSign.getPublicKey()
-                );
+        try {
+            signatureValid = DigitalSigner.verifySignature(
+                    orderSign.getOrderHash(),
+                    signatureBase64,
+                    orderSign.getPublicKey()
+            );
+        } catch (Exception e) {
+            sigError = e.getMessage();
+        }
+
+        try {
+            certificateValid = verifyCertificate(
+                    certificate.getCertificateData(),
+                    orderSign.getPublicKey()
+            );
+        } catch (Exception e) {
+            certError = e.getMessage();
+        }
 
         if (signatureValid && certificateValid) {
 
@@ -129,25 +140,37 @@ protected void doPost(HttpServletRequest request,
                     "Xác thực thành công"
             );
 
-            // cập nhật thanh toán
             orderDAO.markOrderAsPaid(orderId);
 
-            // cập nhật trạng thái đơn
             orderDAO.updateOrderStatus(
                     orderId,
                     "Paid"
             );
 
             result.put("success", true);
-            result.put("message",
-                    "Xác thực chữ ký điện tử thành công.");
+            result.put("message", "Xác thực chữ ký điện tử thành công.");
 
         } else {
+
+            String failMsg = "";
+            if (!signatureValid) {
+                failMsg = "Chữ ký không hợp lệ";
+                if (sigError != null && !sigError.isEmpty()) {
+                    failMsg += " (" + sigError + ")";
+                }
+            }
+            if (!certificateValid) {
+                if (!failMsg.isEmpty()) failMsg += " — ";
+                failMsg += "Chứng thư số không hợp lệ";
+                if (certError != null && !certError.isEmpty()) {
+                    failMsg += " (" + certError + ")";
+                }
+            }
 
             orderSignatureDAO.updateVerifyStatus(
                     orderId,
                     OrderSignature.VerifyStatus.failed,
-                    "Chữ ký điện tử hoặc chứng thư số không hợp lệ."
+                    failMsg
             );
 
             orderDAO.updateOrderStatus(
@@ -156,8 +179,7 @@ protected void doPost(HttpServletRequest request,
             );
 
             result.put("success", false);
-            result.put("message",
-                    "Chữ ký điện tử hoặc chứng thư số không hợp lệ.");
+            result.put("message", failMsg);
         }
 
     } catch (Exception e) {

@@ -65,14 +65,14 @@ public enum OrderStatus {
         public Set<OrderStatus> validTargets() {
             return EnumSet.noneOf(OrderStatus.class);
         }
-    };
-    
-    VERIFY_FAILED("Xác thực thất bại") {
-    @Override
-    public Set<OrderStatus> validTargets() {
-        return EnumSet.noneOf(OrderStatus.class);
-        }
     },
+    VERIFY_FAILED("Verification Failed") {
+        @Override
+        public Set<OrderStatus> validTargets() {
+            return EnumSet.noneOf(OrderStatus.class);
+        }
+    };
+
     private final String displayName;
 
     OrderStatus(String displayName) {

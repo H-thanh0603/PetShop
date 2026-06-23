@@ -95,6 +95,7 @@
                         <th>Khách hàng</th>
                         <th style="width: 110px;">Sản phẩm</th>
                         <th>Thanh toán</th>
+                        <th style="width: 100px;">Xác thực</th>
                         <th style="width: 130px;">Tổng tiền</th>
                         <th style="width: 150px;">Ngày đặt</th>
                         <th style="width: 140px;">Trạng thái</th>
@@ -105,7 +106,7 @@
                 <tbody>
                     <c:if test="${empty orders}">
                         <tr>
-                            <td colspan="8" class="text-center py-5">Không có đơn hàng phù hợp.</td>
+                            <td colspan="9" class="text-center py-5">Không có đơn hàng phù hợp.</td>
                         </tr>
                     </c:if>
                     <c:forEach items="${orders}" var="o">
@@ -132,6 +133,11 @@
                                 <c:if test="${not empty o.paymentVerificationMessage}">
                                     <br><small class="text-muted">${fn:escapeXml(o.paymentVerificationMessage)}</small>
                                 </c:if>
+                            </td>
+                            <td>
+                                <span class="badge ${o.signatureStatusCssClass}" style="font-size:.85rem;">
+                                    ${fn:escapeXml(o.signatureStatusLabel)}
+                                </span>
                             </td>
                             <td><span class="total-amount">${fn:escapeXml(o.formattedTotalAmount)}</span></td>
                             <td><fmt:formatDate value="${o.createdAt}" pattern="dd/MM/yyyy HH:mm"/></td>
