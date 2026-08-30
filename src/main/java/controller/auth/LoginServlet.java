@@ -19,6 +19,7 @@ import Model.User;
 import Util.AppConfig;
 import Util.AuthRedirectUtil;
 import Util.FormHelper;
+import Util.LoginLockout;
 import Util.SocialAuthUtil;
 
 import java.security.SecureRandom;
@@ -222,11 +223,12 @@ public class LoginServlet extends HttpServlet {
         
         // === BRUTE-FORCE CHECK ===
         UserDAO dao = new UserDAO();
-        
-        // Check if account is locked before password verification
-        if (dao.isAccountLocked(email)) {
+
+        // Check lockout for this (email, IP) pair — an attacker from one IP
+        // cannot lock the account for users connecting from other IPs.
+        if (LoginLockout.isLocked(email, request.getRemoteAddr())) {
             securityEventDAO.log("ACCOUNT_LOCKED_ATTEMPT", email, request.getRemoteAddr(),
-                    "Login attempt blocked while the account lock is still active.");
+                    "Login attempt blocked while the (email, IP) lock is still active.");
             form.addGeneralError("Email hoặc mật khẩu không đúng.");
             form.applyToRequest();
             populateLoginViewData(request);
@@ -240,6 +242,7 @@ public class LoginServlet extends HttpServlet {
         if (user != null) {
             // Reset failed attempts on successful login
             dao.resetFailedAttempts(email);
+            LoginLockout.reset(email, request.getRemoteAddr());
             
             // Check if user account is deactivated
             if (!user.getStatus()) {
@@ -336,14 +339,11 @@ public class LoginServlet extends HttpServlet {
                 response.sendRedirect(request.getContextPath() + "/home");
             }
         } else {
-            // Increment failed attempts on failed login
-            dao.incrementFailedAttempts(email);
-            int failedAttempts = dao.getFailedLoginAttempts(email);
-            
-            if (failedAttempts >= 5) {
-                dao.lockAccount(email, 15);
+            // Record failure per (email, IP); lock that pair after 5 failures
+            boolean nowLocked = LoginLockout.recordFailure(email, request.getRemoteAddr());
+            if (nowLocked) {
                 securityEventDAO.log("ACCOUNT_LOCKED", email, request.getRemoteAddr(),
-                        "Account locked for 15 minutes after " + failedAttempts + " failed login attempts.");
+                        "Login locked for the (email, IP) pair for 15 minutes after repeated failures.");
             }
             form.addGeneralError("Email hoặc mật khẩu không đúng.");
             

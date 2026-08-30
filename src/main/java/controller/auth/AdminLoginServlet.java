@@ -46,10 +46,10 @@ public class AdminLoginServlet extends HttpServlet {
             return;
         }
 
-        // Brute-force check
-        if (userDAO.isAccountLocked(email)) {
-            securityEventDAO.log("ACCOUNT_LOCKED_ATTEMPT", email, request.getRemoteAddr(), "Admin login attempt blocked while account is locked.");
-            request.setAttribute("error", "Tài khoản đã bị khóa. Vui lòng thử lại sau.");
+        // Brute-force check for this (email, IP) pair
+        if (Util.LoginLockout.isLocked(email, request.getRemoteAddr())) {
+            securityEventDAO.log("ACCOUNT_LOCKED_ATTEMPT", email, request.getRemoteAddr(), "Admin login attempt blocked while the (email, IP) lock is still active.");
+            request.setAttribute("error", "Email hoặc mật khẩu không đúng.");
             request.getRequestDispatcher("/pages/admin/login.jsp").forward(request, response);
             return;
         }
@@ -64,6 +64,7 @@ public class AdminLoginServlet extends HttpServlet {
             if (isAdminOrStaffOrShipper && user.getStatus()) {
                 // Reset failed attempts
                 userDAO.resetFailedAttempts(email);
+                Util.LoginLockout.reset(email, request.getRemoteAddr());
 
                 // Session regeneration: invalidate the pre-auth session (and its
                 // fixed JSESSIONID + CSRF token) so a session-fixation attempt on
@@ -90,12 +91,11 @@ public class AdminLoginServlet extends HttpServlet {
                 request.getRequestDispatcher("/pages/admin/login.jsp").forward(request, response);
             }
         } else {
-            // Failed login
-            userDAO.incrementFailedAttempts(email);
-            int failedAttempts = userDAO.getFailedLoginAttempts(email);
-            if (failedAttempts >= 5) {
-                userDAO.lockAccount(email, 15);
-                securityEventDAO.log("ACCOUNT_LOCKED", email, request.getRemoteAddr(), "Account locked on admin login after " + failedAttempts + " attempts.");
+            // Record failure per (email, IP); lock that pair after 5 failures
+            boolean nowLocked = Util.LoginLockout.recordFailure(email, request.getRemoteAddr());
+            if (nowLocked) {
+                securityEventDAO.log("ACCOUNT_LOCKED", email, request.getRemoteAddr(),
+                        "Admin login locked for the (email, IP) pair for 15 minutes after repeated failures.");
             }
             request.setAttribute("error", "Email hoặc mật khẩu không đúng.");
             request.getRequestDispatcher("/pages/admin/login.jsp").forward(request, response);
