@@ -1,7 +1,8 @@
 # Base application URL and deploy settings
 app.base-url=http://localhost:8080/PetShop
 app.context-path=/PetShop
-app.cookies.secure=false
+# Unset app.cookies.secure to follow the request scheme (Secure on HTTPS).
+# Set to true to always mark cookies Secure (recommended in production).
 deploy.tomcat-home=
 app.static.cache.max-age-seconds=86400
 
