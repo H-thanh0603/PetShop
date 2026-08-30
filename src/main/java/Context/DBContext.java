@@ -359,9 +359,10 @@ public class DBContext {
                 }
             }
 
-            stmt.execute("UPDATE products SET is_active = 1 WHERE is_active = 0");
-            stmt.execute("UPDATE products SET stock = 50 WHERE stock = 0");
-            stmt.execute("UPDATE products SET discount = 0");
+            // NOTE: do not "fix" product data on every startup. These resets used to
+            // run here and silently reactivated products, restocked out-of-stock
+            // items to 50 and wiped discounts on every redeploy/restart. Data
+            // corrections belong in versioned SQL migrations (sql/), not in app boot.
 
             System.out.println("[DBContext] Migrations applied.");
         } catch (Exception e) {
