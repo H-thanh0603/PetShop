@@ -28,9 +28,26 @@ public class ProductDAO {
             "AND NOW() BETWEEN prm.start_date AND prm.end_date " +
             "AND (prm.promotion_type <> 'FLASH_SALE' OR (ppm.sale_quantity IS NOT NULL AND COALESCE(ppm.sold_quantity, 0) < ppm.sale_quantity)))";
 
+    // Review aggregates come from a materialized derived table: joining a
+    // pre-grouped subquery keeps every list query 1:1 on products and avoids
+    // the outer GROUP BY filesort over the joined result.
     private static final String PRODUCT_SELECT_WITH_REVIEWS =
-            "SELECT p.*, COALESCE(AVG(r.rating), 0) AS average_rating, COUNT(r.id) AS review_count " +
-            "FROM products p LEFT JOIN reviews r ON r.product_id = p.id ";
+            "SELECT p.*, COALESCE(rv.average_rating, 0) AS average_rating, COALESCE(rv.review_count, 0) AS review_count " +
+            "FROM products p " +
+            "LEFT JOIN (SELECT product_id, AVG(rating) AS average_rating, COUNT(id) AS review_count " +
+            "FROM reviews GROUP BY product_id) rv ON rv.product_id = p.id ";
+
+    // Best active promotion per product as a percent-equivalent, materialized
+    // once per query. Replaces the per-row correlated subquery that used to
+    // sit inside ORDER BY (unindexable, re-evaluated for every product row).
+    private static final String BEST_PROMO_JOIN =
+            "LEFT JOIN (SELECT ppm.product_id, MAX(CASE WHEN prm.discount_type = 'PERCENT' THEN prm.discount_value " +
+            "ELSE ROUND(prm.discount_value * 100 / pp.price, 0) END) AS best_discount_percent " +
+            "FROM promotions prm " +
+            "JOIN promotion_products ppm ON ppm.promotion_id = prm.id " +
+            "JOIN products pp ON pp.id = ppm.product_id " +
+            "WHERE prm.status = 'ACTIVE' AND NOW() BETWEEN prm.start_date AND prm.end_date " +
+            "GROUP BY ppm.product_id) bp ON bp.product_id = p.id ";
     private final ProductPricingService pricingService = new ProductPricingService();
 
     private Product mapProduct(ResultSet rs) throws Exception {
@@ -97,7 +114,7 @@ public class ProductDAO {
 
     public List<Product> getAllProducts() {
         List<Product> list = new ArrayList<>();
-        String query = PRODUCT_SELECT_WITH_REVIEWS + "WHERE p.is_active = 1 GROUP BY p.id ORDER BY p.id DESC";
+        String query = PRODUCT_SELECT_WITH_REVIEWS + "WHERE p.is_active = 1 ORDER BY p.id DESC";
         try (Connection conn = DBContext.getConnection();
              PreparedStatement ps = conn.prepareStatement(query);
              ResultSet rs = ps.executeQuery()) {
@@ -112,7 +129,7 @@ public class ProductDAO {
                 "FROM products p " +
                 "INNER JOIN pet_types pt ON p.pet_type_id = pt.id " +
                 "LEFT JOIN reviews r ON r.product_id = p.id " +
-                "WHERE pt.code = ? AND pt.is_active = 1 AND p.is_active = 1 GROUP BY p.id ORDER BY p.id DESC";
+                "WHERE pt.code = ? AND pt.is_active = 1 AND p.is_active = 1 ORDER BY p.id DESC";
         try (Connection conn = DBContext.getConnection(); PreparedStatement ps = conn.prepareStatement(query)) {
             ps.setString(1, petTypeCode); ResultSet rs = ps.executeQuery();
             while (rs.next()) { list.add(mapProduct(rs)); }
@@ -122,7 +139,7 @@ public class ProductDAO {
 
     public List<Product> getProductsByPetTypeFallback(String petTypeName) {
         List<Product> list = new ArrayList<>();
-        String query = PRODUCT_SELECT_WITH_REVIEWS + "WHERE p.category LIKE ? AND p.is_active = 1 GROUP BY p.id ORDER BY p.id DESC";
+        String query = PRODUCT_SELECT_WITH_REVIEWS + "WHERE p.category LIKE ? AND p.is_active = 1 ORDER BY p.id DESC";
         try (Connection conn = DBContext.getConnection(); PreparedStatement ps = conn.prepareStatement(query)) {
             ps.setString(1, "%" + petTypeName + "%"); ResultSet rs = ps.executeQuery();
             while (rs.next()) { list.add(mapProduct(rs)); }
@@ -174,7 +191,7 @@ public class ProductDAO {
 
     public List<Product> getProductsByCategory(String category) {
         List<Product> list = new ArrayList<>();
-        String query = PRODUCT_SELECT_WITH_REVIEWS + "WHERE p.category = ? AND p.is_active = 1 GROUP BY p.id ORDER BY p.id DESC";
+        String query = PRODUCT_SELECT_WITH_REVIEWS + "WHERE p.category = ? AND p.is_active = 1 ORDER BY p.id DESC";
         try (Connection conn = DBContext.getConnection(); PreparedStatement ps = conn.prepareStatement(query)) {
             ps.setString(1, category); ResultSet rs = ps.executeQuery();
             while (rs.next()) { list.add(mapProduct(rs)); }
@@ -185,7 +202,7 @@ public class ProductDAO {
     public List<Product> searchProducts(String keyword) {
         List<Product> list = new ArrayList<>();
         String query = PRODUCT_SELECT_WITH_REVIEWS +
-                "WHERE (p.name LIKE ? OR p.description LIKE ?) AND p.is_active = 1 GROUP BY p.id ORDER BY p.name ASC";
+                "WHERE (p.name LIKE ? OR p.description LIKE ?) AND p.is_active = 1 ORDER BY p.name ASC";
         try (Connection conn = DBContext.getConnection(); PreparedStatement ps = conn.prepareStatement(query)) {
             String p = "%" + keyword + "%"; ps.setString(1, p); ps.setString(2, p);
             ResultSet rs = ps.executeQuery();
@@ -332,6 +349,7 @@ public class ProductDAO {
                 "  WHERE o.status != 'Cancelled' " +
                 "  GROUP BY oi.product_id" +
                 ") bs ON bs.product_id = p.id " +
+                ("discount".equals(criteria.getSort()) ? BEST_PROMO_JOIN : "") +
                 parts.whereClause +
                 " ORDER BY " + parts.orderByClause +
                 " LIMIT ? OFFSET ?";
@@ -373,7 +391,7 @@ public class ProductDAO {
 
     public List<Product> getDiscountedProductsList() {
         List<Product> list = new ArrayList<>();
-        String query = PRODUCT_SELECT_WITH_REVIEWS + "WHERE " + ACTIVE_PROMOTION_EXISTS_SQL + " AND p.is_active = 1 GROUP BY p.id ORDER BY COALESCE((SELECT CASE WHEN prm.discount_type = 'PERCENT' THEN prm.discount_value ELSE ROUND(prm.discount_value * 100 / p.price, 0) END FROM promotions prm JOIN promotion_products ppm ON ppm.promotion_id = prm.id WHERE ppm.product_id = p.id AND prm.status = 'ACTIVE' AND NOW() BETWEEN prm.start_date AND prm.end_date LIMIT 1), 0) DESC, p.id DESC";
+        String query = PRODUCT_SELECT_WITH_REVIEWS + BEST_PROMO_JOIN + "WHERE " + ACTIVE_PROMOTION_EXISTS_SQL + " AND p.is_active = 1 ORDER BY COALESCE(bp.best_discount_percent, 0) DESC, p.id DESC";
         try (Connection conn = DBContext.getConnection(); PreparedStatement ps = conn.prepareStatement(query); ResultSet rs = ps.executeQuery()) {
             while (rs.next()) { list.add(mapProduct(rs)); }
         } catch (Exception e) { log.error("Error fetching discounted products list", e); }
@@ -382,7 +400,7 @@ public class ProductDAO {
 
     public List<Product> getDiscountedProductsPage(int page, int size) {
         List<Product> list = new ArrayList<>();
-        String query = PRODUCT_SELECT_WITH_REVIEWS + "WHERE " + ACTIVE_PROMOTION_EXISTS_SQL + " AND p.is_active = 1 GROUP BY p.id ORDER BY COALESCE((SELECT CASE WHEN prm.discount_type = 'PERCENT' THEN prm.discount_value ELSE ROUND(prm.discount_value * 100 / p.price, 0) END FROM promotions prm JOIN promotion_products ppm ON ppm.promotion_id = prm.id WHERE ppm.product_id = p.id AND prm.status = 'ACTIVE' AND NOW() BETWEEN prm.start_date AND prm.end_date LIMIT 1), 0) DESC, p.id DESC LIMIT ? OFFSET ?";
+        String query = PRODUCT_SELECT_WITH_REVIEWS + BEST_PROMO_JOIN + "WHERE " + ACTIVE_PROMOTION_EXISTS_SQL + " AND p.is_active = 1 ORDER BY COALESCE(bp.best_discount_percent, 0) DESC, p.id DESC LIMIT ? OFFSET ?";
         try (Connection conn = DBContext.getConnection(); PreparedStatement ps = conn.prepareStatement(query)) {
             ps.setInt(1, size); ps.setInt(2, Math.max(0, (page - 1) * size));
             ResultSet rs = ps.executeQuery(); while (rs.next()) { list.add(mapProduct(rs)); }
@@ -400,7 +418,7 @@ public class ProductDAO {
 
     public List<Product> getAllProductsPage(int page, int size) {
         List<Product> list = new ArrayList<>();
-        String query = PRODUCT_SELECT_WITH_REVIEWS + "WHERE p.is_active = 1 GROUP BY p.id ORDER BY p.id DESC LIMIT ? OFFSET ?";
+        String query = PRODUCT_SELECT_WITH_REVIEWS + "WHERE p.is_active = 1 ORDER BY p.id DESC LIMIT ? OFFSET ?";
         try (Connection conn = DBContext.getConnection(); PreparedStatement ps = conn.prepareStatement(query)) {
             ps.setInt(1, size); ps.setInt(2, Math.max(0, (page - 1) * size));
             ResultSet rs = ps.executeQuery(); while (rs.next()) { list.add(mapProduct(rs)); }
@@ -432,8 +450,9 @@ public class ProductDAO {
                 "  SELECT product_id, AVG(rating) AS average_rating, COUNT(id) AS review_count " +
                 "  FROM reviews GROUP BY product_id " +
                 ") rv ON rv.product_id = p.id " +
+                BEST_PROMO_JOIN +
                 "WHERE p.is_active = 1 " +
-                "ORDER BY total_sold DESC, COALESCE((SELECT CASE WHEN prm.discount_type = 'PERCENT' THEN prm.discount_value ELSE ROUND(prm.discount_value * 100 / p.price, 0) END FROM promotions prm JOIN promotion_products ppm ON ppm.promotion_id = prm.id WHERE ppm.product_id = p.id AND prm.status = 'ACTIVE' AND NOW() BETWEEN prm.start_date AND prm.end_date LIMIT 1), 0) DESC, p.id DESC LIMIT ? OFFSET ?";
+                "ORDER BY total_sold DESC, COALESCE(bp.best_discount_percent, 0) DESC, p.id DESC LIMIT ? OFFSET ?";
         try (Connection conn = DBContext.getConnection(); PreparedStatement ps = conn.prepareStatement(query)) {
             ps.setInt(1, size); ps.setInt(2, Math.max(0, (page - 1) * size));
             ResultSet rs = ps.executeQuery(); while (rs.next()) { list.add(mapProduct(rs)); }
@@ -552,7 +571,7 @@ public class ProductDAO {
             case "price-desc":
                 return "p.price DESC, p.id DESC";
             case "discount":
-                return "COALESCE((SELECT CASE WHEN prm.discount_type = 'PERCENT' THEN prm.discount_value ELSE ROUND(prm.discount_value * 100 / p.price, 0) END FROM promotions prm JOIN promotion_products ppm ON ppm.promotion_id = prm.id WHERE ppm.product_id = p.id AND prm.status = 'ACTIVE' AND NOW() BETWEEN prm.start_date AND prm.end_date LIMIT 1), 0) DESC, p.id DESC";
+                return "COALESCE(bp.best_discount_percent, 0) DESC, p.id DESC";
             case "name":
                 return "p.name ASC, p.id DESC";
             case "rating":
@@ -587,7 +606,7 @@ public class ProductDAO {
     }
 
     public Product getProductById(Connection conn, int id) {
-        String query = PRODUCT_SELECT_WITH_REVIEWS + "WHERE p.id = ? GROUP BY p.id";
+        String query = PRODUCT_SELECT_WITH_REVIEWS + "WHERE p.id = ?";
         try (PreparedStatement ps = conn.prepareStatement(query)) {
             ps.setInt(1, id);
             ResultSet rs = ps.executeQuery();
@@ -599,7 +618,7 @@ public class ProductDAO {
     }
 
     public Product getProductByIdForUpdate(Connection conn, int id) {
-        String query = PRODUCT_SELECT_WITH_REVIEWS + "WHERE p.id = ? GROUP BY p.id FOR UPDATE";
+        String query = PRODUCT_SELECT_WITH_REVIEWS + "WHERE p.id = ? FOR UPDATE";
         try (PreparedStatement ps = conn.prepareStatement(query)) {
             ps.setInt(1, id);
             ResultSet rs = ps.executeQuery();
@@ -785,7 +804,7 @@ public class ProductDAO {
 
             int offset = (count > limit) ? ThreadLocalRandom.current().nextInt(count - limit + 1) : 0;
             String query = PRODUCT_SELECT_WITH_REVIEWS +
-                    "WHERE p.id != ? AND p.category = ? AND p.is_active = 1 GROUP BY p.id ORDER BY p.id LIMIT ? OFFSET ?";
+                    "WHERE p.id != ? AND p.category = ? AND p.is_active = 1 ORDER BY p.id LIMIT ? OFFSET ?";
             try (Connection conn = DBContext.getConnection();
                  PreparedStatement ps = conn.prepareStatement(query)) {
                 ps.setInt(1, excludeId);
@@ -825,7 +844,7 @@ public class ProductDAO {
 
             int offset = (count > needed) ? ThreadLocalRandom.current().nextInt(count - needed + 1) : 0;
             String query = PRODUCT_SELECT_WITH_REVIEWS +
-                    "WHERE p.id NOT IN (" + placeholders + ") AND p.is_active = 1 GROUP BY p.id ORDER BY p.id LIMIT ? OFFSET ?";
+                    "WHERE p.id NOT IN (" + placeholders + ") AND p.is_active = 1 ORDER BY p.id LIMIT ? OFFSET ?";
             try (Connection conn = DBContext.getConnection();
                  PreparedStatement ps = conn.prepareStatement(query)) {
                 int paramIdx = 1;
@@ -842,7 +861,7 @@ public class ProductDAO {
 
     public List<Product> getProductsByPage(int index, int size) {
         List<Product> list = new ArrayList<>();
-        String query = PRODUCT_SELECT_WITH_REVIEWS + "WHERE p.is_active = 1 GROUP BY p.id ORDER BY p.id DESC LIMIT ? OFFSET ?";
+        String query = PRODUCT_SELECT_WITH_REVIEWS + "WHERE p.is_active = 1 ORDER BY p.id DESC LIMIT ? OFFSET ?";
         try (Connection conn = DBContext.getConnection(); PreparedStatement ps = conn.prepareStatement(query)) {
             ps.setInt(1, size); ps.setInt(2, (index - 1) * size);
             ResultSet rs = ps.executeQuery(); while (rs.next()) { list.add(mapProduct(rs)); }
@@ -1034,7 +1053,7 @@ public class ProductDAO {
     }
     public List<Product> getLowStockProducts(int threshold) {
         List<Product> list = new ArrayList<>();
-        String query = PRODUCT_SELECT_WITH_REVIEWS + "WHERE p.stock < ? AND p.stock > 0 GROUP BY p.id ORDER BY p.stock ASC";
+        String query = PRODUCT_SELECT_WITH_REVIEWS + "WHERE p.stock < ? AND p.stock > 0 ORDER BY p.stock ASC";
         try (Connection conn = DBContext.getConnection(); PreparedStatement ps = conn.prepareStatement(query)) {
             ps.setInt(1, threshold); ResultSet rs = ps.executeQuery();
             while (rs.next()) { list.add(mapProduct(rs)); }
@@ -1042,7 +1061,7 @@ public class ProductDAO {
     }
     public List<Product> getOutOfStockProducts() {
         List<Product> list = new ArrayList<>();
-        String query = PRODUCT_SELECT_WITH_REVIEWS + "WHERE p.stock <= 0 GROUP BY p.id ORDER BY p.id DESC";
+        String query = PRODUCT_SELECT_WITH_REVIEWS + "WHERE p.stock <= 0 ORDER BY p.id DESC";
         try (Connection conn = DBContext.getConnection(); PreparedStatement ps = conn.prepareStatement(query); ResultSet rs = ps.executeQuery()) {
             while (rs.next()) { list.add(mapProduct(rs)); }
         } catch (Exception e) { log.error("Error fetching out-of-stock products", e); } return list;
