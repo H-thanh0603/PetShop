@@ -38,6 +38,7 @@ import java.sql.Timestamp;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Comparator;
 import java.util.Map;
 
 public class CheckoutService {
@@ -138,7 +139,13 @@ public class CheckoutService {
         try (Connection conn = DBContext.getConnection()) {
             conn.setAutoCommit(false);
             try {
-                for (CartItem item : cart.values()) {
+                // Lock products in a deterministic (ascending id) order: with
+                // HashMap iteration two concurrent checkouts holding overlapping
+                // carts could lock the same rows in opposite order and deadlock.
+                List<CartItem> orderedItems = new ArrayList<>(cart.values());
+                orderedItems.sort(Comparator.comparingInt(item -> item.getProduct().getId()));
+
+                for (CartItem item : orderedItems) {
                     Product latestProduct = productDAO.getProductByIdForUpdate(conn, item.getProduct().getId());
                     if (latestProduct == null) {
                         conn.rollback();
