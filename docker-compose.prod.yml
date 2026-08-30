@@ -1,0 +1,136 @@
+services:
+  mysql:
+    image: mysql:8.0
+    container_name: petshop-mysql
+    restart: unless-stopped
+    command: --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:?set in .env}
+      MYSQL_DATABASE: petvaccine
+    volumes:
+      - mysql-data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    # Not exposed to the host: only app/backup join the same network.
+
+  app:
+    build: .
+    container_name: petshop-app
+    restart: unless-stopped
+    depends_on:
+      mysql:
+        condition: service_healthy
+    environment:
+      SPRING_PROFILES_ACTIVE: prod
+      DB_HOST: mysql
+      DB_PORT: 3306
+      DB_NAME: petvaccine
+      DB_USERNAME: petshop
+      DB_PASSWORD: ${DB_PASSWORD:?set in .env}
+      APP_BASE_URL: ${APP_BASE_URL:?set in .env}
+      APP_COOKIES_SECURE: "true"
+      APP_UPLOAD_DIR: /app/uploads
+      # Payment / shipping / AI secrets — real values in .env (never committed)
+      VNPAY_TMN_CODE: ${VNPAY_TMN_CODE:-}
+      VNPAY_HASH_SECRET: ${VNPAY_HASH_SECRET:-}
+      VNPAY_PAY_URL: ${VNPAY_PAY_URL:-https://sandbox.vnpayment.vn/paymentv2/vpcpay.html}
+      TOKEN: ${GHN_TOKEN:-}
+      GHN_ORDER_TOKEN: ${GHN_ORDER_TOKEN:-}
+      DEEPSEEK_API_KEY: ${DEEPSEEK_API_KEY:-}
+      PAYMENT_BANK_ID: ${PAYMENT_BANK_ID:-}
+      PAYMENT_BANK_ACCOUNT_NUMBER: ${PAYMENT_BANK_ACCOUNT_NUMBER:-}
+      PAYMENT_BANK_ACCOUNT_NAME: ${PAYMENT_BANK_ACCOUNT_NAME:-}
+      PAYMENT_BANK_WEBHOOK_SECRET: ${PAYMENT_BANK_WEBHOOK_SECRET:?set in .env}
+      PAYMENT_GHN_WEBHOOK_SECRET: ${PAYMENT_GHN_WEBHOOK_SECRET:?set in .env}
+    volumes:
+      - upload-data:/app/uploads
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://localhost:8080/actuator/health | grep -q UP"]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+
+  nginx:
+    image: nginx:1.27-alpine
+    container_name: petshop-nginx
+    restart: unless-stopped
+    depends_on:
+      - app
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./deploy/nginx/default.conf:/etc/nginx/conf.d/default.conf:ro
+      - certbot-etc:/etc/letsencrypt
+      - certbot-www:/var/www/certbot
+
+  certbot:
+    image: certbot/certbot
+    container_name: petshop-certbot
+    volumes:
+      - certbot-etc:/etc/letsencrypt
+      - certbot-www:/var/www/certbot
+    # Issue/renew manually or via a cron:
+    #   docker compose -f docker-compose.prod.yml run --rm certbot certonly \
+    #     --webroot -w /var/www/certbot -d melipet.shop --email you@example.com \
+    #     --agree-tos --no-eff-email
+    entrypoint: ["/bin/sh", "-c", "trap exit TERM; while :; do sleep 12h & wait $${!}; certbot renew --webroot -w /var/www/certbot; done"]
+
+  backup:
+    image: mysql:8.0
+    container_name: petshop-backup
+    restart: unless-stopped
+    depends_on:
+      mysql:
+        condition: service_healthy
+    environment:
+      MYSQL_PASSWORD: ${DB_PASSWORD:?set in .env}
+    volumes:
+      - ./backups:/backups
+    # Nightly 02:00 mysqldump, keep 14 days.
+    entrypoint:
+      - /bin/sh
+      - -c
+      - |
+        while true; do
+          ts=$$(date +%Y%m%d_%H%M%S)
+          mysqldump -h mysql -u petshop -p"$$MYSQL_PASSWORD" --single-transaction --routines petvaccine \
+            | gzip > /backups/petvaccine_$$ts.sql.gz
+          find /backups -name 'petvaccine_*.sql.gz' -mtime +14 -delete
+          sleep 86400
+        done
+
+  prometheus:
+    image: prom/prometheus:v2.54.1
+    container_name: petshop-prometheus
+    restart: unless-stopped
+    volumes:
+      - ./deploy/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus-data:/prometheus
+    # Only reachable on the internal network; view via an SSH tunnel or Grafana.
+
+  grafana:
+    image: grafana/grafana:11.2.0
+    container_name: petshop-grafana
+    restart: unless-stopped
+    depends_on:
+      - prometheus
+    environment:
+      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_ADMIN_PASSWORD:?set in .env}
+      GF_USERS_ALLOW_SIGN_UP: "false"
+    volumes:
+      - grafana-data:/var/lib/grafana
+    ports:
+      # Bound to localhost only — reach it via SSH tunnel: ssh -L 3000:localhost:3000
+      - "127.0.0.1:3000:3000"
+
+volumes:
+  mysql-data:
+  upload-data:
+  certbot-etc:
+  certbot-www:
+  prometheus-data:
+  grafana-data:

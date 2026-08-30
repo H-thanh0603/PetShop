@@ -11,6 +11,8 @@ spring:
 
 server:
   port: 8080
+  # nginx terminates TLS and forwards; makes Secure cookies/redirects correct
+  forward-headers-strategy: framework
   servlet:
     session:
       timeout: 30m
@@ -21,7 +23,7 @@ management:
   endpoints:
     web:
       exposure:
-        include: health,info,metrics
+        include: health,info,metrics,prometheus
   endpoint:
     health:
       show-details: when-authorized

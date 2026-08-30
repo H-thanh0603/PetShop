@@ -65,5 +65,9 @@ RunDemoSQL.class
 *.omx
 *.doc
 
-# ===== Deploy / Production (KHONG push - chua IP VPS, so tai khoan, secret) =====
-deploy/
+# ===== Secrets (real .env is never committed; see .env.example) =====
+.env
+
+# ===== Backups / env =====
+backups/
+.env
