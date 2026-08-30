@@ -10,32 +10,50 @@ import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import services.ShippingService;
+import Util.AppConfig;
 
 import java.io.BufferedReader;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
-import java.util.logging.Logger;
 
 /**
  * Webhook endpoint for GHN to push order status updates.
  * GHN calls this when a shipper updates the order status on their system.
  *
- * POST /api/ghn/webhook
+ * POST /api/ghn/webhook?secret={webhook-secret}
  * Body: { "order_code": "GHN123", "status": "delivering", "tracking_code": "VN123" }
+ *
+ * Authentication: the request must present the configured
+ * payment.ghn.webhook-secret (via the X-GHN-Webhook-Secret header or the
+ * "secret" query parameter, so the secret can be embedded in the webhook URL
+ * registered on the GHN seller portal). When no secret is configured the
+ * endpoint rejects every request (fail closed).
  */
 @WebServlet("/api/ghn/webhook")
 public class GhnWebhookServlet extends HttpServlet {
 
-    private static final Logger log = Logger.getLogger(GhnWebhookServlet.class.getName());
+    private static final Logger log = LoggerFactory.getLogger(GhnWebhookServlet.class);
+    private static final String QUERY_PARAM_SECRET = "secret";
+    private static final String HEADER_SECRET = "X-GHN-Webhook-Secret";
     private final OrderDAO orderDAO = new OrderDAO();
     private final Gson gson = new Gson();
 
     @Override
     protected void doPost(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
+
+        if (!isAuthorized(request)) {
+            log.warn("Rejected unauthorized GHN webhook call from {}", request.getRemoteAddr());
+            sendError(response, 401, "Unauthorized");
+            return;
+        }
 
         // Read request body
         StringBuilder sb = new StringBuilder();
@@ -65,7 +83,7 @@ public class GhnWebhookServlet extends HttpServlet {
             // Find local order by GHN order code
             Order order = orderByGhnCode(orderCode);
             if (order == null) {
-                log.warning("GHN webhook: order not found for code " + orderCode);
+                log.warn("GHN webhook: order not found for code {}", orderCode);
                 sendError(response, 404, "Order not found");
                 return;
             }
@@ -77,9 +95,9 @@ public class GhnWebhookServlet extends HttpServlet {
             String localStatus = ShippingService.mapGhnStatusToLocal(ghnStatus);
             if (localStatus != null && !localStatus.equals(order.getStatus())) {
                 orderDAO.updateStatus(order.getId(), localStatus, 0); // system update
-                log.info("GHN webhook: order " + order.getId() + " status changed to " + localStatus);
+                log.info("GHN webhook: order {} status changed to {}", order.getId(), localStatus);
             } else {
-                log.info("GHN webhook: order " + order.getId() + " GHN status updated to " + ghnStatus);
+                log.info("GHN webhook: order {} GHN status updated to {}", order.getId(), ghnStatus);
             }
 
             response.setStatus(200);
@@ -87,9 +105,29 @@ public class GhnWebhookServlet extends HttpServlet {
             response.getWriter().write("{\"success\": true}");
 
         } catch (Exception e) {
-            log.severe("GHN webhook error: " + e.getMessage());
-            sendError(response, 500, "Internal error: " + e.getMessage());
+            log.error("GHN webhook error", e);
+            sendError(response, 500, "Internal error");
         }
+    }
+
+    private boolean isAuthorized(HttpServletRequest request) {
+        String configuredSecret = AppConfig.getOrDefault("payment.ghn.webhook-secret", "");
+        if (configuredSecret.isBlank()) {
+            return false;
+        }
+
+        String submittedSecret = request.getHeader(HEADER_SECRET);
+        if (submittedSecret == null || submittedSecret.isBlank()) {
+            submittedSecret = request.getParameter(QUERY_PARAM_SECRET);
+        }
+        if (submittedSecret == null || submittedSecret.isBlank()) {
+            return false;
+        }
+
+        return MessageDigest.isEqual(
+                submittedSecret.getBytes(StandardCharsets.UTF_8),
+                configuredSecret.getBytes(StandardCharsets.UTF_8)
+        );
     }
 
     private Order orderByGhnCode(String ghnOrderCode) {
@@ -103,7 +141,7 @@ public class GhnWebhookServlet extends HttpServlet {
                 }
             }
         } catch (Exception e) {
-            log.warning("orderByGhnCode error: " + e.getMessage());
+            log.warn("orderByGhnCode error: {}", e.getMessage());
         }
         return null;
     }

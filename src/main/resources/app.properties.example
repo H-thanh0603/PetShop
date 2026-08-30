@@ -28,6 +28,9 @@ payment.bank.api-key=
 payment.bank.api-secret=
 payment.bank.webhook-secret=change-me-in-production
 
+# GHN webhook secret; embed in the registered webhook URL as ?secret=...
+payment.ghn.webhook-secret=
+
 # Rate-limit defaults (requests per minute)
 ratelimit.login=10
 ratelimit.register=6
