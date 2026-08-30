@@ -83,7 +83,7 @@ public class PolicyServlet extends HttpServlet {
                         List.of(
                                 "Thêm sản phẩm vào giỏ và kiểm tra lại số lượng trước khi thanh toán.",
                                 "Cập nhật họ tên, số điện thoại và địa chỉ giao hàng mặc định.",
-                                "Chọn COD, MoMo demo hoặc chuyển khoản ngân hàng theo QR được tạo sau khi đặt đơn.",
+                                "Chọn COD, VNPAY hoặc chuyển khoản ngân hàng theo QR được tạo sau khi đặt đơn.",
                                 "Theo dõi trạng thái xử lý, giao hàng và thanh toán trong Đơn hàng của tôi."
                         )
                 );

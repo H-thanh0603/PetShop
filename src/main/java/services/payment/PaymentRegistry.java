@@ -19,8 +19,10 @@ public class PaymentRegistry {
 
     private PaymentRegistry() {
         // Register built-in providers
+        // NOTE: MoMo is intentionally NOT registered. The previous provider was
+        // a mock that auto-marked every MoMo order as paid. Do not re-register
+        // until a real MoMo integration (with signature verification) exists.
         register("cod",           new CODPaymentProvider());
-        register("momo",          new MoMoPaymentProvider());
         register("bank_transfer", new BankTransferPaymentProvider());
         register("vnpay",         new VnpayPaymentProvider());
     }

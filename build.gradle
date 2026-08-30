@@ -35,7 +35,6 @@ dependencies {
     implementation 'org.apache.httpcomponents:httpclient:4.5.14'
     implementation 'com.google.code.gson:gson:2.10.1'
     implementation 'org.mindrot:jbcrypt:0.4'
-    implementation 'io.github.momo-wallet:momopayment:1.0'
 
     // HikariCP connection pool
     implementation 'com.zaxxer:HikariCP:5.1.0'
@@ -54,14 +53,6 @@ dependencies {
 
 configurations.configureEach {
     resolutionStrategy.force 'com.google.code.gson:gson:2.10.1'
-}
-
-configurations.testCompileClasspath {
-    exclude group: 'io.github.momo-wallet', module: 'momopayment'
-}
-
-configurations.testRuntimeClasspath {
-    exclude group: 'io.github.momo-wallet', module: 'momopayment'
 }
 
 test {

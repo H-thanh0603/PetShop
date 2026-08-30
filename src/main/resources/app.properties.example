@@ -28,12 +28,6 @@ payment.bank.api-key=
 payment.bank.api-secret=
 payment.bank.webhook-secret=change-me-in-production
 
-# MoMo placeholders
-payment.momo.mode=demo
-payment.momo.partner-code=
-payment.momo.access-key=
-payment.momo.secret-key=
-
 # Rate-limit defaults (requests per minute)
 ratelimit.login=10
 ratelimit.register=6

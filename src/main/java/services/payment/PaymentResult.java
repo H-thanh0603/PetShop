@@ -5,7 +5,7 @@ package services.payment;
  */
 public class PaymentResult {
     private final boolean success;
-    private final String paymentMethodDb;   // e.g. "COD", "MOMO", "BANK_TRANSFER"
+    private final String paymentMethodDb;   // e.g. "COD", "VNPAY", "BANK_TRANSFER"
     private final boolean paymentStatus;    // true = paid, false = unpaid at order time
     private final String message;
     private final String transactionStatus;

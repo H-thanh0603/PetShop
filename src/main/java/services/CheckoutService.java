@@ -423,8 +423,6 @@ public class CheckoutService {
         switch (paymentMethodDb.toUpperCase()) {
             case "COD":
                 return "Cash On Delivery";
-            case "MOMO":
-                return "MoMo";
             case "BANK_TRANSFER":
                 return "Bank Transfer";
             case "VNPAY":
