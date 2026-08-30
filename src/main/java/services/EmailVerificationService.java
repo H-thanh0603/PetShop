@@ -1,5 +1,8 @@
 package services;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import DAO.UserDAO;
 import Util.EmailUtil;
 
@@ -9,6 +12,9 @@ import java.security.SecureRandom;
  * Handles email verification token generation, sending, and validation.
  */
 public class EmailVerificationService {
+
+    private static final Logger logger = LoggerFactory.getLogger(EmailVerificationService.class);
+
 
     private static final SecureRandom RANDOM = new SecureRandom();
     private static final long EXPIRY_MS = 24L * 60 * 60 * 1000; // 24 hours
@@ -36,7 +42,7 @@ public class EmailVerificationService {
             EmailUtil.sendHtmlEmail(email, subject, html);
             return true;
         } catch (Exception e) {
-            System.err.println("[EmailVerification] Failed to send to " + email + ": " + e.getMessage());
+            logger.warn("[EmailVerification] Failed to send to " + email + ": " + e.getMessage());
             return false;
         }
     }

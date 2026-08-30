@@ -65,7 +65,7 @@ public class Product {
     public void setImage(String image) { this.image = image; }
     public BigDecimal getPrice() { return price; }
     public void setPrice(BigDecimal price) { this.price = price != null ? price : BigDecimal.ZERO; }
-    public int getDiscount() { return 0; } // ALWAYS return 0 to ignore legacy discount
+    public int getDiscount() { return discount; }
     public void setDiscount(int discount) { this.discount = discount; }
     public String getDescription() { return description; }
     public void setDescription(String description) { this.description = description; }

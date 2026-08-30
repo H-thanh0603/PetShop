@@ -24,6 +24,9 @@ import Model.CustomerRepurchaseSuggestion;
 
 public class OrderDAO {
 
+    private static final Logger logger = LoggerFactory.getLogger(OrderDAO.class);
+
+
     private static final Logger log = LoggerFactory.getLogger(OrderDAO.class);
     private final PaymentTransactionDAO paymentTransactionDAO = new PaymentTransactionDAO();
     private static final String ORDER_SELECT =
@@ -1149,7 +1152,7 @@ public class OrderDAO {
             return ps.executeUpdate() > 0;
 
         } catch (Exception e) {
-            e.printStackTrace();
+            logger.error("Unexpected error", e);
             return false;
         }
     }
@@ -1172,7 +1175,7 @@ public class OrderDAO {
 
             return ps.executeUpdate() > 0;
         } catch (Exception e) {
-            e.printStackTrace();
+            logger.error("Unexpected error", e);
             return false;
         }
     }
@@ -1196,7 +1199,7 @@ public class OrderDAO {
 
             return ps.executeUpdate() > 0;
         } catch (Exception e) {
-            e.printStackTrace();
+            logger.error("Unexpected error", e);
             return false;
         }
     }

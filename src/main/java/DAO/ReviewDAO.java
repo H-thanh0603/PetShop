@@ -13,6 +13,9 @@ import Model.Review;
 
 public class ReviewDAO {
 
+    private static final Logger logger = LoggerFactory.getLogger(ReviewDAO.class);
+
+
     private static final Logger log = LoggerFactory.getLogger(ReviewDAO.class);
 
     // 1. Lấy danh sách đánh giá theo sản phẩm
@@ -203,7 +206,7 @@ public class ReviewDAO {
             return ps.executeUpdate() > 0;
 
         } catch (SQLException e) {
-            e.printStackTrace();
+            logger.error("Unexpected error", e);
         }
 
         return false;
@@ -220,7 +223,7 @@ public class ReviewDAO {
             return ps.executeUpdate() > 0;
 
         } catch (SQLException e) {
-            e.printStackTrace();
+            logger.error("Unexpected error", e);
         }
 
         return false;

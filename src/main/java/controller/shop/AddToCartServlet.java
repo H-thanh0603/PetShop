@@ -1,5 +1,8 @@
 package controller.shop;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
@@ -16,6 +19,9 @@ import services.InventoryService;
 import services.InventoryService.StockValidationResult;
 
 public class AddToCartServlet extends HttpServlet {
+
+    private static final Logger logger = LoggerFactory.getLogger(AddToCartServlet.class);
+
     private static final long serialVersionUID = 1L;
 
     private final InventoryService inventoryService = new InventoryService();
@@ -75,8 +81,8 @@ public class AddToCartServlet extends HttpServlet {
                 response.sendRedirect(request.getContextPath() + "/checkout?buyNow=true");
 
             } catch (Exception e) {
-                System.err.println("[BuyNow] Exception for productId=" + productId + ": " + e.getMessage());
-                e.printStackTrace();
+                logger.warn("[BuyNow] Exception for productId=" + productId + ": " + e.getMessage());
+                logger.error("Unexpected error", e);
                 session.setAttribute("toastMessage", "Không thể mua ngay, vui lòng thử lại!");
                 session.setAttribute("toastType", "error");
                 response.sendRedirect(redirectUrl);
@@ -132,8 +138,8 @@ public class AddToCartServlet extends HttpServlet {
             session.setAttribute("toastType", "success");
 
         } catch (Exception e) {
-            System.err.println("[AddToCart] Exception for productId=" + productId + ": " + e.getMessage());
-            e.printStackTrace();
+            logger.warn("[AddToCart] Exception for productId=" + productId + ": " + e.getMessage());
+            logger.error("Unexpected error", e);
             session.setAttribute("toastMessage", "Sản phẩm không tồn tại!");
             session.setAttribute("toastType", "error");
         }

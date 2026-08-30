@@ -1,5 +1,8 @@
 package services;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import Util.ShippingConfig;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
@@ -20,6 +23,9 @@ import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 
 public class ShippingService {
+
+    private static final Logger logger = LoggerFactory.getLogger(ShippingService.class);
+
     private static final String TOKEN = ShippingConfig.get("TOKEN");
     private static final int SHOP_ID = ShippingConfig.getInt("SHOP_ID");
     private static final int FROM_DISTRICT_ID = ShippingConfig.getInt("FROM_DISTRICT_ID");
@@ -246,11 +252,11 @@ public class ShippingService {
         int httpStatus = response.statusCode();
         String respBody = response.body();
 
-        System.out.println("[GHN] Create order HTTP status: " + httpStatus);
-        System.out.println("[GHN] Create order response body: " + respBody);
+        logger.info("[GHN] Create order HTTP status: " + httpStatus);
+        logger.info("[GHN] Create order response body: " + respBody);
 
-        System.out.println("[GHN] Final HTTP status: " + httpStatus);
-        System.out.println("[GHN] Response body: " + respBody);
+        logger.info("[GHN] Final HTTP status: " + httpStatus);
+        logger.info("[GHN] Response body: " + respBody);
 
         if (respBody == null || respBody.trim().isEmpty()) {
             throw new RuntimeException("GHN API returned empty response. HTTP status: " + httpStatus);
@@ -297,8 +303,8 @@ public class ShippingService {
         int httpStatus = response.statusCode();
         String respBody = response.body();
 
-        System.out.println("[GHN] Sync HTTP status: " + httpStatus);
-        System.out.println("[GHN] Sync response body: " + respBody);
+        logger.info("[GHN] Sync HTTP status: " + httpStatus);
+        logger.info("[GHN] Sync response body: " + respBody);
 
         if (respBody == null || respBody.trim().isEmpty()) {
             throw new RuntimeException("GHN sync returned empty response. HTTP status: " + httpStatus);

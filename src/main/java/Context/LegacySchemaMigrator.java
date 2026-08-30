@@ -1,5 +1,8 @@
 package Context;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import Util.AppConfig;
 
 import java.sql.Connection;
@@ -18,6 +21,9 @@ import java.sql.Statement;
  * migrated database is a no-op.
  */
 public final class LegacySchemaMigrator {
+
+    private static final Logger logger = LoggerFactory.getLogger(LegacySchemaMigrator.class);
+
 
     private LegacySchemaMigrator() {
     }
@@ -323,9 +329,9 @@ public final class LegacySchemaMigrator {
             // items to 50 and wiped discounts on every redeploy/restart. Data
             // corrections belong in versioned SQL migrations (sql/), not in app boot.
 
-            System.out.println("[DBContext] Migrations applied.");
+            logger.info("[DBContext] Migrations applied.");
         } catch (Exception e) {
-            System.err.println("[DBContext] Migration warning: " + e.getMessage());
+            logger.warn("[DBContext] Migration warning: " + e.getMessage());
         }
     }
 
@@ -337,7 +343,7 @@ public final class LegacySchemaMigrator {
                 stmt.execute("ALTER TABLE " + tableName + " ADD COLUMN " + columnName + " " + columnDefinition);
             }
         } catch (Exception e) {
-            System.err.println("[DBContext] Migration warning for "
+            logger.warn("[DBContext] Migration warning for "
                     + tableName + "." + columnName + ": " + e.getMessage());
         }
     }

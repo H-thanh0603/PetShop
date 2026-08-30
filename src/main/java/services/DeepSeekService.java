@@ -73,8 +73,7 @@ public class DeepSeekService {
         public void setRelatedOrder(Order relatedOrder) { this.relatedOrder = relatedOrder; }
     }
 
-    public AiResponse getChatResponse(String userMessage, List<AiChatMessage> history, User user) {
-        // 1. Check if AI is enabled
+    public AiResponse getChatResponse(String userMessage, List<AiChatMessage> history, User user) {        // 1. Check if AI is enabled
         boolean enabled = Boolean.parseBoolean(settingDAO.getSetting("AI_SUPPORT_ENABLED", "true"));
         if (!enabled) {
             AiResponse fallback = new AiResponse();
@@ -96,6 +95,18 @@ public class DeepSeekService {
             fallback.setAnswer("Trợ lý AI hiện chưa được cấu hình API key. Vui lòng liên hệ quản trị viên.");
             fallback.setIntent("UNKNOWN");
             return fallback;
+        }
+
+        // 2b. Guests asking about orders are answered deterministically in code
+        // (system-prompt rule 13): no API call, no leaked order data, and the
+        // behaviour does not depend on the model following the prompt.
+        if (user == null && looksLikeOrderInquiry(userMessage)) {
+            AiResponse guest = new AiResponse();
+            guest.setAnswer("Để kiểm tra đơn hàng, bạn vui lòng đăng nhập vào tài khoản đã dùng để đặt hàng. "
+                    + "Sau khi đăng nhập, tôi có thể hỗ trợ kiểm tra trạng thái đơn hàng của bạn.");
+            guest.setIntent("ORDER_STATUS");
+            guest.setNeedAdminSupport(false);
+            return guest;
         }
 
         // 3. Build context data
@@ -352,5 +363,22 @@ public class DeepSeekService {
         res.setNeedAdminSupport(true);
         res.setSuggestedAdminNote("AI error / Parse error / Timeout");
         return res;
+    }
+
+    /**
+     * Cheap heuristic for the deterministic guest order-inquiry guard: guests
+     * asking about orders never reach the model, so no order data can leak
+     * through it.
+     */
+    private static boolean looksLikeOrderInquiry(String message) {
+        if (message == null) {
+            return false;
+        }
+        String normalized = message.toLowerCase();
+        return normalized.contains("đơn hàng")
+                || normalized.contains("don hang")
+                || normalized.contains("kiểm tra đơn")
+                || normalized.contains("order")
+                || normalized.contains("vận đơn");
     }
 }

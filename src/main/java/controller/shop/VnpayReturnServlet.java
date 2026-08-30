@@ -1,5 +1,8 @@
 package controller.shop;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import Context.DBContext;
 import DAO.OrderDAO;
 import DAO.PaymentTransactionDAO;
@@ -20,6 +23,9 @@ import java.sql.Timestamp;
 import java.time.LocalDateTime;
 
 public class VnpayReturnServlet extends HttpServlet {
+
+    private static final Logger logger = LoggerFactory.getLogger(VnpayReturnServlet.class);
+
     private final OrderDAO orderDAO = new OrderDAO();
     private final PaymentTransactionDAO paymentTransactionDAO = new PaymentTransactionDAO();
 
@@ -90,7 +96,7 @@ public class VnpayReturnServlet extends HttpServlet {
                     newTx.setUpdatedAt(Timestamp.valueOf(LocalDateTime.now()));
                     paymentTransactionDAO.save(conn, newTx);
                 } catch (Exception ex) {
-                    ex.printStackTrace();
+                    logger.error("Unexpected error", ex);
                 }
             }
             if (!orderDAO.markOnlinePaymentPaidAndFinalize(orderId, "VNPAY")) {

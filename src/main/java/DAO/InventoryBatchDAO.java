@@ -1,5 +1,8 @@
 package DAO;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import Context.DBContext;
 import Model.InventoryAgingSnapshot;
 import Model.InventoryBatch;
@@ -21,6 +24,9 @@ import java.util.List;
 import java.util.Map;
 
 public class InventoryBatchDAO {
+
+    private static final Logger logger = LoggerFactory.getLogger(InventoryBatchDAO.class);
+
 
     public boolean recordImportBatch(InventoryBatch batch, Integer actorUserId) {
         String insertBatch = "INSERT INTO inventory_batches " +
@@ -76,7 +82,7 @@ public class InventoryBatchDAO {
                 conn.setAutoCommit(true);
             }
         } catch (SQLException e) {
-            e.printStackTrace();
+            logger.error("Unexpected error", e);
             return false;
         }
     }
@@ -96,7 +102,7 @@ public class InventoryBatchDAO {
                 }
             }
         } catch (SQLException e) {
-            e.printStackTrace();
+            logger.error("Unexpected error", e);
         }
         return batches;
     }
@@ -219,7 +225,7 @@ public class InventoryBatchDAO {
                 conn.setAutoCommit(true);
             }
         } catch (SQLException e) {
-            e.printStackTrace();
+            logger.error("Unexpected error", e);
             return false;
         }
     }
@@ -239,7 +245,7 @@ public class InventoryBatchDAO {
                 }
             }
         } catch (SQLException e) {
-            e.printStackTrace();
+            logger.error("Unexpected error", e);
         }
         return batches;
     }
@@ -274,7 +280,7 @@ public class InventoryBatchDAO {
                 snapshots.add(snapshot);
             }
         } catch (SQLException e) {
-            e.printStackTrace();
+            logger.error("Unexpected error", e);
         }
         return snapshots;
     }
@@ -310,7 +316,7 @@ public class InventoryBatchDAO {
                 }
             }
         } catch (SQLException e) {
-            e.printStackTrace();
+            logger.error("Unexpected error", e);
         }
         return views;
     }
@@ -350,7 +356,7 @@ public class InventoryBatchDAO {
                 recommendations.add(recommendation);
             }
         } catch (SQLException e) {
-            e.printStackTrace();
+            logger.error("Unexpected error", e);
         }
         return recommendations;
     }

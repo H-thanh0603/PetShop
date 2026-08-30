@@ -1,5 +1,8 @@
 package DAO;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 
@@ -11,11 +14,14 @@ import Context.DBContext;
  */
 public class AdminActionLogDAO {
 
+    private static final Logger logger = LoggerFactory.getLogger(AdminActionLogDAO.class);
+
+
     public void log(int adminId, String actionType, String targetType, Integer targetId, String details) {
         try (Connection conn = DBContext.getConnection()) {
             log(conn, adminId, actionType, targetType, targetId, details);
         } catch (Exception e) {
-            System.err.println("[AdminActionLog] Failed to log action: " + e.getMessage());
+            logger.warn("[AdminActionLog] Failed to log action: " + e.getMessage());
         }
     }
 
@@ -31,7 +37,7 @@ public class AdminActionLogDAO {
             ps.setString(5, details);
             ps.executeUpdate();
         } catch (Exception e) {
-            System.err.println("[AdminActionLog] Failed to log action: " + e.getMessage());
+            logger.warn("[AdminActionLog] Failed to log action: " + e.getMessage());
         }
     }
 }

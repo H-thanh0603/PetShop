@@ -1,5 +1,8 @@
 package Util;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import jakarta.mail.*;
 import jakarta.mail.internet.*;
 
@@ -10,6 +13,9 @@ import java.util.Properties;
  * Supports retry logic (up to 3 attempts with 2-second delay).
  */
 public class EmailUtil {
+
+    private static final Logger logger = LoggerFactory.getLogger(EmailUtil.class);
+
 
     private static final int MAX_RETRIES = 3;
     private static final long RETRY_DELAY_MS = 2000;
@@ -26,13 +32,13 @@ public class EmailUtil {
                 return; // success
             } catch (Exception e) {
                 lastException = e;
-                System.err.println("[EmailUtil] Attempt " + attempt + " failed for " + toEmail + ": " + e.getMessage());
+                logger.warn("[EmailUtil] Attempt " + attempt + " failed for " + toEmail + ": " + e.getMessage());
                 if (attempt < MAX_RETRIES) {
                     try { Thread.sleep(RETRY_DELAY_MS); } catch (InterruptedException ie) { Thread.currentThread().interrupt(); }
                 }
             }
         }
-        System.err.println("[EmailUtil] All " + MAX_RETRIES + " attempts failed for " + toEmail + ": " + lastException.getMessage());
+        logger.warn("[EmailUtil] All " + MAX_RETRIES + " attempts failed for " + toEmail + ": " + lastException.getMessage());
         throw new RuntimeException("Email delivery failed after " + MAX_RETRIES + " attempts", lastException);
     }
 
@@ -44,7 +50,7 @@ public class EmailUtil {
             try {
                 sendHtmlEmail(toEmail, subject, htmlBody);
             } catch (Exception e) {
-                System.err.println("[EmailUtil] Async send failed for " + toEmail + ": " + e.getMessage());
+                logger.warn("[EmailUtil] Async send failed for " + toEmail + ": " + e.getMessage());
             }
         });
         t.setDaemon(true);
@@ -86,7 +92,7 @@ public class EmailUtil {
             sendHtmlEmail(toEmail, subject, htmlBody);
             return true;
         } catch (Exception e) {
-            System.err.println("[EmailUtil] sendEmail failed: " + e.getMessage());
+            logger.warn("[EmailUtil] sendEmail failed: " + e.getMessage());
             return false;
         }
     }

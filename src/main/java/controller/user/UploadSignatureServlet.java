@@ -1,5 +1,8 @@
 package controller.user;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import DAO.CertificateDAO;
 import DAO.OrderDAO;
 import DAO.OrderSignDAO;
@@ -31,6 +34,9 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class UploadSignatureServlet extends HttpServlet {
+
+    private static final Logger logger = LoggerFactory.getLogger(UploadSignatureServlet.class);
+
 private final OrderSignDAO orderSignDAO = new OrderSignDAO();
 private final OrderSignatureDAO orderSignatureDAO = new OrderSignatureDAO();
 private final CertificateDAO certificateDAO = new CertificateDAO();
@@ -182,7 +188,7 @@ protected void doPost(HttpServletRequest request,
 
     } catch (Exception e) {
 
-        e.printStackTrace();
+        logger.error("Unexpected error", e);
 
         result.put("success", false);
         result.put("message", e.getMessage());

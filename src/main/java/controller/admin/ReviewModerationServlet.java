@@ -1,5 +1,8 @@
 package controller.admin;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.io.IOException;
 import java.util.List;
 
@@ -16,6 +19,9 @@ import Model.User;
 import Util.ValidationUtil;
 
 public class ReviewModerationServlet extends HttpServlet {
+
+    private static final Logger logger = LoggerFactory.getLogger(ReviewModerationServlet.class);
+
     private static final long serialVersionUID = 1L;
 
     @Override
@@ -130,7 +136,7 @@ public class ReviewModerationServlet extends HttpServlet {
             }
 
         } catch (Exception e) {
-            e.printStackTrace();
+            logger.error("Unexpected error", e);
             message = "Có lỗi xảy ra khi xử lý review.";
             messageType = "error";
         }

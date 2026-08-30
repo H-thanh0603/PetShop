@@ -468,7 +468,7 @@ public class CheckoutServlet extends HttpServlet {
                 result.put("message", "Đặt hàng thành công!");
                 result.put("orderId", completedOrderId);
                 result.put("redirectUrl", request.getContextPath() + "/order-success");
-                System.out.println("DEBUG COD redirectUrl=" + result.get("redirectUrl"));
+                logger.info("DEBUG COD redirectUrl=" + result.get("redirectUrl"));
                 write(response, result);
                 return;
             }
