@@ -35,7 +35,7 @@
             <h1>403</h1>
             <p>Rất tiếc, bạn không có quyền truy cập vào trang này.</p>
             <c:choose>
-                <c:when test="${sessionScope.user.role == 'shiper'}">
+                <c:when test="${sessionScope.user.role == 'shipper'}">
                     <a href="${pageContext.request.contextPath}/admin/orders" class="btn btn-primary">Quay về trang đơn hàng</a>
                 </c:when>
                 <c:when test="${not empty sessionScope.user.role}">

@@ -238,7 +238,7 @@
                         <option value="user" ${selectedRole == 'user' ? 'selected' : ''}>Khách hàng</option>
                         <option value="admin" ${selectedRole == 'admin' ? 'selected' : ''}>Quản trị viên</option>
                         <option value="staff" ${selectedRole == 'staff' ? 'selected' : ''}>Nhân viên</option>
-                        <option value="shiper" ${selectedRole == 'shiper' ? 'selected' : ''}>Shipper</option>
+                        <option value="shiper" ${selectedRole == 'shipper' ? 'selected' : ''}>Shipper</option>
                     </select>
                     <button type="submit" class="btn btn-primary">
                         <i class='bx bx-search'></i> Tìm kiếm
@@ -313,7 +313,7 @@
                                             <c:when test="${user.role == 'staff'}">
                                                 <span class="badge-admin badge-info"><i class='bx bxs-user-badge'></i> Staff</span>
                                             </c:when>
-                                            <c:when test="${user.role == 'shiper'}">
+                                            <c:when test="${user.role == 'shipper'}">
                                                 <span class="badge-admin badge-secondary"><i class='bx bxs-truck'></i> Shiper</span>
                                             </c:when>
                                             <c:otherwise>
@@ -491,7 +491,7 @@
                                 <option value="user">Khách hàng (User)</option>
                                 <option value="admin">Quản trị viên (Admin)</option>
                                 <option value="staff">Nhân viên (Staff)</option>
-                                <option value="shiper">Người giao hàng (Shiper)</option>
+                                <option value="shiper">Người giao hàng (Shipper)</option>
                             </select>
                         </div>
                     </div>

@@ -196,7 +196,7 @@
                         <label class="form-label">Trạng thái mới</label>
                         <select name="status" id="modalStatus" class="form-select">
                             <c:choose>
-                                <c:when test="${sessionScope.user.role == 'shiper'}">
+                                <c:when test="${sessionScope.user.role == 'shipper'}">
                                     <option value="Shipping">Đang giao hàng</option>
                                     <option value="Delivered">Đã giao hàng</option>
                                 </c:when>

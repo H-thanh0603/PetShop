@@ -14,7 +14,7 @@ import jakarta.servlet.http.HttpSession;
 import java.io.IOException;
 
 /**
- * Handles login for admin, staff, and shiper roles.
+ * Handles login for admin, staff, and shipper roles.
  */
 
 public class AdminLoginServlet extends HttpServlet {
@@ -59,20 +59,26 @@ public class AdminLoginServlet extends HttpServlet {
         if (user != null) {
             // Check for correct role
             String role = user.getRole();
-            boolean isAdminOrStaffOrShiper = "admin".equals(role) || "staff".equals(role) || "shiper".equals(role);
+            boolean isAdminOrStaffOrShipper = "admin".equals(role) || "staff".equals(role) || "shipper".equals(role);
 
-            if (isAdminOrStaffOrShiper && user.getStatus()) {
+            if (isAdminOrStaffOrShipper && user.getStatus()) {
                 // Reset failed attempts
                 userDAO.resetFailedAttempts(email);
 
-                // Create new session
+                // Session regeneration: invalidate the pre-auth session (and its
+                // fixed JSESSIONID + CSRF token) so a session-fixation attempt on
+                // /admin/login fails; the new session gets a fresh CSRF token too.
+                HttpSession oldSession = request.getSession(false);
+                if (oldSession != null) {
+                    oldSession.invalidate();
+                }
                 HttpSession session = request.getSession(true);
                 session.setAttribute("user", user);
                 session.setAttribute("username", user.getUsername());
                 session.setAttribute("role", user.getRole());
 
                 // Redirect based on role
-                if ("shiper".equals(role)) {
+                if ("shipper".equals(role)) {
                     response.sendRedirect(request.getContextPath() + "/admin/orders");
                 } else {
                     response.sendRedirect(request.getContextPath() + "/pages/admin/dashboard");

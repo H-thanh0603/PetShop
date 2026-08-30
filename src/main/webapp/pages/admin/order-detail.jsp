@@ -197,7 +197,7 @@
                         <div class="col-md-8">
                             <select name="status" class="form-select">
                                 <c:choose>
-                                    <c:when test="${sessionScope.user.role == 'shiper'}">
+                                    <c:when test="${sessionScope.user.role == 'shipper'}">
                                         <option value="Shipping" ${order.status == 'Shipping' ? 'selected' : ''}>Đang giao hàng</option>
                                         <option value="Delivered" ${order.status == 'Delivered' ? 'selected' : ''}>Đã giao hàng</option>
                                     </c:when>
