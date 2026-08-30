@@ -14,10 +14,14 @@ public class OTPUtil {
     
     // Thời gian hết hạn OTP (5 phút)
     private static final long OTP_EXPIRY_MS = 5 * 60 * 1000;
-    
+
+    // Số lần nhập sai tối đa trước khi OTP bị vô hiệu (chống brute-force
+    // trên không gian 10^6 mã)
+    private static final int MAX_VERIFY_ATTEMPTS = 5;
+
     // Độ dài OTP
     private static final int OTP_LENGTH = 6;
-    
+
     /**
      * Tạo OTP mới cho email
      */
@@ -27,54 +31,78 @@ public class OTPUtil {
         for (int i = 0; i < OTP_LENGTH; i++) {
             otp.append(random.nextInt(10));
         }
-        
+
+        // Dọn các OTP đã hết hạn để map không phình to vô hạn
+        purgeExpired();
+
         String otpCode = otp.toString();
         otpStorage.put(email.toLowerCase(), new OTPData(otpCode, System.currentTimeMillis()));
-        
+
         return otpCode;
     }
-    
+
     /**
-     * Xác thực OTP
+     * Xác thực OTP. Sau MAX_VERIFY_ATTEMPTS lần nhập sai, OTP bị vô hiệu
+     * và người dùng phải yêu cầu mã mới.
      */
     public static boolean verifyOTP(String email, String otp) {
         if (email == null || otp == null) return false;
-        
-        OTPData data = otpStorage.get(email.toLowerCase());
+
+        String key = email.toLowerCase();
+        OTPData data = otpStorage.get(key);
         if (data == null) return false;
-        
+
         // Kiểm tra hết hạn
         if (System.currentTimeMillis() - data.timestamp > OTP_EXPIRY_MS) {
-            otpStorage.remove(email.toLowerCase());
+            otpStorage.remove(key);
             return false;
         }
-        
+
         // Kiểm tra OTP
         if (data.otp.equals(otp.trim())) {
-            otpStorage.remove(email.toLowerCase()); // Xóa sau khi verify thành công
+            otpStorage.remove(key); // Xóa sau khi verify thành công
             return true;
         }
-        
+
+        data.attempts++;
+        if (data.attempts >= MAX_VERIFY_ATTEMPTS) {
+            otpStorage.remove(key); // Vô hiệu OTP sau quá nhiều lần sai
+        }
         return false;
     }
-    
+
     /**
-     * Xác thực OTP nhưng không xóa (dùng cho multi-step flow)
+     * Xác thực OTP nhưng không xóa (dùng cho multi-step flow).
+     * Cũng bị vô hiệu sau MAX_VERIFY_ATTEMPTS lần sai.
      */
     public static boolean verifyOTPKeep(String email, String otp) {
         if (email == null || otp == null) return false;
-        
-        OTPData data = otpStorage.get(email.toLowerCase());
+
+        String key = email.toLowerCase();
+        OTPData data = otpStorage.get(key);
         if (data == null) return false;
-        
+
         // Kiểm tra hết hạn
         if (System.currentTimeMillis() - data.timestamp > OTP_EXPIRY_MS) {
-            otpStorage.remove(email.toLowerCase());
+            otpStorage.remove(key);
             return false;
         }
-        
+
         // Kiểm tra OTP (không xóa)
-        return data.otp.equals(otp.trim());
+        if (data.otp.equals(otp.trim())) {
+            return true;
+        }
+
+        data.attempts++;
+        if (data.attempts >= MAX_VERIFY_ATTEMPTS) {
+            otpStorage.remove(key);
+        }
+        return false;
+    }
+
+    private static void purgeExpired() {
+        long now = System.currentTimeMillis();
+        otpStorage.entrySet().removeIf(e -> now - e.getValue().timestamp > OTP_EXPIRY_MS);
     }
     
     /**
@@ -129,9 +157,10 @@ public class OTPUtil {
      * Class lưu trữ OTP data
      */
     private static class OTPData {
-        String otp;
-        long timestamp;
-        
+        final String otp;
+        final long timestamp;
+        volatile int attempts;
+
         OTPData(String otp, long timestamp) {
             this.otp = otp;
             this.timestamp = timestamp;

@@ -209,6 +209,8 @@ public class RateLimitFilter implements Filter {
         endpointLimits.put("/login", AppConfig.getInt("ratelimit.login", 10));
         endpointLimits.put("/register", AppConfig.getInt("ratelimit.register", 6));
         endpointLimits.put("/forgot-password", AppConfig.getInt("ratelimit.forgot-password", 6));
+        endpointLimits.put("/verify-otp", AppConfig.getInt("ratelimit.verify-otp", 6));
+        endpointLimits.put("/reset-password", AppConfig.getInt("ratelimit.reset-password", 6));
         endpointLimits.put("/checkout", AppConfig.getInt("ratelimit.checkout", 8));
         endpointLimits.put("/api/payment/bank-webhook", AppConfig.getInt("ratelimit.bank-webhook", 60));
         endpointLimits.put("/api/payment/vnpay-ipn", AppConfig.getInt("ratelimit.vnpay-ipn", 60));
