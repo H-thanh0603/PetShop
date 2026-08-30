@@ -41,7 +41,7 @@ class BankWebhookServletTest {
                 + "\"id\":12345,"
                 + "\"gateway\":\"VPBank\","
                 + "\"transactionDate\":\"2026-06-14 18:05:39\","
-                + "\"accountNumber\":\"0368600557\","
+                + "\"accountNumber\":\"0000000000\","
                 + "\"transferType\":\"in\","
                 + "\"transferAmount\":258000,"
                 + "\"content\":\"Thanh toan PETSHOP-U9-654321\","
@@ -62,6 +62,6 @@ class BankWebhookServletTest {
         assertEquals("SEPAY987", payload.getTransactionId());
         assertEquals(new BigDecimal("258000"), payload.getAmount());
         assertEquals("Thanh toan PETSHOP-U9-654321", payload.getContent());
-        assertEquals("0368600557", payload.getBankAccount());
+        assertEquals("0000000000", payload.getBankAccount());
     }
 }

@@ -24,8 +24,8 @@ public class BankTransferDetails {
         return new BankTransferDetails(
                 AppConfig.getOrDefault("payment.bank.id", "VPB"),
                 AppConfig.getOrDefault("payment.bank.display-name", "VP Bank"),
-                AppConfig.getOrDefault("payment.bank.account-number", "0368600557"),
-                AppConfig.getOrDefault("payment.bank.account-name", "NGUYEN HUU THANH"),
+                AppConfig.getOrDefault("payment.bank.account-number", ""),
+                AppConfig.getOrDefault("payment.bank.account-name", ""),
                 AppConfig.getOrDefault("payment.bank.transfer-prefix", "PETSH"),
                 AppConfig.getOrDefault("payment.bank.currency", "VND")
         );

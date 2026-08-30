@@ -3,7 +3,6 @@ app.base-url=http://localhost:8080/PetShop
 app.context-path=/PetShop
 app.cookies.secure=false
 deploy.tomcat-home=
-app.cookies.secure=false
 app.static.cache.max-age-seconds=86400
 
 # Social login redirect URI examples:
@@ -16,8 +15,8 @@ payment.bank.pending-minutes=10
 
 # Bank transfer display config
 payment.bank.id=VPB
-payment.bank.account-number=0368600557
-payment.bank.account-name=NGUYEN HUU THANH
+payment.bank.account-number=YOUR_ACCOUNT_NUMBER
+payment.bank.account-name=YOUR_ACCOUNT_NAME
 payment.bank.display-name=VP Bank
 payment.bank.transfer-prefix=PETSH
 payment.bank.currency=VND
