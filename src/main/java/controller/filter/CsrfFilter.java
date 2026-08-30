@@ -47,9 +47,6 @@ public class CsrfFilter implements Filter {
         if (submittedToken == null || submittedToken.isEmpty()) {
             submittedToken = request.getParameter("csrfToken");
         }
-        System.out.println("=== CSRF CHECK ===");
-        System.out.println("Session token: " + sessionToken);
-        System.out.println("Submitted token: " + submittedToken);
         if (submittedToken != null && MessageDigest.isEqual(
                 submittedToken.getBytes(StandardCharsets.UTF_8),
                 sessionToken.getBytes(StandardCharsets.UTF_8))) {

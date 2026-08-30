@@ -1,5 +1,6 @@
 <%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
 <%@ taglib prefix="c" uri="jakarta.tags.core" %>
+<%@ taglib prefix="fn" uri="jakarta.tags.functions" %>
 <!DOCTYPE html>
 <html lang="vi">
 <head>
@@ -61,14 +62,14 @@
         </div>
 
         <c:if test="${not empty requestScope.error}">
-            <div class="alert alert-danger">${requestScope.error}</div>
+            <div class="alert alert-danger">${fn:escapeXml(requestScope.error)}</div>
         </c:if>
 
         <form method="POST" action="${pageContext.request.contextPath}/admin/login">
              <input type="hidden" name="csrfToken" value="${sessionScope.csrfToken}" />
             <div class="mb-3">
                 <label for="email" class="form-label fw-bold">Email</label>
-                <input type="email" class="form-control" id="email" name="email" value="${param.email}" required>
+                <input type="email" class="form-control" id="email" name="email" value="${fn:escapeXml(param.email)}" required>
             </div>
             <div class="mb-4">
                 <label for="password" class="form-label fw-bold">Mật khẩu</label>

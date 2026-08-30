@@ -32,9 +32,9 @@ public class PasswordUtil {
         try {
             return BCrypt.checkpw(plainPassword, hashedPassword);
         } catch (Exception e) {
-            // Nếu hash không hợp lệ (ví dụ: mật khẩu cũ chưa hash)
-            // So sánh trực tiếp để hỗ trợ migration
-            return plainPassword.equals(hashedPassword);
+            // Malformed/legacy hash: never fall back to plaintext comparison.
+            // Plaintext passwords must be migrated to BCrypt (hashPassword) instead.
+            return false;
         }
     }
     

@@ -295,12 +295,12 @@
                     <div class="shop-pagination">
                         <c:set var="baseUrl" value="${pageContext.request.contextPath}/shop?" />
                         <c:set var="params" value="" />
-                        <c:if test="${not empty selectedPet}"><c:set var="params" value="${params}pet=${selectedPet}&" /></c:if>
-                        <c:if test="${not empty selectedCategory}"><c:set var="params" value="${params}category=${selectedCategory}&" /></c:if>
-                        <c:if test="${not empty searchKeyword}"><c:set var="params" value="${params}search=${searchKeyword}&" /></c:if>
-                        <c:if test="${not empty selectedSort}"><c:set var="params" value="${params}sort=${selectedSort}&" /></c:if>
-                        <c:if test="${not empty selectedPriceRange}"><c:set var="params" value="${params}priceRange=${selectedPriceRange}&" /></c:if>
-                        <c:if test="${not empty selectedDiscountOnly}"><c:set var="params" value="${params}discountOnly=${selectedDiscountOnly}&" /></c:if>
+                        <c:if test="${not empty selectedPet}"><c:set var="params" value="${params}pet=${fn:escapeXml(selectedPet)}&" /></c:if>
+                        <c:if test="${not empty selectedCategory}"><c:set var="params" value="${params}category=${fn:escapeXml(selectedCategory)}&" /></c:if>
+                        <c:if test="${not empty searchKeyword}"><c:set var="params" value="${params}search=${fn:escapeXml(searchKeyword)}&" /></c:if>
+                        <c:if test="${not empty selectedSort}"><c:set var="params" value="${params}sort=${fn:escapeXml(selectedSort)}&" /></c:if>
+                        <c:if test="${not empty selectedPriceRange}"><c:set var="params" value="${params}priceRange=${fn:escapeXml(selectedPriceRange)}&" /></c:if>
+                        <c:if test="${not empty selectedDiscountOnly}"><c:set var="params" value="${params}discountOnly=${fn:escapeXml(selectedDiscountOnly)}&" /></c:if>
 
                         <a href="${baseUrl}${params}page=${currentPage - 1}" class="${currentPage <= 1 ? 'disabled' : ''}"><i class='bx bx-chevron-left'></i></a>
                         <c:forEach begin="1" end="${totalPages}" var="i">
