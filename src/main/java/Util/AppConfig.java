@@ -10,11 +10,14 @@ public final class AppConfig {
     private static final Logger logger = LoggerFactory.getLogger(AppConfig.class);
     private static final Properties properties = new Properties();
     private static final String[] PROPERTY_FILES = {
+            // Order matters: later files overwrite earlier ones, so
+            // secrets.properties (gitignored, real values) must be last and win
+            // over the blank placeholders in the tracked config files.
             "app.properties",
             "db.properties",
-            "secrets.properties",
             "ship.properties",
-            "vnpay.properties"
+            "vnpay.properties",
+            "secrets.properties"
     };
 
     // Set by the Spring context (AppConfigBridge); lets configuration live in

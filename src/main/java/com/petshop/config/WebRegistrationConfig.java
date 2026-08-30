@@ -27,6 +27,7 @@ import controller.pages.HomeServlet;
 import controller.pages.PolicyServlet;
 import controller.payment.BankWebhookServlet;
 import controller.payment.GhnWebhookServlet;
+import controller.payment.VnpayIpnServlet;
 import controller.shop.AddReviewServlet;
 import controller.shop.AddToCartServlet;
 import controller.shop.CartServlet;
@@ -93,6 +94,7 @@ public class WebRegistrationConfig {
             register(servletContext, "HomeServlet", controller.pages.HomeServlet::new, "/home");
             register(servletContext, "PolicyServlet", controller.pages.PolicyServlet::new, "/privacy-policy", "/terms", "/shipping-policy", "/return-policy", "/buying-guide", "/support");
             register(servletContext, "BankWebhookServlet", controller.payment.BankWebhookServlet::new, "/api/payment/bank-webhook");
+            register(servletContext, "VnpayIpnServlet", VnpayIpnServlet::new, "/api/payment/vnpay-ipn");
             register(servletContext, "GhnWebhookServlet", controller.payment.GhnWebhookServlet::new, "/api/ghn/webhook");
             register(servletContext, "AddReviewServlet", controller.shop.AddReviewServlet::new, "/add-review");
             register(servletContext, "AddToCartServlet", controller.shop.AddToCartServlet::new, "/add-to-cart");
