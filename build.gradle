@@ -3,6 +3,7 @@ plugins {
     id 'maven-publish'
     id 'war'
     id 'org.hidetake.ssh' version '2.11.2'
+    id 'org.springframework.boot' version '3.3.4'
 }
 
 group = 'com.petshop'
@@ -22,7 +23,24 @@ repositories {
 }
 
 dependencies {
+    // Spring Boot BOM manages versions for all org.springframework.* and
+    // tomcat/flyway/mail artifacts below.
+    implementation platform('org.springframework.boot:spring-boot-dependencies:3.3.4')
+    providedRuntime platform('org.springframework.boot:spring-boot-dependencies:3.3.4')
+
     providedCompile 'jakarta.servlet:jakarta.servlet-api:6.0.0'
+
+    // Spring Boot (web + embedded Tomcat + JSP + actuator)
+    implementation 'org.springframework.boot:spring-boot-starter-web'
+    implementation 'org.springframework.boot:spring-boot-starter-actuator'
+    implementation 'org.springframework.boot:spring-boot-starter-validation'
+    implementation 'org.springframework.boot:spring-boot-starter-mail'
+    implementation 'org.apache.tomcat.embed:tomcat-embed-jasper'
+    providedRuntime 'org.springframework.boot:spring-boot-starter-tomcat'
+
+    // Flyway replaces the ad-hoc migrations that used to run from DBContext
+    implementation 'org.flywaydb:flyway-core'
+    implementation 'org.flywaydb:flyway-mysql'
 
     implementation 'jakarta.servlet.jsp.jstl:jakarta.servlet.jsp.jstl-api:3.0.0'
     implementation 'org.glassfish.web:jakarta.servlet.jsp.jstl:3.0.1'
@@ -36,7 +54,7 @@ dependencies {
     implementation 'com.google.code.gson:gson:2.10.1'
     implementation 'org.mindrot:jbcrypt:0.4'
 
-    // HikariCP connection pool
+    // HikariCP connection pool (Spring Boot manages its version from 3.3.x)
     implementation 'com.zaxxer:HikariCP:5.1.0'
 
     // SLF4J + Logback
@@ -49,6 +67,7 @@ dependencies {
     testImplementation 'org.mockito:mockito-junit-jupiter:5.12.0'
     testImplementation 'org.mockito:mockito-inline:5.2.0'
     testImplementation 'net.jqwik:jqwik:1.8.4'
+    testImplementation 'org.springframework.boot:spring-boot-starter-test'
 }
 
 configurations.configureEach {
@@ -103,8 +122,19 @@ def bankPendingMinutes = prop('bankPendingMinutes', '60')
 def systemTomcatService = prop('systemTomcatService', 'tomcat10')
 def systemTomcatWebapps = prop('systemTomcatWebapps', '/var/lib/tomcat10/webapps')
 
+springBoot {
+    mainClass = 'com.petshop.PetShopApplication'
+}
+
+// Plain WAR for external Tomcat (legacy deploy path until the migration
+// completes). bootWar is the executable artifact: java -jar petshop-boot.war
 tasks.named('war') {
+    enabled = true
     archiveFileName = "${appContext}.war"
+}
+
+tasks.named('bootWar') {
+    archiveFileName = 'petshop-boot.war'
 }
 
 remotes {

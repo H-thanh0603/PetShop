@@ -1,0 +1,46 @@
+services:
+  mysql:
+    image: mysql:8.0
+    container_name: petshop-mysql-dev
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:?set in .env}
+      MYSQL_DATABASE: petvaccine
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql-data-dev:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+  app:
+    build: .
+    container_name: petshop-app-dev
+    depends_on:
+      mysql:
+        condition: service_healthy
+    environment:
+      SPRING_PROFILES_ACTIVE: dev
+      DB_HOST: mysql
+      DB_PORT: 3306
+      DB_NAME: petvaccine
+      DB_USERNAME: root
+      DB_PASSWORD: ${MYSQL_ROOT_PASSWORD:?set in .env}
+      # App secrets (VNPAY, GHN, DeepSeek, bank webhook...) — put real values
+      # in .env, never commit them.
+      DEEPSEEK_API_KEY: ${DEEPSEEK_API_KEY:-}
+      VNPAY_TMN_CODE: ${VNPAY_TMN_CODE:-}
+      VNPAY_HASH_SECRET: ${VNPAY_HASH_SECRET:-}
+      TOKEN: ${GHN_TOKEN:-}
+      PAYMENT_BANK_WEBHOOK_SECRET: ${PAYMENT_BANK_WEBHOOK_SECRET:-}
+      PAYMENT_GHN_WEBHOOK_SECRET: ${PAYMENT_GHN_WEBHOOK_SECRET:-}
+    ports:
+      - "8080:8080"
+    volumes:
+      - upload-data:/app/uploads
+
+volumes:
+  mysql-data-dev:
+  upload-data:

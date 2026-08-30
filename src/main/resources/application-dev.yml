@@ -1,0 +1,13 @@
+spring:
+  datasource:
+    # Secrets come from environment variables (see docker-compose.dev.yml).
+    url: jdbc:mysql://${DB_HOST:localhost}:${DB_PORT:3306}/${DB_NAME:petvaccine}?${DB_OPTION:useUnicode=true&characterEncoding=utf-8&serverTimezone=UTC}
+    username: ${DB_USERNAME:petshop}
+    password: ${DB_PASSWORD:}
+    hikari:
+      maximum-pool-size: 20
+      connection-timeout: 30000
+      idle-timeout: 600000
+      max-lifetime: 1800000
+  flyway:
+    enabled: false # enabled in Phase 1 once migrations are ported
