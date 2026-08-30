@@ -4,7 +4,6 @@ import java.io.IOException;
 import java.util.List;
 
 import jakarta.servlet.ServletException;
-import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -14,7 +13,6 @@ import DAO.PetTypeDAO;
 import Model.PetType;
 import services.PetTypeCache;
 
-@WebServlet("/pages/admin/pet-types")
 public class PetTypeServlet extends HttpServlet {
     private static final long serialVersionUID = 1L;
     private PetTypeDAO dao = new PetTypeDAO();

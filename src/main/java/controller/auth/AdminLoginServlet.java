@@ -6,7 +6,6 @@ import Model.User;
 import Util.FormHelper;
 
 import jakarta.servlet.ServletException;
-import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -17,7 +16,7 @@ import java.io.IOException;
 /**
  * Handles login for admin, staff, and shiper roles.
  */
-@WebServlet("/admin/login")
+
 public class AdminLoginServlet extends HttpServlet {
     private final UserDAO userDAO = new UserDAO();
     private final SecurityEventDAO securityEventDAO = new SecurityEventDAO();

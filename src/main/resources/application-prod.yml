@@ -1,13 +1,6 @@
-spring:
-  datasource:
-    # All secrets MUST come from environment variables in production.
-    url: jdbc:mysql://${DB_HOST}:${DB_PORT:3306}/${DB_NAME}?${DB_OPTION:useUnicode=true&characterEncoding=utf-8&useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true}
-    username: ${DB_USERNAME}
-    password: ${DB_PASSWORD}
-    hikari:
-      maximum-pool-size: 20
-      connection-timeout: 30000
-      idle-timeout: 600000
-      max-lifetime: 1800000
-  flyway:
-    enabled: false # enabled in Phase 1 once migrations are ported
+# Production profile. DB connection details come from DBProperties
+# (environment variables: DB_HOST, DB_PORT, DB_NAME, DB_USERNAME, DB_PASSWORD)
+# via the Spring-managed HikariCP pool in DataSourceConfig. All secrets MUST
+# come from environment variables.
+app:
+  upload-dir: ${APP_UPLOAD_DIR:?set APP_UPLOAD_DIR to a persistent volume path}

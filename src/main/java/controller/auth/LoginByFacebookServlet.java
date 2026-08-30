@@ -9,7 +9,6 @@ import Util.AuthRedirectUtil;
 import Util.SocialAuthUtil;
 import controller.FaceBook.FaceBookLogin;
 import jakarta.servlet.ServletException;
-import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -20,7 +19,6 @@ import org.slf4j.LoggerFactory;
 import java.io.IOException;
 import java.util.Map;
 
-@WebServlet("/LoginByFacebookServlet")
 public class LoginByFacebookServlet extends HttpServlet {
     private UserDAO userDao = new UserDAO();
     private static final Logger logger = LoggerFactory.getLogger(LoginByFacebookServlet.class);

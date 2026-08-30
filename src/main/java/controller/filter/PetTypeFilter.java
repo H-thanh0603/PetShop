@@ -9,7 +9,6 @@ import jakarta.servlet.FilterConfig;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.ServletRequest;
 import jakarta.servlet.ServletResponse;
-import jakarta.servlet.annotation.WebFilter;
 import jakarta.servlet.http.HttpServletRequest;
 
 import DAO.PetTypeDAO;
@@ -22,7 +21,7 @@ import org.slf4j.LoggerFactory;
  * Filter để load danh sách loại thú cưng cho tất cả các trang.
  * Dùng PetTypeCache với TTL 1 giờ để tránh query DB mỗi request.
  */
-@WebFilter("/*")
+
 public class PetTypeFilter implements Filter {
 
     private static final Logger logger = LoggerFactory.getLogger(PetTypeFilter.class);

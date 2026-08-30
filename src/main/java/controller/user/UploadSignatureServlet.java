@@ -16,7 +16,6 @@ import Util.DigitalSigner;
 import com.google.gson.Gson;
 
 import jakarta.servlet.ServletException;
-import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -31,7 +30,6 @@ import java.util.Base64;
 import java.util.HashMap;
 import java.util.Map;
 
-@WebServlet("/user/upload-signature")
 public class UploadSignatureServlet extends HttpServlet {
 private final OrderSignDAO orderSignDAO = new OrderSignDAO();
 private final OrderSignatureDAO orderSignatureDAO = new OrderSignatureDAO();

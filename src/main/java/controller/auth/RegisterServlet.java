@@ -5,7 +5,6 @@ import java.util.HashMap;
 import java.util.Map;
 import com.google.gson.Gson;
 import jakarta.servlet.ServletException;
-import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -17,7 +16,6 @@ import Util.FormHelper;
 import Util.OTPUtil;
 import Util.ValidationUtil;
 
-@WebServlet("/register")
 public class RegisterServlet extends HttpServlet {
     private static final long serialVersionUID = 1L;
     private final Gson gson = new Gson();

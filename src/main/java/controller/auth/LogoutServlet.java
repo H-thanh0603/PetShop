@@ -2,7 +2,6 @@ package controller.auth;
 
 import java.io.IOException;
 import jakarta.servlet.ServletException;
-import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
@@ -11,7 +10,6 @@ import jakarta.servlet.http.HttpSession;
 import DAO.RememberTokenDAO;
 import Model.User;
 
-@WebServlet("/logout")
 public class LogoutServlet extends HttpServlet {
     private static final long serialVersionUID = 1L;
     private final RememberTokenDAO rememberTokenDAO = new RememberTokenDAO();

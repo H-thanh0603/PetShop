@@ -4,7 +4,6 @@ import DAO.ReportDAO;
 import Model.Product;
 import Model.Review;
 import jakarta.servlet.ServletException;
-import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -14,7 +13,6 @@ import java.util.Calendar;
 import java.util.List;
 import java.util.Map;
 
-@WebServlet("/admin/reports")
 public class ReportServlet extends HttpServlet {
     private static final long serialVersionUID = 1L;
     private final ReportDAO reportDAO = new ReportDAO();

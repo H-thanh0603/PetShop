@@ -17,6 +17,14 @@ public final class AppConfig {
             "vnpay.properties"
     };
 
+    // Set by the Spring context (AppConfigBridge); lets configuration live in
+    // application.yml / Spring Environment while legacy static callers keep working.
+    private static volatile org.springframework.core.env.Environment springEnvironment;
+
+    public static void setSpringEnvironment(org.springframework.core.env.Environment environment) {
+        springEnvironment = environment;
+    }
+
     static {
         for (String fileName : PROPERTY_FILES) {
             loadOptionalProperties(fileName);
@@ -78,6 +86,14 @@ public final class AppConfig {
     private static String lookup(String key) {
         if (!hasText(key)) {
             return null;
+        }
+
+        org.springframework.core.env.Environment env = springEnvironment;
+        if (env != null) {
+            String springValue = env.getProperty(key);
+            if (hasText(springValue)) {
+                return springValue;
+            }
         }
 
         String systemValue = System.getProperty(key);

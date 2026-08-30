@@ -3,9 +3,19 @@ spring:
     name: petshop
   profiles:
     default: dev
+  flyway:
+    # Managed explicitly by DataSourceConfig (Flyway bean) — auto-config off.
+    enabled: false
+    baseline-on-migrate: true
+    baseline-version: 0
 
 server:
   port: 8080
+  servlet:
+    session:
+      timeout: 30m
+      cookie:
+        http-only: true
 
 management:
   endpoints:

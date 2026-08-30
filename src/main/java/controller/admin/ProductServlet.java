@@ -10,8 +10,6 @@ import java.util.List;
 import java.util.Map;
 
 import jakarta.servlet.ServletException;
-import jakarta.servlet.annotation.MultipartConfig;
-import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -30,12 +28,6 @@ import Model.User;
 import Util.ValidationUtil;
 import Util.FileUploadValidator;
 
-@WebServlet("/pages/admin/products")
-@MultipartConfig(
-    fileSizeThreshold = 1024 * 1024,      // 1 MB - ngưỡng lưu vào bộ nhớ
-    maxFileSize = 1024 * 1024 * 5,        // 5 MB - kích thước file tối đa
-    maxRequestSize = 1024 * 1024 * 20     // 20 MB - kích thước request tối đa
-)
 public class ProductServlet extends HttpServlet {
     private static final long serialVersionUID = 1L;
     

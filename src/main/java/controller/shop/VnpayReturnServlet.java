@@ -7,7 +7,6 @@ import Model.Order;
 import Model.PaymentTransaction;
 import Util.VnpayUtil;
 import jakarta.servlet.ServletException;
-import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -20,7 +19,6 @@ import java.sql.Connection;
 import java.sql.Timestamp;
 import java.time.LocalDateTime;
 
-@WebServlet("/vnpay-return")
 public class VnpayReturnServlet extends HttpServlet {
     private final OrderDAO orderDAO = new OrderDAO();
     private final PaymentTransactionDAO paymentTransactionDAO = new PaymentTransactionDAO();

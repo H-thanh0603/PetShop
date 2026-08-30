@@ -3,7 +3,6 @@ package controller.admin;
 import java.io.IOException;
 import java.util.List;
 import jakarta.servlet.ServletException;
-import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -17,7 +16,6 @@ import Model.User;
 import services.ShippingService;
 import com.google.gson.JsonObject;
 
-@WebServlet("/admin/orders")
 public class ManageOrderServlet extends HttpServlet {
     private static final long serialVersionUID = 1L;
     private AdminActionLogDAO actionLog = new AdminActionLogDAO();

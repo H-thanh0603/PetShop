@@ -12,7 +12,6 @@ import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import jakarta.servlet.ServletException;
-import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -28,16 +27,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-@WebServlet({
-    "/admin/ai-support",
-    "/admin/ai-support/dashboard",
-    "/admin/ai-support/sessions",
-    "/admin/ai-support/sessions/detail",
-    "/admin/ai-support/sessions/reply",
-    "/admin/ai-support/sessions/close",
-    "/admin/ai-support/knowledge",
-    "/admin/ai-support/settings"
-})
 public class AdminAiSupportServlet extends HttpServlet {
     private static final Logger log = LoggerFactory.getLogger(AdminAiSupportServlet.class);
     private final AiChatSessionDAO sessionDAO = new AiChatSessionDAO();

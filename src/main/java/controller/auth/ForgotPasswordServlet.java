@@ -2,7 +2,6 @@ package controller.auth;
 
 import java.io.IOException;
 import jakarta.servlet.ServletException;
-import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -13,7 +12,6 @@ import Model.User;
 import Util.OTPUtil;
 import Util.PasswordUtil;
 
-@WebServlet(urlPatterns = {"/forgot-password", "/verify-otp", "/reset-password"})
 public class ForgotPasswordServlet extends HttpServlet {
     private static final long serialVersionUID = 1L;
     private UserDAO userDAO = new UserDAO();
@@ -64,7 +62,6 @@ public class ForgotPasswordServlet extends HttpServlet {
                 break;
         }
     }
-
 
     private void handleForgotPassword(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {

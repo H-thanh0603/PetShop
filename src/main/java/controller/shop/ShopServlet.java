@@ -8,7 +8,6 @@ import Model.Product;
 import Model.ProductFilterCriteria;
 import Model.User;
 import jakarta.servlet.ServletException;
-import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -17,7 +16,6 @@ import java.io.IOException;
 import java.util.List;
 import java.util.Set;
 
-@WebServlet("/shop")
 public class ShopServlet extends HttpServlet {
     private static final long serialVersionUID = 1L;
     private static final int PAGE_SIZE = 12;

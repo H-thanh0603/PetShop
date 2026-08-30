@@ -8,7 +8,6 @@ import Model.CartItem;
 import Model.Product;
 import Model.User;
 import jakarta.servlet.ServletException;
-import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -16,7 +15,6 @@ import jakarta.servlet.http.HttpSession;
 import services.InventoryService;
 import services.InventoryService.StockValidationResult;
 
-@WebServlet("/add-to-cart")
 public class AddToCartServlet extends HttpServlet {
     private static final long serialVersionUID = 1L;
 

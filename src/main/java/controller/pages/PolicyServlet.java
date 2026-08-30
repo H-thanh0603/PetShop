@@ -3,19 +3,10 @@ package controller.pages;
 import java.io.IOException;
 import java.util.List;
 import jakarta.servlet.ServletException;
-import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 
-@WebServlet(urlPatterns = {
-        "/privacy-policy",
-        "/terms",
-        "/shipping-policy",
-        "/return-policy",
-        "/buying-guide",
-        "/support"
-})
 public class PolicyServlet extends HttpServlet {
     private static final long serialVersionUID = 1L;
 

@@ -9,7 +9,6 @@ import Util.AuthRedirectUtil;
 import Util.SocialAuthUtil;
 import controller.Google.GoogleLogin;
 import jakarta.servlet.ServletException;
-import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -20,7 +19,6 @@ import org.slf4j.LoggerFactory;
 import java.io.IOException;
 import java.util.Map;
 
-@WebServlet("/LoginByGoogleServlet")
 public class LoginByGoogleServlet extends HttpServlet {
     private UserDAO userDao = new UserDAO();
     private static final Logger logger = LoggerFactory.getLogger(LoginByGoogleServlet.class);

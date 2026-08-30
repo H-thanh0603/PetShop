@@ -2,7 +2,6 @@ package controller.auth;
 
 import java.io.IOException;
 import jakarta.servlet.ServletException;
-import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -12,7 +11,6 @@ import DAO.UserDAO;
 import Model.User;
 import services.EmailVerificationService;
 
-@WebServlet("/verify-email")
 public class VerifyEmailServlet extends HttpServlet {
     private static final long serialVersionUID = 1L;
     private final UserDAO userDAO = new UserDAO();

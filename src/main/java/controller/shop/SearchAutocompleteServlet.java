@@ -6,7 +6,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import jakarta.servlet.ServletException;
-import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -18,7 +17,7 @@ import Model.Product;
  * API endpoint cho Search Autocomplete
  * Trả về danh sách sản phẩm gợi ý dựa trên keyword
  */
-@WebServlet("/api/search-autocomplete")
+
 public class SearchAutocompleteServlet extends HttpServlet {
     private static final long serialVersionUID = 1L;
     private ProductDAO productDAO = new ProductDAO();

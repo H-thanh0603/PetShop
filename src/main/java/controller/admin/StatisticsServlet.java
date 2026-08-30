@@ -5,13 +5,11 @@ import java.util.Calendar;
 import java.util.List;
 import java.util.Map;
 import jakarta.servlet.ServletException;
-import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import DAO.ReportDAO;
 
-@WebServlet("/admin/statistics")
 public class StatisticsServlet extends HttpServlet {
     private static final long serialVersionUID = 1L;
     private ReportDAO reportDAO = new ReportDAO();

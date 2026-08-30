@@ -6,7 +6,6 @@ import Model.Product;
 import Model.Promotion;
 import Util.ValidationUtil;
 import jakarta.servlet.ServletException;
-import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -19,7 +18,6 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
-@WebServlet("/admin/promotions")
 public class PromotionServlet extends HttpServlet {
     private final PromotionDAO promotionDAO = new PromotionDAO();
     private final ProductDAO productDAO = new ProductDAO();

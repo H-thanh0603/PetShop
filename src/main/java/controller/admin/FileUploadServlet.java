@@ -8,13 +8,12 @@ import java.util.Map;
 import com.google.gson.Gson;
 
 import jakarta.servlet.ServletException;
-import jakarta.servlet.annotation.MultipartConfig;
-import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.Part;
 
+import Util.AppConfig;
 import Util.FileUploadUtil;
 import Util.FileUploadValidator;
 import org.slf4j.Logger;
@@ -33,46 +32,41 @@ import org.slf4j.LoggerFactory;
  * - Thành công: {"success": true, "fileName": "img_xxx.jpg", "message": "Upload thành công"}
  * - Thất bại: {"success": false, "message": "Lỗi..."}
  */
-@WebServlet("/admin/upload")
-@MultipartConfig(
-    fileSizeThreshold = 1024 * 1024,      // 1MB - Ngưỡng lưu vào memory trước khi ghi disk
-    maxFileSize = 5 * 1024 * 1024,         // 5MB - Kích thước tối đa mỗi file
-    maxRequestSize = 10 * 1024 * 1024      // 10MB - Tổng kích thước request
-)
+
 public class FileUploadServlet extends HttpServlet {
     private static final long serialVersionUID = 1L;
     private static final Logger logger = LoggerFactory.getLogger(FileUploadServlet.class);
     private final Gson gson = new Gson();
-    
-    // Thư mục lưu ảnh theo loại
-    private static final String UPLOAD_FOLDER_PRODUCT = "assets/images/shop_pic";
-    private static final String UPLOAD_FOLDER_DEFAULT = "assets/images/uploads";
-    
+
+    // Sub-folders under the configured upload directory (app.upload-dir)
+    private static final String UPLOAD_FOLDER_PRODUCT = "shop_pic";
+    private static final String UPLOAD_FOLDER_DEFAULT = "uploads";
+
     @Override
-    protected void doPost(HttpServletRequest request, HttpServletResponse response) 
+    protected void doPost(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
-        
+
         request.setCharacterEncoding("UTF-8");
         response.setContentType("application/json;charset=UTF-8");
         response.setCharacterEncoding("UTF-8");
-        
+
         try {
             // Lấy file từ request
             Part filePart = request.getPart("file");
-            
+
             // Validate file using FileUploadValidator
             FileUploadValidator.ValidationResult validationResult = FileUploadValidator.validate(filePart);
             if (!validationResult.isValid()) {
                 writeJsonResponse(response, false, validationResult.getErrorMessage());
                 return;
             }
-            
+
             // Kiểm tra kích thước
             if (!FileUploadUtil.isValidSize(filePart)) {
                 writeJsonResponse(response, false, "File quá lớn. Tối đa 5MB");
                 return;
             }
-            
+
             // Xác định thư mục upload theo type
             String type = request.getParameter("type");
             String uploadFolder;
@@ -81,9 +75,12 @@ public class FileUploadServlet extends HttpServlet {
             } else {
                 uploadFolder = UPLOAD_FOLDER_DEFAULT;
             }
-            
-            // Lấy đường dẫn thư mục upload (absolute path)
-            String uploadDir = getServletContext().getRealPath("") + File.separator + uploadFolder;
+
+            // Store outside the WAR (configurable) so redeploys keep images.
+            // Served back at /assets/images/<folder>/<file> by WebMvcConfig.
+            String baseDir = AppConfig.getOrDefault("app.upload-dir",
+                    System.getProperty("user.dir") + File.separator + "uploads");
+            String uploadDir = baseDir + File.separator + uploadFolder;
             
             // Use secure filename from validator
             String fileName = validationResult.getSecureFileName();
@@ -97,7 +94,7 @@ public class FileUploadServlet extends HttpServlet {
             
             if (fileName != null) {
                 // Trả về JSON thành công
-                String fileUrl = request.getContextPath() + "/" + uploadFolder + "/" + fileName;
+                String fileUrl = request.getContextPath() + "/assets/images/" + uploadFolder + "/" + fileName;
                 Map<String, Object> result = new HashMap<>();
                 result.put("success", true);
                 result.put("fileName", fileName);

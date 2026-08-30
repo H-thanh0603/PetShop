@@ -5,7 +5,6 @@ import Model.OrderSign;
 import Model.User;
 
 import jakarta.servlet.ServletException;
-import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -14,7 +13,6 @@ import jakarta.servlet.http.HttpSession;
 import java.io.IOException;
 import java.util.Base64;
 
-@WebServlet("/user/download-private-key")
 public class DownloadPrivateKeyServlet extends HttpServlet {
 
     private final OrderSignDAO orderSignDAO = new OrderSignDAO();

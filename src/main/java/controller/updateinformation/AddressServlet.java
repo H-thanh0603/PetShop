@@ -4,7 +4,6 @@ import DAO.AddressDao;
 import Model.User;
 import Util.ValidationUtil;
 import jakarta.servlet.ServletException;
-import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -14,7 +13,6 @@ import java.io.IOException;
 import java.sql.Timestamp;
 import java.time.LocalDateTime;
 
-@WebServlet("/addresses")
 public class AddressServlet extends HttpServlet {
     private AddressDao dao = new AddressDao();
 

@@ -12,7 +12,6 @@ import Model.User;
 import Util.PasswordUtil;
 import Util.ValidationUtil;
 import jakarta.servlet.ServletException;
-import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -21,7 +20,6 @@ import jakarta.servlet.http.HttpSession;
 import java.io.IOException;
 import java.util.List;
 
-@WebServlet("/my-account")
 public class MyAccountServlet extends HttpServlet {
     private final AddressDao addressDao = new AddressDao();
     private final OrderDAO orderDAO = new OrderDAO();

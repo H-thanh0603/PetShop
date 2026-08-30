@@ -6,7 +6,6 @@ import Model.Order;
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 import jakarta.servlet.ServletException;
-import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -36,7 +35,7 @@ import java.sql.ResultSet;
  * registered on the GHN seller portal). When no secret is configured the
  * endpoint rejects every request (fail closed).
  */
-@WebServlet("/api/ghn/webhook")
+
 public class GhnWebhookServlet extends HttpServlet {
 
     private static final Logger log = LoggerFactory.getLogger(GhnWebhookServlet.class);
