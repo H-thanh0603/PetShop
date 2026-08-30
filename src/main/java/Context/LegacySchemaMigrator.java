@@ -19,19 +19,90 @@ import java.sql.Statement;
  * Everything here is idempotent (CREATE TABLE IF NOT EXISTS,
  * addColumnIfMissing, guarded seeding), so running it against an already
  * migrated database is a no-op.
+ *
+ * The original hand-written sql/01..22 scripts are executed first (see
+ * runLegacySqlScripts): fresh databases get the full base schema; existing
+ * databases never re-run V1, and every statement failure is tolerated
+ * (e.g. "duplicate column") exactly like the old deploy-time scripts did.
+ * sql/18 and sql/19 are excluded: their stored procedures only migrate the
+ * same order_items/promotions shapes that the idempotent block below already
+ * creates, and DELIMITER scripts cannot be split statement-by-statement.
  */
 public final class LegacySchemaMigrator {
 
     private static final Logger logger = LoggerFactory.getLogger(LegacySchemaMigrator.class);
 
-
     private LegacySchemaMigrator() {
+    }
+
+    /**
+     * Executes the original sql/01..22 scripts (minus 18/19, see class javadoc)
+     * statement by statement, ignoring individual failures so a fresh database
+     * and an already-migrated database both end up with a complete schema.
+     */
+    private static void runLegacySqlScripts(Connection conn) {
+        org.springframework.core.io.support.PathMatchingResourcePatternResolver resolver =
+                new org.springframework.core.io.support.PathMatchingResourcePatternResolver();
+        org.springframework.core.io.Resource[] resources;
+        try {
+            resources = resolver.getResources("classpath*:db/legacy/*.sql");
+        } catch (Exception e) {
+            logger.warn("Could not list legacy SQL scripts", e);
+            return;
+        }
+
+        java.util.Arrays.sort(resources, java.util.Comparator.comparing(r -> {
+            try {
+                return r.getFilename() == null ? "" : r.getFilename();
+            } catch (Exception e) {
+                return "";
+            }
+        }));
+
+        for (org.springframework.core.io.Resource resource : resources) {
+            String fileName = resource.getFilename();
+            String fileNameLower = fileName == null ? "" : fileName.toLowerCase();
+            if (fileNameLower.contains("18_") || fileNameLower.contains("19_")) {
+                continue; // stored-procedure scripts, superseded by the idempotent block
+            }
+            int applied = 0;
+            int failed = 0;
+            try (java.io.InputStream in = resource.getInputStream();
+                 java.util.Scanner scanner = new java.util.Scanner(in, java.nio.charset.StandardCharsets.UTF_8)) {
+                StringBuilder current = new StringBuilder();
+                while (scanner.hasNextLine()) {
+                    String line = scanner.nextLine();
+                    if (line.trim().startsWith("--") || line.trim().startsWith("#")) {
+                        continue; // comment line
+                    }
+                    current.append(line).append('\n');
+                    if (line.trim().endsWith(";")) {
+                        String statement = current.toString().trim();
+                        current.setLength(0);
+                        statement = statement.substring(0, statement.length() - 1);
+                        if (statement.isBlank()) {
+                            continue;
+                        }
+                        try (Statement stmt = conn.createStatement()) {
+                            stmt.execute(statement);
+                            applied++;
+                        } catch (Exception e) {
+                            failed++; // e.g. duplicate column/index on existing schema
+                        }
+                    }
+                }
+            } catch (Exception e) {
+                logger.warn("Failed reading legacy SQL script {}", fileName, e);
+            }
+            logger.info("Legacy SQL script {}: {} applied, {} skipped", fileName, applied, failed);
+        }
     }
 
     /**
      * Run schema migrations on startup.
      */
     public static void migrate(Connection conn) {
+        runLegacySqlScripts(conn);
         try (Statement stmt = conn.createStatement()) {
             addColumnIfMissing(conn, stmt, "products", "weight", "INT NOT NULL DEFAULT 0");
             addColumnIfMissing(conn, stmt, "products", "is_active", "TINYINT(1) NOT NULL DEFAULT 1");
