@@ -48,12 +48,13 @@ public class ReportDAO {
     }
 
     public List<Map<String, Object>> getRevenueByMonth(int year) {
+        // Reads the pre-aggregated daily rollup instead of scanning orders.
         List<Map<String, Object>> list = new ArrayList<>();
-        String query = "SELECT MONTH(createdAt) AS month, COALESCE(SUM(total_amount), 0) AS revenue " +
-                "FROM orders " +
-                "WHERE YEAR(createdAt) = ? AND status != 'Cancelled' " +
-                "GROUP BY MONTH(createdAt) " +
-                "ORDER BY MONTH(createdAt)";
+        String query = "SELECT MONTH(sale_date) AS month, COALESCE(SUM(revenue), 0) AS revenue " +
+                "FROM daily_sales_summary " +
+                "WHERE YEAR(sale_date) = ? " +
+                "GROUP BY MONTH(sale_date) " +
+                "ORDER BY MONTH(sale_date)";
         try (Connection conn = DBContext.getConnection();
              PreparedStatement ps = conn.prepareStatement(query)) {
             ps.setInt(1, year);
@@ -119,16 +120,17 @@ public class ReportDAO {
     }
 
     public List<Map<String, Object>> getOrdersByMonthWithStatus(int year) {
+        // Reads the pre-aggregated daily rollup instead of scanning orders.
         List<Map<String, Object>> list = new ArrayList<>();
-        String query = "SELECT MONTH(createdAt) AS month, " +
-                "SUM(CASE WHEN status = 'Pending' THEN 1 ELSE 0 END) AS pending, " +
-                "SUM(CASE WHEN status = 'Completed' THEN 1 ELSE 0 END) AS completed, " +
-                "SUM(CASE WHEN status = 'Cancelled' THEN 1 ELSE 0 END) AS cancelled, " +
-                "COUNT(*) AS total " +
-                "FROM orders " +
-                "WHERE YEAR(createdAt) = ? " +
-                "GROUP BY MONTH(createdAt) " +
-                "ORDER BY MONTH(createdAt)";
+        String query = "SELECT MONTH(sale_date) AS month, " +
+                "SUM(pending_orders) AS pending, " +
+                "SUM(completed_orders) AS completed, " +
+                "SUM(cancelled_orders) AS cancelled, " +
+                "SUM(total_orders) AS total " +
+                "FROM daily_sales_summary " +
+                "WHERE YEAR(sale_date) = ? " +
+                "GROUP BY MONTH(sale_date) " +
+                "ORDER BY MONTH(sale_date)";
         try (Connection conn = DBContext.getConnection();
              PreparedStatement ps = conn.prepareStatement(query)) {
             ps.setInt(1, year);
@@ -150,7 +152,8 @@ public class ReportDAO {
     }
 
     public BigDecimal getTotalRevenue() {
-        String query = "SELECT COALESCE(SUM(total_amount), 0) FROM orders WHERE status != 'Cancelled'";
+        // Pre-aggregated rollup; may lag up to the scheduler interval.
+        String query = "SELECT COALESCE(SUM(revenue), 0) FROM daily_sales_summary";
         try (Connection conn = DBContext.getConnection();
              PreparedStatement ps = conn.prepareStatement(query);
              ResultSet rs = ps.executeQuery()) {
@@ -165,8 +168,9 @@ public class ReportDAO {
     }
 
     public BigDecimal getCurrentMonthRevenue() {
-        String query = "SELECT COALESCE(SUM(total_amount), 0) FROM orders " +
-                "WHERE status != 'Cancelled' AND MONTH(createdAt) = MONTH(CURDATE()) AND YEAR(createdAt) = YEAR(CURDATE())";
+        // Pre-aggregated rollup; may lag up to the scheduler interval.
+        String query = "SELECT COALESCE(SUM(revenue), 0) FROM daily_sales_summary " +
+                "WHERE sale_date >= DATE_FORMAT(CURDATE(), '%Y-%m-01')";
         try (Connection conn = DBContext.getConnection();
              PreparedStatement ps = conn.prepareStatement(query);
              ResultSet rs = ps.executeQuery()) {
