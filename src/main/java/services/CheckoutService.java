@@ -43,6 +43,11 @@ import java.util.Map;
 
 public class CheckoutService {
 
+    private static final org.slf4j.Logger logger =
+            org.slf4j.LoggerFactory.getLogger(CheckoutService.class);
+
+    private static final String SIGNATURE_TOOL_URL = "/tools/CryptoToolMVC.exe";
+
     private final ProductDAO productDAO;
     private final UserDAO userDAO;
     private final CouponDao couponDao;
@@ -275,24 +280,36 @@ public class CheckoutService {
 
                 cartDAO.clearCart(conn, user.getId());
 
-                RSAKeyGenerator rsa = new RSAKeyGenerator();
-                PublicKey publicKey = rsa.getPublicKey();
-                PrivateKey privateKey = rsa.getPrivateKey();
-                String privateKeyBase64 = rsa.encodePrivateKey();
-                String publicKeyBase64 = rsa.encodePublicKey();
-
-                String orderData = buildOrderDataForSign(order, orderId, user);
-                String orderHash = DigitalSigner.hashOrderData(orderData);
-
-                String toolUrl = "/tools/CryptoToolMVC.exe";
-
-                orderSignDAO.save(orderId, user.getId(), orderData, orderHash, publicKeyBase64, privateKeyBase64);
-
-                java.security.cert.X509Certificate cert = CertificateGenerator.generateX509(publicKey, privateKey, orderId, user.getId());
-                String certPem = CertificateGenerator.encodeCertificate(cert);
-                certificateDAO.save(orderId, user.getId(), String.valueOf(orderId), certPem, cert.getSubjectX500Principal().getName(), Timestamp.from(cert.getNotAfter().toInstant()));
-
                 conn.commit();
+
+                // Digital-signature material is generated and stored AFTER the
+                // transaction commits: RSA/X.509 work is CPU-heavy and used to
+                // hold the product row locks (and a pooled connection) for its
+                // whole duration, which could exhaust the pool during checkout
+                // bursts. A signature failure must not fail the placed order —
+                // it is logged and checkout proceeds without the modal payload.
+                String privateKeyBase64 = "";
+                String orderHash = "";
+                try {
+                    RSAKeyGenerator rsa = new RSAKeyGenerator();
+                    PublicKey publicKey = rsa.getPublicKey();
+                    PrivateKey privateKey = rsa.getPrivateKey();
+                    privateKeyBase64 = rsa.encodePrivateKey();
+                    String publicKeyBase64 = rsa.encodePublicKey();
+
+                    String orderData = buildOrderDataForSign(order, orderId, user);
+                    orderHash = DigitalSigner.hashOrderData(orderData);
+
+                    orderSignDAO.save(orderId, user.getId(), orderData, orderHash, publicKeyBase64, privateKeyBase64);
+
+                    java.security.cert.X509Certificate cert = CertificateGenerator.generateX509(publicKey, privateKey, orderId, user.getId());
+                    String certPem = CertificateGenerator.encodeCertificate(cert);
+                    certificateDAO.save(orderId, user.getId(), String.valueOf(orderId), certPem, cert.getSubjectX500Principal().getName(), Timestamp.from(cert.getNotAfter().toInstant()));
+                } catch (Exception signEx) {
+                    logger.error("Order {} was placed but digital-signature generation failed", orderId, signEx);
+                    privateKeyBase64 = "";
+                    orderHash = "";
+                }
 
                 sendOrderConfirmationAsync(user, cart, orderId, order);
 
@@ -306,7 +323,7 @@ public class CheckoutService {
                 successResult.setFinalTotal(finalTotal);
                 successResult.setPrivateKeyBase64(privateKeyBase64);
                 successResult.setOrderHash(orderHash);
-                successResult.setToolUrl(toolUrl);
+                successResult.setToolUrl(SIGNATURE_TOOL_URL);
                 return successResult;
             } catch (Exception e) {
                 conn.rollback();
