@@ -118,7 +118,11 @@ services:
       MYSQL_PASSWORD: ${DB_PASSWORD:?set in .env}
     volumes:
       - ./backups:/backups
-    # Nightly 02:00 mysqldump, keep 14 days.
+      # Product/user images are backed up next to the DB dump — restoring the
+      # DB without matching uploads leaves every product image broken.
+      - upload-data:/data:ro
+    # Nightly 02:00 mysqldump + uploads tarball, keep 14 days.
+    # Restore: scripts/restore_db.sh (run on the host, see file header).
     entrypoint:
       - /bin/sh
       - -c
@@ -127,7 +131,9 @@ services:
           ts=$$(date +%Y%m%d_%H%M%S)
           mysqldump -h mysql -u petshop -p"$$MYSQL_PASSWORD" --single-transaction --routines petvaccine \
             | gzip > /backups/petvaccine_$$ts.sql.gz
+          tar -czf /backups/uploads_$$ts.tar.gz -C /data .
           find /backups -name 'petvaccine_*.sql.gz' -mtime +14 -delete
+          find /backups -name 'uploads_*.tar.gz' -mtime +14 -delete
           sleep 86400
         done
     deploy:

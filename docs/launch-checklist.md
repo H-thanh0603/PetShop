@@ -84,11 +84,18 @@ Luồng tay trên trình duyệt:
 ## 6. Monitoring & backup [DEV]
 
 - Grafana: `ssh -L 3000:localhost:3000 <server>` → `http://localhost:3000` (user `admin`, password trong `.env`). Xem nhanh: HTTP error rate, HikariCP pool, JVM memory.
-- Backup tự động mỗi 02:00 vào `./backups/` trên server. **Kiểm tra khôi phục ít nhất 1 lần trước khi mở bán:**
+- **Alerting**: Prometheus có alert rules (`deploy/prometheus/alerts.yml`) — app down, 5xx > 5%, HikariCP starvation, heap > 90%. Xem tại Prometheus UI (SSH tunnel tới port 9090 qua `docker run --rm -p 9090:9090 --network petshop_default prom/prometheus` hoặc Grafana → Alerting). Alertmanager (`deploy/prometheus/alertmanager.yml`) chưa nối kênh thật (email/Telegram) — cần cấu hình để được báo động.
+- Backup tự động mỗi 02:00 vào `./backups/` trên server (DB **và** thư mục uploads, giữ 14 ngày). **Kiểm tra khôi phục ít nhất 1 lần trước khi mở bán** bằng script:
+  ```bash
+  export MYSQL_ROOT_PASSWORD=...
+  scripts/restore_db.sh backups/petvaccine_XXXX.sql.gz backups/uploads_XXXX.tar.gz
+  ```
+  (Script khôi phục thẳng vào DB chạy thật — để test an toàn, dùng biến thể sau để nạp vào schema tạm `petvaccine_restore_test`:
   ```bash
   gunzip -c backups/petvaccine_XXXX.sql.gz | docker exec -i petshop-mysql mysql -u petshop -p"$DB_PASSWORD" petvaccine_restore_test
   ```
-- Backup thư mục ảnh: `docker run --rm -v petshop_upload-data:/data -v $(pwd)/backups:/backup alpine tar czf /backup/uploads_$(date +%F).tar.gz -C /data .`
+  )
+- Backup nằm trên cùng host — nên định kỳ copy `./backups/` ra nơi khác (object storage / máy khác); mất host = mất cả DB lẫn backup.
 
 ## 7. Việc hành chính [USER]
 
