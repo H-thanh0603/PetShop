@@ -71,3 +71,9 @@ RunDemoSQL.class
 # ===== Backups / env =====
 backups/
 .env
+
+# ===== Local runtime / tooling (never commit: contains a full Tomcat + logs) =====
+.tomcat/
+.zcode/
+start.sh
+.jqwik-database

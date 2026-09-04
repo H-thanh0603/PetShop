@@ -16,9 +16,6 @@ java {
 repositories {
     mavenLocal()
     mavenCentral()
-    maven {
-        url = uri('https://oss.sonatype.org/content/repositories/snapshots')
-    }
 }
 
 dependencies {
@@ -65,7 +62,8 @@ dependencies {
     testImplementation 'org.junit.jupiter:junit-jupiter:5.10.2'
     testImplementation 'org.mockito:mockito-core:5.12.0'
     testImplementation 'org.mockito:mockito-junit-jupiter:5.12.0'
-    testImplementation 'org.mockito:mockito-inline:5.2.0'
+    // mockito-inline is deprecated/no-op in Mockito 5 — mockito-core mocks
+    // final classes by default.
     testImplementation 'net.jqwik:jqwik:1.8.4'
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
     testImplementation platform('org.testcontainers:testcontainers-bom:1.21.3')
