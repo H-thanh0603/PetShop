@@ -1,0 +1,53 @@
+groups:
+  - name: petshop-app
+    rules:
+      - alert: AppDown
+        expr: up{job="petshop-app"} == 0
+        for: 2m
+        labels:
+          severity: critical
+        annotations:
+          summary: "PetShop app is down"
+          description: "Prometheus cannot scrape {{ $labels.instance }} for more than 2 minutes."
+
+      - alert: HighHttp5xxRate
+        expr: >
+          sum(rate(http_server_requests_seconds_count{status=~"5.."}[5m]))
+          /
+          sum(rate(http_server_requests_seconds_count[5m])) > 0.05
+        for: 5m
+        labels:
+          severity: critical
+        annotations:
+          summary: "HTTP 5xx rate above 5%"
+          description: "5xx responses are {{ $value | humanizePercentage }} of all requests over the last 5 minutes."
+
+      - alert: HikariPoolStarved
+        expr: hikaricp_connections_pending > 0
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "DB connection pool starvation"
+          description: "Requests are waiting for a HikariCP connection at {{ $labels.instance }}."
+
+      - alert: HighHeapUsage
+        expr: >
+          sum by (instance) (jvm_memory_used_bytes{area="heap"})
+          /
+          sum by (instance) (jvm_memory_max_bytes{area="heap"}) > 0.9
+        for: 10m
+        labels:
+          severity: warning
+        annotations:
+          summary: "JVM heap above 90%"
+          description: "Heap usage at {{ $value | humanizePercentage }} on {{ $labels.instance }} for 10 minutes."
+
+      - alert: AppScrapeMissing
+        expr: absent(up{job="petshop-app"})
+        for: 5m
+        labels:
+          severity: critical
+        annotations:
+          summary: "No app scrape data at all"
+          description: "Prometheus has no samples for the petshop-app job — the app or the scrape job disappeared."
