@@ -177,7 +177,7 @@
                     <span class="input-group-text"><i class='bx bx-envelope'></i></span>
                     <input type="email" class="form-control ${not empty errors.email ? 'is-invalid' : ''}" 
                            name="email" id="emailInput" placeholder="Nhập email" required
-                           value="${not empty form.email ? form.email : savedEmail}"
+                           value="${not empty form.email ? fn:escapeXml(form.email) : fn:escapeXml(savedEmail)}"
                            autocomplete="email">
                     <span class="password-toggle" id="clearEmail" title="Xóa email" style="display: none;">
                         <i class='bx bx-x'></i>

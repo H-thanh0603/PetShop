@@ -152,7 +152,7 @@
                     <span class="input-group-text"><i class='bx bx-user'></i></span>
                     <input type="text" class="form-control" 
                            name="fullName" id="fullName" placeholder="Nhập họ và tên"
-                           value="${form.fullName}" autocomplete="name">
+                           value="${fn:escapeXml(form.fullName)}" autocomplete="name">
                 </div>
                 <div class="invalid-feedback" id="fullNameError">Vui lòng nhập họ và tên</div>
             </div>
@@ -164,7 +164,7 @@
                     <span class="input-group-text"><i class='bx bx-envelope'></i></span>
                     <input type="email" class="form-control" 
                            name="email" id="email" placeholder="Nhập email"
-                           value="${form.email}" autocomplete="email">
+                           value="${fn:escapeXml(form.email)}" autocomplete="email">
                     <button type="button" class="btn btn-send-otp" id="btnSendOTP">
                         Gửi OTP
                     </button>
@@ -191,7 +191,7 @@
                     <span class="input-group-text"><i class='bx bx-at'></i></span>
                     <input type="text" class="form-control" 
                            name="username" id="username" placeholder="Nhập tên đăng nhập"
-                           value="${form.username}" autocomplete="username">
+                           value="${fn:escapeXml(form.username)}" autocomplete="username">
                 </div>
                 <div class="invalid-feedback" id="usernameError">Tên đăng nhập không hợp lệ</div>
                 <div class="valid-feedback" id="usernameValid">Tên đăng nhập hợp lệ</div>
@@ -208,7 +208,7 @@
                     <span class="input-group-text"><i class='bx bx-phone'></i></span>
                     <input type="tel" class="form-control" 
                            name="phone" id="phone" placeholder="Nhập số điện thoại (không bắt buộc)"
-                           value="${form.phone}" maxlength="10" inputmode="numeric">
+                           value="${fn:escapeXml(form.phone)}" maxlength="10" inputmode="numeric">
                 </div>
                 <div class="invalid-feedback" id="phoneError">Số điện thoại không hợp lệ</div>
                 <div class="field-hint">10 số, bắt đầu bằng số 0</div>

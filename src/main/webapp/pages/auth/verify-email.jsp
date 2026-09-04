@@ -21,7 +21,7 @@
 <div class="card">
     <div class="icon-wrap icon-error"><i class='bx bx-error-circle'></i></div>
     <h3 class="fw-bold mb-3">Xác thực email thất bại</h3>
-    <p class="text-muted mb-4">${verifyError}</p>
+    <p class="text-muted mb-4"><c:out value="${verifyError}"/></p>
 
     <c:if test="${not empty expiredEmail}">
         <p class="mb-3">Bạn muốn nhận lại email xác thực?</p>
