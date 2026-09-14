@@ -54,6 +54,10 @@ public class DeepSeekService {
 
         public Order getRelatedOrder() { return relatedOrder; }
         public void setRelatedOrder(Order relatedOrder) { this.relatedOrder = relatedOrder; }
+
+        private String cardsJson = "[]";
+        public String getCardsJson() { return cardsJson; }
+        public void setCardsJson(String cardsJson) { this.cardsJson = cardsJson == null ? "[]" : cardsJson; }
     }
 
     /**
@@ -85,6 +89,7 @@ public class DeepSeekService {
             res.setRelatedOrderId(r.relatedOrderId());
             res.setRelatedProducts(r.relatedProducts());
             res.setRelatedOrder(r.relatedOrder());
+            res.setCardsJson(r.cards() == null ? "[]" : r.cards().toString());
             return res;
         } catch (Exception e) {
             log.error("Commerce agent failed", e);

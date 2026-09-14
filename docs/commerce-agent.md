@@ -5,6 +5,19 @@ PetShop's AI shopping assistant, built from the architecture of
 but **not coupled to Anthropic**. All commerce logic talks to
 `services.ai.AiProvider`; providers are adapters behind that interface.
 
+Full-port map (every upstream module has a counterpart here):
+
+| Upstream | Here |
+|---|---|
+| `shopping-agent` (backend, tools, executor, gates, skills) | `PetShopCommerceBackend`, `CommerceTools`, `CommerceAgent`, 5 skills in `commerce-skills/shopping/` |
+| `merchant-agent` (backend, changes, gates, analysis, skills) | `services.ai.merchant.*`, 5 skills in `commerce-skills/merchant/`, approval UI at `Admin > AI Merchant` |
+| `commerce-common` (fencing, memory, grounding, presentation, events, MCP) | `services.ai.common.*` (Fence, MemoryService, Cards, AppEventBus), `/mcp` endpoint |
+| `managed-agents` manifests + scheduled digest | config-driven tool surface, `MerchantAgent.digest()` + `/admin/ai-merchant/digest` |
+| `runtime-agent-sdk` consoles | `scripts/smoke-ai.sh` |
+| `plugins/commerce-builder` | `docs/commerce-builder.md` checklist |
+| `docs/` (safety, backends, deployment) | `docs/commerce-safety.md`, `commerce-backends.md`, `commerce-deployment.md` |
+| 4 example verticals | not copied — PetShop itself is the storefront; see `commerce-backends.md` |
+
 ```
 JSP chat UI ──► UserAiSupportServlet (/ai-support/chat, /ai-support/stream)
                       │  (session auth, persistence, escalation — unchanged)

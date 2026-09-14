@@ -66,6 +66,9 @@
                 <span><i class='bx bxs-bot'></i> AI Customer Support</span>
                 <span class="badge bg-danger rounded-pill d-none" id="admin-ai-badge" style="font-size: 0.75rem; padding: 4px 8px; font-weight: bold; border: 1.5px solid white;">0</span>
             </a>
+            <a href="${pageContext.request.contextPath}/admin/ai-merchant" class="<%= "ai-merchant".equals(currentPage) ? "active" : "" %>">
+                <i class='bx bxs-store'></i> AI Merchant
+            </a>
         </c:if>
         
         <c:if test="${sessionScope.user.role == 'admin' || sessionScope.user.role == 'staff'}">

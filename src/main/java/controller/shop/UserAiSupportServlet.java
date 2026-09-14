@@ -297,6 +297,11 @@ public class UserAiSupportServlet extends HttpServlet {
             responseJson.addProperty("needAdminSupport", escalate);
             responseJson.addProperty("provider", services.ai.AiConfig.provider());
             responseJson.addProperty("model", services.ai.AiConfig.model());
+            try {
+                responseJson.add("cards", new JsonParser().parse(aiRes.getCardsJson()));
+            } catch (Exception ignored) {
+                responseJson.add("cards", new com.google.gson.JsonArray());
+            }
             
             // Attach related details if present
             if (aiRes.getRelatedProducts() != null) {

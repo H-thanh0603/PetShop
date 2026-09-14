@@ -358,6 +358,13 @@ public class CheckoutServlet extends HttpServlet {
             completedPaymentTransaction = checkoutResult.getPaymentTransaction();
             completedOrderId = checkoutResult.getOrderId();
 
+            // Queue an app event so the next commerce-agent turn knows the order
+            // completed outside the conversation (upstream: host-queued app events).
+            try {
+                services.ai.common.AppEventBus.publish("user:" + user.getId(), "order_completed",
+                        "orderId=" + completedOrderId + " payment=" + completedPaymentMethod);
+            } catch (Exception ignored) {}
+
             // Create notification for user
             try {
                 new DAO.NotificationDAO().create(

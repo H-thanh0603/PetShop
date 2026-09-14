@@ -1,6 +1,7 @@
 package com.petshop.config;
 
 import controller.admin.AdminAiSupportServlet;
+import controller.admin.AdminMerchantAgentServlet;
 import controller.admin.CategoryServlet;
 import controller.admin.DashboardServlet;
 import controller.admin.FileUploadServlet;
@@ -70,6 +71,7 @@ public class WebRegistrationConfig {
     public ServletContextInitializer legacyServletsInitializer() {
         return (ServletContext servletContext) -> {
             register(servletContext, "AdminAiSupportServlet", controller.admin.AdminAiSupportServlet::new, "/admin/ai-support", "/admin/ai-support/dashboard", "/admin/ai-support/sessions", "/admin/ai-support/sessions/detail", "/admin/ai-support/sessions/reply", "/admin/ai-support/sessions/close", "/admin/ai-support/knowledge", "/admin/ai-support/settings");
+            register(servletContext, "AdminMerchantAgentServlet", controller.admin.AdminMerchantAgentServlet::new, "/admin/ai-merchant", "/admin/ai-merchant/chat", "/admin/ai-merchant/pending", "/admin/ai-merchant/approve", "/admin/ai-merchant/apply", "/admin/ai-merchant/discard", "/admin/ai-merchant/digest", "/admin/ai-merchant/memory");
             register(servletContext, "CategoryServlet", controller.admin.CategoryServlet::new, "/pages/admin/categories");
             register(servletContext, "DashboardServlet", controller.admin.DashboardServlet::new, "/pages/admin/dashboard");
             register(servletContext, "InventoryServlet", controller.admin.InventoryServlet::new, "/admin/inventory");
@@ -106,6 +108,7 @@ public class WebRegistrationConfig {
             register(servletContext, "ShopServlet", controller.shop.ShopServlet::new, "/shop");
             register(servletContext, "ToggleWishlistServlet", controller.shop.ToggleWishlistServlet::new, "/toggle-wishlist");
             register(servletContext, "UserAiSupportServlet", controller.shop.UserAiSupportServlet::new, "/ai-support/chat", "/ai-support/history", "/ai-support/messages", "/ai-support/unread-count", "/ai-support/stream");
+            register(servletContext, "McpServlet", controller.shop.McpServlet::new, "/mcp");
             register(servletContext, "UserNotificationServlet", controller.shop.UserNotificationServlet::new, "/notifications/unread-count", "/notifications/list", "/notifications/mark-read");
             register(servletContext, "VnpayReturnServlet", controller.shop.VnpayReturnServlet::new, "/vnpay-return");
             register(servletContext, "WishlistServlet", controller.shop.WishlistServlet::new, "/wishlist");

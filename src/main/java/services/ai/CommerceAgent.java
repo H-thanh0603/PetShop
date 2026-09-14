@@ -11,6 +11,10 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import services.ai.common.AppEventBus;
+import services.ai.common.Cards;
+import services.ai.common.DbMemoryStore;
+import services.ai.common.MemoryService;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -31,13 +35,15 @@ public class CommerceAgent {
 
     private final AiSupportSettingDAO settingDAO = new AiSupportSettingDAO();
     private final PetShopCommerceBackend backend = new PetShopCommerceBackend();
+    private final MemoryService memory = new MemoryService(new DbMemoryStore());
 
     public record AgentResult(String answer, String intent, double confidence,
                               boolean needAdminSupport, String suggestedAdminNote,
                               List<Integer> relatedProductIds, Integer relatedOrderId,
                               List<Product> relatedProducts, Order relatedOrder,
                               String usedProvider, String usedModel, String requestId,
-                              long latencyMs, List<String> attemptedProviders) {}
+                              long latencyMs, List<String> attemptedProviders,
+                              com.google.gson.JsonArray cards) {}
 
     public AgentResult run(String userMessage, List<AiChatMessage> history, User user) {
         PetShopCommerceBackend.SessionContext session = PetShopCommerceBackend.SessionContext.of(user);
@@ -49,7 +55,18 @@ public class CommerceAgent {
         }
 
         List<AiMessage> messages = new ArrayList<>();
-        messages.add(AiMessage.system(buildSystemPrompt()));
+        String memorySubject = user == null ? null : "user:" + user.getId();
+        StringBuilder system = new StringBuilder(buildSystemPrompt());
+        String memBlock = memory.memoryBlock(memorySubject);
+        if (!memBlock.isEmpty()) system.append("\n").append(memBlock);
+        messages.add(AiMessage.system(system.toString()));
+        // App events queued by the host (e.g. order completed on the checkout
+        // page) are read on the next turn.
+        if (memorySubject != null) {
+            for (AppEventBus.AppEvent ev : AppEventBus.drain(memorySubject)) {
+                messages.add(AiMessage.user("[App event " + ev.type() + "] " + ev.payload()));
+            }
+        }
         for (AiChatMessage h : history) {
             if (h == null || h.getMessage() == null) continue;
             if ("USER".equals(h.getSenderType())) {
@@ -120,6 +137,11 @@ public class CommerceAgent {
         }
         AgentResult parsed = parseStructured(finalContent, tools, user, usedProvider, usedModel,
                 requestId, totalLatency, attempted);
+        // Post-turn memory extraction (user+assistant text only, never tool
+        // results); failures are non-fatal and never stop the turn.
+        try {
+            memory.extractAndStore(memorySubject, userMessage, parsed.answer());
+        } catch (Exception ignored) {}
         log.info("commerce-agent done intent={} confidence={} needAdmin={} provider={} model={} requestId={} latencyMs={}",
                 parsed.intent(), parsed.confidence(), parsed.needAdminSupport(),
                 usedProvider, usedModel, requestId, totalLatency);
@@ -140,13 +162,7 @@ public class CommerceAgent {
 
         return "Bạn là trợ lý AI chăm sóc khách hàng cho website bán hàng thú cưng (PetShop). "
                 + "Trả lời tiếng Việt, lịch sự, ngắn gọn.\n\n"
-                + "KỸ NĂNG (skills):\n"
-                + "- product_discovery: dùng searchProducts để tìm sản phẩm theo nhu cầu.\n"
-                + "- product_details: dùng getProductDetails khi khách hỏi chi tiết 1 sản phẩm.\n"
-                + "- comparison: dùng compareProducts (2-4 id) khi khách muốn so sánh.\n"
-                + "- recommendations: dùng recommendProducts kèm lý do 'why'.\n"
-                + "- order_support: dùng getOrderStatus cho đơn của chính khách đã đăng nhập.\n"
-                + "- policy_faq: dùng searchPolicies cho đổi trả/hoàn tiền/vận chuyển/thanh toán.\n\n"
+                + SkillLoader.renderForPrompt(SkillLoader.loadRole("shopping"))
                 + "QUY TẮC BẮT BUỘC:\n"
                 + "1. Chỉ nêu sản phẩm/giá/tồn kho có trong kết quả tool. Không bịa.\n"
                 + "2. Không xác nhận thanh toán/hoàn tiền/hủy đơn. Cần admin thì nêu rõ sẽ chuyển cho quản trị viên.\n"
@@ -206,8 +222,12 @@ public class CommerceAgent {
                 order = backend.getOrder(PetShopCommerceBackend.SessionContext.of(user), oid);
                 if (order == null) oid = null;
             }
+            com.google.gson.JsonArray cards = new com.google.gson.JsonArray();
+            for (Product p : products) cards.add(Cards.productCard(p));
+            if (products.size() > 1) cards.add(Cards.comparisonCard(products));
+            if (order != null) cards.add(Cards.orderCard(order));
             return new AgentResult(answer, intent, conf, needAdmin, note, pids, oid,
-                    products, order, usedProvider, usedModel, requestId, latencyMs, attempted);
+                    products, order, usedProvider, usedModel, requestId, latencyMs, attempted, cards);
         } catch (Exception e) {
             log.error("AI_RESPONSE_PARSE_ERROR: {}", content.length() > 500 ? content.substring(0, 500) : content, e);
             return fallback("Tôi chưa thể xử lý câu hỏi này ngay lúc này. Tôi đã ghi nhận yêu cầu và sẽ chuyển cho quản trị viên hỗ trợ thêm.",
@@ -217,7 +237,8 @@ public class CommerceAgent {
 
     private AgentResult fallback(String msg, String provider, String model, List<String> attempted) {
         return new AgentResult(msg, "UNKNOWN", 0.0, true, "AI error / fallback",
-                List.of(), null, List.of(), null, provider, model, "-", 0, attempted);
+                List.of(), null, List.of(), null, provider, model, "-", 0, attempted,
+                new com.google.gson.JsonArray());
     }
 
     private AgentResult guestOrderRefusal() {
@@ -225,7 +246,8 @@ public class CommerceAgent {
                 "Để kiểm tra đơn hàng, bạn vui lòng đăng nhập vào tài khoản đã dùng để đặt hàng. "
                         + "Sau khi đăng nhập, tôi có thể hỗ trợ kiểm tra trạng thái đơn hàng của bạn.",
                 "ORDER_STATUS", 1.0, false, "", List.of(), null, List.of(), null,
-                AiConfig.provider(), AiConfig.model(), "local-guard", 0, List.of());
+                AiConfig.provider(), AiConfig.model(), "local-guard", 0, List.of(),
+                new com.google.gson.JsonArray());
     }
 
     static boolean looksLikeOrderInquiry(String message) {
