@@ -270,8 +270,11 @@
                         </select>
                     </div>
                     <div class="form-group">
-                        <label>DeepSeek Model</label>
+                        <label>Model (bị ghi đè bởi env <code>AI_MODEL</code> nếu có)</label>
                         <input type="text" class="form-control-admin" id="cfg-model" name="DEEPSEEK_MODEL">
+                        <small class="text-muted">Provider được chọn bằng env <code>AI_PROVIDER</code>
+                        (anthropic | openrouter | tokenrouter | openai | gemini | deepseek) — xem docs/commerce-agent.md.
+                        API keys chỉ nằm ở server env, không bao giờ ra frontend.</small>
                     </div>
                     <div class="form-group">
                         <label>Số sản phẩm gợi ý tối đa trong Context</label>

@@ -31,6 +31,14 @@ services:
       # App secrets (VNPAY, GHN, DeepSeek, bank webhook...) — put real values
       # in .env, never commit them.
       DEEPSEEK_API_KEY: ${DEEPSEEK_API_KEY:-}
+      AI_PROVIDER: ${AI_PROVIDER:-deepseek}
+      AI_MODEL: ${AI_MODEL:-}
+      AI_FALLBACKS: ${AI_FALLBACKS:-}
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
+      OPENROUTER_API_KEY: ${OPENROUTER_API_KEY:-}
+      TOKENROUTER_API_KEY: ${TOKENROUTER_API_KEY:-}
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+      GOOGLE_API_KEY: ${GOOGLE_API_KEY:-}
       VNPAY_TMN_CODE: ${VNPAY_TMN_CODE:-}
       VNPAY_HASH_SECRET: ${VNPAY_HASH_SECRET:-}
       TOKEN: ${GHN_TOKEN:-}

@@ -288,12 +288,15 @@ public class UserAiSupportServlet extends HttpServlet {
             
             sessionDAO.updateStatus(sessionId, newStatus, chatSession.isNeedAdminSupport() || escalate);
 
-            // Write JSON response
+            // Write JSON response (provider details are non-sensitive metadata only;
+            // keys never leave the server — see services.ai.AiConfig)
             JsonObject responseJson = new JsonObject();
             responseJson.addProperty("sessionId", sessionId);
             responseJson.addProperty("answer", aiRes.getAnswer());
             responseJson.addProperty("intent", aiRes.getIntent());
             responseJson.addProperty("needAdminSupport", escalate);
+            responseJson.addProperty("provider", services.ai.AiConfig.provider());
+            responseJson.addProperty("model", services.ai.AiConfig.model());
             
             // Attach related details if present
             if (aiRes.getRelatedProducts() != null) {
@@ -309,6 +312,138 @@ public class UserAiSupportServlet extends HttpServlet {
             }
 
             response.getWriter().write(gson.toJson(responseJson));
+        } else if ("/ai-support/stream".equals(path)) {
+            streamChat(request, response);
         }
+    }
+
+    /**
+     * SSE endpoint (POST, same auth/session rules as /ai-support/chat).
+     * Runs the full commerce-agent tool loop server-side, then emits the final
+     * answer as text chunks ({@code event: delta}) followed by {@code event: done}
+     * with session/provider metadata. Token-level streaming inside the tool loop
+     * is available via {@link services.ai.AiProvider#stream} for a future upgrade.
+     */
+    private void streamChat(HttpServletRequest request, HttpServletResponse response) throws IOException {
+        response.setContentType("text/event-stream;charset=UTF-8");
+        response.setHeader("Cache-Control", "no-cache");
+        response.setHeader("X-Accel-Buffering", "no");
+        HttpSession httpSession = request.getSession();
+        User user = (User) httpSession.getAttribute("user");
+
+        int sessionId = 0;
+        String message = "";
+        try (BufferedReader reader = request.getReader()) {
+            StringBuilder raw = new StringBuilder();
+            String line;
+            while ((line = reader.readLine()) != null) raw.append(line);
+            if (raw.length() > 0) {
+                JsonObject reqJson = new JsonParser().parse(raw.toString()).getAsJsonObject();
+                if (reqJson.has("sessionId") && !reqJson.get("sessionId").isJsonNull()) {
+                    sessionId = reqJson.get("sessionId").getAsInt();
+                }
+                if (reqJson.has("message")) message = reqJson.get("message").getAsString();
+            }
+        } catch (Exception e) {
+            sendSse(response, "error", "{\"error\":\"Invalid JSON payload\"}");
+            return;
+        }
+        if (message == null || message.trim().isEmpty()) {
+            sendSse(response, "error", "{\"error\":\"Message content is required\"}");
+            return;
+        }
+
+        AiChatSession chatSession = resolveSession(httpSession, user, sessionId, response);
+        if (chatSession == null) return;
+        sessionId = chatSession.getId();
+
+        AiChatMessage userMsg = new AiChatMessage();
+        userMsg.setSessionId(sessionId);
+        userMsg.setSenderType("USER");
+        userMsg.setMessage(message);
+        messageDAO.create(userMsg);
+
+        List<AiChatMessage> history = messageDAO.getRecentMessagesBySessionId(sessionId, 10);
+        if (!history.isEmpty()) history.remove(history.size() - 1);
+
+        services.ai.CommerceAgent agent = new services.ai.CommerceAgent();
+        services.ai.CommerceAgent.AgentResult result;
+        try {
+            result = agent.run(message, history, user);
+        } catch (Exception e) {
+            log.error("stream commerce agent failed", e);
+            sendSse(response, "error", "{\"error\":\"AI service temporarily unavailable\"}");
+            return;
+        }
+
+        AiChatMessage aiMsg = new AiChatMessage();
+        aiMsg.setSessionId(sessionId);
+        aiMsg.setSenderType("AI");
+        aiMsg.setMessage(result.answer());
+        aiMsg.setIntent(result.intent());
+        aiMsg.setConfidence(BigDecimal.valueOf(result.confidence()));
+        aiMsg.setNeedAdminSupport(result.needAdminSupport());
+        aiMsg.setSuggestedAdminNote(result.suggestedAdminNote());
+        messageDAO.create(aiMsg);
+
+        boolean autoEscalate = Boolean.parseBoolean(settingDAO.getSetting("AUTO_ESCALATE_TO_ADMIN", "true"));
+        String newStatus = chatSession.getStatus();
+        if (result.needAdminSupport() && autoEscalate) newStatus = "WAITING_ADMIN";
+        if ("ANSWERED_BY_ADMIN".equals(chatSession.getStatus())) {
+            newStatus = result.needAdminSupport() && autoEscalate ? "WAITING_ADMIN" : "OPEN";
+        }
+        sessionDAO.updateStatus(sessionId, newStatus, chatSession.isNeedAdminSupport() || result.needAdminSupport());
+
+        String answer = result.answer() == null ? "" : result.answer();
+        for (int i = 0; i < answer.length(); i += 60) {
+            JsonObject delta = new JsonObject();
+            delta.addProperty("text", answer.substring(i, Math.min(answer.length(), i + 60)));
+            sendSse(response, "delta", gson.toJson(delta));
+        }
+        JsonObject done = new JsonObject();
+        done.addProperty("sessionId", sessionId);
+        done.addProperty("intent", result.intent());
+        done.addProperty("needAdminSupport", result.needAdminSupport());
+        done.addProperty("provider", result.usedProvider());
+        done.addProperty("model", result.usedModel());
+        sendSse(response, "done", gson.toJson(done));
+    }
+
+    private AiChatSession resolveSession(HttpSession httpSession, User user,
+                                         int sessionId, HttpServletResponse response) throws IOException {
+        AiChatSession chatSession = null;
+        if (sessionId > 0) {
+            chatSession = sessionDAO.getById(sessionId);
+            if (chatSession != null) {
+                if (user != null) {
+                    if (chatSession.getUserId() == null || chatSession.getUserId() != user.getId()) {
+                        response.setStatus(HttpServletResponse.SC_FORBIDDEN);
+                        return null;
+                    }
+                } else {
+                    Integer guestSessionId = (Integer) httpSession.getAttribute("guest_chat_session_id");
+                    if (guestSessionId == null || guestSessionId != sessionId) {
+                        response.setStatus(HttpServletResponse.SC_FORBIDDEN);
+                        return null;
+                    }
+                }
+            }
+        }
+        if (chatSession == null) {
+            chatSession = new AiChatSession();
+            if (user != null) chatSession.setUserId(user.getId());
+            else chatSession.setGuestName("Guest");
+            chatSession.setStatus("OPEN");
+            chatSession.setNeedAdminSupport(false);
+            chatSession.setId(sessionDAO.create(chatSession));
+            if (user == null) httpSession.setAttribute("guest_chat_session_id", chatSession.getId());
+        }
+        return chatSession;
+    }
+
+    private void sendSse(HttpServletResponse response, String event, String data) throws IOException {
+        response.getWriter().write("event: " + event + "\n");
+        response.getWriter().write("data: " + data + "\n\n");
+        response.getWriter().flush();
     }
 }

@@ -105,7 +105,7 @@ public class WebRegistrationConfig {
             register(servletContext, "SearchAutocompleteServlet", controller.shop.SearchAutocompleteServlet::new, "/api/search-autocomplete");
             register(servletContext, "ShopServlet", controller.shop.ShopServlet::new, "/shop");
             register(servletContext, "ToggleWishlistServlet", controller.shop.ToggleWishlistServlet::new, "/toggle-wishlist");
-            register(servletContext, "UserAiSupportServlet", controller.shop.UserAiSupportServlet::new, "/ai-support/chat", "/ai-support/history", "/ai-support/messages", "/ai-support/unread-count");
+            register(servletContext, "UserAiSupportServlet", controller.shop.UserAiSupportServlet::new, "/ai-support/chat", "/ai-support/history", "/ai-support/messages", "/ai-support/unread-count", "/ai-support/stream");
             register(servletContext, "UserNotificationServlet", controller.shop.UserNotificationServlet::new, "/notifications/unread-count", "/notifications/list", "/notifications/mark-read");
             register(servletContext, "VnpayReturnServlet", controller.shop.VnpayReturnServlet::new, "/vnpay-return");
             register(servletContext, "WishlistServlet", controller.shop.WishlistServlet::new, "/wishlist");
