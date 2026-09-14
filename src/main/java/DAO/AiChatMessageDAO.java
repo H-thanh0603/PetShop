@@ -126,4 +126,35 @@ public class AiChatMessageDAO {
             log.error("Error updating session timestamp for id={}", sessionId, e);
         }
     }
+
+    public int countBySession(int sessionId) {
+        String sql = "SELECT COUNT(*) FROM ai_chat_messages WHERE session_id = ?";
+        try (Connection conn = DBContext.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setInt(1, sessionId);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) return rs.getInt(1);
+            }
+        } catch (Exception e) {
+            log.error("Error counting messages for session_id={}", sessionId, e);
+        }
+        return 0;
+    }
+
+    /** USER messages sent today across all sessions of one user (cost control). */
+    public int countUserMessagesToday(int userId) {
+        String sql = "SELECT COUNT(*) FROM ai_chat_messages m "
+                + "JOIN ai_chat_sessions s ON s.id = m.session_id "
+                + "WHERE s.user_id = ? AND m.sender_type = 'USER' AND m.created_at >= CURDATE()";
+        try (Connection conn = DBContext.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setInt(1, userId);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) return rs.getInt(1);
+            }
+        } catch (Exception e) {
+            log.error("Error counting today's messages for user_id={}", userId, e);
+        }
+        return 0;
+    }
 }

@@ -62,8 +62,40 @@ public class MerchantChangeDAO {
         }
     }
 
-    public boolean isApproved(String changeId) {
+    /** Loads staged rows for ledger hydration after a restart. */
+    public List<StagedChange> loadStaged() {
+        List<StagedChange> out = new ArrayList<>();
+        String sql = "SELECT change_id, kind, summary, items_json, created_by, guardrail_notes "
+                + "FROM ai_merchant_changes WHERE status = 'STAGED' ORDER BY id ASC LIMIT 200";
         try (Connection c = DBContext.getConnection();
+             PreparedStatement ps = c.prepareStatement(sql);
+             ResultSet rs = ps.executeQuery()) {
+            while (rs.next()) {
+                try {
+                    StagedChange.Kind kind = StagedChange.Kind.valueOf(rs.getString(2));
+                    List<StagedChange.Item> items = new ArrayList<>();
+                    for (var el : JsonParser.parseString(rs.getString(4)).getAsJsonArray()) {
+                        JsonObject i = el.getAsJsonObject();
+                        items.add(new StagedChange.Item(
+                                i.has("target") ? i.get("target").getAsString() : "",
+                                i.has("field") ? i.get("field").getAsString() : "",
+                                i.has("before") ? i.get("before").getAsString() : "",
+                                i.has("after") ? i.get("after").getAsString() : ""));
+                    }
+                    String notes = rs.getString(6);
+                    StagedChange change = new StagedChange(rs.getString(1), kind,
+                            rs.getString(3), items, rs.getString(5),
+                            notes == null || notes.isBlank() ? List.of() : List.of(notes));
+                    out.add(change);
+                } catch (Exception ignored) {}
+            }
+        } catch (Exception e) {
+            log.warn("merchant staged hydration failed", e);
+        }
+        return out;
+    }
+
+    public boolean isApproved(String changeId) {        try (Connection c = DBContext.getConnection();
              PreparedStatement ps = c.prepareStatement(
                      "SELECT approved_by FROM ai_merchant_changes WHERE change_id = ?")) {
             ps.setString(1, changeId);

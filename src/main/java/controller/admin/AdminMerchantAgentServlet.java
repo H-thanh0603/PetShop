@@ -12,6 +12,8 @@ import jakarta.servlet.http.HttpSession;
 import Model.User;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import services.ai.common.AppEventBus;
+import services.ai.common.AuditLog;
 import services.ai.common.DbMemoryStore;
 import services.ai.common.MemoryService;
 import services.ai.merchant.MerchantAgent;
@@ -56,6 +58,19 @@ public class AdminMerchantAgentServlet extends HttpServlet {
             case "/admin/ai-merchant/digest" -> {
                 JsonObject o = new JsonObject();
                 o.addProperty("digest", agent.digest());
+                response.getWriter().write(gson.toJson(o));
+            }
+            case "/admin/ai-merchant/escalations" -> {
+                JsonArray arr = new JsonArray();
+                for (AppEventBus.AppEvent ev : AppEventBus.peek("merchant:queue")) {
+                    JsonObject e = new JsonObject();
+                    e.addProperty("type", ev.type());
+                    e.addProperty("payload", ev.payload());
+                    e.addProperty("timestamp", ev.timestamp());
+                    arr.add(e);
+                }
+                JsonObject o = new JsonObject();
+                o.add("escalations", arr);
                 response.getWriter().write(gson.toJson(o));
             }
             case "/admin/ai-merchant/memory" -> {
@@ -112,6 +127,7 @@ public class AdminMerchantAgentServlet extends HttpServlet {
                 String changeId = str(body, "changeId");
                 if (changeId.isEmpty()) return;
                 changeDAO.markApproved(changeId, operator);
+                AuditLog.record("merchant", "approve", operator, null, changeId, "", "", "", 0);
                 log.info("merchant change approved id={} by={}", changeId, operator);
                 JsonObject o = new JsonObject();
                 o.addProperty("changeId", changeId);
@@ -123,6 +139,7 @@ public class AdminMerchantAgentServlet extends HttpServlet {
                 if (changeId.isEmpty()) return;
                 try {
                     backend.apply(changeId, operator, true);
+                    AuditLog.record("merchant", "apply", operator, null, changeId, "", "", "", 0);
                     JsonObject o = new JsonObject();
                     o.addProperty("changeId", changeId);
                     o.addProperty("applied", true);
@@ -139,6 +156,7 @@ public class AdminMerchantAgentServlet extends HttpServlet {
                 String changeId = str(body, "changeId");
                 if (changeId.isEmpty()) return;
                 backend.discard(changeId, operator);
+                AuditLog.record("merchant", "discard", operator, null, changeId, "", "", "", 0);
                 JsonObject o = new JsonObject();
                 o.addProperty("changeId", changeId);
                 o.addProperty("discarded", true);

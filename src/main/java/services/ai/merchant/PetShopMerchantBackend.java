@@ -31,8 +31,26 @@ public class PetShopMerchantBackend {
     private final OrderDAO orderDAO = new OrderDAO();
     private final ProductDAO productDAO = new ProductDAO();
     private final PromotionDAO promotionDAO = new PromotionDAO();
-    private final ChangeLedger ledger = new ChangeLedger();
+    /**
+     * Shared ledger: every backend instance (agent turns, MCP calls, approval
+     * servlet) stages into and applies from the same lifecycle. Hydrated once
+     * from durable storage so staged work and id sequencing survive restarts.
+     */
+    private static final ChangeLedger SHARED_LEDGER = new ChangeLedger();
+    private static volatile boolean hydrated;
+    private final ChangeLedger ledger = SHARED_LEDGER;
     private final MerchantChangeDAO changeDAO = new MerchantChangeDAO();
+
+    public PetShopMerchantBackend() {
+        if (!hydrated) {
+            synchronized (PetShopMerchantBackend.class) {
+                if (!hydrated) {
+                    for (StagedChange c : changeDAO.loadStaged()) SHARED_LEDGER.reattach(c);
+                    hydrated = true;
+                }
+            }
+        }
+    }
 
     public ChangeLedger ledger() { return ledger; }
 

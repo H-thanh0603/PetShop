@@ -201,6 +201,18 @@ public class UserAiSupportServlet extends HttpServlet {
                 return;
             }
 
+            // Cost control: daily per-user agent turn budget (guests: per-session cap below).
+            if (user != null) {
+                int dailyCap = Integer.parseInt(settingDAO.getSetting("AI_MAX_TURNS_PER_DAY", "100"));
+                try {
+                    if (messageDAO.countUserMessagesToday(user.getId()) >= dailyCap) {
+                        response.setStatus(429); // Too Many Requests (quota guard)
+                        response.getWriter().write("{\"error\":\"Daily AI quota reached. Please try again tomorrow.\"}");
+                        return;
+                    }
+                } catch (Exception ignored) {}
+            }
+
             // Get or create session
             AiChatSession chatSession = null;
             if (sessionId > 0) {
@@ -257,8 +269,19 @@ public class UserAiSupportServlet extends HttpServlet {
                 history.remove(history.size() - 1);
             }
 
-            // Call DeepSeek Service
-            DeepSeekService.AiResponse aiRes = deepSeekService.getChatResponse(message, history, user);
+            // Guest per-session cap (cost control alongside the user daily quota).
+            try {
+                int sessionCap = Integer.parseInt(settingDAO.getSetting("AI_MAX_MSGS_PER_SESSION", "60"));
+                if (messageDAO.countBySession(sessionId) >= sessionCap) {
+                    response.setStatus(429); // Too Many Requests (quota guard)
+                    response.getWriter().write("{\"error\":\"This chat reached its message limit. Please start a new conversation.\"}");
+                    return;
+                }
+            } catch (Exception ignored) {}
+
+            // Call DeepSeek Service (sessionKey keeps cross-turn provenance)
+            DeepSeekService.AiResponse aiRes = deepSeekService.getChatResponse(
+                    message, history, user, "chat:" + sessionId);
 
             // Save AI message to database
             AiChatMessage aiMsg = new AiChatMessage();
@@ -288,6 +311,17 @@ public class UserAiSupportServlet extends HttpServlet {
             
             sessionDAO.updateStatus(sessionId, newStatus, chatSession.isNeedAdminSupport() || escalate);
 
+            // Agent-to-agent handoff: escalations enter the merchant queue so the
+            // merchant agent surfaces them (digest + admin view).
+            if (escalate) {
+                try {
+                    String who = user == null ? "guest" : "user:" + user.getId();
+                    services.ai.common.AppEventBus.publish("merchant:queue", "support_escalation",
+                            "session=" + sessionId + " who=" + who + " intent=" + aiRes.getIntent()
+                                    + " note=" + aiRes.getSuggestedAdminNote());
+                } catch (Exception ignored) {}
+            }
+
             // Write JSON response (provider details are non-sensitive metadata only;
             // keys never leave the server — see services.ai.AiConfig)
             JsonObject responseJson = new JsonObject();
@@ -295,8 +329,9 @@ public class UserAiSupportServlet extends HttpServlet {
             responseJson.addProperty("answer", aiRes.getAnswer());
             responseJson.addProperty("intent", aiRes.getIntent());
             responseJson.addProperty("needAdminSupport", escalate);
-            responseJson.addProperty("provider", services.ai.AiConfig.provider());
-            responseJson.addProperty("model", services.ai.AiConfig.model());
+            responseJson.addProperty("provider", aiRes.getUsedProvider());
+            responseJson.addProperty("model", aiRes.getUsedModel());
+            responseJson.addProperty("requestId", aiRes.getRequestId());
             try {
                 responseJson.add("cards", new JsonParser().parse(aiRes.getCardsJson()));
             } catch (Exception ignored) {

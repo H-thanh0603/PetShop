@@ -155,6 +155,12 @@ public final class CommerceTools {
     public Set<Integer> getSeenProductIds() { return Set.copyOf(seenProductIds); }
     public Integer getSeenOrderId() { return seenOrderId; }
 
+    /** Restores cross-turn provenance loaded from the session store. */
+    public void seedProvenance(Set<Integer> productIds, Integer orderId) {
+        if (productIds != null) seenProductIds.addAll(productIds);
+        if (orderId != null) seenOrderId = orderId;
+    }
+
     // ---- helpers ----
     private static String schema(String[] props, String[] required) {
         JsonObject s = new JsonObject();

@@ -14,6 +14,7 @@ import org.slf4j.LoggerFactory;
 import services.ai.CommerceTools;
 import services.ai.PetShopCommerceBackend;
 import services.ai.ToolDefinition;
+import services.ai.common.AuditLog;
 import services.ai.merchant.MerchantTools;
 import services.ai.merchant.PetShopMerchantBackend;
 
@@ -92,6 +93,9 @@ public class McpServlet extends HttpServlet {
             result = new CommerceTools(new PetShopCommerceBackend(),
                     PetShopCommerceBackend.SessionContext.of(user)).execute(name, args);
         }
+        AuditLog.record("mcp", "tools/call:" + name,
+                user == null ? "guest" : "user:" + user.getId(), null,
+                result.length() > 500 ? result.substring(0, 500) : result, "", "", "", 0);
         try {
             o.add("result", JsonParser.parseString(result));
         } catch (Exception e) {

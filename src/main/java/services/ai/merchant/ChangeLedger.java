@@ -107,6 +107,20 @@ public class ChangeLedger {
 
     public StagedChange get(String changeId) { return changes.get(changeId); }
 
+    /**
+     * Re-inserts a change hydrated from durable storage (restart recovery).
+     * Advances the id sequence past any hydrated id so new ids never collide.
+     */
+    public void reattach(StagedChange change) {
+        changes.put(change.getChangeId(), change);
+        try {
+            String num = change.getChangeId().replaceAll("\\D+", "");
+            if (!num.isEmpty()) {
+                sequence.updateAndGet(cur -> Math.max(cur, Integer.parseInt(num)));
+            }
+        } catch (Exception ignored) {}
+    }
+
     public List<StagedChange> pending() {
         return changes.values().stream()
                 .filter(c -> c.getStatus() == StagedChange.Status.STAGED).toList();

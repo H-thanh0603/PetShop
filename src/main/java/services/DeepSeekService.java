@@ -58,6 +58,16 @@ public class DeepSeekService {
         private String cardsJson = "[]";
         public String getCardsJson() { return cardsJson; }
         public void setCardsJson(String cardsJson) { this.cardsJson = cardsJson == null ? "[]" : cardsJson; }
+
+        private String usedProvider = "";
+        private String usedModel = "";
+        private String requestId = "";
+        public String getUsedProvider() { return usedProvider; }
+        public void setUsedProvider(String v) { this.usedProvider = v == null ? "" : v; }
+        public String getUsedModel() { return usedModel; }
+        public void setUsedModel(String v) { this.usedModel = v == null ? "" : v; }
+        public String getRequestId() { return requestId; }
+        public void setRequestId(String v) { this.requestId = v == null ? "" : v; }
     }
 
     /**
@@ -69,6 +79,11 @@ public class DeepSeekService {
      * switching providers requires only env/config changes.
      */
     public AiResponse getChatResponse(String userMessage, List<AiChatMessage> history, User user) {
+        return getChatResponse(userMessage, history, user, null);
+    }
+
+    public AiResponse getChatResponse(String userMessage, List<AiChatMessage> history,
+                                      User user, String sessionKey) {
         boolean enabled = Boolean.parseBoolean(settingDAO.getSetting("AI_SUPPORT_ENABLED", "true"));
         if (!enabled) {
             AiResponse fallback = new AiResponse();
@@ -78,7 +93,7 @@ public class DeepSeekService {
             return fallback;
         }
         try {
-            CommerceAgent.AgentResult r = commerceAgent.run(userMessage, history, user);
+            CommerceAgent.AgentResult r = commerceAgent.run(userMessage, history, user, sessionKey);
             AiResponse res = new AiResponse();
             res.setAnswer(r.answer());
             res.setIntent(r.intent());
@@ -90,6 +105,9 @@ public class DeepSeekService {
             res.setRelatedProducts(r.relatedProducts());
             res.setRelatedOrder(r.relatedOrder());
             res.setCardsJson(r.cards() == null ? "[]" : r.cards().toString());
+            res.setUsedProvider(r.usedProvider());
+            res.setUsedModel(r.usedModel());
+            res.setRequestId(r.requestId());
             return res;
         } catch (Exception e) {
             log.error("Commerce agent failed", e);

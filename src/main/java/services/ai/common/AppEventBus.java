@@ -29,9 +29,17 @@ public final class AppEventBus {
         }
     }
 
-    /** Drains pending events for a session (consumed by the next turn). */
-    public static List<AppEvent> drain(String sessionKey) {
+    /** Non-destructive read (digests, queues); use drain to consume. */
+    public static List<AppEvent> peek(String sessionKey) {
         Deque<AppEvent> q = QUEUES.get(sessionKey);
+        if (q == null) return List.of();
+        synchronized (q) {
+            return new ArrayList<>(q);
+        }
+    }
+
+    /** Drains pending events for a session (consumed by the next turn). */
+    public static List<AppEvent> drain(String sessionKey) {        Deque<AppEvent> q = QUEUES.get(sessionKey);
         if (q == null) return List.of();
         synchronized (q) {
             List<AppEvent> out = new ArrayList<>(q);

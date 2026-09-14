@@ -220,6 +220,7 @@ public class RateLimitFilter implements Filter {
         endpointLimits.put("/add-to-cart", 20);
         endpointLimits.put("/ai-support/chat", 10);
         endpointLimits.put("/ai-support/stream", 10);
+        endpointLimits.put("/admin/ai-merchant/chat", 30);
         endpointLimits.put("/mcp", 30);
     }
 }

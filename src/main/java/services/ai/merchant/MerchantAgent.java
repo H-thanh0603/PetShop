@@ -10,6 +10,8 @@ import services.ai.ChatRequest;
 import services.ai.ChatResponse;
 import services.ai.SkillLoader;
 import services.ai.ToolCall;
+import services.ai.common.AppEventBus;
+import services.ai.common.AuditLog;
 import services.ai.common.Cards;
 
 import java.util.ArrayList;
@@ -65,7 +67,12 @@ public class MerchantAgent {
                 }
                 request.getMessages().add(AiMessage.assistantWithTools(resp.getContent(), resp.getToolCalls()));
                 for (ToolCall tc : resp.getToolCalls()) {
+                    long t0 = System.currentTimeMillis();
                     String result = tools.execute(tc.getName(), tc.getArgumentsJson());
+                    long toolMs = System.currentTimeMillis() - t0;
+                    AuditLog.record("merchant", "tool:" + tc.getName(), operator, null,
+                            result.length() > 500 ? result.substring(0, 500) : result,
+                            fr.usedProvider(), fr.usedModel(), requestId, toolMs);
                     request.getMessages().add(AiMessage.toolResult(tc.getId(), tc.getName(), result));
                     // Attach change preview cards for staged changes.
                     try {
@@ -96,6 +103,8 @@ public class MerchantAgent {
         if (finalContent == null || finalContent.isBlank()) {
             finalContent = "Tôi chưa thể xử lý yêu cầu này. Vui lòng thử lại hoặc diễn đạt khác.";
         }
+        AuditLog.record("merchant", "turn_complete", operator, null,
+                "answerChars=" + finalContent.length(), usedProvider, usedModel, requestId, totalLatency);
         return new MerchantResult(finalContent, usedProvider, usedModel, requestId, totalLatency, cards);
     }
 
@@ -120,6 +129,11 @@ public class MerchantAgent {
             var issues = backend.orderIssues();
             sb.append("Đơn cần chú ý: ").append(issues.size()).append("\n");
             sb.append("Thay đổi đang chờ duyệt: ").append(backend.ledger().pending().size()).append("\n");
+            var escalations = AppEventBus.peek("merchant:queue");
+            sb.append("Escalation từ shopping agent: ").append(escalations.size()).append("\n");
+            for (int i = 0; i < Math.min(escalations.size(), 5); i++) {
+                sb.append("- ").append(escalations.get(i).payload()).append("\n");
+            }
         } catch (Exception e) {
             sb.append("(digest partially unavailable: ").append(e.getMessage()).append(")\n");
         }
