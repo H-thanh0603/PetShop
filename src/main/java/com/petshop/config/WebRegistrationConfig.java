@@ -18,12 +18,8 @@ import controller.admin.UserManageServlet;
 import controller.payment.BankWebhookServlet;
 import controller.payment.GhnWebhookServlet;
 import controller.payment.VnpayIpnServlet;
-import controller.shop.AddReviewServlet;
-import controller.shop.CheckoutServlet;
-import controller.shop.SearchAutocompleteServlet;
 import controller.shop.UserAiSupportServlet;
 import controller.shop.UserNotificationServlet;
-import controller.shop.VnpayReturnServlet;
 import controller.user.DownloadPrivateKeyServlet;
 import controller.user.UploadSignatureServlet;
 import jakarta.servlet.MultipartConfigElement;
@@ -75,19 +71,19 @@ public class WebRegistrationConfig {
             register(servletContext, "BankWebhookServlet", controller.payment.BankWebhookServlet::new, "/api/payment/bank-webhook");
             register(servletContext, "VnpayIpnServlet", VnpayIpnServlet::new, "/api/payment/vnpay-ipn");
             register(servletContext, "GhnWebhookServlet", controller.payment.GhnWebhookServlet::new, "/api/ghn/webhook");
-            register(servletContext, "AddReviewServlet", controller.shop.AddReviewServlet::new, "/add-review");
+            // /add-review served by ShopApiController.
             // /add-to-cart served by CartController (addToCart).
             // /cart served by CartController.
             register(servletContext, "CheckoutServlet", controller.shop.CheckoutServlet::new, "/checkout");
             // /my-orders served by MyOrdersController.
             // /product-detail + /wishlist served by CatalogController.
-            register(servletContext, "SearchAutocompleteServlet", controller.shop.SearchAutocompleteServlet::new, "/api/search-autocomplete");
+            // /api/search-autocomplete served by ShopApiController.
             // /shop served by ShopController.
             // /toggle-wishlist served by CatalogController.
             register(servletContext, "UserAiSupportServlet", controller.shop.UserAiSupportServlet::new, "/ai-support/chat", "/ai-support/history", "/ai-support/messages", "/ai-support/unread-count", "/ai-support/stream");
             register(servletContext, "McpServlet", controller.shop.McpServlet::new, "/mcp");
             register(servletContext, "UserNotificationServlet", controller.shop.UserNotificationServlet::new, "/notifications/unread-count", "/notifications/list", "/notifications/mark-read");
-            register(servletContext, "VnpayReturnServlet", controller.shop.VnpayReturnServlet::new, "/vnpay-return");
+            // /vnpay-return served by ShopApiController.
             // /wishlist served by CatalogController.
             // /order-success served by OrderResultController.
             // /addresses + /my-account + /update-profile-checkout served by AccountController.
