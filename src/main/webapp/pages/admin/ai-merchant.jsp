@@ -69,7 +69,7 @@ const CTX = '<c:out value="${pageContext.request.contextPath}"/>';
 function esc(s){return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;');}
 function addMsg(cls, text){const l=document.getElementById('mcht-log');const d=document.createElement('div');d.className='mcht-msg '+cls;d.textContent=text;l.appendChild(d);l.scrollTop=l.scrollHeight;}
 async function post(url, body){
-    const r = await fetch(CTX + url, {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(body||{})});
+    const r = await fetch(CTX + url, {method:'POST', headers:{'Content-Type':'application/json','X-CSRF-Token':'${csrfToken}'}, body: JSON.stringify(body||{})});
     return r.json();
 }
 async function mchtSend(){

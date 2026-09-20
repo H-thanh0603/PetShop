@@ -84,6 +84,7 @@ public class CsrfFilter implements Filter {
 
     private boolean isServerToServerWebhook(String uri) {
         return uri != null && (uri.endsWith("/api/payment/bank-webhook")
+                || uri.endsWith("/api/payment/vnpay-ipn")
                 || uri.endsWith("/api/ghn/webhook"));
     }
 
