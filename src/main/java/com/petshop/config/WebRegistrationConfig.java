@@ -31,15 +31,12 @@ import controller.shop.AddToCartServlet;
 import controller.shop.CartServlet;
 import controller.shop.CheckoutServlet;
 import controller.shop.MyOrdersServlet;
-import controller.shop.ProductDetailServlet;
 import controller.shop.SearchAutocompleteServlet;
 import controller.shop.ShopServlet;
 import controller.shop.ToggleWishlistServlet;
 import controller.shop.UserAiSupportServlet;
 import controller.shop.UserNotificationServlet;
 import controller.shop.VnpayReturnServlet;
-import controller.shop.WishlistServlet;
-import controller.success.OrderSuccessServlet;
 import controller.updateinformation.AddressServlet;
 import controller.updateinformation.MyAccountServlet;
 import controller.updateinformation.UpdateProfileCheckoutServlet;
@@ -99,7 +96,7 @@ public class WebRegistrationConfig {
             register(servletContext, "CartServlet", controller.shop.CartServlet::new, "/cart");
             register(servletContext, "CheckoutServlet", controller.shop.CheckoutServlet::new, "/checkout");
             register(servletContext, "MyOrdersServlet", controller.shop.MyOrdersServlet::new, "/my-orders");
-            register(servletContext, "ProductDetailServlet", controller.shop.ProductDetailServlet::new, "/product-detail");
+            // /product-detail + /wishlist served by CatalogController.
             register(servletContext, "SearchAutocompleteServlet", controller.shop.SearchAutocompleteServlet::new, "/api/search-autocomplete");
             register(servletContext, "ShopServlet", controller.shop.ShopServlet::new, "/shop");
             register(servletContext, "ToggleWishlistServlet", controller.shop.ToggleWishlistServlet::new, "/toggle-wishlist");
@@ -107,8 +104,8 @@ public class WebRegistrationConfig {
             register(servletContext, "McpServlet", controller.shop.McpServlet::new, "/mcp");
             register(servletContext, "UserNotificationServlet", controller.shop.UserNotificationServlet::new, "/notifications/unread-count", "/notifications/list", "/notifications/mark-read");
             register(servletContext, "VnpayReturnServlet", controller.shop.VnpayReturnServlet::new, "/vnpay-return");
-            register(servletContext, "WishlistServlet", controller.shop.WishlistServlet::new, "/wishlist");
-            register(servletContext, "OrderSuccessServlet", controller.success.OrderSuccessServlet::new, "/order-success");
+            // /wishlist served by CatalogController.
+            // /order-success served by OrderResultController.
             register(servletContext, "AddressServlet", controller.updateinformation.AddressServlet::new, "/addresses");
             register(servletContext, "MyAccountServlet", controller.updateinformation.MyAccountServlet::new, "/my-account");
             register(servletContext, "UpdateProfileCheckoutServlet", controller.updateinformation.UpdateProfileCheckoutServlet::new, "/update-profile-checkout");
