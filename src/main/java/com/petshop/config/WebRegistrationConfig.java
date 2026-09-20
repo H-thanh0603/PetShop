@@ -2,26 +2,16 @@ package com.petshop.config;
 
 import controller.admin.AdminAiSupportServlet;
 import controller.admin.AdminMerchantAgentServlet;
-import controller.admin.CategoryServlet;
-import controller.admin.DashboardServlet;
 import controller.admin.FileUploadServlet;
 import controller.admin.InventoryServlet;
 import controller.admin.ManageOrderServlet;
-import controller.admin.NotificationServlet;
-import controller.admin.PetTypeServlet;
 import controller.admin.ProductServlet;
 import controller.admin.PromotionServlet;
-import controller.admin.ReportServlet;
-import controller.admin.ReviewModerationServlet;
-import controller.admin.StatisticsServlet;
 import controller.admin.UserManageServlet;
 import controller.payment.BankWebhookServlet;
 import controller.payment.GhnWebhookServlet;
 import controller.payment.VnpayIpnServlet;
 import controller.shop.UserAiSupportServlet;
-import controller.shop.UserNotificationServlet;
-import controller.user.DownloadPrivateKeyServlet;
-import controller.user.UploadSignatureServlet;
 import jakarta.servlet.MultipartConfigElement;
 import jakarta.servlet.ServletContext;
 import org.springframework.boot.web.servlet.ServletContextInitializer;
@@ -46,17 +36,17 @@ public class WebRegistrationConfig {
         return (ServletContext servletContext) -> {
             register(servletContext, "AdminAiSupportServlet", controller.admin.AdminAiSupportServlet::new, "/admin/ai-support", "/admin/ai-support/dashboard", "/admin/ai-support/sessions", "/admin/ai-support/sessions/detail", "/admin/ai-support/sessions/reply", "/admin/ai-support/sessions/close", "/admin/ai-support/knowledge", "/admin/ai-support/settings");
             register(servletContext, "AdminMerchantAgentServlet", controller.admin.AdminMerchantAgentServlet::new, "/admin/ai-merchant", "/admin/ai-merchant/chat", "/admin/ai-merchant/pending", "/admin/ai-merchant/approve", "/admin/ai-merchant/apply", "/admin/ai-merchant/discard", "/admin/ai-merchant/digest", "/admin/ai-merchant/memory", "/admin/ai-merchant/escalations");
-            register(servletContext, "CategoryServlet", controller.admin.CategoryServlet::new, "/pages/admin/categories");
-            register(servletContext, "DashboardServlet", controller.admin.DashboardServlet::new, "/pages/admin/dashboard");
+            // /pages/admin/categories served by AdminReadController.
+            // /pages/admin/dashboard served by AdminReadController.
             register(servletContext, "InventoryServlet", controller.admin.InventoryServlet::new, "/admin/inventory");
             register(servletContext, "ManageOrderServlet", controller.admin.ManageOrderServlet::new, "/admin/orders");
-            register(servletContext, "NotificationServlet", controller.admin.NotificationServlet::new, "/admin/notifications");
-            register(servletContext, "PetTypeServlet", controller.admin.PetTypeServlet::new, "/pages/admin/pet-types");
+            // /admin/notifications served by AdminReadController.
+            // /pages/admin/pet-types served by AdminReadController.
             register(servletContext, "ProductServlet", controller.admin.ProductServlet::new, "/pages/admin/products");
             register(servletContext, "PromotionServlet", controller.admin.PromotionServlet::new, "/admin/promotions");
-            register(servletContext, "ReportServlet", controller.admin.ReportServlet::new, "/admin/reports");
+            // /admin/reports served by AdminReadController.
             register(servletContext, "ReviewModerationServlet", controller.admin.ReviewModerationServlet::new, "/pages/admin/reviews");
-            register(servletContext, "StatisticsServlet", controller.admin.StatisticsServlet::new, "/admin/statistics");
+            // /admin/statistics served by AdminReadController.
             register(servletContext, "UserManageServlet", controller.admin.UserManageServlet::new, "/admin/users", "/admin/users/api");
             // /admin/login served by AuthController.
             // /forgot-password, /verify-otp, /reset-password served by AuthController.
@@ -82,13 +72,12 @@ public class WebRegistrationConfig {
             // /toggle-wishlist served by CatalogController.
             register(servletContext, "UserAiSupportServlet", controller.shop.UserAiSupportServlet::new, "/ai-support/chat", "/ai-support/history", "/ai-support/messages", "/ai-support/unread-count", "/ai-support/stream");
             register(servletContext, "McpServlet", controller.shop.McpServlet::new, "/mcp");
-            register(servletContext, "UserNotificationServlet", controller.shop.UserNotificationServlet::new, "/notifications/unread-count", "/notifications/list", "/notifications/mark-read");
+            // /notifications/* served by NotificationController.
             // /vnpay-return served by ShopApiController.
             // /wishlist served by CatalogController.
             // /order-success served by OrderResultController.
             // /addresses + /my-account + /update-profile-checkout served by AccountController.
-            register(servletContext, "DownloadPrivateKeyServlet", controller.user.DownloadPrivateKeyServlet::new, "/user/download-private-key");
-            register(servletContext, "UploadSignatureServlet", controller.user.UploadSignatureServlet::new, "/user/upload-signature");
+            // /user/download-private-key + /user/upload-signature served by SignatureController.
 
             // FileUploadServlet needs an explicit multipart config: programmatic
             // registration does not process the (removed) @MultipartConfig.
