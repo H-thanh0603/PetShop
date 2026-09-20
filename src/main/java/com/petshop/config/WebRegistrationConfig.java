@@ -24,9 +24,6 @@ import controller.shop.SearchAutocompleteServlet;
 import controller.shop.UserAiSupportServlet;
 import controller.shop.UserNotificationServlet;
 import controller.shop.VnpayReturnServlet;
-import controller.updateinformation.AddressServlet;
-import controller.updateinformation.MyAccountServlet;
-import controller.updateinformation.UpdateProfileCheckoutServlet;
 import controller.user.DownloadPrivateKeyServlet;
 import controller.user.UploadSignatureServlet;
 import jakarta.servlet.MultipartConfigElement;
@@ -93,9 +90,7 @@ public class WebRegistrationConfig {
             register(servletContext, "VnpayReturnServlet", controller.shop.VnpayReturnServlet::new, "/vnpay-return");
             // /wishlist served by CatalogController.
             // /order-success served by OrderResultController.
-            register(servletContext, "AddressServlet", controller.updateinformation.AddressServlet::new, "/addresses");
-            register(servletContext, "MyAccountServlet", controller.updateinformation.MyAccountServlet::new, "/my-account");
-            register(servletContext, "UpdateProfileCheckoutServlet", controller.updateinformation.UpdateProfileCheckoutServlet::new, "/update-profile-checkout");
+            // /addresses + /my-account + /update-profile-checkout served by AccountController.
             register(servletContext, "DownloadPrivateKeyServlet", controller.user.DownloadPrivateKeyServlet::new, "/user/download-private-key");
             register(servletContext, "UploadSignatureServlet", controller.user.UploadSignatureServlet::new, "/user/upload-signature");
 
