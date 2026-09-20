@@ -1,38 +1,37 @@
-package controller.payment;
+package com.petshop.web;
 
-import jakarta.servlet.http.HttpServletRequest;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
 import org.junit.jupiter.api.Test;
+
 import services.payment.BankWebhookPayload;
 
 import java.lang.reflect.Method;
 import java.math.BigDecimal;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
-
-class BankWebhookServletTest {
+class BankWebhookControllerTest {
 
     @Test
     void sepayAuthorizationApiKeyHeaderIsAccepted() throws Exception {
         System.setProperty("payment.bank.webhook-secret", "sepay-secret");
-        HttpServletRequest request = mock(HttpServletRequest.class);
-        when(request.getHeader("X-Bank-Webhook-Secret")).thenReturn(null);
-        when(request.getHeader("X-Secret-Key")).thenReturn(null);
-        when(request.getHeader("Authorization")).thenReturn("Apikey sepay-secret");
-
-        Method isAuthorized = BankWebhookServlet.class.getDeclaredMethod(
-                "isAuthorized",
-                HttpServletRequest.class
-        );
-        isAuthorized.setAccessible(true);
-
         try {
-            assertTrue((Boolean) isAuthorized.invoke(new BankWebhookServlet(), request));
+            BankWebhookController controller = new BankWebhookController();
+            assertTrue(controller.isAuthorized(null, null, "Apikey sepay-secret"));
+            assertTrue(controller.isAuthorized("sepay-secret", null, null));
+            assertFalse(controller.isAuthorized(null, null, null));
+            assertFalse(controller.isAuthorized("wrong", null, null));
         } finally {
             System.clearProperty("payment.bank.webhook-secret");
         }
+    }
+
+    @Test
+    void blankConfiguredSecretRejectsAll() {
+        System.clearProperty("payment.bank.webhook-secret");
+        BankWebhookController controller = new BankWebhookController();
+        assertFalse(controller.isAuthorized("anything", null, null));
     }
 
     @Test
@@ -48,14 +47,14 @@ class BankWebhookServletTest {
                 + "\"referenceCode\":\"SEPAY987\""
                 + "}";
 
-        Method parsePayload = BankWebhookServlet.class.getDeclaredMethod(
+        Method parsePayload = BankWebhookController.class.getDeclaredMethod(
                 "parsePayload",
                 String.class
         );
         parsePayload.setAccessible(true);
 
         BankWebhookPayload payload = (BankWebhookPayload) parsePayload.invoke(
-                new BankWebhookServlet(),
+                new BankWebhookController(),
                 rawPayload
         );
 

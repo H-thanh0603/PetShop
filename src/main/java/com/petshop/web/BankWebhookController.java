@@ -1,18 +1,4 @@
-package controller.payment;
-
-import Util.AppConfig;
-import com.google.gson.Gson;
-import com.google.gson.JsonObject;
-import com.google.gson.JsonParser;
-import jakarta.servlet.ServletException;
-import jakarta.servlet.http.HttpServlet;
-import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpServletResponse;
-import services.payment.BankWebhookPayload;
-import services.payment.BankWebhookReconciliationResult;
-import services.payment.BankWebhookReconciliationService;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+package com.petshop.web;
 
 import java.io.IOException;
 import java.math.BigDecimal;
@@ -23,59 +9,93 @@ import java.time.format.DateTimeFormatter;
 import java.util.HashMap;
 import java.util.Map;
 
-public class BankWebhookServlet extends HttpServlet {
-    private static final long serialVersionUID = 1L;
-    private static final Logger logger = LoggerFactory.getLogger(BankWebhookServlet.class);
-    private final BankWebhookReconciliationService reconciliationService = new BankWebhookReconciliationService();
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.stereotype.Controller;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestHeader;
+import org.springframework.web.bind.annotation.ResponseBody;
+
+import com.google.gson.Gson;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
+
+import Util.AppConfig;
+import jakarta.servlet.http.HttpServletRequest;
+import services.payment.BankWebhookPayload;
+import services.payment.BankWebhookReconciliationResult;
+import services.payment.BankWebhookReconciliationService;
+
+/**
+ * Replaces BankWebhookServlet (/api/payment/bank-webhook) 1:1 — same secret
+ * auth (X-Bank-Webhook-Secret / X-Secret-Key / Authorization Bearer+Apikey),
+ * same SePay-style payload parsing, same reconcile flow. CsrfFilter already
+ * exempts this server-to-server path.
+ */
+@Controller
+public class BankWebhookController {
+
+    private static final Logger logger = LoggerFactory.getLogger(BankWebhookController.class);
+
+    private final BankWebhookReconciliationService reconciliationService;
     private final Gson gson = new Gson();
 
-    @Override
-    protected void doPost(HttpServletRequest request, HttpServletResponse response)
-            throws ServletException, IOException {
-        request.setCharacterEncoding("UTF-8");
-        response.setContentType("application/json;charset=UTF-8");
-        response.setCharacterEncoding("UTF-8");
+    public BankWebhookController() {
+        this(new BankWebhookReconciliationService());
+    }
 
-        if (!isAuthorized(request)) {
-            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
-            write(response, false, "Webhook secret không hợp lệ.", null);
-            return;
+    BankWebhookController(BankWebhookReconciliationService reconciliationService) {
+        this.reconciliationService = reconciliationService;
+    }
+
+    @PostMapping(value = "/api/payment/bank-webhook", produces = "application/json;charset=UTF-8")
+    @ResponseBody
+    public ResponseEntity<String> bankWebhook(
+            @RequestBody(required = false) String rawPayload,
+            @RequestHeader(value = "X-Bank-Webhook-Secret", required = false) String bankSecret,
+            @RequestHeader(value = "X-Secret-Key", required = false) String secretKey,
+            @RequestHeader(value = "Authorization", required = false) String authorization,
+            HttpServletRequest request) throws IOException {
+        if (!isAuthorized(bankSecret, secretKey, authorization)) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(write(false, "Webhook secret không hợp lệ.", null));
         }
 
-        String rawPayload = request.getReader().lines()
-                .reduce("", (left, right) -> left + right);
-
         try {
-            BankWebhookPayload payload = parsePayload(rawPayload);
+            BankWebhookPayload payload = parsePayload(rawPayload == null ? "" : rawPayload);
             BankWebhookReconciliationResult result = reconciliationService.reconcile(payload);
             logger.info("Bank webhook result={} transactionId={} orderId={} paymentTransactionId={} message={}",
                     result.getStatus(), payload.getTransactionId(), result.getOrderId(),
                     result.getPaymentTransactionId(), result.getMessage());
-            response.setStatus(HttpServletResponse.SC_OK);
-            writeSuccess(response);
+            Map<String, Object> body = new HashMap<>();
+            body.put("success", true);
+            return ResponseEntity.ok(gson.toJson(body));
         } catch (IllegalArgumentException e) {
             logger.warn("Invalid bank webhook payload: {}", e.getMessage());
-            response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
-            write(response, false, e.getMessage(), null);
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(write(false, e.getMessage(), null));
         } catch (Exception e) {
             logger.error("Failed to process bank webhook", e);
-            response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
-            write(response, false, "Không xử lý được webhook thanh toán.", null);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(write(false, "Không xử lý được webhook thanh toán.", null));
         }
     }
 
-    private boolean isAuthorized(HttpServletRequest request) {
+    boolean isAuthorized(String bankSecret, String secretKey, String authorization) {
         String configuredSecret = AppConfig.getOrDefault("payment.bank.webhook-secret", "");
         if (configuredSecret.isBlank()) {
             return false;
         }
 
-        String submittedSecret = request.getHeader("X-Bank-Webhook-Secret");
+        String submittedSecret = bankSecret;
         if (submittedSecret == null || submittedSecret.isBlank()) {
-            submittedSecret = request.getHeader("X-Secret-Key");
+            submittedSecret = secretKey;
         }
         if (submittedSecret == null || submittedSecret.isBlank()) {
-            submittedSecret = authorizationToken(request.getHeader("Authorization"));
+            submittedSecret = authorizationToken(authorization);
         }
         if (submittedSecret == null || submittedSecret.isBlank()) {
             return false;
@@ -149,20 +169,13 @@ public class BankWebhookServlet extends HttpServlet {
         return null;
     }
 
-    private void writeSuccess(HttpServletResponse response) throws IOException {
-        Map<String, Object> body = new HashMap<>();
-        body.put("success", true);
-        response.getWriter().write(gson.toJson(body));
-    }
-
-    private void write(HttpServletResponse response, boolean success, String message, Map<String, Object> extra)
-            throws IOException {
+    private String write(boolean success, String message, Map<String, Object> extra) {
         Map<String, Object> body = new HashMap<>();
         body.put("success", success);
         body.put("message", message);
         if (extra != null) {
             body.putAll(extra);
         }
-        response.getWriter().write(gson.toJson(body));
+        return gson.toJson(body);
     }
 }

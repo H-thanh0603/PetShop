@@ -1,16 +1,20 @@
-package controller.shop;
+package com.petshop.web;
 
-import Model.User;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.stereotype.Controller;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.ResponseBody;
+
 import com.google.gson.Gson;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
-import jakarta.servlet.http.HttpServlet;
+
+import Model.User;
 import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import services.ai.CommerceTools;
 import services.ai.PetShopCommerceBackend;
 import services.ai.ToolDefinition;
@@ -18,24 +22,22 @@ import services.ai.common.AuditLog;
 import services.ai.merchant.MerchantTools;
 import services.ai.merchant.PetShopMerchantBackend;
 
-import java.io.BufferedReader;
-import java.io.IOException;
-
 /**
- * MCP-style tools endpoint port (commerce-common/mcp_server.py concept):
- * JSON-RPC 2.0 over HTTP exposing the same commerce tools the agents use.
- * Read tools are public (same data as the shop); stage/merchant tools
- * require an admin session. Bind behind auth in production — never expose
- * this without the host's authentication.
+ * Replaces McpServlet (/mcp) 1:1 — same JSON-RPC 2.0 tools/list + tools/call
+ * contract, same admin gate for stage/merchant tools. Bind behind auth in
+ * production — never expose this without the host's authentication.
  */
-public class McpServlet extends HttpServlet {
-    private static final Logger log = LoggerFactory.getLogger(McpServlet.class);
+@Controller
+public class McpController {
+
+    private static final Logger log = LoggerFactory.getLogger(McpController.class);
+
     private final Gson gson = new Gson();
 
-    @Override
-    protected void doPost(HttpServletRequest request, HttpServletResponse response) throws IOException {
-        response.setContentType("application/json;charset=UTF-8");
-        JsonObject req = readJson(request);
+    @PostMapping(value = "/mcp", produces = "application/json;charset=UTF-8")
+    @ResponseBody
+    public String mcp(@RequestBody(required = false) String rawBody, HttpServletRequest request) {
+        JsonObject req = readJson(rawBody);
         Object id = req.has("id") ? req.get("id") : null;
         String method = req.has("method") ? req.get("method").getAsString() : "";
 
@@ -45,18 +47,20 @@ public class McpServlet extends HttpServlet {
 
         try {
             switch (method) {
-                case "tools/list" -> writeResult(response, id, toolsList(isAdmin));
-                case "tools/call" -> {
+                case "tools/list":
+                    return writeResult(id, toolsList(isAdmin));
+                case "tools/call": {
                     JsonObject params = req.has("params") ? req.getAsJsonObject("params") : new JsonObject();
                     String name = params.has("name") ? params.get("name").getAsString() : "";
                     String args = params.has("arguments") ? gson.toJson(params.get("arguments")) : "{}";
-                    writeResult(response, id, toolsCall(name, args, user, isAdmin));
+                    return writeResult(id, toolsCall(name, args, user, isAdmin));
                 }
-                default -> writeError(response, id, -32601, "Method not found: " + method);
+                default:
+                    return writeError(id, -32601, "Method not found: " + method);
             }
         } catch (Exception e) {
             log.warn("mcp call failed", e);
-            writeError(response, id, -32603, "Internal error");
+            return writeError(id, -32603, "Internal error");
         }
     }
 
@@ -118,25 +122,24 @@ public class McpServlet extends HttpServlet {
         return o;
     }
 
-    private JsonObject readJson(HttpServletRequest request) {
-        try (BufferedReader reader = request.getReader()) {
-            StringBuilder raw = new StringBuilder();
-            String line;
-            while ((line = reader.readLine()) != null) raw.append(line);
-            if (!raw.toString().isBlank()) return JsonParser.parseString(raw.toString()).getAsJsonObject();
+    private JsonObject readJson(String rawBody) {
+        try {
+            if (rawBody != null && !rawBody.isBlank()) {
+                return JsonParser.parseString(rawBody).getAsJsonObject();
+            }
         } catch (Exception ignored) {}
         return new JsonObject();
     }
 
-    private void writeResult(HttpServletResponse response, Object id, JsonObject result) throws IOException {
+    private String writeResult(Object id, JsonObject result) {
         JsonObject o = new JsonObject();
         o.addProperty("jsonrpc", "2.0");
         if (id != null) o.add("id", (com.google.gson.JsonElement) id);
         o.add("result", result);
-        response.getWriter().write(gson.toJson(o));
+        return gson.toJson(o);
     }
 
-    private void writeError(HttpServletResponse response, Object id, int code, String message) throws IOException {
+    private String writeError(Object id, int code, String message) {
         JsonObject o = new JsonObject();
         o.addProperty("jsonrpc", "2.0");
         if (id != null) o.add("id", (com.google.gson.JsonElement) id);
@@ -144,6 +147,6 @@ public class McpServlet extends HttpServlet {
         e.addProperty("code", code);
         e.addProperty("message", message);
         o.add("error", e);
-        response.getWriter().write(gson.toJson(o));
+        return gson.toJson(o);
     }
 }

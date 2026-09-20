@@ -1,20 +1,5 @@
-package controller.payment;
+package com.petshop.web;
 
-import Context.DBContext;
-import DAO.OrderDAO;
-import Model.Order;
-import com.google.gson.Gson;
-import com.google.gson.JsonObject;
-import jakarta.servlet.ServletException;
-import jakarta.servlet.http.HttpServlet;
-import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpServletResponse;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import services.ShippingService;
-import Util.AppConfig;
-
-import java.io.BufferedReader;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
@@ -22,52 +7,66 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.stereotype.Controller;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestHeader;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.ResponseBody;
+
+import com.google.gson.Gson;
+import com.google.gson.JsonObject;
+
+import Context.DBContext;
+import DAO.OrderDAO;
+import Model.Order;
+import Util.AppConfig;
+import services.ShippingService;
+
 /**
- * Webhook endpoint for GHN to push order status updates.
- * GHN calls this when a shipper updates the order status on their system.
- *
- * POST /api/ghn/webhook?secret={webhook-secret}
- * Body: { "order_code": "GHN123", "status": "delivering", "tracking_code": "VN123" }
- *
- * Authentication: the request must present the configured
- * payment.ghn.webhook-secret (via the X-GHN-Webhook-Secret header or the
- * "secret" query parameter, so the secret can be embedded in the webhook URL
- * registered on the GHN seller portal). When no secret is configured the
- * endpoint rejects every request (fail closed).
+ * Replaces GhnWebhookServlet (POST /api/ghn/webhook?secret=...) 1:1 — same
+ * fail-closed secret auth (header or query param), same order lookup by GHN
+ * code, same local-status mapping. CsrfFilter already exempts this
+ * server-to-server path.
  */
+@Controller
+public class GhnWebhookController {
 
-public class GhnWebhookServlet extends HttpServlet {
-
-    private static final Logger log = LoggerFactory.getLogger(GhnWebhookServlet.class);
+    private static final Logger log = LoggerFactory.getLogger(GhnWebhookController.class);
     private static final String QUERY_PARAM_SECRET = "secret";
     private static final String HEADER_SECRET = "X-GHN-Webhook-Secret";
-    private final OrderDAO orderDAO = new OrderDAO();
+
+    private final OrderDAO orderDAO;
     private final Gson gson = new Gson();
 
-    @Override
-    protected void doPost(HttpServletRequest request, HttpServletResponse response)
-            throws ServletException, IOException {
+    public GhnWebhookController() {
+        this(new OrderDAO());
+    }
 
-        if (!isAuthorized(request)) {
+    GhnWebhookController(OrderDAO orderDAO) {
+        this.orderDAO = orderDAO;
+    }
+
+    @PostMapping(value = "/api/ghn/webhook", produces = "application/json;charset=UTF-8")
+    @ResponseBody
+    public ResponseEntity<String> ghnWebhook(
+            @RequestBody(required = false) String rawBody,
+            @RequestHeader(value = "X-GHN-Webhook-Secret", required = false) String headerSecret,
+            @RequestParam(value = "secret", required = false) String querySecret,
+            jakarta.servlet.http.HttpServletRequest request) throws IOException {
+        if (!isAuthorized(headerSecret, querySecret)) {
             log.warn("Rejected unauthorized GHN webhook call from {}", request.getRemoteAddr());
-            sendError(response, 401, "Unauthorized");
-            return;
-        }
-
-        // Read request body
-        StringBuilder sb = new StringBuilder();
-        try (BufferedReader reader = request.getReader()) {
-            String line;
-            while ((line = reader.readLine()) != null) {
-                sb.append(line);
-            }
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("{\"error\": \"Unauthorized\"}");
         }
 
         try {
-            JsonObject payload = gson.fromJson(sb.toString(), JsonObject.class);
+            JsonObject payload = gson.fromJson(rawBody == null ? "" : rawBody, JsonObject.class);
             if (payload == null) {
-                sendError(response, 400, "Empty payload");
-                return;
+                return sendError(400, "Empty payload");
             }
 
             String orderCode = payload.has("order_code") ? payload.get("order_code").getAsString() : null;
@@ -75,16 +74,14 @@ public class GhnWebhookServlet extends HttpServlet {
             String trackingCode = payload.has("tracking_code") ? payload.get("tracking_code").getAsString() : null;
 
             if (orderCode == null || ghnStatus == null) {
-                sendError(response, 400, "Missing order_code or status");
-                return;
+                return sendError(400, "Missing order_code or status");
             }
 
             // Find local order by GHN order code
             Order order = orderByGhnCode(orderCode);
             if (order == null) {
                 log.warn("GHN webhook: order not found for code {}", orderCode);
-                sendError(response, 404, "Order not found");
-                return;
+                return sendError(404, "Order not found");
             }
 
             // Update GHN status
@@ -99,25 +96,23 @@ public class GhnWebhookServlet extends HttpServlet {
                 log.info("GHN webhook: order {} GHN status updated to {}", order.getId(), ghnStatus);
             }
 
-            response.setStatus(200);
-            response.setContentType("application/json");
-            response.getWriter().write("{\"success\": true}");
+            return ResponseEntity.ok("{\"success\": true}");
 
         } catch (Exception e) {
             log.error("GHN webhook error", e);
-            sendError(response, 500, "Internal error");
+            return sendError(500, "Internal error");
         }
     }
 
-    private boolean isAuthorized(HttpServletRequest request) {
+    boolean isAuthorized(String headerSecret, String querySecret) {
         String configuredSecret = AppConfig.getOrDefault("payment.ghn.webhook-secret", "");
         if (configuredSecret.isBlank()) {
             return false;
         }
 
-        String submittedSecret = request.getHeader(HEADER_SECRET);
+        String submittedSecret = headerSecret;
         if (submittedSecret == null || submittedSecret.isBlank()) {
-            submittedSecret = request.getParameter(QUERY_PARAM_SECRET);
+            submittedSecret = querySecret;
         }
         if (submittedSecret == null || submittedSecret.isBlank()) {
             return false;
@@ -145,9 +140,7 @@ public class GhnWebhookServlet extends HttpServlet {
         return null;
     }
 
-    private void sendError(HttpServletResponse response, int code, String message) throws IOException {
-        response.setStatus(code);
-        response.setContentType("application/json");
-        response.getWriter().write("{\"error\": \"" + message + "\"}");
+    private ResponseEntity<String> sendError(int code, String message) {
+        return ResponseEntity.status(code).body("{\"error\": \"" + message + "\"}");
     }
 }
