@@ -74,7 +74,7 @@ public class WebRegistrationConfig {
             // /add-review served by ShopApiController.
             // /add-to-cart served by CartController (addToCart).
             // /cart served by CartController.
-            register(servletContext, "CheckoutServlet", controller.shop.CheckoutServlet::new, "/checkout");
+            // /checkout served by CheckoutController.
             // /my-orders served by MyOrdersController.
             // /product-detail + /wishlist served by CatalogController.
             // /api/search-autocomplete served by ShopApiController.

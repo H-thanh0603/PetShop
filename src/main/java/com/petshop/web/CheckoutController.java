@@ -1,11 +1,29 @@
-package controller.shop;
+package com.petshop.web;
 
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.sql.Connection;
+import java.sql.Timestamp;
+import java.time.LocalDateTime;
+import java.time.temporal.ChronoUnit;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.ResponseBody;
 
+import com.google.gson.Gson;
+
+import Context.DBContext;
 import DAO.AddressDao;
 import DAO.CartDAO;
 import DAO.CouponDao;
@@ -14,188 +32,111 @@ import DAO.OrderDAO;
 import DAO.PaymentTransactionDAO;
 import DAO.ProductDAO;
 import DAO.UserDAO;
-import Context.DBContext;
-import Util.VnpayUtil;
-
-import Model.*;
-
-import Util.ValidationUtil;
+import Model.Address;
+import Model.CartItem;
+import Model.Coupon;
+import Model.CouponValidationResult;
+import Model.Order;
+import Model.PaymentTransaction;
+import Model.Product;
+import Model.User;
 import Util.AppConfig;
-import com.google.gson.Gson;
-import jakarta.servlet.ServletException;
-import jakarta.servlet.http.HttpServlet;
+import Util.ValidationUtil;
+import Util.VnpayUtil;
 import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
-import services.ShippingService;
+import services.CheckoutResult;
+import services.CheckoutService;
+import services.InventoryService;
 import services.OrderEmailService;
+import services.ShippingService;
 import services.payment.BankTransferDetails;
 import services.payment.PaymentProvider;
 import services.payment.PaymentRegistry;
 import services.payment.PaymentResult;
 
-import java.sql.Connection;
-import java.sql.Timestamp;
-import java.time.temporal.ChronoUnit;
-import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import services.InventoryService;
-
-public class CheckoutServlet extends HttpServlet {
-    private static final long serialVersionUID = 1L;
-    private static final Logger logger = LoggerFactory.getLogger(CheckoutServlet.class);
+/**
+ * Replaces CheckoutServlet (/checkout) 1:1 — same render logic, same
+ * applyCoupon flow, same placeOrder JSON contract (incl. top-level
+ * Throwable safety net that never returns an empty body).
+ */
+@Controller
+public class CheckoutController {
+    private static final Logger logger = LoggerFactory.getLogger(CheckoutController.class);
     private static final int DEFAULT_PRODUCT_WEIGHT = 200;
     private static final int DEFAULT_SHIPPING_FEE = 30000;
     private static final int DEFAULT_PRICE = 500000;
     private static final String BANK_TRANSFER_REFERENCE_SESSION_KEY = "bankTransferReference";
 
-    private final CouponDao couponDao = new CouponDao();
-    private final AddressDao addressDAO = new AddressDao();
-    private final InventoryService inventoryService = new InventoryService();
-    private final CartDAO cartDAO = new CartDAO();
-    private final ProductDAO productDAO = new ProductDAO();
-    private final OrderDAO orderDAO = new OrderDAO();
-    private final PaymentTransactionDAO paymentTransactionDAO = new PaymentTransactionDAO();
-    private final UserDAO userDAO = new UserDAO();
-    private final OrderEmailService orderEmailService = new OrderEmailService();
-    private final InventoryBatchDAO inventoryBatchDAO = new InventoryBatchDAO();
+    private final CouponDao couponDao;
+    private final AddressDao addressDAO;
+    private final InventoryService inventoryService;
+    private final CartDAO cartDAO;
+    private final ProductDAO productDAO;
+    private final OrderDAO orderDAO;
+    private final PaymentTransactionDAO paymentTransactionDAO;
+    private final UserDAO userDAO;
+    private final OrderEmailService orderEmailService;
+    private final InventoryBatchDAO inventoryBatchDAO;
+    private final Gson gson = new Gson();
 
-    @Override
-    protected void doGet(HttpServletRequest request, HttpServletResponse response)
-            throws ServletException, IOException {
-        HttpSession session = request.getSession();
-        User userSession = (User) session.getAttribute("user");
-
-        if (userSession == null) {
-            response.sendRedirect(request.getContextPath() + "/login");
-            return;
-        }
-
-        renderCheckout(request, response, session, userSession);
+    public CheckoutController() {
+        this(new CouponDao(), new AddressDao(), new InventoryService(), new CartDAO(),
+                new ProductDAO(), new OrderDAO(), new PaymentTransactionDAO(),
+                new UserDAO(), new OrderEmailService(), new InventoryBatchDAO());
     }
 
-    @Override
-    protected void doPost(HttpServletRequest request, HttpServletResponse response)
-            throws ServletException, IOException {
-        request.setCharacterEncoding("UTF-8");
-
-        HttpSession session = request.getSession();
-        User userSession = (User) session.getAttribute("user");
-
-        if (userSession == null) {
-            response.sendRedirect(request.getContextPath() + "/login");
-            return;
-        }
-
-        String action = trimToEmpty(request.getParameter("action"));
-        if ("applyCoupon".equals(action)) {
-            handleApplyCoupon(request, response, session, userSession);
-            return;
-        }
-
-        try {
-            placeOrderWithStockCheck(request, response, session, userSession);
-        } catch (Exception e) {
-            logger.error("Top-level unhandled exception in doPost for user id={}", userSession.getId(), e);
-            Map<String, Object> errorResult = new HashMap<>();
-            errorResult.put("success", false);
-            errorResult.put("message", resolveCheckoutErrorMessage(e));
-            write(response, errorResult);
-        }
+    CheckoutController(CouponDao couponDao, AddressDao addressDAO, InventoryService inventoryService,
+                       CartDAO cartDAO, ProductDAO productDAO, OrderDAO orderDAO,
+                       PaymentTransactionDAO paymentTransactionDAO, UserDAO userDAO,
+                       OrderEmailService orderEmailService, InventoryBatchDAO inventoryBatchDAO) {
+        this.couponDao = couponDao;
+        this.addressDAO = addressDAO;
+        this.inventoryService = inventoryService;
+        this.cartDAO = cartDAO;
+        this.productDAO = productDAO;
+        this.orderDAO = orderDAO;
+        this.paymentTransactionDAO = paymentTransactionDAO;
+        this.userDAO = userDAO;
+        this.orderEmailService = orderEmailService;
+        this.inventoryBatchDAO = inventoryBatchDAO;
     }
 
-    private void renderCheckout(HttpServletRequest request, HttpServletResponse response,
-                                HttpSession session, User userSession)
-            throws ServletException, IOException {
+    @GetMapping("/checkout")
+    public String checkoutPage(
+            @RequestParam(value = "buyNow", required = false) String buyNowParam,
+            @RequestParam(value = "id", required = false) String idParam,
+            @RequestParam(value = "quantity", required = false) String qtyParam,
+            Model model,
+            HttpServletRequest request,
+            HttpSession session) {
+        User userSession = (User) session.getAttribute("user");
+        if (userSession == null) {
+            return "redirect:" + request.getContextPath() + "/login";
+        }
+        return renderCheckout(request, model, session, userSession,
+                "true".equals(buyNowParam), idParam, qtyParam);
+    }
+
+    @PostMapping(value = "/checkout", params = "action=applyCoupon")
+    public String applyCoupon(
+            @RequestParam(value = "note", required = false) String note,
+            @RequestParam(value = "couponCode", required = false) String couponCode,
+            @RequestParam(value = "buyNow", required = false) String buyNowParam,
+            HttpServletRequest request,
+            HttpSession session) {
+        User userSession = (User) session.getAttribute("user");
+        if (userSession == null) {
+            return "redirect:" + request.getContextPath() + "/login";
+        }
         User user = refreshUserSession(session, userSession.getId());
         if (user == null) {
-            response.sendRedirect(request.getContextPath() + "/login");
-            return;
+            return "redirect:" + request.getContextPath() + "/login";
         }
 
-        @SuppressWarnings("unchecked")
-        Map<Integer, CartItem> sessionBuyNowCart =
-                (Map<Integer, CartItem>) session.getAttribute("buyNowCart");
+        session.setAttribute("checkoutNote", trimToEmpty(note));
 
-        boolean isBuyNow = "true".equals(request.getParameter("buyNow"))
-                || (sessionBuyNowCart != null && !sessionBuyNowCart.isEmpty());
-        Map<Integer, CartItem> checkoutCart = isBuyNow
-                ? loadBuyNowCart(session, request)
-                : loadLatestCartForUser(session, user);
-
-        if (checkoutCart == null || checkoutCart.isEmpty()) {
-            response.sendRedirect(request.getContextPath() + "/shop");
-            return;
-        }
-
-        List<String> stockErrors = inventoryService.validateCartForCheckout(checkoutCart);
-        if (!stockErrors.isEmpty()) {
-            session.setAttribute("toastMessage", stockErrors.get(0));
-            session.setAttribute("toastType", "warning");
-            response.sendRedirect(request.getContextPath() + (isBuyNow ? "/shop" : "/cart"));
-            return;
-        }
-
-        List<Address> addressList = addressDAO.getAddressesByUserId(user.getId());
-        Address defaultAddress = resolvePrimaryAddress(user.getId(), addressList);
-        CouponValidationResult couponState = resolveAppliedCouponFromSession(session, user);
-        CheckoutSummary summary = buildCheckoutSummary(checkoutCart, defaultAddress, couponState.getCoupon());
-
-        request.setAttribute("addressList", addressList);
-        request.setAttribute("cartItems", new ArrayList<>(checkoutCart.values()));
-        request.setAttribute("user", user);
-        request.setAttribute("defaultAddress", defaultAddress);
-        request.setAttribute("defaultShippingAddress", defaultAddress != null ? formatFullAddress(defaultAddress) : "");
-        request.setAttribute("selectedAddressId", defaultAddress != null ? defaultAddress.getId() : null);
-        request.setAttribute("totalAmount", summary.getTotalAmount());
-        request.setAttribute("shippingFee", summary.getShippingFee());
-        request.setAttribute("shippingMessage", summary.getShippingMessage());
-        request.setAttribute("discount", summary.getDiscount());
-        request.setAttribute("finalTotal", summary.getFinalTotal());
-        request.setAttribute("appliedCouponCode",
-                couponState.getCoupon() != null ? couponState.getCoupon().getCode() : "");
-        request.setAttribute("isBuyNow", isBuyNow);
-
-        BankTransferDetails bankTransferDetails = BankTransferDetails.fromConfig();
-        String bankTransferReference = ensureBankTransferReference(session, user.getId(), bankTransferDetails);
-        request.setAttribute("bankDisplayName", bankTransferDetails.getDisplayName());
-        request.setAttribute("bankId", bankTransferDetails.getBankId());
-        request.setAttribute("bankAccountNumber", bankTransferDetails.getAccountNumber());
-        request.setAttribute("bankAccountName", bankTransferDetails.getAccountName());
-        request.setAttribute("bankTransferPrefix", bankTransferDetails.getTransferPrefix());
-        request.setAttribute("bankTransferReference", bankTransferReference);
-        request.setAttribute("bankPaymentTtlSeconds", AppConfig.getInt("payment.bank.pending-minutes", 10) * 60);
-        request.setAttribute("provincesApiBaseUrl",
-                AppConfig.getOrDefault("api.provinces.base-url", "https://provinces.open-api.vn/api/v1"));
-
-        String couponMessage = (String) session.getAttribute("couponMessage");
-        if (couponMessage != null) {
-            request.setAttribute("couponMessage", couponMessage);
-            session.removeAttribute("couponMessage");
-        } else if (couponState.getMessage() != null) {
-            request.setAttribute("couponMessage", couponState.getMessage());
-        }
-
-        request.getRequestDispatcher("/pages/shop/checkout.jsp").forward(request, response);
-    }
-
-    private void handleApplyCoupon(HttpServletRequest request, HttpServletResponse response,
-                                   HttpSession session, User userSession) throws IOException {
-        User user = refreshUserSession(session, userSession.getId());
-        if (user == null) {
-            response.sendRedirect(request.getContextPath() + "/login");
-            return;
-        }
-
-        session.setAttribute("checkoutNote", trimToEmpty(request.getParameter("note")));
-
-        CouponValidationResult validation = validateCouponForUser(
-                request.getParameter("couponCode"),
-                user
-        );
+        CouponValidationResult validation = validateCouponForUser(couponCode, user);
 
         if (validation.isValid()) {
             session.setAttribute("appliedCoupon", validation.getCoupon());
@@ -212,14 +153,106 @@ public class CheckoutServlet extends HttpServlet {
         Map<Integer, CartItem> sessionBuyNowCart =
                 (Map<Integer, CartItem>) session.getAttribute("buyNowCart");
 
-        boolean isBuyNow = "true".equals(request.getParameter("buyNow"))
+        boolean isBuyNow = "true".equals(buyNowParam)
                 || (sessionBuyNowCart != null && !sessionBuyNowCart.isEmpty());
 
-        response.sendRedirect(request.getContextPath() + "/checkout" + (isBuyNow ? "?buyNow=true" : ""));
+        return "redirect:" + request.getContextPath() + "/checkout" + (isBuyNow ? "?buyNow=true" : "");
     }
 
-    private void placeOrderWithStockCheck(HttpServletRequest request, HttpServletResponse response,
-                                          HttpSession session, User userSession) throws IOException {
+    @PostMapping(value = "/checkout", produces = "application/json;charset=UTF-8")
+    @ResponseBody
+    public String placeOrder(HttpServletRequest request, HttpSession session,
+                             jakarta.servlet.http.HttpServletResponse response) throws IOException {
+        User userSession = (User) session.getAttribute("user");
+        if (userSession == null) {
+            response.sendRedirect(request.getContextPath() + "/login");
+            return null;
+        }
+        try {
+            return placeOrderWithStockCheck(request, session, userSession);
+        } catch (Exception e) {
+            logger.error("Top-level unhandled exception in placeOrder for user id={}", userSession.getId(), e);
+            Map<String, Object> errorResult = new HashMap<>();
+            errorResult.put("success", false);
+            errorResult.put("message", resolveCheckoutErrorMessage(e));
+            return gson.toJson(errorResult);
+        }
+    }
+
+    private String renderCheckout(HttpServletRequest request, Model model,
+                                  HttpSession session, User userSession,
+                                  boolean buyNowParam, String idParam, String qtyParam) {
+        User user = refreshUserSession(session, userSession.getId());
+        if (user == null) {
+            return "redirect:" + request.getContextPath() + "/login";
+        }
+
+        @SuppressWarnings("unchecked")
+        Map<Integer, CartItem> sessionBuyNowCart =
+                (Map<Integer, CartItem>) session.getAttribute("buyNowCart");
+
+        boolean isBuyNow = buyNowParam
+                || (sessionBuyNowCart != null && !sessionBuyNowCart.isEmpty());
+        Map<Integer, CartItem> checkoutCart = isBuyNow
+                ? loadBuyNowCart(session, request, idParam, qtyParam)
+                : loadLatestCartForUser(session, user);
+
+        if (checkoutCart == null || checkoutCart.isEmpty()) {
+            return "redirect:" + request.getContextPath() + "/shop";
+        }
+
+        List<String> stockErrors = inventoryService.validateCartForCheckout(checkoutCart);
+        if (!stockErrors.isEmpty()) {
+            session.setAttribute("toastMessage", stockErrors.get(0));
+            session.setAttribute("toastType", "warning");
+            return "redirect:" + request.getContextPath() + (isBuyNow ? "/shop" : "/cart");
+        }
+
+        List<Address> addressList = addressDAO.getAddressesByUserId(user.getId());
+        Address defaultAddress = resolvePrimaryAddress(user.getId(), addressList);
+        CouponValidationResult couponState = resolveAppliedCouponFromSession(session, user);
+        CheckoutSummary summary = buildCheckoutSummary(checkoutCart, defaultAddress, couponState.getCoupon());
+
+        model.addAttribute("addressList", addressList);
+        model.addAttribute("cartItems", new ArrayList<>(checkoutCart.values()));
+        model.addAttribute("user", user);
+        model.addAttribute("defaultAddress", defaultAddress);
+        model.addAttribute("defaultShippingAddress", defaultAddress != null ? formatFullAddress(defaultAddress) : "");
+        model.addAttribute("selectedAddressId", defaultAddress != null ? defaultAddress.getId() : null);
+        model.addAttribute("totalAmount", summary.getTotalAmount());
+        model.addAttribute("shippingFee", summary.getShippingFee());
+        model.addAttribute("shippingMessage", summary.getShippingMessage());
+        model.addAttribute("discount", summary.getDiscount());
+        model.addAttribute("finalTotal", summary.getFinalTotal());
+        model.addAttribute("appliedCouponCode",
+                couponState.getCoupon() != null ? couponState.getCoupon().getCode() : "");
+        model.addAttribute("isBuyNow", isBuyNow);
+
+        BankTransferDetails bankTransferDetails = BankTransferDetails.fromConfig();
+        String bankTransferReference = ensureBankTransferReference(session, user.getId(), bankTransferDetails);
+        model.addAttribute("bankDisplayName", bankTransferDetails.getDisplayName());
+        model.addAttribute("bankId", bankTransferDetails.getBankId());
+        model.addAttribute("bankAccountNumber", bankTransferDetails.getAccountNumber());
+        model.addAttribute("bankAccountName", bankTransferDetails.getAccountName());
+        model.addAttribute("bankTransferPrefix", bankTransferDetails.getTransferPrefix());
+        model.addAttribute("bankTransferReference", bankTransferReference);
+        model.addAttribute("bankPaymentTtlSeconds", AppConfig.getInt("payment.bank.pending-minutes", 10) * 60);
+        model.addAttribute("provincesApiBaseUrl",
+                AppConfig.getOrDefault("api.provinces.base-url", "https://provinces.open-api.vn/api/v1"));
+
+        String couponMessage = (String) session.getAttribute("couponMessage");
+        if (couponMessage != null) {
+            model.addAttribute("couponMessage", couponMessage);
+            session.removeAttribute("couponMessage");
+        } else if (couponState.getMessage() != null) {
+            model.addAttribute("couponMessage", couponState.getMessage());
+        }
+
+        return "pages/shop/checkout";
+    }
+
+    private String placeOrderWithStockCheck(HttpServletRequest request,
+                                            HttpSession session, User userSession) throws IOException {
         Map<String, Object> result = new HashMap<>();
         String completedPaymentMethod = null;
         PaymentTransaction completedPaymentTransaction = null;
@@ -230,8 +263,7 @@ public class CheckoutServlet extends HttpServlet {
             if (user == null) {
                 result.put("success", false);
                 result.put("message", "Phiên đăng nhập đã hết hạn.");
-                write(response, result);
-                return;
+                return gson.toJson(result);
             }
             @SuppressWarnings("unchecked")
             Map<Integer, CartItem> sessionBuyNowCart =
@@ -241,14 +273,13 @@ public class CheckoutServlet extends HttpServlet {
                     || (sessionBuyNowCart != null && !sessionBuyNowCart.isEmpty());
 
             Map<Integer, CartItem> checkoutCart = isBuyNow
-                    ? loadBuyNowCart(session, request)
+                    ? loadBuyNowCart(session, request, null, null)
                     : loadLatestCartForUser(session, user);
 
             if (checkoutCart == null || checkoutCart.isEmpty()) {
                 result.put("success", false);
                 result.put("message", "Giỏ hàng đang trống.");
-                write(response, result);
-                return;
+                return gson.toJson(result);
             }
 
             List<Address> addressList = addressDAO.getAddressesByUserId(user.getId());
@@ -256,16 +287,14 @@ public class CheckoutServlet extends HttpServlet {
             if (defaultAddress == null) {
                 result.put("success", false);
                 result.put("message", "Bạn chưa có địa chỉ mặc định.");
-                write(response, result);
-                return;
+                return gson.toJson(result);
             }
 
             String addressDetailError = ValidationUtil.validateAddressDetail(defaultAddress.getAddress());
             if (addressDetailError != null) {
                 result.put("success", false);
                 result.put("message", "Địa chỉ giao hàng hiện tại không hợp lệ. Vui lòng cập nhật lại.");
-                write(response, result);
-                return;
+                return gson.toJson(result);
             }
 
             Coupon appliedCoupon = (Coupon) session.getAttribute("appliedCoupon");
@@ -277,8 +306,7 @@ public class CheckoutServlet extends HttpServlet {
                 session.removeAttribute("appliedCoupon");
                 result.put("success", false);
                 result.put("message", couponState.getMessage());
-                write(response, result);
-                return;
+                return gson.toJson(result);
             }
 
             CheckoutSummary baseSummary = buildCheckoutSummary(checkoutCart, defaultAddress, null);
@@ -287,8 +315,7 @@ public class CheckoutServlet extends HttpServlet {
             if (!ValidationUtil.validateMaxLength(note, 500)) {
                 result.put("success", false);
                 result.put("message", "Ghi chú không được vượt quá 500 ký tự.");
-                write(response, result);
-                return;
+                return gson.toJson(result);
             }
 
             String fullAddress = formatFullAddress(defaultAddress);
@@ -303,29 +330,25 @@ public class CheckoutServlet extends HttpServlet {
             if (recipientNameError != null) {
                 result.put("success", false);
                 result.put("message", recipientNameError);
-                write(response, result);
-                return;
+                return gson.toJson(result);
             }
 
             String recipientPhoneError = ValidationUtil.validateRecipientPhone(recipientPhone);
             if (recipientPhoneError != null) {
                 result.put("success", false);
                 result.put("message", recipientPhoneError);
-                write(response, result);
-                return;
+                return gson.toJson(result);
             }
 
             if (isBlank(shippingAddress)) {
                 result.put("success", false);
                 result.put("message", "Địa chỉ giao hàng không được để trống.");
-                write(response, result);
-                return;
+                return gson.toJson(result);
             }
             if (!ValidationUtil.validateMaxLength(shippingAddress, 500)) {
                 result.put("success", false);
                 result.put("message", "Địa chỉ giao hàng không được vượt quá 500 ký tự.");
-                write(response, result);
-                return;
+                return gson.toJson(result);
             }
 
             String paymentMethodKey = resolvePaymentMethodKey(request);
@@ -350,8 +373,7 @@ public class CheckoutServlet extends HttpServlet {
             if (!checkoutResult.isSuccess()) {
                 result.put("success", false);
                 result.put("message", checkoutResult.getMessage());
-                write(response, result);
-                return;
+                return gson.toJson(result);
             }
 
             completedPaymentMethod = isVnpay ? "VNPAY" : checkoutResult.getPaymentMethodDb();
@@ -421,8 +443,7 @@ public class CheckoutServlet extends HttpServlet {
                 result.put("success", true);
                 result.put("redirectUrl", vnpayUrl);
                 // Với VNPay, không trả về showSignatureModal trong JSON để tránh hiện modal ngay lập tức
-                write(response, result);
-                return;
+                return gson.toJson(result);
             }
 
             if ("BANK_TRANSFER".equalsIgnoreCase(completedPaymentMethod) && completedPaymentTransaction != null) {
@@ -455,36 +476,33 @@ public class CheckoutServlet extends HttpServlet {
 
                 // Modal signature cho bank_transfer: dùng button "Tải chữ ký" thay vì popup
                 result.put("showSignatureModal", true);
-                write(response, result);
-                return;
-            } else {
-                session.setAttribute("successOrderId", completedOrderId);
-                session.setAttribute("successUser", user);
-                session.setAttribute("successTotalAmount", checkoutResult.getTotalAmount());
-                session.setAttribute("successShippingFee", checkoutResult.getShippingFee());
-                session.setAttribute("successDiscount", checkoutResult.getDiscount());
-                session.setAttribute("successFinalTotal", checkoutResult.getFinalTotal());
-                session.setAttribute("successShippingAddress", shippingAddress);
-                session.setAttribute("successOrderNote", note);
-                session.setAttribute("successOrderItems", new ArrayList<>(checkoutCart.values()));
-                session.setAttribute("orderHash", checkoutResult.getOrderHash());
-                session.setAttribute("privateKeyBase64", checkoutResult.getPrivateKeyBase64());
-                session.setAttribute("toolUrl", checkoutResult.getToolUrl());
-                session.setAttribute("showSignatureModal", true);
-                result.put("success", true);
-                result.put("message", "Đặt hàng thành công!");
-                result.put("orderId", completedOrderId);
-                result.put("redirectUrl", request.getContextPath() + "/order-success");
-                logger.info("DEBUG COD redirectUrl=" + result.get("redirectUrl"));
-                write(response, result);
-                return;
+                return gson.toJson(result);
             }
+            session.setAttribute("successOrderId", completedOrderId);
+            session.setAttribute("successUser", user);
+            session.setAttribute("successTotalAmount", checkoutResult.getTotalAmount());
+            session.setAttribute("successShippingFee", checkoutResult.getShippingFee());
+            session.setAttribute("successDiscount", checkoutResult.getDiscount());
+            session.setAttribute("successFinalTotal", checkoutResult.getFinalTotal());
+            session.setAttribute("successShippingAddress", shippingAddress);
+            session.setAttribute("successOrderNote", note);
+            session.setAttribute("successOrderItems", new ArrayList<>(checkoutCart.values()));
+            session.setAttribute("orderHash", checkoutResult.getOrderHash());
+            session.setAttribute("privateKeyBase64", checkoutResult.getPrivateKeyBase64());
+            session.setAttribute("toolUrl", checkoutResult.getToolUrl());
+            session.setAttribute("showSignatureModal", true);
+            result.put("success", true);
+            result.put("message", "Đặt hàng thành công!");
+            result.put("orderId", completedOrderId);
+            result.put("redirectUrl", request.getContextPath() + "/order-success");
+            logger.info("DEBUG COD redirectUrl=" + result.get("redirectUrl"));
+            return gson.toJson(result);
 
         } catch (Throwable t) {
             logger.error("Unexpected error during checkout for user id={}", userSession.getId(), t);
             result.put("success", false);
             result.put("message", resolveCheckoutErrorMessage(t));
-            write(response, result);
+            return gson.toJson(result);
         }
     }
 
@@ -603,17 +621,18 @@ public class CheckoutServlet extends HttpServlet {
         return cart;
     }
 
-    private Map<Integer, CartItem> loadBuyNowCart(HttpSession session, HttpServletRequest request) {
+    private Map<Integer, CartItem> loadBuyNowCart(HttpSession session, HttpServletRequest request,
+                                                 String idParam, String qtyParam) {
         @SuppressWarnings("unchecked")
         Map<Integer, CartItem> buyNowCart = (Map<Integer, CartItem>) session.getAttribute("buyNowCart");
 
         if (buyNowCart == null) {
-            String idParam = request.getParameter("id");
-            String qtyParam = request.getParameter("quantity");
-            if (idParam != null && qtyParam != null) {
+            String idP = idParam != null ? idParam : request.getParameter("id");
+            String qtyP = qtyParam != null ? qtyParam : request.getParameter("quantity");
+            if (idP != null && qtyP != null) {
                 try {
-                    int productId = Integer.parseInt(idParam);
-                    int quantity  = Math.max(1, Integer.parseInt(qtyParam));
+                    int productId = Integer.parseInt(idP);
+                    int quantity  = Math.max(1, Integer.parseInt(qtyP));
                     Product product = productDAO.getProductById(productId);
                     if (product != null) {
                         CartItem item = new CartItem(product, quantity);
@@ -622,7 +641,7 @@ public class CheckoutServlet extends HttpServlet {
                         session.setAttribute("buyNowCart", buyNowCart);
                     }
                 } catch (NumberFormatException e) {
-                    logger.warn("Invalid buyNow params: id={}, quantity={}", idParam, qtyParam);
+                    logger.warn("Invalid buyNow params: id={}, quantity={}", idP, qtyP);
                 }
             }
         }
@@ -752,12 +771,6 @@ public class CheckoutServlet extends HttpServlet {
             default:
                 return paymentMethodDb;
         }
-    }
-
-    private void write(HttpServletResponse res, Map<String, Object> data) throws IOException {
-        res.setContentType("application/json;charset=UTF-8");
-        res.setCharacterEncoding("UTF-8");
-        res.getWriter().write(new Gson().toJson(data));
     }
 
     private static final class CheckoutSummary {
