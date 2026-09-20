@@ -44,8 +44,6 @@ dependencies {
     implementation 'com.mysql:mysql-connector-j:8.0.33'
     implementation 'jakarta.mail:jakarta.mail-api:2.1.2'
     implementation 'org.eclipse.angus:jakarta.mail:2.0.2'
-    implementation 'commons-fileupload:commons-fileupload:1.5'
-    implementation 'commons-io:commons-io:2.15.1'
     implementation 'org.apache.httpcomponents:fluent-hc:4.5.14'
     implementation 'org.apache.httpcomponents:httpclient:4.5.14'
     implementation 'com.google.code.gson:gson:2.10.1'
