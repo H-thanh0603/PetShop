@@ -1,79 +1,112 @@
-package controller.admin;
+package com.petshop.web;
 
-import java.io.IOException;
 import java.util.List;
-import jakarta.servlet.ServletException;
-import jakarta.servlet.http.HttpServlet;
-import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpServletResponse;
-import jakarta.servlet.http.HttpSession;
+
+import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+
+import com.google.gson.JsonObject;
+
 import DAO.AdminActionLogDAO;
+import DAO.NotificationDAO;
 import DAO.OrderDAO;
 import Model.Order;
 import Model.OrderLog;
 import Model.OrderStatusHistory;
 import Model.User;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpSession;
 import services.ShippingService;
-import com.google.gson.JsonObject;
 
-public class ManageOrderServlet extends HttpServlet {
-    private static final long serialVersionUID = 1L;
-    private AdminActionLogDAO actionLog = new AdminActionLogDAO();
-    private OrderDAO orderDAO = new OrderDAO();
-    private ShippingService shippingService = new ShippingService();
+/**
+ * Replaces ManageOrderServlet (/admin/orders) 1:1 — same list/view pages,
+ * same updateStatus/pushToGhn/syncGhnStatus/updatePaymentVerification flows,
+ * same session flash messages and redirects. AuthorizationFilter still guards
+ * all admin paths.
+ */
+@Controller
+public class AdminOrderController {
 
-    protected void doGet(HttpServletRequest request, HttpServletResponse response) 
-            throws ServletException, IOException {
-        String action = request.getParameter("action");
-        String status = request.getParameter("status");
-        String keyword = request.getParameter("keyword");
-        HttpSession session = request.getSession();
-        
+    private final AdminActionLogDAO actionLog;
+    private final OrderDAO orderDAO;
+    private final ShippingService shippingService;
+    private final NotificationDAO notificationDAO;
+
+    public AdminOrderController() {
+        this(new AdminActionLogDAO(), new OrderDAO(), new ShippingService(), new NotificationDAO());
+    }
+
+    AdminOrderController(AdminActionLogDAO actionLog, OrderDAO orderDAO,
+                         ShippingService shippingService, NotificationDAO notificationDAO) {
+        this.actionLog = actionLog;
+        this.orderDAO = orderDAO;
+        this.shippingService = shippingService;
+        this.notificationDAO = notificationDAO;
+    }
+
+    @GetMapping("/admin/orders")
+    public String orders(
+            @RequestParam(value = "action", required = false) String action,
+            @RequestParam(value = "status", required = false) String status,
+            @RequestParam(value = "keyword", required = false) String keyword,
+            @RequestParam(value = "page", required = false) String pageRaw,
+            @RequestParam(value = "size", required = false) String sizeRaw,
+            @RequestParam(value = "id", required = false) String idRaw,
+            Model model,
+            HttpServletRequest request,
+            HttpSession session) {
         if ("view".equals(action)) {
             int orderId;
             try {
-                orderId = Integer.parseInt(request.getParameter("id"));
+                orderId = Integer.parseInt(idRaw);
             } catch (NumberFormatException e) {
                 session.setAttribute("message", "Mã đơn hàng không hợp lệ.");
                 session.setAttribute("messageType", "error");
-                response.sendRedirect(request.getContextPath() + "/admin/orders");
-                return;
+                return "redirect:" + request.getContextPath() + "/admin/orders";
             }
             Order order = orderDAO.getOrderById(orderId);
             List<OrderStatusHistory> statusHistory = orderDAO.getStatusHistory(orderId);
             List<OrderLog> orderLogs = orderDAO.getOrderLogs(orderId);
-            request.setAttribute("order", order);
-            request.setAttribute("statusHistory", statusHistory);
-            request.setAttribute("orderLogs", orderLogs);
-            request.getRequestDispatcher("/pages/admin/order-detail.jsp").forward(request, response);
-            return;
+            model.addAttribute("order", order);
+            model.addAttribute("statusHistory", statusHistory);
+            model.addAttribute("orderLogs", orderLogs);
+            return "pages/admin/order-detail";
         }
 
         // Pagination
         int page = 1;
         int size = 20;
-        try { page = Math.max(1, Integer.parseInt(request.getParameter("page"))); } catch (Exception ignored) {}
-        try { size = Math.max(1, Integer.parseInt(request.getParameter("size"))); } catch (Exception ignored) {}
+        try { page = Math.max(1, Integer.parseInt(pageRaw)); } catch (Exception ignored) {}
+        try { size = Math.max(1, Integer.parseInt(sizeRaw)); } catch (Exception ignored) {}
 
         List<Order> list = orderDAO.getOrdersPage(page, size, status, keyword);
         int totalOrders = orderDAO.countOrders(status, keyword);
         int totalPages = (int) Math.ceil((double) totalOrders / size);
 
-        request.setAttribute("orders", list);
-        request.setAttribute("totalOrders", totalOrders);
-        request.setAttribute("currentPage", page);
-        request.setAttribute("pageSize", size);
-        request.setAttribute("totalPages", totalPages);
-        request.setAttribute("selectedStatus", status);
-        request.setAttribute("keyword", keyword);
-        request.setAttribute("pendingPaymentReviewCount", orderDAO.countOrdersAwaitingPaymentVerification());
-        request.getRequestDispatcher("/pages/admin/orders.jsp").forward(request, response);
+        model.addAttribute("orders", list);
+        model.addAttribute("totalOrders", totalOrders);
+        model.addAttribute("currentPage", page);
+        model.addAttribute("pageSize", size);
+        model.addAttribute("totalPages", totalPages);
+        model.addAttribute("selectedStatus", status);
+        model.addAttribute("keyword", keyword);
+        model.addAttribute("pendingPaymentReviewCount", orderDAO.countOrdersAwaitingPaymentVerification());
+        return "pages/admin/orders";
     }
 
-    protected void doPost(HttpServletRequest request, HttpServletResponse response) 
-            throws ServletException, IOException {
-        String action = request.getParameter("action");
-        HttpSession session = request.getSession();
+    @PostMapping("/admin/orders")
+    public String ordersPost(
+            @RequestParam(value = "action", required = false) String action,
+            @RequestParam(value = "orderId", required = false) String orderIdRaw,
+            @RequestParam(value = "status", required = false) String newStatus,
+            @RequestParam(value = "verificationStatus", required = false) String verificationStatus,
+            @RequestParam(value = "verificationMessage", required = false) String verificationMessage,
+            @RequestParam(value = "returnTo", required = false) String returnTo,
+            HttpServletRequest request,
+            HttpSession session) {
         User admin = (User) session.getAttribute("user");
         int adminId = admin != null ? admin.getId() : 1;
         String adminRole = admin != null ? admin.getRole() : "";
@@ -81,22 +114,19 @@ public class ManageOrderServlet extends HttpServlet {
         if ("updateStatus".equals(action)) {
             int orderId;
             try {
-                orderId = Integer.parseInt(request.getParameter("orderId"));
+                orderId = Integer.parseInt(orderIdRaw);
             } catch (NumberFormatException e) {
                 session.setAttribute("message", "Mã đơn hàng không hợp lệ.");
                 session.setAttribute("messageType", "error");
-                response.sendRedirect(request.getContextPath() + "/admin/orders");
-                return;
+                return "redirect:" + request.getContextPath() + "/admin/orders";
             }
-            String newStatus = request.getParameter("status");
 
             // Role-based validation for shippers
             if ("shipper".equals(adminRole)) {
                 if (!"Shipping".equals(newStatus) && !"Delivered".equals(newStatus)) {
                     session.setAttribute("message", "Shipper chỉ có thể cập nhật trạng thái là 'Đang giao' hoặc 'Đã giao hàng'.");
                     session.setAttribute("messageType", "error");
-                    response.sendRedirect(request.getContextPath() + "/admin/orders");
-                    return;
+                    return "redirect:" + request.getContextPath() + "/admin/orders";
                 }
             }
 
@@ -106,10 +136,10 @@ public class ManageOrderServlet extends HttpServlet {
             if (orderDAO.updateStatus(orderId, newStatus, adminId)) {
                 actionLog.log(adminId, "UPDATE_ORDER_STATUS", "order", orderId,
                         "Status changed from " + oldStatus + " to " + newStatus);
-                
+
                 // Send notification to user
                 if (existing != null) {
-                    new DAO.NotificationDAO().create(
+                    notificationDAO.create(
                         existing.getUserId(),
                         "Cập nhật đơn hàng #" + orderId,
                         "Đơn hàng của bạn đã được chuyển trạng thái sang '" + getStatusLabelVietnamese(newStatus) + "'.",
@@ -117,7 +147,7 @@ public class ManageOrderServlet extends HttpServlet {
                         request.getContextPath() + "/my-orders?action=view&id=" + orderId
                     );
                 }
-                
+
                 session.setAttribute("message", "Cập nhật trạng thái đơn hàng thành công!");
                 session.setAttribute("messageType", "success");
             } else {
@@ -129,20 +159,18 @@ public class ManageOrderServlet extends HttpServlet {
         if ("pushToGhn".equals(action)) {
             int orderId;
             try {
-                orderId = Integer.parseInt(request.getParameter("orderId"));
+                orderId = Integer.parseInt(orderIdRaw);
             } catch (NumberFormatException e) {
                 session.setAttribute("message", "Mã đơn hàng không hợp lệ.");
                 session.setAttribute("messageType", "error");
-                response.sendRedirect(request.getContextPath() + "/admin/orders");
-                return;
+                return "redirect:" + request.getContextPath() + "/admin/orders";
             }
 
             Order order = orderDAO.getOrderById(orderId);
             if (order == null) {
                 session.setAttribute("message", "Không tìm thấy đơn hàng.");
                 session.setAttribute("messageType", "error");
-                response.sendRedirect(request.getContextPath() + "/admin/orders");
-                return;
+                return "redirect:" + request.getContextPath() + "/admin/orders";
             }
 
             if (order.getGhnOrderId() != null) {
@@ -176,12 +204,11 @@ public class ManageOrderServlet extends HttpServlet {
         if ("syncGhnStatus".equals(action)) {
             int orderId;
             try {
-                orderId = Integer.parseInt(request.getParameter("orderId"));
+                orderId = Integer.parseInt(orderIdRaw);
             } catch (NumberFormatException e) {
                 session.setAttribute("message", "Mã đơn hàng không hợp lệ.");
                 session.setAttribute("messageType", "error");
-                response.sendRedirect(request.getContextPath() + "/admin/orders");
-                return;
+                return "redirect:" + request.getContextPath() + "/admin/orders";
             }
 
             Order order = orderDAO.getOrderById(orderId);
@@ -217,16 +244,13 @@ public class ManageOrderServlet extends HttpServlet {
         if ("updatePaymentVerification".equals(action)) {
             int orderId;
             try {
-                orderId = Integer.parseInt(request.getParameter("orderId"));
+                orderId = Integer.parseInt(orderIdRaw);
             } catch (NumberFormatException e) {
                 session.setAttribute("message", "Mã đơn hàng không hợp lệ.");
                 session.setAttribute("messageType", "error");
-                response.sendRedirect(request.getContextPath() + "/admin/orders");
-                return;
+                return "redirect:" + request.getContextPath() + "/admin/orders";
             }
 
-            String verificationStatus = request.getParameter("verificationStatus");
-            String verificationMessage = request.getParameter("verificationMessage");
             if (orderDAO.updatePaymentVerification(orderId, verificationStatus, verificationMessage)) {
                 actionLog.log(adminId, "UPDATE_PAYMENT_VERIFICATION", "order", orderId,
                         "Payment verification updated to " + verificationStatus);
@@ -238,11 +262,10 @@ public class ManageOrderServlet extends HttpServlet {
             }
         }
 
-        if ("detail".equalsIgnoreCase(request.getParameter("returnTo"))) {
-            response.sendRedirect(request.getContextPath() + "/admin/orders?action=view&id=" + request.getParameter("orderId"));
-            return;
+        if ("detail".equalsIgnoreCase(returnTo)) {
+            return "redirect:" + request.getContextPath() + "/admin/orders?action=view&id=" + orderIdRaw;
         }
-        response.sendRedirect(request.getContextPath() + "/admin/orders");
+        return "redirect:" + request.getContextPath() + "/admin/orders";
     }
 
     private String getStatusLabelVietnamese(String status) {

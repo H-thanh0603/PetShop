@@ -1,83 +1,113 @@
-package controller.admin;
+package com.petshop.web;
 
-import DAO.ProductDAO;
-import DAO.PromotionDAO;
-import Model.Product;
-import Model.Promotion;
-import Util.ValidationUtil;
-import jakarta.servlet.ServletException;
-import jakarta.servlet.http.HttpServlet;
-import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpServletResponse;
-import jakarta.servlet.http.HttpSession;
-
-import java.io.IOException;
 import java.math.BigDecimal;
 import java.sql.Timestamp;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
-public class PromotionServlet extends HttpServlet {
-    private final PromotionDAO promotionDAO = new PromotionDAO();
-    private final ProductDAO productDAO = new ProductDAO();
+import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 
-    @Override
-    protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
-        Integer editId = ValidationUtil.parseIntOrNull(request.getParameter("id"));
+import DAO.ProductDAO;
+import DAO.PromotionDAO;
+import Model.Product;
+import Model.Promotion;
+import Util.ValidationUtil;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpSession;
+
+/**
+ * Replaces PromotionServlet (/admin/promotions) 1:1 — same list/edit page,
+ * same save/toggle/delete validation messages. AuthorizationFilter still
+ * guards all admin paths.
+ */
+@Controller
+public class AdminPromotionController {
+
+    private final PromotionDAO promotionDAO;
+    private final ProductDAO productDAO;
+
+    public AdminPromotionController() {
+        this(new PromotionDAO(), new ProductDAO());
+    }
+
+    AdminPromotionController(PromotionDAO promotionDAO, ProductDAO productDAO) {
+        this.promotionDAO = promotionDAO;
+        this.productDAO = productDAO;
+    }
+
+    @GetMapping("/admin/promotions")
+    public String promotions(
+            @RequestParam(value = "id", required = false) String idRaw,
+            Model model) {
+        Integer editId = ValidationUtil.parseIntOrNull(idRaw);
         Promotion editingPromotion = editId == null ? null : promotionDAO.getPromotionById(editId);
-        request.setAttribute("promotions", promotionDAO.getAllPromotions());
-        request.setAttribute("products", productDAO.getAllProducts());
-        request.setAttribute("editingPromotion", editingPromotion);
-        request.getRequestDispatcher("/pages/admin/promotions.jsp").forward(request, response);
+        model.addAttribute("promotions", promotionDAO.getAllPromotions());
+        model.addAttribute("products", productDAO.getAllProducts());
+        model.addAttribute("editingPromotion", editingPromotion);
+        return "pages/admin/promotions";
     }
 
-    @Override
-    protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
-        request.setCharacterEncoding("UTF-8");
-        HttpSession session = request.getSession();
-        String action = request.getParameter("action");
-
+    @PostMapping("/admin/promotions")
+    public String promotionsPost(
+            @RequestParam(value = "action", required = false) String action,
+            @RequestParam(value = "id", required = false) String idRaw,
+            @RequestParam(value = "name", required = false) String name,
+            @RequestParam(value = "discountType", required = false) String discountType,
+            @RequestParam(value = "flashSale", required = false) String flashSale,
+            @RequestParam(value = "discountValue", required = false) String discountValueRaw,
+            @RequestParam(value = "startDate", required = false) String startRaw,
+            @RequestParam(value = "endDate", required = false) String endRaw,
+            @RequestParam(value = "saleQuantity", required = false) String saleQuantityRaw,
+            @RequestParam(value = "productIds", required = false) List<String> productIdsRaw,
+            @RequestParam(value = "currentStatus", required = false) String currentStatus,
+            HttpServletRequest request,
+            HttpSession session) {
         if ("toggle".equals(action)) {
-            handleToggle(request, session);
+            handleToggle(idRaw, currentStatus, session);
         } else if ("delete".equals(action)) {
-            handleDelete(request, session);
+            handleDelete(idRaw, session);
         } else {
-            handleSave(request, session);
+            handleSave(idRaw, name, discountType, flashSale, discountValueRaw,
+                    startRaw, endRaw, saleQuantityRaw, productIdsRaw, session);
         }
-        response.sendRedirect(request.getContextPath() + "/admin/promotions");
+        return "redirect:" + request.getContextPath() + "/admin/promotions";
     }
 
-    private void handleSave(HttpServletRequest request, HttpSession session) {
+    private void handleSave(String idRaw, String name, String discountTypeRaw, String flashSale,
+                            String discountValueRaw, String startRaw, String endRaw,
+                            String saleQuantityRaw, List<String> productIdsRaw, HttpSession session) {
         Promotion promotion = new Promotion();
-        Integer id = ValidationUtil.parseIntOrNull(request.getParameter("id"));
+        Integer id = ValidationUtil.parseIntOrNull(idRaw);
         Promotion existing = id != null ? promotionDAO.getPromotionById(id) : null;
         if (id != null) {
             promotion.setId(id);
         }
 
-        String name = trimToEmpty(request.getParameter("name"));
-        String discountType = trimToEmpty(request.getParameter("discountType")).toUpperCase();
-        boolean isFlashSale = "1".equals(request.getParameter("flashSale"))
-                || "on".equalsIgnoreCase(request.getParameter("flashSale"))
-                || "true".equalsIgnoreCase(request.getParameter("flashSale"));
+        String promoName = trimToEmpty(name);
+        String discountType = trimToEmpty(discountTypeRaw).toUpperCase();
+        boolean isFlashSale = "1".equals(flashSale)
+                || "on".equalsIgnoreCase(flashSale)
+                || "true".equalsIgnoreCase(flashSale);
         String promotionType = isFlashSale ? "FLASH_SALE" : "NORMAL";
-        String discountValueRaw = trimToEmpty(request.getParameter("discountValue"));
-        String startRaw = trimToEmpty(request.getParameter("startDate"));
-        String endRaw = trimToEmpty(request.getParameter("endDate"));
-        String saleQuantityRaw = trimToEmpty(request.getParameter("saleQuantity"));
-        String[] productIdsRaw = request.getParameterValues("productIds");
+        String[] productIdsArr = productIdsRaw == null ? null : productIdsRaw.toArray(new String[0]);
 
-        String validationMessage = validatePromotionInput(name, discountType, promotionType, discountValueRaw, startRaw, endRaw, saleQuantityRaw, productIdsRaw);
+        String validationMessage = validatePromotionInput(promoName, discountType, promotionType,
+                trimToEmpty(discountValueRaw), trimToEmpty(startRaw), trimToEmpty(endRaw),
+                trimToEmpty(saleQuantityRaw), productIdsArr);
         if (validationMessage != null) {
             session.setAttribute("message", validationMessage);
             session.setAttribute("messageType", "error");
             return;
         }
 
-        promotion.setName(name);
+        promotion.setName(promoName);
         // Mô tả tự lấy từ tên để giữ tương thích với DB cũ; admin không cần nhập riêng.
-        promotion.setDescription(existing != null && existing.getDescription() != null ? existing.getDescription() : name);
+        promotion.setDescription(existing != null && existing.getDescription() != null ? existing.getDescription() : promoName);
         promotion.setDiscountType(discountType);
         promotion.setPromotionType(promotionType);
         // Khi tạo mới mặc định bật; khi sửa giữ nguyên trạng thái hiện có (admin bật/tắt qua nút riêng).
@@ -88,7 +118,7 @@ public class PromotionServlet extends HttpServlet {
         if (isFlashSale) {
             promotion.setSaleQuantity(Integer.parseInt(saleQuantityRaw));
         }
-        promotion.setProductIds(parseProductIds(productIdsRaw));
+        promotion.setProductIds(parseProductIds(productIdsArr));
 
         int savedId = promotionDAO.savePromotion(promotion);
         if (savedId > 0) {
@@ -100,9 +130,9 @@ public class PromotionServlet extends HttpServlet {
         }
     }
 
-    private void handleToggle(HttpServletRequest request, HttpSession session) {
-        Integer id = ValidationUtil.parseIntOrNull(request.getParameter("id"));
-        String currentStatus = trimToEmpty(request.getParameter("currentStatus")).toUpperCase();
+    private void handleToggle(String idRaw, String currentStatusRaw, HttpSession session) {
+        Integer id = ValidationUtil.parseIntOrNull(idRaw);
+        String currentStatus = trimToEmpty(currentStatusRaw).toUpperCase();
         if (id == null) {
             session.setAttribute("message", "Mã khuyến mãi không hợp lệ.");
             session.setAttribute("messageType", "error");
@@ -120,8 +150,8 @@ public class PromotionServlet extends HttpServlet {
         }
     }
 
-    private void handleDelete(HttpServletRequest request, HttpSession session) {
-        Integer id = ValidationUtil.parseIntOrNull(request.getParameter("id"));
+    private void handleDelete(String idRaw, HttpSession session) {
+        Integer id = ValidationUtil.parseIntOrNull(idRaw);
         if (id == null) {
             session.setAttribute("message", "Mã khuyến mãi không hợp lệ.");
             session.setAttribute("messageType", "error");
@@ -136,8 +166,9 @@ public class PromotionServlet extends HttpServlet {
         }
     }
 
-    private String validatePromotionInput(String name, String discountType, String promotionType, String discountValueRaw,
-                                          String startRaw, String endRaw, String saleQuantityRaw, String[] productIdsRaw) {
+    private String validatePromotionInput(String name, String discountType, String promotionType,
+                                          String discountValueRaw, String startRaw, String endRaw,
+                                          String saleQuantityRaw, String[] productIdsRaw) {
         if (name.isEmpty()) {
             return "Tên khuyến mãi không được để trống.";
         }

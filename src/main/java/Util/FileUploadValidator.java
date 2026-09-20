@@ -34,15 +34,23 @@ public class FileUploadValidator {
         if (filePart == null || filePart.getSize() <= 0) {
             return new ValidationResult(false, "No file uploaded.", null);
         }
-        String fileName = filePart.getSubmittedFileName();
-        if (fileName == null || fileName.isEmpty()) {
-            return new ValidationResult(false, "Invalid file.", null);
+        return validate(filePart.getSubmittedFileName(), filePart.getContentType(), filePart.getSize());
+    }
+
+    /**
+     * Spring MVC port: same rules as {@link #validate(Part)} but driven by a
+     * {@code MultipartFile}'s metadata instead of a servlet {@code Part}.
+     */
+    public static ValidationResult validate(String submittedFileName, String contentType, long size) {
+        if (submittedFileName == null || submittedFileName.isEmpty() || size <= 0) {
+            return new ValidationResult(false, "No file uploaded.", null);
         }
+        String fileName = submittedFileName;
         if (!isAllowedExtension(fileName)) {
             return new ValidationResult(false, "File type not allowed. Only JPG, PNG, GIF, WebP accepted.", null);
         }
         String ext = fileName.substring(fileName.lastIndexOf('.') + 1).toLowerCase();
-        if (!isContentTypeMatchingExtension(filePart.getContentType(), ext)) {
+        if (!isContentTypeMatchingExtension(contentType, ext)) {
             return new ValidationResult(false, "Content type does not match file extension.", null);
         }
         String secureName = generateSecureFileName(fileName);

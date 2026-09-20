@@ -2,17 +2,10 @@ package com.petshop.config;
 
 import controller.admin.AdminAiSupportServlet;
 import controller.admin.AdminMerchantAgentServlet;
-import controller.admin.FileUploadServlet;
-import controller.admin.InventoryServlet;
-import controller.admin.ManageOrderServlet;
-import controller.admin.ProductServlet;
-import controller.admin.PromotionServlet;
-import controller.admin.UserManageServlet;
 import controller.payment.BankWebhookServlet;
 import controller.payment.GhnWebhookServlet;
 import controller.payment.VnpayIpnServlet;
 import controller.shop.UserAiSupportServlet;
-import jakarta.servlet.MultipartConfigElement;
 import jakarta.servlet.ServletContext;
 import org.springframework.boot.web.servlet.ServletContextInitializer;
 import jakarta.servlet.ServletException;
@@ -38,16 +31,12 @@ public class WebRegistrationConfig {
             register(servletContext, "AdminMerchantAgentServlet", controller.admin.AdminMerchantAgentServlet::new, "/admin/ai-merchant", "/admin/ai-merchant/chat", "/admin/ai-merchant/pending", "/admin/ai-merchant/approve", "/admin/ai-merchant/apply", "/admin/ai-merchant/discard", "/admin/ai-merchant/digest", "/admin/ai-merchant/memory", "/admin/ai-merchant/escalations");
             // /pages/admin/categories served by AdminReadController.
             // /pages/admin/dashboard served by AdminReadController.
-            register(servletContext, "InventoryServlet", controller.admin.InventoryServlet::new, "/admin/inventory");
-            register(servletContext, "ManageOrderServlet", controller.admin.ManageOrderServlet::new, "/admin/orders");
-            // /admin/notifications served by AdminReadController.
-            // /pages/admin/pet-types served by AdminReadController.
-            register(servletContext, "ProductServlet", controller.admin.ProductServlet::new, "/pages/admin/products");
-            register(servletContext, "PromotionServlet", controller.admin.PromotionServlet::new, "/admin/promotions");
-            // /admin/reports served by AdminReadController.
-            register(servletContext, "ReviewModerationServlet", controller.admin.ReviewModerationServlet::new, "/pages/admin/reviews");
-            // /admin/statistics served by AdminReadController.
-            register(servletContext, "UserManageServlet", controller.admin.UserManageServlet::new, "/admin/users", "/admin/users/api");
+            // /admin/inventory served by AdminInventoryController.
+            // /admin/orders served by AdminOrderController.
+            // /pages/admin/products served by AdminProductController.
+            // /admin/promotions served by AdminPromotionController.
+            // /pages/admin/reviews served by AdminReviewController.
+            // /admin/users + /admin/users/api served by AdminUserController.
             // /admin/login served by AuthController.
             // /forgot-password, /verify-otp, /reset-password served by AuthController.
             // /LoginByFacebookServlet + /LoginByGoogleServlet served by AuthController
@@ -78,13 +67,8 @@ public class WebRegistrationConfig {
             // /order-success served by OrderResultController.
             // /addresses + /my-account + /update-profile-checkout served by AccountController.
             // /user/download-private-key + /user/upload-signature served by SignatureController.
-
-            // FileUploadServlet needs an explicit multipart config: programmatic
-            // registration does not process the (removed) @MultipartConfig.
-            ServletRegistration.Dynamic upload = register(servletContext, "FileUploadServlet",
-                    FileUploadServlet::new, "/admin/upload");
-            upload.setMultipartConfig(new MultipartConfigElement("",
-                    5L * 1024 * 1024, 10L * 1024 * 1024, 1024 * 1024));
+            // /admin/upload served by AdminUploadController (multipart via Spring,
+            // spring.servlet.multipart limits in application.yml).
         };
     }
 

@@ -7,6 +7,11 @@ spring:
     view:
       prefix: /
       suffix: .jsp
+  servlet:
+    multipart:
+      # Matches the legacy FileUploadServlet programmatic limits (5MB file, 10MB request).
+      max-file-size: 5MB
+      max-request-size: 10MB
   flyway:
     # Managed explicitly by DataSourceConfig (Flyway bean) — auto-config off.
     enabled: false

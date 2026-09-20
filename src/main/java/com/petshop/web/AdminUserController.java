@@ -1,105 +1,111 @@
-package controller.admin;
+package com.petshop.web;
 
-import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import com.google.gson.Gson;
-import jakarta.servlet.ServletException;
-import jakarta.servlet.http.HttpServlet;
-import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpServletResponse;
-import DAO.UserDAO;
-import DAO.OrderDAO;
-import DAO.AdminActionLogDAO;
-import Model.User;
-import Model.Order;
-import Util.PasswordUtil;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.ResponseBody;
 
-public class UserManageServlet extends HttpServlet {
-    private static final long serialVersionUID = 1L;
-    private static final Logger logger = LoggerFactory.getLogger(UserManageServlet.class);
-    private UserDAO userDAO = new UserDAO();
-    private AdminActionLogDAO actionLog = new AdminActionLogDAO();
+import com.google.gson.Gson;
+
+import DAO.AdminActionLogDAO;
+import DAO.OrderDAO;
+import DAO.UserDAO;
+import Model.Order;
+import Model.User;
+import Util.PasswordUtil;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpSession;
+
+/**
+ * Replaces UserManageServlet (/admin/users + /admin/users/api) 1:1 — same
+ * list/search page, same user-detail panel, same add/update/role/status/
+ * resetPassword/delete flows. AuthorizationFilter still guards admin paths.
+ */
+@Controller
+public class AdminUserController {
+
+    private static final Logger logger = LoggerFactory.getLogger(AdminUserController.class);
+
+    private final UserDAO userDAO;
+    private final OrderDAO orderDAO;
+    private final AdminActionLogDAO actionLog;
     private final Gson gson = new Gson();
 
-    @Override
-    protected void doGet(HttpServletRequest request, HttpServletResponse response) 
-            throws ServletException, IOException {
-        
-        String path = request.getServletPath();
-        
-        // API endpoint để lấy pets và appointments
-        if (path.equals("/admin/users/api")) {
-            handleApiRequest(request, response);
-            return;
-        }
-        
-        String keyword = request.getParameter("keyword");
-        String roleFilter = request.getParameter("role");
-        
+    public AdminUserController() {
+        this(new UserDAO(), new OrderDAO(), new AdminActionLogDAO());
+    }
+
+    AdminUserController(UserDAO userDAO, OrderDAO orderDAO, AdminActionLogDAO actionLog) {
+        this.userDAO = userDAO;
+        this.orderDAO = orderDAO;
+        this.actionLog = actionLog;
+    }
+
+    @GetMapping("/admin/users")
+    public String users(
+            @RequestParam(value = "keyword", required = false) String keyword,
+            @RequestParam(value = "role", required = false) String roleFilter,
+            @RequestParam(value = "viewId", required = false) String viewIdRaw,
+            Model model) {
         List<User> users;
-        
+
         // Tìm kiếm hoặc lọc
         if ((keyword != null && !keyword.isEmpty()) || (roleFilter != null && !roleFilter.isEmpty())) {
             users = userDAO.searchUsers(keyword, roleFilter);
         } else {
             users = userDAO.getAllUsersWithStats();
         }
-        
+
         // Thống kê
-        request.setAttribute("users", users);
-        request.setAttribute("totalUsers", userDAO.countUsers());
-        request.setAttribute("totalAdmins", userDAO.countUsersByRole("admin"));
-        request.setAttribute("totalRegularUsers", userDAO.countUsersByRole("user"));
-        request.setAttribute("newUsersThisWeek", userDAO.countNewUsersThisWeek());
-        request.setAttribute("selectedRole", roleFilter);
-        request.setAttribute("keyword", keyword);
-        
+        model.addAttribute("users", users);
+        model.addAttribute("totalUsers", userDAO.countUsers());
+        model.addAttribute("totalAdmins", userDAO.countUsersByRole("admin"));
+        model.addAttribute("totalRegularUsers", userDAO.countUsersByRole("user"));
+        model.addAttribute("newUsersThisWeek", userDAO.countNewUsersThisWeek());
+        model.addAttribute("selectedRole", roleFilter);
+        model.addAttribute("keyword", keyword);
+
         // Lấy chi tiết user nếu có
-        String viewId = request.getParameter("viewId");
-        if (viewId != null && !viewId.isEmpty()) {
+        if (viewIdRaw != null && !viewIdRaw.isEmpty()) {
             try {
-                int userId = Integer.parseInt(viewId);
+                int userId = Integer.parseInt(viewIdRaw);
                 User viewUser = userDAO.getUserFullById(userId);
-                request.setAttribute("viewUser", viewUser);
-                
-                OrderDAO orderDAO = new OrderDAO();
-                request.setAttribute("userOrders", orderDAO.getOrdersByUserId(userId));
+                model.addAttribute("viewUser", viewUser);
+                model.addAttribute("userOrders", orderDAO.getOrdersByUserId(userId));
             } catch (Exception e) {
-                logger.error("Error loading orders for user id={}", viewId, e);
+                logger.error("Error loading orders for user id={}", viewIdRaw, e);
             }
         }
-        
-        request.getRequestDispatcher("/pages/admin/users.jsp").forward(request, response);
+
+        return "pages/admin/users";
     }
-    
-    // API để lấy pets và appointments của user
-    private void handleApiRequest(HttpServletRequest request, HttpServletResponse response) 
-            throws IOException {
-        response.setContentType("application/json");
-        response.setCharacterEncoding("UTF-8");
-        
-        String action = request.getParameter("action");
-        String userIdStr = request.getParameter("userId");
-        
+
+    @GetMapping(value = "/admin/users/api", produces = "application/json;charset=UTF-8")
+    @ResponseBody
+    public String usersApi(
+            @RequestParam(value = "action", required = false) String action,
+            @RequestParam(value = "userId", required = false) String userIdStr) {
         if (userIdStr == null || userIdStr.isEmpty()) {
-            writeJsonError(response, "Missing userId");
-            return;
+            return gson.toJson(Map.of("error", "Missing userId"));
         }
-        
+
         try {
             int userId = Integer.parseInt(userIdStr);
             SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy");
-            
+
             if ("getOrders".equals(action)) {
-                OrderDAO orderDAO = new OrderDAO();
                 List<Order> orders = orderDAO.getOrdersByUserId(userId);
-                
+
                 List<Map<String, Object>> orderList = new ArrayList<>();
                 for (Order o : orders) {
                     Map<String, Object> orderData = new HashMap<>();
@@ -111,42 +117,37 @@ public class UserManageServlet extends HttpServlet {
                     orderData.put("createdAt", o.getCreatedAt() != null ? sdf.format(o.getCreatedAt()) : "");
                     orderList.add(orderData);
                 }
-                response.getWriter().write(gson.toJson(orderList));
-            } else {
-                writeJsonError(response, "Invalid action");
+                return gson.toJson(orderList);
             }
+            return gson.toJson(Map.of("error", "Invalid action"));
         } catch (Exception e) {
-            writeJsonError(response, "An error occurred");
+            return gson.toJson(Map.of("error", "An error occurred"));
         }
     }
-    
-    private void writeJsonError(HttpServletResponse response, String message) throws IOException {
-        Map<String, String> error = new HashMap<>();
-        error.put("error", message);
-        response.getWriter().write(gson.toJson(error));
-    }
 
-    @Override
-    protected void doPost(HttpServletRequest request, HttpServletResponse response) 
-            throws ServletException, IOException {
-        
-        request.setCharacterEncoding("UTF-8");
-        String action = request.getParameter("action");
+    @PostMapping("/admin/users")
+    public String usersPost(
+            @RequestParam(value = "action", required = false) String action,
+            @RequestParam(value = "username", required = false) String username,
+            @RequestParam(value = "password", required = false) String password,
+            @RequestParam(value = "fullname", required = false) String fullname,
+            @RequestParam(value = "email", required = false) String email,
+            @RequestParam(value = "phone", required = false) String phone,
+            @RequestParam(value = "role", required = false) String role,
+            @RequestParam(value = "userId", required = false) String userIdRaw,
+            @RequestParam(value = "address", required = false) String address,
+            @RequestParam(value = "status", required = false) String newStatus,
+            @RequestParam(value = "newPassword", required = false) String newPassword,
+            HttpServletRequest request,
+            HttpSession session) {
         String message = "";
         String messageType = "success";
-        User admin = (User) request.getSession().getAttribute("user");
+        User admin = (User) session.getAttribute("user");
         int adminId = admin != null ? admin.getId() : 1;
 
         try {
-            switch (action) {
+            switch (action == null ? "" : action) {
                 case "add":
-                    String username = request.getParameter("username");
-                    String password = request.getParameter("password");
-                    String fullname = request.getParameter("fullname");
-                    String email = request.getParameter("email");
-                    String phone = request.getParameter("phone");
-                    String role = request.getParameter("role");
-                    
                     if (!PasswordUtil.isStrongPassword(password)) {
                         message = "Mật khẩu phải có tối thiểu 8 ký tự, gồm chữ hoa, chữ thường, số và ký tự đặc biệt.";
                         messageType = "error";
@@ -162,15 +163,10 @@ public class UserManageServlet extends HttpServlet {
                         messageType = "error";
                     }
                     break;
-                    
+
                 case "update":
-                    int updateId = Integer.parseInt(request.getParameter("userId"));
-                    String updateFullname = request.getParameter("fullname");
-                    String updateEmail = request.getParameter("email");
-                    String updatePhone = request.getParameter("phone");
-                    String updateAddress = request.getParameter("address");
-                    
-                    if (userDAO.updateUser(updateId, updateFullname, updateEmail, updatePhone, updateAddress)) {
+                    int updateId = Integer.parseInt(userIdRaw);
+                    if (userDAO.updateUser(updateId, fullname, email, phone, address)) {
                         actionLog.log(adminId, "UPDATE_USER", "user", updateId, null);
                         message = "Cập nhật thông tin thành công!";
                     } else {
@@ -178,25 +174,21 @@ public class UserManageServlet extends HttpServlet {
                         messageType = "error";
                     }
                     break;
-                    
+
                 case "updateRole":
-                    int roleUserId = Integer.parseInt(request.getParameter("userId"));
-                    String newRole = request.getParameter("role");
-                    
-                    if (userDAO.updateUserRole(roleUserId, newRole)) {
+                    int roleUserId = Integer.parseInt(userIdRaw);
+                    if (userDAO.updateUserRole(roleUserId, role)) {
                         actionLog.log(adminId, "UPDATE_ROLE", "user", roleUserId,
-                                "newRole=" + newRole);
+                                "newRole=" + role);
                         message = "Đã cập nhật quyền thành công!";
                     } else {
                         message = "Có lỗi xảy ra!";
                         messageType = "error";
                     }
                     break;
-                    
+
                 case "toggleStatus":
-                    int statusUserId = Integer.parseInt(request.getParameter("userId"));
-                    String newStatus = request.getParameter("status");
-                    
+                    int statusUserId = Integer.parseInt(userIdRaw);
                     if (userDAO.updateUserStatus(statusUserId, newStatus)) {
                         actionLog.log(adminId, "TOGGLE_STATUS", "user", statusUserId,
                                 "newStatus=" + newStatus);
@@ -206,11 +198,9 @@ public class UserManageServlet extends HttpServlet {
                         messageType = "error";
                     }
                     break;
-                    
+
                 case "resetPassword":
-                    int resetUserId = Integer.parseInt(request.getParameter("userId"));
-                    String newPassword = request.getParameter("newPassword");
-                    
+                    int resetUserId = Integer.parseInt(userIdRaw);
                     if (!PasswordUtil.isStrongPassword(newPassword)) {
                         message = "Mật khẩu mới phải có tối thiểu 8 ký tự, gồm chữ hoa, chữ thường, số và ký tự đặc biệt.";
                         messageType = "error";
@@ -222,10 +212,9 @@ public class UserManageServlet extends HttpServlet {
                         messageType = "error";
                     }
                     break;
-                    
+
                 case "delete":
-                    int deleteId = Integer.parseInt(request.getParameter("userId"));
-                    
+                    int deleteId = Integer.parseInt(userIdRaw);
                     if (userDAO.deactivateUser(deleteId)) {
                         actionLog.log(adminId, "DELETE_USER", "user", deleteId, null);
                         message = "Đã vô hiệu hóa tài khoản thành công!";
@@ -234,7 +223,7 @@ public class UserManageServlet extends HttpServlet {
                         messageType = "error";
                     }
                     break;
-                    
+
                 default:
                     message = "Hành động không hợp lệ!";
                     messageType = "error";
@@ -245,8 +234,8 @@ public class UserManageServlet extends HttpServlet {
             logger.error("Admin user management action='{}' failed", action, e);
         }
 
-        request.getSession().setAttribute("message", message);
-        request.getSession().setAttribute("messageType", messageType);
-        response.sendRedirect(request.getContextPath() + "/admin/users");
+        session.setAttribute("message", message);
+        session.setAttribute("messageType", messageType);
+        return "redirect:" + request.getContextPath() + "/admin/users";
     }
 }
