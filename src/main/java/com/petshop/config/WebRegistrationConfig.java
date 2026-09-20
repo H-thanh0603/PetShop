@@ -15,7 +15,6 @@ import controller.admin.ReportServlet;
 import controller.admin.ReviewModerationServlet;
 import controller.admin.StatisticsServlet;
 import controller.admin.UserManageServlet;
-import controller.auth.AdminLoginServlet;
 import controller.payment.BankWebhookServlet;
 import controller.payment.GhnWebhookServlet;
 import controller.payment.VnpayIpnServlet;
@@ -66,10 +65,10 @@ public class WebRegistrationConfig {
             register(servletContext, "ReviewModerationServlet", controller.admin.ReviewModerationServlet::new, "/pages/admin/reviews");
             register(servletContext, "StatisticsServlet", controller.admin.StatisticsServlet::new, "/admin/statistics");
             register(servletContext, "UserManageServlet", controller.admin.UserManageServlet::new, "/admin/users", "/admin/users/api");
-            register(servletContext, "AdminLoginServlet", controller.auth.AdminLoginServlet::new, "/admin/login");
+            // /admin/login served by AuthController.
             // /forgot-password, /verify-otp, /reset-password served by AuthController.
-            register(servletContext, "LoginByFacebookServlet", controller.auth.LoginByFacebookServlet::new, "/LoginByFacebookServlet");
-            register(servletContext, "LoginByGoogleServlet", controller.auth.LoginByGoogleServlet::new, "/LoginByGoogleServlet");
+            // /LoginByFacebookServlet + /LoginByGoogleServlet served by AuthController
+            // (same legacy paths so OAuth provider consoles keep working).
             // /login served by AuthController.
             // /logout served by AuthController.
             // /register served by AuthController.

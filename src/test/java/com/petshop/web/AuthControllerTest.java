@@ -137,6 +137,81 @@ class AuthControllerTest {
     }
 
     @Test
+    void adminLoginPageRendersView() throws Exception {
+        mockMvc.perform(get("/admin/login"))
+                .andExpect(status().isOk())
+                .andExpect(view().name("pages/admin/login"));
+    }
+
+    @Test
+    void adminLoginRejectsMissingCredentials() throws Exception {
+        mockMvc.perform(post("/admin/login")
+                        .param("email", "")
+                        .param("password", ""))
+                .andExpect(status().isOk())
+                .andExpect(view().name("pages/admin/login"))
+                .andExpect(model().attributeExists("error"));
+    }
+
+    @Test
+    void adminLoginWrongPasswordShowsError() throws Exception {
+        when(userDAO.loginByEmail(
+                org.mockito.ArgumentMatchers.eq("admin@example.com"),
+                org.mockito.ArgumentMatchers.anyString())).thenReturn(null);
+
+        mockMvc.perform(post("/admin/login")
+                        .param("email", "admin@example.com")
+                        .param("password", "Wrongpass1!"))
+                .andExpect(status().isOk())
+                .andExpect(view().name("pages/admin/login"))
+                .andExpect(model().attributeExists("error"));
+    }
+
+    @Test
+    void adminLoginSuccessRedirectsDashboard() throws Exception {
+        User admin = new User();
+        admin.setId(1);
+        admin.setUsername("admin");
+        admin.setRole("admin");
+        admin.setStatus(true);
+        when(userDAO.loginByEmail(
+                org.mockito.ArgumentMatchers.eq("admin@example.com"),
+                org.mockito.ArgumentMatchers.anyString())).thenReturn(admin);
+
+        mockMvc.perform(post("/admin/login")
+                        .param("email", "admin@example.com")
+                        .param("password", "Goodpass1!"))
+                .andExpect(status().is3xxRedirection());
+    }
+
+    @Test
+    void adminLoginRejectsNonAdminRole() throws Exception {
+        User user = new User();
+        user.setId(7);
+        user.setUsername("tester");
+        user.setRole("user");
+        user.setStatus(true);
+        when(userDAO.loginByEmail(
+                org.mockito.ArgumentMatchers.eq("user@example.com"),
+                org.mockito.ArgumentMatchers.anyString())).thenReturn(user);
+
+        mockMvc.perform(post("/admin/login")
+                        .param("email", "user@example.com")
+                        .param("password", "Goodpass1!"))
+                .andExpect(status().isOk())
+                .andExpect(view().name("pages/admin/login"))
+                .andExpect(model().attributeExists("error"));
+    }
+
+    @Test
+    void socialCallbackWithoutCodeRedirectsLogin() throws Exception {
+        mockMvc.perform(get("/LoginByGoogleServlet"))
+                .andExpect(status().is3xxRedirection());
+        mockMvc.perform(get("/LoginByFacebookServlet"))
+                .andExpect(status().is3xxRedirection());
+    }
+
+    @Test
     void verifyEmailValidTokenMarksVerifiedAndRedirectsLogin() throws Exception {
         User user = new User();
         user.setId(9);

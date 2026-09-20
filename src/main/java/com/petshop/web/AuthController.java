@@ -6,6 +6,8 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -20,6 +22,8 @@ import DAO.RememberTokenDAO;
 import DAO.SecurityEventDAO;
 import DAO.UserDAO;
 import Model.CartItem;
+import Model.FbAccount.Account;
+import Model.GgAccount.GoogleAccount;
 import Model.User;
 import Util.AppConfig;
 import Util.AuthRedirectUtil;
@@ -786,5 +790,198 @@ public class AuthController {
         result.put("success", success);
         result.put("message", message);
         return gson.toJson(result);
+    }
+
+    // ── SOCIAL LOGIN (/LoginByGoogleServlet, /LoginByFacebookServlet) ──
+
+    private static final Logger logger = LoggerFactory.getLogger(AuthController.class);
+
+    @GetMapping("/LoginByGoogleServlet")
+    public String loginByGoogle(
+            @RequestParam(value = "code", required = false) String code,
+            @RequestParam(value = "error", required = false) String error,
+            HttpServletRequest request,
+            HttpSession session) {
+        if (!SocialAuthUtil.isGoogleConfigured()) {
+            session.setAttribute("warning", "Google login chưa được cấu hình trên máy này.");
+            return "redirect:/login";
+        }
+
+        // Người dùng bấm hủy hoặc provider trả lỗi
+        if (error != null || code == null || code.isEmpty()) {
+            session.setAttribute("warning", "Đăng nhập Google đã bị hủy hoặc không thành công.");
+            return "redirect:/login";
+        }
+
+        try {
+            controller.Google.GoogleLogin gg = new controller.Google.GoogleLogin();
+            String accessToken = gg.getToken(code, SocialAuthUtil.buildGoogleRedirectUri(request));
+            GoogleAccount acc = gg.getUserInfo(accessToken);
+
+            if (acc == null || acc.getEmail() == null || acc.getEmail().isBlank()) {
+                session.setAttribute("error", "Google không trả về email. Không thể đăng nhập.");
+                return "redirect:/login";
+            }
+
+            finishSocialLogin(session, acc.getEmail(), acc.getName());
+            return redirectAfterSocialLogin(request, session);
+        } catch (Exception e) {
+            logger.error("Google OAuth login failed", e);
+            session.setAttribute("error", "Đăng nhập Google thất bại. Kiểm tra lại cấu hình OAuth.");
+            return "redirect:/login";
+        }
+    }
+
+    @GetMapping("/LoginByFacebookServlet")
+    public String loginByFacebook(
+            @RequestParam(value = "code", required = false) String code,
+            @RequestParam(value = "error", required = false) String error,
+            HttpServletRequest request,
+            HttpSession session) {
+        if (!SocialAuthUtil.isFacebookConfigured()) {
+            session.setAttribute("warning", "Facebook login chưa được cấu hình trên máy này.");
+            return "redirect:/login";
+        }
+
+        // Người dùng bấm hủy hoặc provider trả lỗi
+        if (error != null || code == null || code.isEmpty()) {
+            session.setAttribute("warning", "Đăng nhập Facebook đã bị hủy hoặc không thành công.");
+            return "redirect:/login";
+        }
+
+        try {
+            controller.FaceBook.FaceBookLogin fb = new controller.FaceBook.FaceBookLogin();
+            String accessToken = fb.getToken(code, SocialAuthUtil.buildFacebookRedirectUri(request));
+            Account acc = fb.getUserInfo(accessToken);
+
+            if (acc == null || acc.getEmail() == null || acc.getEmail().isBlank()) {
+                session.setAttribute("error", "Facebook không trả về email. Hãy bật quyền email hoặc dùng đăng nhập thường.");
+                return "redirect:/login";
+            }
+
+            finishSocialLogin(session, acc.getEmail(), acc.getName());
+            return redirectAfterSocialLogin(request, session);
+        } catch (Exception e) {
+            logger.error("Facebook OAuth login failed", e);
+            session.setAttribute("error", "Đăng nhập Facebook thất bại. Kiểm tra lại cấu hình OAuth.");
+            return "redirect:/login";
+        }
+    }
+
+    private void finishSocialLogin(HttpSession session, String email, String name) {
+        boolean isEmailAvailable = userDAO.HaveEmail(email);
+        User user;
+        if (!isEmailAvailable) {
+            user = userDAO.getUserByEmail(email);
+        } else {
+            userDAO.insertUser(name, email);
+            user = userDAO.getUserByEmail(email);
+        }
+
+        if (user == null) {
+            throw new IllegalStateException("Không thể tạo hoặc tải tài khoản social.");
+        }
+
+        session.setAttribute("user", user);
+        session.setAttribute("username", user.getUsername());
+        session.setAttribute("role", user.getRole());
+
+        CartDAO cartDAO = new CartDAO();
+        @SuppressWarnings("unchecked")
+        Map<Integer, CartItem> sessionCart = (Map<Integer, CartItem>) session.getAttribute("cart");
+        if (sessionCart != null && !sessionCart.isEmpty()) {
+            cartDAO.syncCartFromSession(user.getId(), sessionCart);
+        }
+
+        Map<Integer, CartItem> cart = cartDAO.getCartByUserId(user.getId());
+        session.setAttribute("cart", cart);
+        int totalQuantity = 0;
+        for (CartItem item : cart.values()) {
+            totalQuantity += item.getQuantity();
+        }
+        session.setAttribute("totalQuantity", totalQuantity);
+    }
+
+    private String redirectAfterSocialLogin(HttpServletRequest request, HttpSession session) {
+        User user = (User) session.getAttribute("user");
+        String redirectUrl = AuthRedirectUtil.consumeRedirectAfterLogin(request);
+
+        if (user != null && "admin".equals(user.getRole())) {
+            return "redirect:" + request.getContextPath() + "/pages/admin/dashboard";
+        } else if (redirectUrl != null && !redirectUrl.isEmpty()) {
+            return "redirect:" + redirectUrl;
+        }
+        return "redirect:" + request.getContextPath() + "/home";
+    }
+
+    // ── ADMIN LOGIN (/admin/login) ──
+
+    @GetMapping("/admin/login")
+    public String adminLoginPage() {
+        return "pages/admin/login";
+    }
+
+    @PostMapping("/admin/login")
+    public String adminLoginSubmit(HttpServletRequest request, Model model) {
+        FormHelper form = new FormHelper(request);
+
+        String email = form.get("email");
+        String password = form.getRaw("password");
+
+        if (!form.validateRequired("email", "Email") || !form.validateRequiredRaw("password", "Mật khẩu")) {
+            model.addAttribute("error", "Vui lòng nhập đầy đủ email và mật khẩu.");
+            return "pages/admin/login";
+        }
+
+        // Brute-force check for this (email, IP) pair
+        if (Util.LoginLockout.isLocked(email, request.getRemoteAddr())) {
+            securityEventDAO.log("ACCOUNT_LOCKED_ATTEMPT", email, request.getRemoteAddr(), "Admin login attempt blocked while the (email, IP) lock is still active.");
+            model.addAttribute("error", "Email hoặc mật khẩu không đúng.");
+            return "pages/admin/login";
+        }
+
+        User user = userDAO.loginByEmail(email, password);
+
+        if (user != null) {
+            // Check for correct role
+            String role = user.getRole();
+            boolean isAdminOrStaffOrShipper = "admin".equals(role) || "staff".equals(role) || "shipper".equals(role);
+
+            if (isAdminOrStaffOrShipper && user.getStatus()) {
+                // Reset failed attempts
+                userDAO.resetFailedAttempts(email);
+                Util.LoginLockout.reset(email, request.getRemoteAddr());
+
+                // Session regeneration: invalidate the pre-auth session (and its
+                // fixed JSESSIONID + CSRF token) so a session-fixation attempt on
+                // /admin/login fails; the new session gets a fresh CSRF token too.
+                HttpSession oldSession = request.getSession(false);
+                if (oldSession != null) {
+                    oldSession.invalidate();
+                }
+                HttpSession session = request.getSession(true);
+                session.setAttribute("user", user);
+                session.setAttribute("username", user.getUsername());
+                session.setAttribute("role", user.getRole());
+
+                // Redirect based on role
+                if ("shipper".equals(role)) {
+                    return "redirect:" + request.getContextPath() + "/admin/orders";
+                }
+                return "redirect:" + request.getContextPath() + "/pages/admin/dashboard";
+            }
+            // Wrong role or inactive account
+            securityEventDAO.log("AUTH_FAIL", email, request.getRemoteAddr(), "User with role '" + role + "' tried to access admin panel.");
+            model.addAttribute("error", "Bạn không có quyền truy cập vào khu vực này.");
+            return "pages/admin/login";
+        }
+        // Record failure per (email, IP); lock that pair after 5 failures
+        boolean nowLocked = Util.LoginLockout.recordFailure(email, request.getRemoteAddr());
+        if (nowLocked) {
+            securityEventDAO.log("ACCOUNT_LOCKED", email, request.getRemoteAddr(),
+                    "Admin login locked for the (email, IP) pair for 15 minutes after repeated failures.");
+        }
+        model.addAttribute("error", "Email hoặc mật khẩu không đúng.");
+        return "pages/admin/login";
     }
 }
