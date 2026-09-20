@@ -1,24 +1,60 @@
-package controller.pages;
+package com.petshop.web;
 
-import java.io.IOException;
 import java.util.List;
-import jakarta.servlet.ServletException;
-import jakarta.servlet.http.HttpServlet;
+
+import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
+
+import DAO.PromotionDAO;
 import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpServletResponse;
 
-public class PolicyServlet extends HttpServlet {
-    private static final long serialVersionUID = 1L;
+/**
+ * Replaces AboutServlet, HomeServlet and PolicyServlet 1:1.
+ * View names resolve to the same JSPs via spring.mvc.view prefix/suffix.
+ */
+@Controller
+public class PageController {
 
-    @Override
-    protected void doGet(HttpServletRequest request, HttpServletResponse response)
-            throws ServletException, IOException {
-        String path = request.getServletPath();
-        PolicyContent content = contentFor(path);
-        request.setAttribute("policyTitle", content.title());
-        request.setAttribute("policyLead", content.lead());
-        request.setAttribute("policySections", content.sections());
-        request.getRequestDispatcher("/pages/main/policy.jsp").forward(request, response);
+    private final PromotionDAO promotionDAO;
+
+    public PageController() {
+        this(new PromotionDAO());
+    }
+
+    PageController(PromotionDAO promotionDAO) {
+        this.promotionDAO = promotionDAO;
+    }
+
+    @GetMapping("/about")
+    public String about() {
+        return "pages/main/about";
+    }
+
+    @PostMapping("/about")
+    public String aboutPost() {
+        return about();
+    }
+
+    @GetMapping("/home")
+    public String home(Model model) {
+        model.addAttribute("flashSaleProducts", promotionDAO.getFlashSaleProducts(8));
+        return "pages/main/home";
+    }
+
+    @PostMapping("/home")
+    public String homePost(Model model) {
+        return home(model);
+    }
+
+    @GetMapping({"/privacy-policy", "/terms", "/shipping-policy", "/return-policy", "/buying-guide", "/support"})
+    public String policy(HttpServletRequest request, Model model) {
+        PolicyContent content = contentFor(request.getServletPath());
+        model.addAttribute("policyTitle", content.title());
+        model.addAttribute("policyLead", content.lead());
+        model.addAttribute("policySections", content.sections());
+        return "pages/main/policy";
     }
 
     private PolicyContent contentFor(String path) {

@@ -3,6 +3,10 @@ spring:
     name: petshop
   profiles:
     default: dev
+  mvc:
+    view:
+      prefix: /
+      suffix: .jsp
   flyway:
     # Managed explicitly by DataSourceConfig (Flyway bean) — auto-config off.
     enabled: false

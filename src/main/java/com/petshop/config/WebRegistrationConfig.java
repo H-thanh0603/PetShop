@@ -23,9 +23,6 @@ import controller.auth.LoginServlet;
 import controller.auth.LogoutServlet;
 import controller.auth.RegisterServlet;
 import controller.auth.VerifyEmailServlet;
-import controller.pages.AboutServlet;
-import controller.pages.HomeServlet;
-import controller.pages.PolicyServlet;
 import controller.payment.BankWebhookServlet;
 import controller.payment.GhnWebhookServlet;
 import controller.payment.VnpayIpnServlet;
@@ -92,9 +89,8 @@ public class WebRegistrationConfig {
             register(servletContext, "LogoutServlet", controller.auth.LogoutServlet::new, "/logout");
             register(servletContext, "RegisterServlet", controller.auth.RegisterServlet::new, "/register");
             register(servletContext, "VerifyEmailServlet", controller.auth.VerifyEmailServlet::new, "/verify-email");
-            register(servletContext, "AboutServlet", controller.pages.AboutServlet::new, "/about");
-            register(servletContext, "HomeServlet", controller.pages.HomeServlet::new, "/home");
-            register(servletContext, "PolicyServlet", controller.pages.PolicyServlet::new, "/privacy-policy", "/terms", "/shipping-policy", "/return-policy", "/buying-guide", "/support");
+            // About/Home/Policy served by com.petshop.web.PageController (Spring MVC).
+            // HomeServlet, AboutServlet, PolicyServlet removed.
             register(servletContext, "BankWebhookServlet", controller.payment.BankWebhookServlet::new, "/api/payment/bank-webhook");
             register(servletContext, "VnpayIpnServlet", VnpayIpnServlet::new, "/api/payment/vnpay-ipn");
             register(servletContext, "GhnWebhookServlet", controller.payment.GhnWebhookServlet::new, "/api/ghn/webhook");
