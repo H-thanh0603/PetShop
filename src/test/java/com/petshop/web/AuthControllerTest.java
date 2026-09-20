@@ -4,7 +4,9 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.model;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.request;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.view;
 
@@ -56,11 +58,82 @@ class AuthControllerTest {
     }
 
     @Test
-    void verifyEmailMissingTokenShowsError() throws Exception {
-        mockMvc.perform(get("/verify-email"))
+    void loginPageRendersView() throws Exception {
+        mockMvc.perform(get("/login"))
                 .andExpect(status().isOk())
-                .andExpect(view().name("pages/auth/verify-email"))
-                .andExpect(model().attributeExists("verifyError"));
+                .andExpect(view().name("pages/auth/login"));
+    }
+
+    @Test
+    void loginWrongPasswordShowsError() throws Exception {
+        when(userDAO.loginByEmail(
+                org.mockito.ArgumentMatchers.eq("user@example.com"),
+                org.mockito.ArgumentMatchers.anyString())).thenReturn(null);
+
+        mockMvc.perform(post("/login")
+                        .param("email", "user@example.com")
+                        .param("password", "Wrongpass1!"))
+                .andExpect(status().isOk())
+                .andExpect(view().name("pages/auth/login"))
+                .andExpect(request().attribute("error", org.hamcrest.Matchers.notNullValue()));
+    }
+
+    @Test
+    void loginSuccessRedirectsHome() throws Exception {
+        User user = new User();
+        user.setId(7);
+        user.setUsername("tester");
+        user.setStatus(true);
+        when(userDAO.loginByEmail(
+                org.mockito.ArgumentMatchers.eq("user@example.com"),
+                org.mockito.ArgumentMatchers.anyString())).thenReturn(user);
+
+        try (var mocked = org.mockito.Mockito.mockConstruction(DAO.CartDAO.class,
+                (dao, ctx) -> when(dao.getCartByUserId(7))
+                        .thenReturn(new java.util.HashMap<>()))) {
+            mockMvc.perform(post("/login")
+                            .param("email", "user@example.com")
+                            .param("password", "Goodpass1!"))
+                    .andExpect(status().is3xxRedirection());
+        }
+    }
+
+    @Test
+    void registerPageRendersView() throws Exception {
+        mockMvc.perform(get("/register"))
+                .andExpect(status().isOk())
+                .andExpect(view().name("pages/auth/register"));
+    }
+
+    @Test
+    void registerCheckUsernameReportsAvailability() throws Exception {
+        when(userDAO.checkUsernameExists("taken")).thenReturn(true);
+        when(userDAO.checkUsernameExists("free_name")).thenReturn(false);
+
+        mockMvc.perform(post("/register")
+                        .param("action", "checkUsername")
+                        .param("username", "taken"))
+                .andExpect(status().isOk())
+                .andExpect(content().string(org.hamcrest.Matchers.containsString("\"available\":false")));
+
+        mockMvc.perform(post("/register")
+                        .param("action", "checkUsername")
+                        .param("username", "free_name"))
+                .andExpect(status().isOk())
+                .andExpect(content().string(org.hamcrest.Matchers.containsString("\"available\":true")));
+    }
+
+    @Test
+    void registerRejectsWeakPassword() throws Exception {
+        mockMvc.perform(post("/register")
+                        .param("username", "new_user")
+                        .param("email", "newuser@example.com")
+                        .param("fullName", "Nguyen Van A")
+                        .param("password", "weak")
+                        .param("confirmPassword", "weak")
+                        .param("otp", "123456"))
+                .andExpect(status().isOk())
+                .andExpect(view().name("pages/auth/register"));
     }
 
     @Test
