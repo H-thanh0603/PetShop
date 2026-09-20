@@ -28,11 +28,9 @@ import controller.payment.GhnWebhookServlet;
 import controller.payment.VnpayIpnServlet;
 import controller.shop.AddReviewServlet;
 import controller.shop.AddToCartServlet;
-import controller.shop.CartServlet;
 import controller.shop.CheckoutServlet;
 import controller.shop.MyOrdersServlet;
 import controller.shop.SearchAutocompleteServlet;
-import controller.shop.ShopServlet;
 import controller.shop.ToggleWishlistServlet;
 import controller.shop.UserAiSupportServlet;
 import controller.shop.UserNotificationServlet;
@@ -93,12 +91,12 @@ public class WebRegistrationConfig {
             register(servletContext, "GhnWebhookServlet", controller.payment.GhnWebhookServlet::new, "/api/ghn/webhook");
             register(servletContext, "AddReviewServlet", controller.shop.AddReviewServlet::new, "/add-review");
             register(servletContext, "AddToCartServlet", controller.shop.AddToCartServlet::new, "/add-to-cart");
-            register(servletContext, "CartServlet", controller.shop.CartServlet::new, "/cart");
+            // /cart served by CartController.
             register(servletContext, "CheckoutServlet", controller.shop.CheckoutServlet::new, "/checkout");
             register(servletContext, "MyOrdersServlet", controller.shop.MyOrdersServlet::new, "/my-orders");
             // /product-detail + /wishlist served by CatalogController.
             register(servletContext, "SearchAutocompleteServlet", controller.shop.SearchAutocompleteServlet::new, "/api/search-autocomplete");
-            register(servletContext, "ShopServlet", controller.shop.ShopServlet::new, "/shop");
+            // /shop served by ShopController.
             register(servletContext, "ToggleWishlistServlet", controller.shop.ToggleWishlistServlet::new, "/toggle-wishlist");
             register(servletContext, "UserAiSupportServlet", controller.shop.UserAiSupportServlet::new, "/ai-support/chat", "/ai-support/history", "/ai-support/messages", "/ai-support/unread-count", "/ai-support/stream");
             register(servletContext, "McpServlet", controller.shop.McpServlet::new, "/mcp");

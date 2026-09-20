@@ -1,4 +1,14 @@
-package controller.shop;
+package com.petshop.web;
+
+import java.util.Collections;
+import java.util.List;
+import java.util.Set;
+
+import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 
 import DAO.PetTypeDAO;
 import DAO.ProductDAO;
@@ -7,48 +17,61 @@ import Model.PetType;
 import Model.Product;
 import Model.ProductFilterCriteria;
 import Model.User;
-import jakarta.servlet.ServletException;
-import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpServletResponse;
+import jakarta.servlet.http.HttpSession;
 
-import java.io.IOException;
-import java.util.List;
-import java.util.Set;
+/**
+ * Replaces ShopServlet (/shop) 1:1 — same params, same model attributes,
+ * same two views (shop.jsp unfiltered, shop-pet.jsp filtered).
+ */
+@Controller
+public class ShopController {
 
-public class ShopServlet extends HttpServlet {
-    private static final long serialVersionUID = 1L;
     private static final int PAGE_SIZE = 12;
     private static final int BEST_SELLER_SIZE = 6;
 
-    private ProductDAO productDao = new ProductDAO();
-    private PetTypeDAO petTypeDao = new PetTypeDAO();
-    private WishlistDAO wishlistDAO = new WishlistDAO();
+    private final ProductDAO productDao;
+    private final PetTypeDAO petTypeDao;
+    private final WishlistDAO wishlistDAO;
 
-    @Override
-    protected void doGet(HttpServletRequest request, HttpServletResponse response)
-            throws ServletException, IOException {
-        request.setCharacterEncoding("UTF-8");
+    public ShopController() {
+        this(new ProductDAO(), new PetTypeDAO(), new WishlistDAO());
+    }
 
-        String category = request.getParameter("category");
-        String search = trimAndClamp(request.getParameter("search"), 100);
-        String sort = request.getParameter("sort");
-        String priceRange = request.getParameter("priceRange");
-        String discountOnly = request.getParameter("discountOnly");
-        String pet = request.getParameter("pet");
-        int page = parsePage(request.getParameter("page"));
-        int salePage = parsePage(request.getParameter("salePage"));
-        int catalogPage = parsePage(request.getParameter("catalogPage"));
+    ShopController(ProductDAO productDao, PetTypeDAO petTypeDao, WishlistDAO wishlistDAO) {
+        this.productDao = productDao;
+        this.petTypeDao = petTypeDao;
+        this.wishlistDAO = wishlistDAO;
+    }
+
+    @GetMapping("/shop")
+    public String shop(
+            @RequestParam(value = "category", required = false) String category,
+            @RequestParam(value = "search", required = false) String search,
+            @RequestParam(value = "sort", required = false) String sort,
+            @RequestParam(value = "priceRange", required = false) String priceRange,
+            @RequestParam(value = "discountOnly", required = false) String discountOnly,
+            @RequestParam(value = "pet", required = false) String pet,
+            @RequestParam(value = "page", required = false) String pageRaw,
+            @RequestParam(value = "salePage", required = false) String salePageRaw,
+            @RequestParam(value = "catalogPage", required = false) String catalogPageRaw,
+            HttpServletRequest request,
+            HttpSession session,
+            Model model) {
+        search = trimAndClamp(search, 100);
+        int page = parsePage(pageRaw);
+        int salePage = parsePage(salePageRaw);
+        int catalogPage = parsePage(catalogPageRaw);
 
         List<PetType> activePetTypes = petTypeDao.getActivePetTypes();
-        request.setAttribute("petTypes", activePetTypes);
+        model.addAttribute("petTypes", activePetTypes);
 
-        User currentUser = (User) request.getSession().getAttribute("user");
-        Set<Integer> wishlistProductIds = java.util.Collections.emptySet();
+        User currentUser = (User) session.getAttribute("user");
+        Set<Integer> wishlistProductIds = Collections.emptySet();
         if (currentUser != null) {
             wishlistProductIds = wishlistDAO.getWishlistProductIdsByUserId(currentUser.getId());
         }
-        request.setAttribute("wishlistProductIds", wishlistProductIds);
+        model.addAttribute("wishlistProductIds", wishlistProductIds);
 
         PetType selectedPetType = null;
         if (pet != null && !pet.trim().isEmpty()) {
@@ -66,14 +89,14 @@ public class ShopServlet extends HttpServlet {
             categories = productDao.getAllCategories();
         }
 
-        request.setAttribute("categories", categories);
-        request.setAttribute("selectedCategory", category);
-        request.setAttribute("searchKeyword", search);
-        request.setAttribute("selectedSort", sort);
-        request.setAttribute("selectedPriceRange", priceRange);
-        request.setAttribute("selectedDiscountOnly", discountOnly);
-        request.setAttribute("selectedPet", pet);
-        request.setAttribute("selectedPetType", selectedPetType);
+        model.addAttribute("categories", categories);
+        model.addAttribute("selectedCategory", category);
+        model.addAttribute("searchKeyword", search);
+        model.addAttribute("selectedSort", sort);
+        model.addAttribute("selectedPriceRange", priceRange);
+        model.addAttribute("selectedDiscountOnly", discountOnly);
+        model.addAttribute("selectedPet", pet);
+        model.addAttribute("selectedPetType", selectedPetType);
 
         if (!isFiltered) {
             List<Product> popularProducts = productDao.getPopularProductsPage(1, BEST_SELLER_SIZE);
@@ -86,17 +109,16 @@ public class ShopServlet extends HttpServlet {
             int discountTotal = productDao.getTotalDiscountedProductsCount();
             int catalogTotal = productDao.getTotalProductsCount();
 
-            request.setAttribute("products", List.of());
-            request.setAttribute("popularProducts", popularProducts);
-            request.setAttribute("discountProducts", discountProducts);
-            request.setAttribute("catalogProducts", catalogProducts);
-            request.setAttribute("salePage", salePage);
-            request.setAttribute("catalogPage", catalogPage);
-            request.setAttribute("saleTotalPages", getTotalPages(discountTotal, PAGE_SIZE));
-            request.setAttribute("catalogTotalPages", getTotalPages(catalogTotal, PAGE_SIZE));
-            request.setAttribute("totalProducts", catalogTotal);
-            request.getRequestDispatcher("/pages/shop/shop.jsp").forward(request, response);
-            return;
+            model.addAttribute("products", List.of());
+            model.addAttribute("popularProducts", popularProducts);
+            model.addAttribute("discountProducts", discountProducts);
+            model.addAttribute("catalogProducts", catalogProducts);
+            model.addAttribute("salePage", salePage);
+            model.addAttribute("catalogPage", catalogPage);
+            model.addAttribute("saleTotalPages", getTotalPages(discountTotal, PAGE_SIZE));
+            model.addAttribute("catalogTotalPages", getTotalPages(catalogTotal, PAGE_SIZE));
+            model.addAttribute("totalProducts", catalogTotal);
+            return "pages/shop/shop";
         }
 
         ProductFilterCriteria criteria = buildFilterCriteria(category, search, sort, priceRange, discountOnly, pet, page);
@@ -117,22 +139,34 @@ public class ShopServlet extends HttpServlet {
         List<Product> pagedProducts = productDao.getFilteredProductsPage(criteria);
         markWishlisted(pagedProducts, wishlistProductIds);
 
-        request.setAttribute("products", pagedProducts);
-        request.setAttribute("currentPage", page);
-        request.setAttribute("totalPages", totalPages);
-        request.setAttribute("totalProducts", totalFiltered);
+        model.addAttribute("products", pagedProducts);
+        model.addAttribute("currentPage", page);
+        model.addAttribute("totalPages", totalPages);
+        model.addAttribute("totalProducts", totalFiltered);
         List<Product> discountProducts = productDao.getDiscountedProductsList();
         markWishlisted(discountProducts, wishlistProductIds);
-        request.setAttribute("discountProducts", discountProducts);
+        model.addAttribute("discountProducts", discountProducts);
         List<String> allBrands = productDao.getAllBrands();
-        request.setAttribute("brands", allBrands);
-        request.getRequestDispatcher("/pages/shop/shop-pet.jsp").forward(request, response);
+        model.addAttribute("brands", allBrands);
+        return "pages/shop/shop-pet";
     }
 
-    @Override
-    protected void doPost(HttpServletRequest request, HttpServletResponse response)
-            throws ServletException, IOException {
-        doGet(request, response);
+    @PostMapping("/shop")
+    public String shopPost(
+            @RequestParam(value = "category", required = false) String category,
+            @RequestParam(value = "search", required = false) String search,
+            @RequestParam(value = "sort", required = false) String sort,
+            @RequestParam(value = "priceRange", required = false) String priceRange,
+            @RequestParam(value = "discountOnly", required = false) String discountOnly,
+            @RequestParam(value = "pet", required = false) String pet,
+            @RequestParam(value = "page", required = false) String pageRaw,
+            @RequestParam(value = "salePage", required = false) String salePageRaw,
+            @RequestParam(value = "catalogPage", required = false) String catalogPageRaw,
+            HttpServletRequest request,
+            HttpSession session,
+            Model model) {
+        return shop(category, search, sort, priceRange, discountOnly, pet,
+                pageRaw, salePageRaw, catalogPageRaw, request, session, model);
     }
 
     private ProductFilterCriteria buildFilterCriteria(String category, String search, String sort,
