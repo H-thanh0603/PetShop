@@ -16,12 +16,10 @@ import controller.admin.ReviewModerationServlet;
 import controller.admin.StatisticsServlet;
 import controller.admin.UserManageServlet;
 import controller.auth.AdminLoginServlet;
-import controller.auth.ForgotPasswordServlet;
 import controller.auth.LoginByFacebookServlet;
 import controller.auth.LoginByGoogleServlet;
 import controller.auth.LoginServlet;
 import controller.auth.RegisterServlet;
-import controller.auth.VerifyEmailServlet;
 import controller.payment.BankWebhookServlet;
 import controller.payment.GhnWebhookServlet;
 import controller.payment.VnpayIpnServlet;
@@ -73,13 +71,13 @@ public class WebRegistrationConfig {
             register(servletContext, "StatisticsServlet", controller.admin.StatisticsServlet::new, "/admin/statistics");
             register(servletContext, "UserManageServlet", controller.admin.UserManageServlet::new, "/admin/users", "/admin/users/api");
             register(servletContext, "AdminLoginServlet", controller.auth.AdminLoginServlet::new, "/admin/login");
-            register(servletContext, "ForgotPasswordServlet", controller.auth.ForgotPasswordServlet::new, "/forgot-password", "/verify-otp", "/reset-password");
+            // /forgot-password, /verify-otp, /reset-password served by AuthController.
             register(servletContext, "LoginByFacebookServlet", controller.auth.LoginByFacebookServlet::new, "/LoginByFacebookServlet");
             register(servletContext, "LoginByGoogleServlet", controller.auth.LoginByGoogleServlet::new, "/LoginByGoogleServlet");
             register(servletContext, "LoginServlet", controller.auth.LoginServlet::new, "/login");
             // /logout served by AuthController.
             register(servletContext, "RegisterServlet", controller.auth.RegisterServlet::new, "/register");
-            register(servletContext, "VerifyEmailServlet", controller.auth.VerifyEmailServlet::new, "/verify-email");
+            // /verify-email served by AuthController.
             // About/Home/Policy served by com.petshop.web.PageController (Spring MVC).
             // HomeServlet, AboutServlet, PolicyServlet removed.
             register(servletContext, "BankWebhookServlet", controller.payment.BankWebhookServlet::new, "/api/payment/bank-webhook");
