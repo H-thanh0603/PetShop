@@ -20,17 +20,14 @@ import controller.auth.ForgotPasswordServlet;
 import controller.auth.LoginByFacebookServlet;
 import controller.auth.LoginByGoogleServlet;
 import controller.auth.LoginServlet;
-import controller.auth.LogoutServlet;
 import controller.auth.RegisterServlet;
 import controller.auth.VerifyEmailServlet;
 import controller.payment.BankWebhookServlet;
 import controller.payment.GhnWebhookServlet;
 import controller.payment.VnpayIpnServlet;
 import controller.shop.AddReviewServlet;
-import controller.shop.AddToCartServlet;
 import controller.shop.CheckoutServlet;
 import controller.shop.SearchAutocompleteServlet;
-import controller.shop.ToggleWishlistServlet;
 import controller.shop.UserAiSupportServlet;
 import controller.shop.UserNotificationServlet;
 import controller.shop.VnpayReturnServlet;
@@ -80,7 +77,7 @@ public class WebRegistrationConfig {
             register(servletContext, "LoginByFacebookServlet", controller.auth.LoginByFacebookServlet::new, "/LoginByFacebookServlet");
             register(servletContext, "LoginByGoogleServlet", controller.auth.LoginByGoogleServlet::new, "/LoginByGoogleServlet");
             register(servletContext, "LoginServlet", controller.auth.LoginServlet::new, "/login");
-            register(servletContext, "LogoutServlet", controller.auth.LogoutServlet::new, "/logout");
+            // /logout served by AuthController.
             register(servletContext, "RegisterServlet", controller.auth.RegisterServlet::new, "/register");
             register(servletContext, "VerifyEmailServlet", controller.auth.VerifyEmailServlet::new, "/verify-email");
             // About/Home/Policy served by com.petshop.web.PageController (Spring MVC).
@@ -89,14 +86,14 @@ public class WebRegistrationConfig {
             register(servletContext, "VnpayIpnServlet", VnpayIpnServlet::new, "/api/payment/vnpay-ipn");
             register(servletContext, "GhnWebhookServlet", controller.payment.GhnWebhookServlet::new, "/api/ghn/webhook");
             register(servletContext, "AddReviewServlet", controller.shop.AddReviewServlet::new, "/add-review");
-            register(servletContext, "AddToCartServlet", controller.shop.AddToCartServlet::new, "/add-to-cart");
+            // /add-to-cart served by CartController (addToCart).
             // /cart served by CartController.
             register(servletContext, "CheckoutServlet", controller.shop.CheckoutServlet::new, "/checkout");
             // /my-orders served by MyOrdersController.
             // /product-detail + /wishlist served by CatalogController.
             register(servletContext, "SearchAutocompleteServlet", controller.shop.SearchAutocompleteServlet::new, "/api/search-autocomplete");
             // /shop served by ShopController.
-            register(servletContext, "ToggleWishlistServlet", controller.shop.ToggleWishlistServlet::new, "/toggle-wishlist");
+            // /toggle-wishlist served by CatalogController.
             register(servletContext, "UserAiSupportServlet", controller.shop.UserAiSupportServlet::new, "/ai-support/chat", "/ai-support/history", "/ai-support/messages", "/ai-support/unread-count", "/ai-support/stream");
             register(servletContext, "McpServlet", controller.shop.McpServlet::new, "/mcp");
             register(servletContext, "UserNotificationServlet", controller.shop.UserNotificationServlet::new, "/notifications/unread-count", "/notifications/list", "/notifications/mark-read");

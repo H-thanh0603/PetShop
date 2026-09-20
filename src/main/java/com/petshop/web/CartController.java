@@ -24,8 +24,8 @@ import services.InventoryService;
 import services.InventoryService.StockValidationResult;
 
 /**
- * Replaces CartServlet (/cart) 1:1 — same actions, same session attributes,
- * same JSON bodies, same redirects.
+ * Replaces CartServlet (/cart) and AddToCartServlet (/add-to-cart) 1:1 —
+ * same actions, same session attributes, same JSON bodies, same redirects.
  */
 @Controller
 public class CartController {
@@ -224,6 +224,121 @@ public class CartController {
         return "redirect:/cart";
     }
 
+    @PostMapping("/add-to-cart")
+    public String addToCart(
+            @RequestParam(value = "id", required = false) String idRaw,
+            @RequestParam(value = "quantity", required = false) String quantityRaw,
+            @RequestParam(value = "actionType", required = false) String action,
+            HttpSession session,
+            jakarta.servlet.http.HttpServletRequest request) {
+
+        boolean isBuyNow = "buy".equals(action);
+        String redirectUrl = resolveRedirectUrl(request);
+
+        int productId;
+        try {
+            productId = Integer.parseInt(idRaw);
+        } catch (NumberFormatException e) {
+            session.setAttribute("toastMessage", "Sản phẩm không tồn tại!");
+            session.setAttribute("toastType", "error");
+            return "redirect:" + redirectUrl;
+        }
+
+        QuantityInputValidation quantityValidation = validateRequestedQuantity(quantityRaw);
+        if (!quantityValidation.isValid()) {
+            session.setAttribute("toastMessage", quantityValidation.getMessage());
+            session.setAttribute("toastType", "warning");
+            return "redirect:" + redirectUrl;
+        }
+
+        int quantity = quantityValidation.getQuantity();
+        User user = (User) session.getAttribute("user");
+
+        // ── BUY NOW PATH ─────────────────────────────────────────────────────────
+        if (isBuyNow) {
+            try {
+                // For buy-now we validate against an EMPTY cart (no existing items)
+                Map<Integer, CartItem> emptyCart = new HashMap<>();
+                StockValidationResult validation = inventoryService.validateAddToCart(emptyCart, productId, quantity);
+                Product product = validation.getProduct();
+
+                if (!validation.isValid()) {
+                    session.setAttribute("toastMessage", validation.getMessage());
+                    session.setAttribute("toastType", validation.isOutOfStock() ? "error" : "warning");
+                    return "redirect:" + redirectUrl;
+                }
+
+                int expectedQuantity = validation.getSuggestedQuantity();
+                Map<Integer, CartItem> buyNowCart = new HashMap<>();
+                buyNowCart.put(productId, new CartItem(product, expectedQuantity));
+                session.setAttribute("buyNowCart", buyNowCart);
+                return "redirect:" + request.getContextPath() + "/checkout?buyNow=true";
+
+            } catch (Exception e) {
+                logger.warn("[BuyNow] Exception for productId=" + productId + ": " + e.getMessage());
+                logger.error("Unexpected error", e);
+                session.setAttribute("toastMessage", "Không thể mua ngay, vui lòng thử lại!");
+                session.setAttribute("toastType", "error");
+                return "redirect:" + redirectUrl;
+            }
+        }
+
+        // ── ADD TO CART PATH ─────────────────────────────────────────────────────
+        try {
+            @SuppressWarnings("unchecked")
+            Map<Integer, CartItem> cart = (Map<Integer, CartItem>) session.getAttribute("cart");
+            if (cart == null) {
+                cart = new HashMap<>();
+            }
+
+            inventoryService.refreshCartProducts(cart);
+
+            StockValidationResult validation = inventoryService.validateAddToCart(cart, productId, quantity);
+            Product product = validation.getProduct();
+
+            if (!validation.isValid()) {
+                if (product != null && cart.containsKey(productId)) {
+                    cart.get(productId).setProduct(product);
+                }
+                session.setAttribute("cart", cart);
+                recalculateTotalQuantity(session, cart);
+                session.setAttribute("toastMessage", validation.getMessage());
+                session.setAttribute("toastType", validation.isOutOfStock() ? "error" : "warning");
+                return "redirect:" + redirectUrl;
+            }
+
+            int expectedQuantity = validation.getSuggestedQuantity();
+
+            if (cart.containsKey(productId)) {
+                CartItem existingItem = cart.get(productId);
+                existingItem.setProduct(product);
+                existingItem.setQuantity(expectedQuantity);
+            } else {
+                cart.put(productId, new CartItem(product, expectedQuantity));
+            }
+
+            session.setAttribute("cart", cart);
+
+            if (user != null) {
+                cartDAO.addToCart(user.getId(), productId, quantity);
+                cart = cartDAO.getCartByUserId(user.getId());
+                session.setAttribute("cart", cart);
+            }
+
+            recalculateTotalQuantity(session, cart);
+            session.setAttribute("toastMessage", "Đã thêm " + product.getName() + " vào giỏ hàng!");
+            session.setAttribute("toastType", "success");
+
+        } catch (Exception e) {
+            logger.warn("[AddToCart] Exception for productId=" + productId + ": " + e.getMessage());
+            logger.error("Unexpected error", e);
+            session.setAttribute("toastMessage", "Sản phẩm không tồn tại!");
+            session.setAttribute("toastType", "error");
+        }
+
+        return "redirect:" + redirectUrl;
+    }
+
     private void showCart(HttpSession session) {
         User user = (User) session.getAttribute("user");
 
@@ -315,5 +430,82 @@ public class CartController {
         result.put("success", success);
         result.put("message", message);
         return gson.toJson(result);
+    }
+
+    private QuantityInputValidation validateRequestedQuantity(String rawQuantity) {
+        String normalizedQuantity = rawQuantity == null ? "" : rawQuantity.trim();
+
+        if (normalizedQuantity.isEmpty()) {
+            return QuantityInputValidation.invalid("Số lượng không hợp lệ.");
+        }
+
+        if (normalizedQuantity.startsWith("-")) {
+            return QuantityInputValidation.invalid("Không được nhập số âm.");
+        }
+
+        if (normalizedQuantity.contains(".") || normalizedQuantity.contains(",")) {
+            return QuantityInputValidation.invalid("Không được nhập số thập phân.");
+        }
+
+        if (!normalizedQuantity.matches("\\d+")) {
+            return QuantityInputValidation.invalid("Số lượng không hợp lệ.");
+        }
+
+        long parsedQuantity;
+        try {
+            parsedQuantity = Long.parseLong(normalizedQuantity);
+        } catch (NumberFormatException e) {
+            return QuantityInputValidation.invalid("Số lượng không hợp lệ.");
+        }
+
+        if (parsedQuantity == 0) {
+            return QuantityInputValidation.invalid("Số lượng phải lớn hơn 0.");
+        }
+
+        if (parsedQuantity > Integer.MAX_VALUE) {
+            return QuantityInputValidation.invalid("Số lượng không hợp lệ.");
+        }
+
+        return QuantityInputValidation.valid((int) parsedQuantity);
+    }
+
+    private String resolveRedirectUrl(jakarta.servlet.http.HttpServletRequest request) {
+        String referer = request.getHeader("referer");
+        if (referer == null || referer.isBlank()) {
+            return request.getContextPath() + "/shop";
+        }
+        return referer;
+    }
+
+    private static final class QuantityInputValidation {
+        private final boolean valid;
+        private final int quantity;
+        private final String message;
+
+        private QuantityInputValidation(boolean valid, int quantity, String message) {
+            this.valid = valid;
+            this.quantity = quantity;
+            this.message = message;
+        }
+
+        private static QuantityInputValidation valid(int quantity) {
+            return new QuantityInputValidation(true, quantity, null);
+        }
+
+        private static QuantityInputValidation invalid(String message) {
+            return new QuantityInputValidation(false, 0, message);
+        }
+
+        private boolean isValid() {
+            return valid;
+        }
+
+        private int getQuantity() {
+            return quantity;
+        }
+
+        private String getMessage() {
+            return message;
+        }
     }
 }

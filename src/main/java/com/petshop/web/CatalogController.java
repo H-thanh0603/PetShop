@@ -6,9 +6,14 @@ import java.util.Set;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestParam;
 
 import DAO.ProductDAO;
@@ -20,9 +25,9 @@ import Model.User;
 import jakarta.servlet.http.HttpSession;
 
 /**
- * Replaces ProductDetailServlet (/product-detail) and WishlistServlet
- * (/wishlist) 1:1 — same view names, same session attributes, same
- * redirect targets.
+ * Replaces ProductDetailServlet (/product-detail), WishlistServlet (/wishlist)
+ * and ToggleWishlistServlet (/toggle-wishlist) 1:1 — same view names, same
+ * session attributes, same JSON bodies, same redirect targets.
  */
 @Controller
 public class CatalogController {
@@ -108,5 +113,106 @@ public class CatalogController {
         List<Product> wishlistProducts = wishlistDAO.getWishlistProductsByUserId(user.getId());
         model.addAttribute("wishlistProducts", wishlistProducts);
         return "pages/shop/wishlist";
+    }
+
+    @PostMapping("/toggle-wishlist")
+    public Object toggleWishlist(
+            @RequestParam(value = "productId", required = false) String productIdRaw,
+            @RequestParam(value = "redirect", required = false) String redirect,
+            @RequestHeader(value = "X-Requested-With", required = false) String requestedWith,
+            @RequestHeader(value = "Accept", required = false) String accept,
+            HttpSession session,
+            jakarta.servlet.http.HttpServletRequest request) {
+        String fallbackUrl = request.getContextPath() + "/shop";
+        boolean ajaxRequest = isAjaxRequest(requestedWith, accept);
+
+        User user = (User) session.getAttribute("user");
+        if (user == null) {
+            String loginRedirect = redirect != null && !redirect.isBlank() ? redirect : fallbackUrl;
+            String loginUrl = request.getContextPath() + "/login?redirect="
+                    + java.net.URLEncoder.encode(loginRedirect, java.nio.charset.StandardCharsets.UTF_8);
+
+            if (ajaxRequest) {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                        .contentType(MediaType.parseMediaType("application/json;charset=UTF-8"))
+                        .body("{\"success\":false,\"authenticated\":false,\"loginUrl\":\"" + escapeJson(loginUrl) + "\"}");
+            }
+            return "redirect:" + loginUrl;
+        }
+
+        try {
+            int productId = parseProductId(productIdRaw);
+            boolean isWishlisted = wishlistDAO.toggleWishlistAndReturnState(user.getId(), productId);
+
+            String message = isWishlisted
+                    ? "Đã thêm sản phẩm vào danh sách yêu thích."
+                    : "Đã xóa sản phẩm khỏi danh sách yêu thích.";
+
+            if (ajaxRequest) {
+                return ResponseEntity.ok()
+                        .contentType(MediaType.parseMediaType("application/json;charset=UTF-8"))
+                        .body("{\"success\":true,\"authenticated\":true,\"wishlisted\":" + isWishlisted
+                                + ",\"message\":\"" + escapeJson(message) + "\"}");
+            }
+
+            session.setAttribute("success", message);
+        } catch (IllegalArgumentException e) {
+            String message = "Sản phẩm không hợp lệ.";
+
+            if (ajaxRequest) {
+                return ResponseEntity.badRequest()
+                        .contentType(MediaType.parseMediaType("application/json;charset=UTF-8"))
+                        .body("{\"success\":false,\"authenticated\":true,\"message\":\"" + escapeJson(message) + "\"}");
+            }
+
+            session.setAttribute("error", message);
+        } catch (Exception e) {
+            logger.error("Unable to toggle wishlist for user id={} productIdRaw={}",
+                    user.getId(), productIdRaw, e);
+            String message = "Không thể cập nhật danh sách yêu thích.";
+
+            if (ajaxRequest) {
+                return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                        .contentType(MediaType.parseMediaType("application/json;charset=UTF-8"))
+                        .body("{\"success\":false,\"authenticated\":true,\"message\":\"" + escapeJson(message) + "\"}");
+            }
+
+            session.setAttribute("error", message);
+        }
+
+        String target = (redirect != null && !redirect.isBlank()) ? redirect : fallbackUrl;
+        return "redirect:" + target;
+    }
+
+    private int parseProductId(String rawProductId) {
+        if (rawProductId == null || rawProductId.isBlank()) {
+            throw new IllegalArgumentException("Missing productId");
+        }
+
+        try {
+            int productId = Integer.parseInt(rawProductId.trim());
+            if (productId <= 0) {
+                throw new IllegalArgumentException("Invalid productId");
+            }
+            return productId;
+        } catch (NumberFormatException e) {
+            throw new IllegalArgumentException("Invalid productId", e);
+        }
+    }
+
+    private boolean isAjaxRequest(String requestedWith, String accept) {
+        return "XMLHttpRequest".equalsIgnoreCase(requestedWith)
+                || (accept != null && accept.contains("application/json"));
+    }
+
+    private String escapeJson(String value) {
+        if (value == null) {
+            return "";
+        }
+        return value
+                .replace("\\", "\\\\")
+                .replace("\"", "\\\"")
+                .replace("\r", "\\r")
+                .replace("\n", "\\n");
     }
 }
