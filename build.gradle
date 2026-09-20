@@ -45,7 +45,7 @@ dependencies {
     implementation 'jakarta.mail:jakarta.mail-api:2.1.2'
     implementation 'org.eclipse.angus:jakarta.mail:2.0.2'
     implementation 'com.google.code.gson:gson:2.10.1'
-    implementation 'org.mindrot:jbcrypt:0.4'
+    implementation 'org.springframework.security:spring-security-crypto'
 
     // HikariCP connection pool (Spring Boot manages its version from 3.3.x)
     implementation 'com.zaxxer:HikariCP:5.1.0'
