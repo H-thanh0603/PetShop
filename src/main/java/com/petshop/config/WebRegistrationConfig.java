@@ -29,7 +29,6 @@ import controller.payment.VnpayIpnServlet;
 import controller.shop.AddReviewServlet;
 import controller.shop.AddToCartServlet;
 import controller.shop.CheckoutServlet;
-import controller.shop.MyOrdersServlet;
 import controller.shop.SearchAutocompleteServlet;
 import controller.shop.ToggleWishlistServlet;
 import controller.shop.UserAiSupportServlet;
@@ -93,7 +92,7 @@ public class WebRegistrationConfig {
             register(servletContext, "AddToCartServlet", controller.shop.AddToCartServlet::new, "/add-to-cart");
             // /cart served by CartController.
             register(servletContext, "CheckoutServlet", controller.shop.CheckoutServlet::new, "/checkout");
-            register(servletContext, "MyOrdersServlet", controller.shop.MyOrdersServlet::new, "/my-orders");
+            // /my-orders served by MyOrdersController.
             // /product-detail + /wishlist served by CatalogController.
             register(servletContext, "SearchAutocompleteServlet", controller.shop.SearchAutocompleteServlet::new, "/api/search-autocomplete");
             // /shop served by ShopController.

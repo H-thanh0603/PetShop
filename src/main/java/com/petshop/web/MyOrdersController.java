@@ -1,4 +1,13 @@
-package controller.shop;
+package com.petshop.web;
+
+import java.util.ArrayList;
+import java.util.List;
+
+import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 
 import DAO.OrderDAO;
 import Model.CustomerRepurchaseSuggestion;
@@ -6,88 +15,91 @@ import Model.Order;
 import Model.OrderStatus;
 import Model.User;
 import Util.VnpayUtil;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpSession;
 import services.ReorderService;
 
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
+/**
+ * Replaces MyOrdersServlet (/my-orders) 1:1 — same views, same session
+ * toast attributes, same cancel/reorder/confirmReceipt/repay flows.
+ */
+@Controller
+public class MyOrdersController {
 
-import jakarta.servlet.ServletException;
-import jakarta.servlet.http.HttpServlet;
-import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpServletResponse;
-import jakarta.servlet.http.HttpSession;
+    private final OrderDAO orderDAO;
+    private final ReorderService reorderService;
 
-public class MyOrdersServlet extends HttpServlet {
-    private OrderDAO orderDAO = new OrderDAO();
-    private ReorderService reorderService = new ReorderService();
-    private static final long serialVersionUID = 1L;
+    public MyOrdersController() {
+        this(new OrderDAO(), new ReorderService());
+    }
 
-    protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
-        HttpSession session = request.getSession();
+    MyOrdersController(OrderDAO orderDAO, ReorderService reorderService) {
+        this.orderDAO = orderDAO;
+        this.reorderService = reorderService;
+    }
+
+    @GetMapping("/my-orders")
+    public String myOrders(
+            @RequestParam(value = "action", required = false) String action,
+            @RequestParam(value = "id", required = false) String idRaw,
+            @RequestParam(value = "status", required = false) String statusFilter,
+            @RequestParam(value = "keyword", required = false) String keyword,
+            Model model,
+            HttpSession session) {
         User user = (User) session.getAttribute("user");
-
         if (user == null) {
-            response.sendRedirect(request.getContextPath() + "/login");
-            return;
+            return "redirect:/login";
         }
-
-        String action = request.getParameter("action");
-        String statusFilter = request.getParameter("status");
-        String keyword = request.getParameter("keyword");
-        OrderDAO dao = new OrderDAO();
 
         if ("view".equals(action)) {
             int orderId;
             try {
-                orderId = Integer.parseInt(request.getParameter("id"));
+                orderId = Integer.parseInt(idRaw);
             } catch (NumberFormatException e) {
                 session.setAttribute("error", "Mã đơn hàng không hợp lệ.");
-                response.sendRedirect(request.getContextPath() + "/my-orders");
-                return;
+                return "redirect:/my-orders";
             }
-            Order order = dao.getOrderById(orderId);
-            
+            Order order = orderDAO.getOrderById(orderId);
+
             // Bảo mật: Chỉ cho phép xem nếu đơn hàng thuộc về user đang đăng nhập
             if (order != null && order.getUserId() == user.getId()) {
-                request.setAttribute("order", order);
-                request.getRequestDispatcher("/pages/shop/order-detail.jsp").forward(request, response);
-                return;
-            } else {
-                response.sendRedirect(request.getContextPath() + "/my-orders");
-                return;
+                model.addAttribute("order", order);
+                return "pages/shop/order-detail";
             }
+            return "redirect:/my-orders";
         }
+
         int countPending = orderDAO.countPendingOrdersByUserId(user.getId());
         int countCompleted = orderDAO.countCompletedOrdersByUserId(user.getId());
-        dao.autoCompleteDeliveredOrders();
-        List<Order> allOrders = dao.getOrdersByUserId(user.getId());
+        orderDAO.autoCompleteDeliveredOrders();
+        List<Order> allOrders = orderDAO.getOrdersByUserId(user.getId());
         List<Order> list = filterOrders(allOrders, statusFilter, keyword);
         List<CustomerRepurchaseSuggestion> repurchaseSuggestions =
-                dao.getRepurchaseSuggestions(user.getId(), 30, 5);
-        request.setAttribute("countPending", countPending);
-        request.setAttribute("countCompleted", countCompleted);
-        request.setAttribute("orders", list);
-        request.setAttribute("repurchaseSuggestions", repurchaseSuggestions);
-        request.setAttribute("totalOrders", allOrders.size());
-        request.setAttribute("selectedStatus", statusFilter);
-        request.setAttribute("keyword", keyword);
-        request.getRequestDispatcher("/pages/shop/my-orders.jsp").forward(request, response);
+                orderDAO.getRepurchaseSuggestions(user.getId(), 30, 5);
+        model.addAttribute("countPending", countPending);
+        model.addAttribute("countCompleted", countCompleted);
+        model.addAttribute("orders", list);
+        model.addAttribute("repurchaseSuggestions", repurchaseSuggestions);
+        model.addAttribute("totalOrders", allOrders.size());
+        model.addAttribute("selectedStatus", statusFilter);
+        model.addAttribute("keyword", keyword);
+        return "pages/shop/my-orders";
     }
 
-    protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
-        HttpSession session = request.getSession();
+    @PostMapping("/my-orders")
+    public String myOrdersPost(
+            @RequestParam(value = "action", required = false) String action,
+            @RequestParam(value = "orderId", required = false) String orderIdRaw,
+            HttpServletRequest request,
+            HttpSession session) {
         User user = (User) session.getAttribute("user");
-
         if (user == null) {
-            response.sendRedirect(request.getContextPath() + "/login");
-            return;
+            return "redirect:/login";
         }
 
-        String action = request.getParameter("action");
         if ("cancel".equals(action)) {
             try {
-                int orderId = Integer.parseInt(request.getParameter("orderId"));
+                int orderId = Integer.parseInt(orderIdRaw);
                 // Check cancellation window first for a clear error message
                 if (!orderDAO.isWithinCancellationWindow(orderId)) {
                     session.setAttribute("toastMessage", "Đã quá thời gian hủy đơn hàng (1 giờ kể từ khi đặt).");
@@ -105,12 +117,11 @@ public class MyOrdersServlet extends HttpServlet {
             }
         } else if ("reorder".equals(action)) {
             try {
-                int orderId = Integer.parseInt(request.getParameter("orderId"));
+                int orderId = Integer.parseInt(orderIdRaw);
                 if (reorderService.reorderToCart(user.getId(), orderId)) {
                     session.setAttribute("toastMessage", "Đã thêm lại sản phẩm từ đơn cũ vào giỏ hàng.");
                     session.setAttribute("toastType", "success");
-                    response.sendRedirect(request.getContextPath() + "/cart");
-                    return;
+                    return "redirect:/cart";
                 }
                 session.setAttribute("toastMessage", "Không thể mua lại đơn hàng này.");
                 session.setAttribute("toastType", "error");
@@ -120,7 +131,7 @@ public class MyOrdersServlet extends HttpServlet {
             }
         } else if ("confirmReceipt".equals(action)) {
             try {
-                int orderId = Integer.parseInt(request.getParameter("orderId"));
+                int orderId = Integer.parseInt(orderIdRaw);
                 Order order = orderDAO.getOrderById(orderId);
                 if (order != null && order.getUserId() == user.getId()) {
                     OrderStatus currentStatus = OrderStatus.fromString(order.getStatus());
@@ -149,7 +160,7 @@ public class MyOrdersServlet extends HttpServlet {
             }
         } else if ("repay".equals(action)) {
             try {
-                int orderId = Integer.parseInt(request.getParameter("orderId"));
+                int orderId = Integer.parseInt(orderIdRaw);
                 Order order = orderDAO.getOrderById(orderId);
 
                 // Bảo mật + trạng thái: chỉ chủ đơn mới được thanh toán lại,
@@ -157,8 +168,7 @@ public class MyOrdersServlet extends HttpServlet {
                 if (order == null || order.getUserId() != user.getId() || !order.isRepayable()) {
                     session.setAttribute("toastMessage", "Đơn hàng không thể thanh toán lại.");
                     session.setAttribute("toastType", "error");
-                    response.sendRedirect(request.getContextPath() + "/my-orders");
-                    return;
+                    return "redirect:/my-orders";
                 }
 
                 // Nạp lại dữ liệu cho trang order-success (đọc từ session).
@@ -176,13 +186,12 @@ public class MyOrdersServlet extends HttpServlet {
 
                 // Tái sử dụng đúng luồng VNPAY hiện có cho chính đơn hàng này.
                 String vnpayUrl = VnpayUtil.createPaymentUrl(request, orderId, order.getTotalAmount());
-                response.sendRedirect(vnpayUrl);
-                return;
+                return "redirect:" + vnpayUrl;
             } catch (Exception e) {
                 session.setAttribute("error", "Có lỗi xảy ra khi thanh toán lại đơn hàng.");
             }
         }
-        response.sendRedirect(request.getContextPath() + "/my-orders");
+        return "redirect:/my-orders";
     }
 
     private List<Order> filterOrders(List<Order> orders, String statusFilter, String keyword) {
