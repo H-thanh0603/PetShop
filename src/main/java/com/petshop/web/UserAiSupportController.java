@@ -174,7 +174,7 @@ public class UserAiSupportController {
         if (contentType != null && contentType.contains("application/json")) {
             try {
                 JsonObject reqJson = rawBody == null || rawBody.isBlank()
-                        ? new JsonObject() : new JsonParser().parse(rawBody).getAsJsonObject();
+                        ? new JsonObject() : JsonParser.parseString(rawBody).getAsJsonObject();
                 if (reqJson.has("sessionId") && !reqJson.get("sessionId").isJsonNull()) {
                     sessionId = reqJson.get("sessionId").getAsInt();
                 }
@@ -325,7 +325,7 @@ public class UserAiSupportController {
         responseJson.addProperty("model", aiRes.getUsedModel());
         responseJson.addProperty("requestId", aiRes.getRequestId());
         try {
-            responseJson.add("cards", new JsonParser().parse(aiRes.getCardsJson()));
+            responseJson.add("cards", JsonParser.parseString(aiRes.getCardsJson()));
         } catch (Exception ignored) {
             responseJson.add("cards", new com.google.gson.JsonArray());
         }
@@ -364,7 +364,7 @@ public class UserAiSupportController {
         String message = "";
         try {
             if (rawBody != null && !rawBody.isBlank()) {
-                JsonObject reqJson = new JsonParser().parse(rawBody).getAsJsonObject();
+                JsonObject reqJson = JsonParser.parseString(rawBody).getAsJsonObject();
                 if (reqJson.has("sessionId") && !reqJson.get("sessionId").isJsonNull()) {
                     sessionId = reqJson.get("sessionId").getAsInt();
                 }

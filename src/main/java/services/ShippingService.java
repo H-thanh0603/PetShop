@@ -358,13 +358,10 @@ public class ShippingService {
      */
     private static JsonObject parseJsonLenient(String json) {
         try {
-            // First try strict parsing
-            return new JsonParser().parse(json).getAsJsonObject();
+            return JsonParser.parseString(json).getAsJsonObject();
         } catch (JsonSyntaxException | IllegalStateException e) {
-            // Fall back to lenient parsing
             try (JsonReader reader = new JsonReader(new StringReader(json))) {
-                reader.setLenient(true);
-                return new JsonParser().parse(reader).getAsJsonObject();
+                return JsonParser.parseReader(reader).getAsJsonObject();
             } catch (Exception ex) {
                 throw new RuntimeException("Failed to parse JSON response: " + json, ex);
             }

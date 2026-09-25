@@ -13,7 +13,7 @@ import java.util.Locale;
  */
 public class OrderEmailService {
 
-    private static final NumberFormat VND = NumberFormat.getNumberInstance(new Locale("vi", "VN"));
+    private static final NumberFormat VND = NumberFormat.getNumberInstance(Locale.of("vi", "VN"));
 
     /**
      * Send order confirmation email asynchronously.
