@@ -21,7 +21,7 @@ Upstream defines three runtimes; this deployment maps them as:
 |---|---|
 | Messages API turn loop | `CommerceAgent` / `MerchantAgent` over `AiProvider` |
 | Agent SDK console | Not ported (no Java SDK loop); `scripts/smoke-ai.sh` is the console equivalent for smoke tests |
-| Managed Agents + MCP server | `/mcp` JSON-RPC endpoint + `agent.yaml`-style config in `app.properties`; `MerchantAgent.digest()` is the scheduled-digest body — call `/admin/ai-merchant/digest` from cron/scheduler |
+| Managed Agents + MCP server | `/mcp` JSON-RPC endpoint + `agent.yaml`-style config in `application.yml`; `MerchantAgent.digest()` is the scheduled-digest body — call `/admin/ai-merchant/digest` from cron/scheduler |
 
 ## Managed-agents notes
 

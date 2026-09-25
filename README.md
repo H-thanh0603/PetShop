@@ -26,7 +26,7 @@ PetShop là đồ án web e-commerce bán sản phẩm cho thú cưng, tập tru
 1. system property `petshop.db.password`
 2. environment variable `PETSHOP_DB_PASSWORD`
 3. environment variable `MYSQL_PASSWORD`
-4. `src/main/resources/db.properties`
+4. `db.password` trong `src/main/resources/application.yml`
 
 Ví dụ trên Windows:
 
@@ -36,11 +36,9 @@ set PETSHOP_DB_PASSWORD=your_mysql_password
 
 ### 2. Cấu hình ứng dụng chung
 
-Copy file mẫu:
-
-```bat
-copy src\main\resources\app.properties.example src\main\resources\app.properties
-```
+Toàn bộ cấu hình thường nằm trong `src/main/resources/application.yml`
+(hợp nhất từ các file cấu hình cũ). File mẫu `app.properties.example` chỉ còn
+giữ làm tài liệu.
 
 Các khóa quan trọng nên điền:
 
@@ -53,16 +51,14 @@ Các khóa quan trọng nên điền:
 - `payment.bank.display-name`
 - `payment.bank.transfer-prefix`
 - `payment.bank.currency`
-- `payment.bank.verification-mode`
 - `payment.bank.webhook-secret`
-- `payment.momo.mode`
 
 Thứ tự ưu tiên config hiện tại là:
 
 1. System property
 2. Environment variable
-3. `app.properties`
-4. File legacy như `db.properties`, `secrets.properties`, `ship.properties`
+3. `application.yml`
+4. `secrets.properties` (gitignored, local)
 
 ### 3. Cấu hình social login
 
@@ -152,7 +148,7 @@ Start.bat
 
 1. Cài JDK, MySQL, Tomcat 10
 2. Import `sql/SETUP_ALL.sql`
-3. Tạo `app.properties` từ file mẫu
+3. Cấu hình `src/main/resources/application.yml` (xem mục "Chuẩn bị cấu hình")
 4. Set `PETSHOP_DB_PASSWORD` và `PETSHOP_TOMCAT_HOME`
 5. Chạy `Start.bat`
 6. Mở `http://localhost:8080/PetShop/home`

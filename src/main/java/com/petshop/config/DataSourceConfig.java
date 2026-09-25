@@ -13,7 +13,7 @@ import org.springframework.scheduling.annotation.EnableScheduling;
 /**
  * Owns the connection pool that previously lived in DBContext's static
  * initializer. Settings are identical to the pre-migration pool; the source
- * of truth is still DBProperties (db.properties + environment variables).
+ * of truth is still DBProperties (application.yml + environment variables).
  *
  * Flyway is configured explicitly (auto-config proved unreliable with a
  * custom DataSource bean): on boot it baselines existing databases and runs

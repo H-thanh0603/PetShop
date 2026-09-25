@@ -10,13 +10,8 @@ public final class AppConfig {
     private static final Logger logger = LoggerFactory.getLogger(AppConfig.class);
     private static final Properties properties = new Properties();
     private static final String[] PROPERTY_FILES = {
-            // Order matters: later files overwrite earlier ones, so
-            // secrets.properties (gitignored, real values) must be last and win
-            // over the blank placeholders in the tracked config files.
-            "app.properties",
-            "db.properties",
-            "ship.properties",
-            "vnpay.properties",
+            // Chỉ còn file legacy chứa secret local (gitignored). Các khoá thường
+            // đã chuyển vào application.yml và được đọc qua Spring Environment.
             "secrets.properties"
     };
 
@@ -29,6 +24,14 @@ public final class AppConfig {
     }
 
     static {
+        // Outside a Spring context (unit tests, CLI tools) the bridge is never
+        // set, so application.yml is mirrored into the same fallback bucket the
+        // legacy property files used to fill — the legacy static facades keep
+        // resolving every key. Bucket order: application.yml first,
+        // secrets.properties last (wins). Precedence overall is unchanged:
+        // system property -> Spring Environment (env var, yml) -> env var ->
+        // this bucket.
+        loadYamlDefaults("application.yml");
         for (String fileName : PROPERTY_FILES) {
             loadOptionalProperties(fileName);
         }
@@ -91,17 +94,22 @@ public final class AppConfig {
             return null;
         }
 
+        // Precedence (unchanged): system property -> env var -> yml ->
+        // secrets.properties. A real Spring Environment already resolves its
+        // systemProperties source ahead of application.yml, but the bridged
+        // Environment may not (e.g. a plain MockEnvironment in tests), so the
+        // system property is checked explicitly first.
+        String systemValue = System.getProperty(key);
+        if (hasText(systemValue)) {
+            return systemValue;
+        }
+
         org.springframework.core.env.Environment env = springEnvironment;
         if (env != null) {
             String springValue = env.getProperty(key);
             if (hasText(springValue)) {
                 return springValue;
             }
-        }
-
-        String systemValue = System.getProperty(key);
-        if (hasText(systemValue)) {
-            return systemValue;
         }
 
         String envValue = System.getenv(key);
@@ -132,6 +140,36 @@ public final class AppConfig {
             properties.putAll(fileProperties);
         } catch (Exception e) {
             logger.warn("Failed to load optional config file {}", fileName, e);
+        }
+    }
+
+    private static void loadYamlDefaults(String fileName) {
+        try (InputStream input = AppConfig.class.getClassLoader().getResourceAsStream(fileName)) {
+            if (input == null) {
+                return;
+            }
+            Object root = new org.yaml.snakeyaml.Yaml(
+                    new org.yaml.snakeyaml.constructor.SafeConstructor(
+                            new org.yaml.snakeyaml.LoaderOptions())).load(input);
+            if (root instanceof java.util.Map<?, ?> map) {
+                flattenYaml("", map);
+            }
+        } catch (Exception e) {
+            logger.warn("Failed to load optional config file {}", fileName, e);
+        }
+    }
+
+    private static void flattenYaml(String prefix, java.util.Map<?, ?> map) {
+        for (java.util.Map.Entry<?, ?> entry : map.entrySet()) {
+            String key = prefix.isEmpty()
+                    ? String.valueOf(entry.getKey())
+                    : prefix + "." + entry.getKey();
+            Object value = entry.getValue();
+            if (value instanceof java.util.Map<?, ?> nested) {
+                flattenYaml(key, nested);
+            } else if (value != null) {
+                properties.setProperty(key, String.valueOf(value));
+            }
         }
     }
 

@@ -7,7 +7,7 @@ import java.util.List;
 
 /**
  * Central AI configuration. Everything comes from env / system properties /
- * app.properties (via {@link AppConfig}) — never hard-coded, never frontend.
+ * application.yml (via {@link AppConfig} + Spring Environment) — never hard-coded, never frontend.
  *
  * <pre>
  * AI_PROVIDER=openrouter

@@ -53,7 +53,7 @@ What was deliberately **not** ported: the Python runtimes, merchant agent
 
 ## Configuration
 
-All in env / system properties / `app.properties` (via `Util.AppConfig`).
+All in env / system properties / `application.yml` (via `Util.AppConfig`).
 Keys stay server-side; the frontend only ever calls `/ai-support/*`.
 
 ```env

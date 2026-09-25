@@ -1,4 +1,3 @@
-import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -54,12 +53,23 @@ public class RunSqlFiles {
         }
     }
 
-    private static Properties loadDbProperties() throws IOException {
+    private static Properties loadDbProperties() {
+        // db.properties đã được gộp vào application.yml (repo không còn file này);
+        // script chạy ngoài Spring nên đọc trực tiếp env var — cùng tên với
+        // DBProperties. Giá trị mặc định (localhost/3306/petvaccine/root) do main() cấp.
         Properties properties = new Properties();
-        try (var input = Files.newInputStream(Path.of("src/main/resources/db.properties"))) {
-            properties.load(input);
-        }
+        copyFromEnv(properties, "db.host", "DB_HOST");
+        copyFromEnv(properties, "db.port", "DB_PORT");
+        copyFromEnv(properties, "db.dbname", "DB_NAME");
+        copyFromEnv(properties, "db.username", "DB_USERNAME");
         return properties;
+    }
+
+    private static void copyFromEnv(Properties properties, String key, String envVar) {
+        String value = System.getenv(envVar);
+        if (value != null && !value.isBlank()) {
+            properties.setProperty(key, value.trim());
+        }
     }
 
     private static String resolvePassword(String filePassword) {
