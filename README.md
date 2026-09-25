@@ -12,8 +12,10 @@ PetShop là đồ án web e-commerce bán sản phẩm cho thú cưng, tập tru
 
 - JDK 21
 - Gradle Wrapper đi kèm project
-- MySQL 8+
+- MySQL 8.4 LTS
 - Tomcat 10.x
+- Hạ dev từ `mysql:8.0` sang `mysql:8.4` (2026-09): backup dữ liệu trước khi `docker compose up` lần đầu:
+  `docker exec petshop-mysql-dev mysqldump -uroot -p"$MYSQL_ROOT_PASSWORD" petvaccine > backup-8.4.sql`
 
 ## Chuẩn bị cấu hình
 
