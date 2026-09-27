@@ -1,37 +1,75 @@
 package com.petshop.model;
 
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.Table;
+import jakarta.persistence.Transient;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.sql.Timestamp;
 import java.text.DecimalFormat;
 import java.util.Locale;
 
+@Entity
+@Table(name = "products")
 public class Product {
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "id")
     private int id;
+    @Column(name = "name", nullable = false)
     private String name;
+    @Column(name = "image")
     private String image;
+    @Column(name = "price", precision = 18, scale = 0)
     private BigDecimal price;
+    @Column(name = "discount")
     private int discount;
+    @Column(name = "description", columnDefinition = "TEXT")
     private String description;
+    @Column(name = "category", length = 100)
     private String category;
+    @Column(name = "weight", nullable = false)
     private int weight;
+    @Column(name = "stock")
     private int stock;
+    @Column(name = "reserved_quantity", nullable = false)
     private int reservedQuantity;
+    // No `sold_quantity` column on schema (drift) — computed presentation only.
+    @Transient
     private int soldQuantity;
+    @Column(name = "pet_type_id")
     private int pet_type_id;
+    @Column(name = "brand", length = 100)
     private String brand;
+    @Transient
     private double averageRating;
+    @Transient
     private int reviewCount;
+    @Transient
     private boolean wishlisted;
+    @Column(name = "is_active", nullable = false)
     private boolean isActive = true;
+    @Transient
     private BigDecimal promotionFinalPrice;
+    @Transient
     private BigDecimal promotionOriginalPrice;
+    @Transient
     private BigDecimal promotionDiscountAmount;
+    @Transient
     private int promotionDiscountPercent;
+    @Transient
     private Integer activePromotionId;
+    @Transient
     private String activePromotionName;
+    @Transient
     private String activePromotionType;
+    @Transient
     private Integer flashSaleRemainingQuantity;
+    @Transient
     private Timestamp promotionEndTime;
 
     public Product() {
