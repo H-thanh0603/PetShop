@@ -19,7 +19,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
-import com.petshop.dao.PetTypeDAO;
+import com.petshop.repository.PetTypeRepository;
 import com.petshop.dao.ReportDAO;
 
 @ExtendWith(MockitoExtension.class)
@@ -28,7 +28,7 @@ class AdminReadControllerTest {
     @Mock
     ReportDAO reportDAO;
     @Mock
-    PetTypeDAO petTypeDAO;
+    PetTypeRepository petTypeDAO;
 
     MockMvc mockMvc;
 

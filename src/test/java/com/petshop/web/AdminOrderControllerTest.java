@@ -26,8 +26,8 @@ import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
 import tools.jackson.databind.node.ObjectNode;
 
-import com.petshop.dao.AdminActionLogDAO;
-import com.petshop.dao.NotificationDAO;
+import com.petshop.repository.AdminActionLogRepository;
+import com.petshop.repository.NotificationRepository;
 import com.petshop.dao.OrderDAO;
 import com.petshop.model.Order;
 import com.petshop.model.User;
@@ -38,13 +38,13 @@ import services.ShippingService;
 class AdminOrderControllerTest {
 
     @Mock
-    AdminActionLogDAO actionLog;
+    AdminActionLogRepository actionLog;
     @Mock
     OrderDAO orderDAO;
     @Mock
     ShippingService shippingService;
     @Mock
-    NotificationDAO notificationDAO;
+    NotificationRepository notificationDAO;
 
     MockMvc mockMvc;
 

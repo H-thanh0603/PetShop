@@ -25,6 +25,7 @@ import com.petshop.dao.PaymentTransactionDAO;
 import com.petshop.dao.ProductDAO;
 import com.petshop.model.Product;
 import com.petshop.model.User;
+import com.petshop.repository.ReviewRepository;
 
 @ExtendWith(MockitoExtension.class)
 class ShopApiControllerTest {
@@ -35,13 +36,15 @@ class ShopApiControllerTest {
     OrderDAO orderDAO;
     @Mock
     PaymentTransactionDAO paymentTransactionDAO;
+    @Mock
+    ReviewRepository reviewDAO;
 
     MockMvc mockMvc;
 
     @BeforeEach
     void setUp() {
         mockMvc = MockMvcBuilders
-                .standaloneSetup(new ShopApiController(productDAO, orderDAO, paymentTransactionDAO))
+                .standaloneSetup(new ShopApiController(productDAO, orderDAO, paymentTransactionDAO, reviewDAO))
                 .build();
     }
 
@@ -133,11 +136,7 @@ class ShopApiControllerTest {
         MockHttpSession session = new MockHttpSession();
         session.setAttribute("user", user);
 
-        try (var mocked = org.mockito.Mockito.mockConstruction(com.petshop.dao.ReviewDAO.class,
-                (dao, ctx) -> {
-                    when(dao.hasUserPurchasedProduct(7, 1)).thenReturn(true);
-                    when(dao.hasUserReviewedProduct(7, 1)).thenReturn(false);
-                })) {
+        {
             mockMvc.perform(post("/add-review")
                             .param("productId", "1")
                             .param("rating", "5")

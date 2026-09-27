@@ -17,7 +17,7 @@ import com.petshop.repository.AiChatMessageRepository;
 import com.petshop.repository.AiChatSessionRepository;
 import com.petshop.repository.AiSupportSettingRepository;
 import com.petshop.repository.CustomerSupportKnowledgeRepository;
-import com.petshop.dao.NotificationDAO;
+import com.petshop.repository.NotificationRepository;
 import com.petshop.model.AiChatMessage;
 import com.petshop.model.AiChatSession;
 import com.petshop.model.CustomerSupportKnowledge;
@@ -38,12 +38,12 @@ public class AdminAiSupportController {
     private final AiChatMessageRepository messageDAO;
     private final CustomerSupportKnowledgeRepository knowledgeDAO;
     private final AiSupportSettingRepository settingDAO;
-    private final NotificationDAO notificationDAO;
+    private final NotificationRepository notificationDAO;
 
     @Autowired
     public AdminAiSupportController(AiChatSessionRepository sessionDAO, AiChatMessageRepository messageDAO,
                                     CustomerSupportKnowledgeRepository knowledgeDAO, AiSupportSettingRepository settingDAO,
-                                    NotificationDAO notificationDAO) {
+                                    NotificationRepository notificationDAO) {
         this.sessionDAO = sessionDAO;
         this.messageDAO = messageDAO;
         this.knowledgeDAO = knowledgeDAO;
@@ -207,7 +207,7 @@ public class AdminAiSupportController {
         sessionDAO.updateStatusBool(sessionId, "ANSWERED_BY_ADMIN", false);
 
         // Notify user
-        AiChatSession chatSession = sessionDAO.getById(sessionId);
+        AiChatSession chatSession = sessionDAO.findById(sessionId).orElse(null);
         if (chatSession != null && chatSession.getUserId() != null) {
             notificationDAO.create(
                 chatSession.getUserId(),

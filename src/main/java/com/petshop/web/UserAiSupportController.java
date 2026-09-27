@@ -68,7 +68,7 @@ public class UserAiSupportController {
         } else {
             Integer guestSessionId = (Integer) httpSession.getAttribute("guest_chat_session_id");
             if (guestSessionId != null) {
-                AiChatSession gs = sessionDAO.getById(guestSessionId);
+                AiChatSession gs = sessionDAO.findById(guestSessionId).orElse(null);
                 if (gs != null) {
                     sessions.add(gs);
                 }
@@ -106,7 +106,7 @@ public class UserAiSupportController {
 
         try {
             int sessionId = Integer.parseInt(sessIdStr);
-            AiChatSession chatSession = sessionDAO.getById(sessionId);
+            AiChatSession chatSession = sessionDAO.findById(sessionId).orElse(null);
 
             if (chatSession == null) {
                 response.setStatus(jakarta.servlet.http.HttpServletResponse.SC_NOT_FOUND);
@@ -140,7 +140,7 @@ public class UserAiSupportController {
         if (sessIdStr != null && !sessIdStr.isEmpty()) {
             try {
                 int sessionId = Integer.parseInt(sessIdStr);
-                AiChatSession chatSession = sessionDAO.getById(sessionId);
+                AiChatSession chatSession = sessionDAO.findById(sessionId).orElse(null);
                 if (chatSession != null) {
                     if (!ownsSession(httpSession, user, chatSession, sessionId)) {
                         response.setStatus(jakarta.servlet.http.HttpServletResponse.SC_FORBIDDEN);
@@ -227,7 +227,7 @@ public class UserAiSupportController {
         // Get or create session
         AiChatSession chatSession = null;
         if (sessionId > 0) {
-            chatSession = sessionDAO.getById(sessionId);
+            chatSession = sessionDAO.findById(sessionId).orElse(null);
             // Security Check: Verify ownership
             if (chatSession != null && !ownsSession(httpSession, user, chatSession, sessionId)) {
                 response.setStatus(jakarta.servlet.http.HttpServletResponse.SC_FORBIDDEN);
@@ -476,7 +476,7 @@ public class UserAiSupportController {
     private AiChatSession resolveSession(HttpSession httpSession, User user, int sessionId) {
         AiChatSession chatSession = null;
         if (sessionId > 0) {
-            chatSession = sessionDAO.getById(sessionId);
+            chatSession = sessionDAO.findById(sessionId).orElse(null);
             if (chatSession != null && !ownsSession(httpSession, user, chatSession, sessionId)) {
                 return null;
             }

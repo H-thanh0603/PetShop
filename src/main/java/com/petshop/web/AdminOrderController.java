@@ -2,14 +2,15 @@ package com.petshop.web;
 
 import java.util.List;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 
-import com.petshop.dao.AdminActionLogDAO;
-import com.petshop.dao.NotificationDAO;
+import com.petshop.repository.AdminActionLogRepository;
+import com.petshop.repository.NotificationRepository;
 import com.petshop.dao.OrderDAO;
 import com.petshop.model.Order;
 import com.petshop.model.OrderLog;
@@ -29,22 +30,20 @@ import tools.jackson.databind.JsonNode;
 @Controller
 public class AdminOrderController {
 
-    private final AdminActionLogDAO actionLog;
+    private final AdminActionLogRepository actionLog;
     private final OrderDAO orderDAO;
     private final ShippingService shippingService;
-    private final NotificationDAO notificationDAO;
+    private final NotificationRepository notificationDAO;
 
-    public AdminOrderController() {
-        this(new AdminActionLogDAO(), new OrderDAO(), new ShippingService(), new NotificationDAO());
-    }
-
-    AdminOrderController(AdminActionLogDAO actionLog, OrderDAO orderDAO,
-                         ShippingService shippingService, NotificationDAO notificationDAO) {
+    @Autowired
+    public AdminOrderController(AdminActionLogRepository actionLog, OrderDAO orderDAO,
+                                ShippingService shippingService, NotificationRepository notificationDAO) {
         this.actionLog = actionLog;
         this.orderDAO = orderDAO;
         this.shippingService = shippingService;
         this.notificationDAO = notificationDAO;
     }
+
 
     @GetMapping("/admin/orders")
     public String orders(

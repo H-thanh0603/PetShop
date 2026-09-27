@@ -14,6 +14,7 @@ import java.util.Map;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -77,17 +78,14 @@ public class CheckoutController {
     private final UserDAO userDAO;
     private final OrderEmailService orderEmailService;
     private final InventoryBatchDAO inventoryBatchDAO;
+    private final com.petshop.repository.NotificationRepository notificationDAO;
 
-    public CheckoutController() {
-        this(new CouponDao(), new AddressDao(), new InventoryService(), new CartDAO(),
-                new ProductDAO(), new OrderDAO(), new PaymentTransactionDAO(),
-                new UserDAO(), new OrderEmailService(), new InventoryBatchDAO());
-    }
-
-    CheckoutController(CouponDao couponDao, AddressDao addressDAO, InventoryService inventoryService,
-                       CartDAO cartDAO, ProductDAO productDAO, OrderDAO orderDAO,
-                       PaymentTransactionDAO paymentTransactionDAO, UserDAO userDAO,
-                       OrderEmailService orderEmailService, InventoryBatchDAO inventoryBatchDAO) {
+    @Autowired
+    public CheckoutController(CouponDao couponDao, AddressDao addressDAO, InventoryService inventoryService,
+                              CartDAO cartDAO, ProductDAO productDAO, OrderDAO orderDAO,
+                              PaymentTransactionDAO paymentTransactionDAO, UserDAO userDAO,
+                              OrderEmailService orderEmailService, InventoryBatchDAO inventoryBatchDAO,
+                              com.petshop.repository.NotificationRepository notificationDAO) {
         this.couponDao = couponDao;
         this.addressDAO = addressDAO;
         this.inventoryService = inventoryService;
@@ -98,7 +96,9 @@ public class CheckoutController {
         this.userDAO = userDAO;
         this.orderEmailService = orderEmailService;
         this.inventoryBatchDAO = inventoryBatchDAO;
+        this.notificationDAO = notificationDAO;
     }
+
 
     @GetMapping("/checkout")
     public String checkoutPage(
@@ -387,7 +387,7 @@ public class CheckoutController {
 
             // Create notification for user
             try {
-                new com.petshop.dao.NotificationDAO().create(
+                notificationDAO.create(
                     user.getId(),
                     "Đặt hàng thành công",
                     "Đơn hàng #" + completedOrderId + " đã được đặt thành công. Chúng tôi sẽ sớm xử lý.",

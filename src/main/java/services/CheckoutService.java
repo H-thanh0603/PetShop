@@ -5,7 +5,7 @@ import com.petshop.dao.CartDAO;
 import com.petshop.dao.CouponDao;
 import com.petshop.dao.InventoryBatchDAO;
 import com.petshop.dao.OrderDAO;
-import com.petshop.dao.OrderSignDAO;
+import com.petshop.repository.OrderSignRepository;
 import com.petshop.repository.CertificateRepository;
 import com.petshop.dao.PaymentTransactionDAO;
 import com.petshop.dao.ProductDAO;
@@ -58,7 +58,7 @@ public class CheckoutService {
     private final InventoryBatchDAO inventoryBatchDAO;
     private final PromotionDAO promotionDAO;
     private final ProductPricingService pricingService;
-    private final OrderSignDAO orderSignDAO;
+    private final OrderSignRepository orderSignDAO;
     private final CertificateRepository certificateDAO;
 
     public CheckoutService(ProductDAO productDAO, UserDAO userDAO, CouponDao couponDao,
@@ -66,7 +66,7 @@ public class CheckoutService {
                            CartDAO cartDAO, OrderEmailService orderEmailService) {
         this(productDAO, userDAO, couponDao, orderDAO, paymentTransactionDAO,
                 cartDAO, orderEmailService, new InventoryBatchDAO(),
-                new OrderSignDAO(), null);
+                null, null);
     }
 
     public CheckoutService(ProductDAO productDAO, UserDAO userDAO, CouponDao couponDao,
@@ -75,14 +75,14 @@ public class CheckoutService {
                            InventoryBatchDAO inventoryBatchDAO) {
         this(productDAO, userDAO, couponDao, orderDAO, paymentTransactionDAO,
                 cartDAO, orderEmailService, inventoryBatchDAO,
-                new OrderSignDAO(), null);
+                null, null);
     }
 
     public CheckoutService(ProductDAO productDAO, UserDAO userDAO, CouponDao couponDao,
                            OrderDAO orderDAO, PaymentTransactionDAO paymentTransactionDAO,
                            CartDAO cartDAO, OrderEmailService orderEmailService,
                            InventoryBatchDAO inventoryBatchDAO,
-                           OrderSignDAO orderSignDAO, CertificateRepository certificateDAO) {
+                           OrderSignRepository orderSignDAO, CertificateRepository certificateDAO) {
         this.productDAO = productDAO;
         this.userDAO = userDAO;
         this.couponDao = couponDao;

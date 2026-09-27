@@ -21,8 +21,8 @@ import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
 import com.petshop.dao.AddressDao;
 import com.petshop.dao.OrderDAO;
-import com.petshop.dao.OrderSignDAO;
-import com.petshop.dao.OrderSignatureDAO;
+import com.petshop.repository.OrderSignRepository;
+import com.petshop.repository.OrderSignatureRepository;
 import com.petshop.dao.UserDAO;
 import com.petshop.model.User;
 
@@ -36,9 +36,9 @@ class AccountControllerTest {
     @Mock
     UserDAO userDAO;
     @Mock
-    OrderSignDAO orderSignDAO;
+    OrderSignRepository orderSignDAO;
     @Mock
-    OrderSignatureDAO orderSignatureDAO;
+    OrderSignatureRepository orderSignatureDAO;
 
     MockMvc mockMvc;
     MockHttpSession authed;

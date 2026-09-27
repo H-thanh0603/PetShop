@@ -18,14 +18,14 @@ import org.springframework.mock.web.MockHttpSession;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
-import com.petshop.dao.NotificationDAO;
+import com.petshop.repository.NotificationRepository;
 import com.petshop.model.User;
 
 @ExtendWith(MockitoExtension.class)
 class NotificationControllerTest {
 
     @Mock
-    NotificationDAO notificationDAO;
+    NotificationRepository notificationDAO;
 
     MockMvc mockMvc;
 
@@ -86,7 +86,7 @@ class NotificationControllerTest {
         user.setId(7);
         MockHttpSession session = new MockHttpSession();
         session.setAttribute("user", user);
-        when(notificationDAO.markAllAsRead(7)).thenReturn(true);
+        when(notificationDAO.markAllAsReadBool(7)).thenReturn(true);
 
         mockMvc.perform(post("/notifications/mark-read").session(session))
                 .andExpect(status().isOk())

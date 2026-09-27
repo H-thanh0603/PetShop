@@ -4,14 +4,15 @@ import java.util.List;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 
-import com.petshop.dao.AdminActionLogDAO;
-import com.petshop.dao.ReviewDAO;
+import com.petshop.repository.AdminActionLogRepository;
+import com.petshop.repository.ReviewRepository;
 import com.petshop.model.Review;
 import com.petshop.model.User;
 import com.petshop.util.ValidationUtil;
@@ -28,17 +29,15 @@ public class AdminReviewController {
 
     private static final Logger logger = LoggerFactory.getLogger(AdminReviewController.class);
 
-    private final ReviewDAO reviewDAO;
-    private final AdminActionLogDAO actionLog;
+    private final ReviewRepository reviewDAO;
+    private final AdminActionLogRepository actionLog;
 
-    public AdminReviewController() {
-        this(new ReviewDAO(), new AdminActionLogDAO());
-    }
-
-    AdminReviewController(ReviewDAO reviewDAO, AdminActionLogDAO actionLog) {
+    @Autowired
+    public AdminReviewController(ReviewRepository reviewDAO, AdminActionLogRepository actionLog) {
         this.reviewDAO = reviewDAO;
         this.actionLog = actionLog;
     }
+
 
     @GetMapping("/pages/admin/reviews")
     public String reviews(

@@ -29,7 +29,7 @@ import com.petshop.repository.AiChatMessageRepository;
 import com.petshop.repository.AiChatSessionRepository;
 import com.petshop.repository.AiSupportSettingRepository;
 import com.petshop.repository.CustomerSupportKnowledgeRepository;
-import com.petshop.dao.NotificationDAO;
+import com.petshop.repository.NotificationRepository;
 import com.petshop.model.AiChatSession;
 import com.petshop.model.User;
 
@@ -45,7 +45,7 @@ class AdminAiSupportControllerTest {
     @Mock
     AiSupportSettingRepository settingDAO;
     @Mock
-    NotificationDAO notificationDAO;
+    NotificationRepository notificationDAO;
 
     MockMvc mockMvc;
 

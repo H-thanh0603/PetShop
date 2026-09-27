@@ -52,7 +52,7 @@ class AdminAuditLoggingPropertyTest {
      * <p>Detection rules:</p>
      * <ul>
      *   <li>If the snippet contains a call to {@code actionLog.log(} or
-     *       {@code AdminActionLogDAO} → audit log is present → no finding</li>
+     *       {@code AdminActionLogRepository} → audit log is present → no finding</li>
      *   <li>Otherwise → MEDIUM severity finding is produced</li>
      * </ul>
      *
@@ -74,7 +74,7 @@ class AdminAuditLoggingPropertyTest {
 
         boolean hasAuditLogCall =
                 strippedCode.contains("actionLog.log(") ||
-                strippedCode.contains("AdminActionLogDAO") ||
+                strippedCode.contains("AdminActionLogDAO") || strippedCode.contains("AdminActionLogRepository") ||
                 strippedCode.matches("(?si).*\\.log\\s*\\(\\s*adminId.*");
 
         if (!hasAuditLogCall) {

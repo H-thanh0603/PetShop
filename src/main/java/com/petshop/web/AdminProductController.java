@@ -4,6 +4,7 @@ import java.io.File;
 import java.math.BigDecimal;
 import java.util.List;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -11,8 +12,8 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.multipart.MultipartFile;
 
-import com.petshop.dao.AdminActionLogDAO;
-import com.petshop.dao.PetTypeDAO;
+import com.petshop.repository.AdminActionLogRepository;
+import com.petshop.repository.PetTypeRepository;
 import com.petshop.dao.ProductDAO;
 import com.petshop.model.PetType;
 import com.petshop.model.Product;
@@ -32,18 +33,16 @@ import jakarta.servlet.http.HttpSession;
 public class AdminProductController {
 
     private final ProductDAO productDAO;
-    private final PetTypeDAO petTypeDAO;
-    private final AdminActionLogDAO actionLog;
+    private final PetTypeRepository petTypeDAO;
+    private final AdminActionLogRepository actionLog;
 
-    public AdminProductController() {
-        this(new ProductDAO(), new PetTypeDAO(), new AdminActionLogDAO());
-    }
-
-    AdminProductController(ProductDAO productDAO, PetTypeDAO petTypeDAO, AdminActionLogDAO actionLog) {
+    @Autowired
+    public AdminProductController(ProductDAO productDAO, PetTypeRepository petTypeDAO, AdminActionLogRepository actionLog) {
         this.productDAO = productDAO;
         this.petTypeDAO = petTypeDAO;
         this.actionLog = actionLog;
     }
+
 
     @GetMapping("/pages/admin/products")
     public String products(Model model) {

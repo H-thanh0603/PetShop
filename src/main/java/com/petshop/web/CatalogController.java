@@ -9,6 +9,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -17,7 +18,7 @@ import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestParam;
 
 import com.petshop.dao.ProductDAO;
-import com.petshop.dao.ReviewDAO;
+import com.petshop.repository.ReviewRepository;
 import com.petshop.dao.WishlistDAO;
 import com.petshop.model.Product;
 import com.petshop.model.Review;
@@ -35,18 +36,16 @@ public class CatalogController {
     private static final Logger logger = LoggerFactory.getLogger(CatalogController.class);
 
     private final ProductDAO productDAO;
-    private final ReviewDAO reviewDAO;
+    private final ReviewRepository reviewDAO;
     private final WishlistDAO wishlistDAO;
 
-    public CatalogController() {
-        this(new ProductDAO(), new ReviewDAO(), new WishlistDAO());
-    }
-
-    CatalogController(ProductDAO productDAO, ReviewDAO reviewDAO, WishlistDAO wishlistDAO) {
+    @Autowired
+    public CatalogController(ProductDAO productDAO, ReviewRepository reviewDAO, WishlistDAO wishlistDAO) {
         this.productDAO = productDAO;
         this.reviewDAO = reviewDAO;
         this.wishlistDAO = wishlistDAO;
     }
+
 
     @GetMapping("/product-detail")
     public String productDetail(

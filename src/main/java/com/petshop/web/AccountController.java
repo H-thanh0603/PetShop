@@ -4,6 +4,7 @@ import java.sql.Timestamp;
 import java.time.LocalDateTime;
 import java.util.List;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -12,8 +13,8 @@ import org.springframework.web.bind.annotation.RequestParam;
 
 import com.petshop.dao.AddressDao;
 import com.petshop.dao.OrderDAO;
-import com.petshop.dao.OrderSignDAO;
-import com.petshop.dao.OrderSignatureDAO;
+import com.petshop.repository.OrderSignRepository;
+import com.petshop.repository.OrderSignatureRepository;
 import com.petshop.dao.UserDAO;
 import com.petshop.model.Address;
 import com.petshop.model.Order;
@@ -35,21 +36,19 @@ public class AccountController {
     private final AddressDao addressDao;
     private final OrderDAO orderDAO;
     private final UserDAO userDAO;
-    private final OrderSignDAO orderSignDAO;
-    private final OrderSignatureDAO orderSignatureDAO;
+    private final OrderSignRepository orderSignDAO;
+    private final OrderSignatureRepository orderSignatureDAO;
 
-    public AccountController() {
-        this(new AddressDao(), new OrderDAO(), new UserDAO(), new OrderSignDAO(), new OrderSignatureDAO());
-    }
-
-    AccountController(AddressDao addressDao, OrderDAO orderDAO, UserDAO userDAO,
-                      OrderSignDAO orderSignDAO, OrderSignatureDAO orderSignatureDAO) {
+    @Autowired
+    public AccountController(AddressDao addressDao, OrderDAO orderDAO, UserDAO userDAO,
+                             OrderSignRepository orderSignDAO, OrderSignatureRepository orderSignatureDAO) {
         this.addressDao = addressDao;
         this.orderDAO = orderDAO;
         this.userDAO = userDAO;
         this.orderSignDAO = orderSignDAO;
         this.orderSignatureDAO = orderSignatureDAO;
     }
+
 
     // ── MY ACCOUNT (/my-account) ──
 

@@ -5,12 +5,13 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.ResponseBody;
 
-import com.petshop.dao.NotificationDAO;
+import com.petshop.repository.NotificationRepository;
 import com.petshop.model.User;
 import com.petshop.util.Json;
 import jakarta.servlet.http.HttpSession;
@@ -22,15 +23,13 @@ import jakarta.servlet.http.HttpSession;
 @Controller
 public class NotificationController {
 
-    private final NotificationDAO notificationDAO;
+    private final NotificationRepository notificationDAO;
 
-    public NotificationController() {
-        this(new NotificationDAO());
-    }
-
-    NotificationController(NotificationDAO notificationDAO) {
+    @Autowired
+    public NotificationController(NotificationRepository notificationDAO) {
         this.notificationDAO = notificationDAO;
     }
+
 
     @GetMapping(value = "/notifications/unread-count", produces = "application/json;charset=UTF-8")
     @ResponseBody
@@ -61,7 +60,7 @@ public class NotificationController {
             response.setStatus(jakarta.servlet.http.HttpServletResponse.SC_UNAUTHORIZED);
             return "{\"error\":\"Unauthorized\"}";
         }
-        boolean success = notificationDAO.markAllAsRead(user.getId());
+        boolean success = notificationDAO.markAllAsReadBool(user.getId());
         Map<String, Object> result = new HashMap<>();
         result.put("success", success);
         return Json.MAPPER.writeValueAsString(result);

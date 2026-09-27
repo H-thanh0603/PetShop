@@ -4,13 +4,14 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 
-import com.petshop.dao.PetTypeDAO;
+import com.petshop.repository.PetTypeRepository;
 import com.petshop.dao.ProductDAO;
 import com.petshop.dao.WishlistDAO;
 import com.petshop.model.PetType;
@@ -31,18 +32,16 @@ public class ShopController {
     private static final int BEST_SELLER_SIZE = 6;
 
     private final ProductDAO productDao;
-    private final PetTypeDAO petTypeDao;
+    private final PetTypeRepository petTypeDao;
     private final WishlistDAO wishlistDAO;
 
-    public ShopController() {
-        this(new ProductDAO(), new PetTypeDAO(), new WishlistDAO());
-    }
-
-    ShopController(ProductDAO productDao, PetTypeDAO petTypeDao, WishlistDAO wishlistDAO) {
+    @Autowired
+    public ShopController(ProductDAO productDao, PetTypeRepository petTypeDao, WishlistDAO wishlistDAO) {
         this.productDao = productDao;
         this.petTypeDao = petTypeDao;
         this.wishlistDAO = wishlistDAO;
     }
+
 
     @GetMapping("/shop")
     public String shop(

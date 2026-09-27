@@ -8,13 +8,14 @@ import java.time.LocalTime;
 import java.util.List;
 import java.util.Map;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 
-import com.petshop.dao.AdminActionLogDAO;
+import com.petshop.repository.AdminActionLogRepository;
 import com.petshop.dao.InventoryBatchDAO;
 import com.petshop.dao.ProductDAO;
 import com.petshop.model.InventoryBatch;
@@ -34,18 +35,16 @@ public class AdminInventoryController {
 
     private final ProductDAO productDAO;
     private final InventoryBatchDAO inventoryBatchDAO;
-    private final AdminActionLogDAO actionLog;
+    private final AdminActionLogRepository actionLog;
 
-    public AdminInventoryController() {
-        this(new ProductDAO(), new InventoryBatchDAO(), new AdminActionLogDAO());
-    }
-
-    AdminInventoryController(ProductDAO productDAO, InventoryBatchDAO inventoryBatchDAO,
-                             AdminActionLogDAO actionLog) {
+    @Autowired
+    public AdminInventoryController(ProductDAO productDAO, InventoryBatchDAO inventoryBatchDAO,
+                                    AdminActionLogRepository actionLog) {
         this.productDAO = productDAO;
         this.inventoryBatchDAO = inventoryBatchDAO;
         this.actionLog = actionLog;
     }
+
 
     @GetMapping("/admin/inventory")
     public String inventory(

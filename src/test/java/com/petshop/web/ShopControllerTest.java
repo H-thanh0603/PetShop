@@ -21,7 +21,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
-import com.petshop.dao.PetTypeDAO;
+import com.petshop.repository.PetTypeRepository;
 import com.petshop.dao.ProductDAO;
 import com.petshop.dao.WishlistDAO;
 import com.petshop.model.Product;
@@ -32,7 +32,7 @@ class ShopControllerTest {
     @Mock
     ProductDAO productDAO;
     @Mock
-    PetTypeDAO petTypeDAO;
+    PetTypeRepository petTypeDAO;
     @Mock
     WishlistDAO wishlistDAO;
 

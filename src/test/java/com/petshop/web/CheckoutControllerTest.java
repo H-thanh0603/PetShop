@@ -67,6 +67,8 @@ class CheckoutControllerTest {
     OrderEmailService orderEmailService;
     @Mock
     InventoryBatchDAO inventoryBatchDAO;
+    @Mock
+    com.petshop.repository.NotificationRepository notificationDAO;
 
     MockMvc mockMvc;
     MockHttpSession authed;
@@ -77,7 +79,7 @@ class CheckoutControllerTest {
     void setUp() {
         mockMvc = MockMvcBuilders.standaloneSetup(new CheckoutController(
                 couponDao, addressDAO, inventoryService, cartDAO, productDAO,
-                orderDAO, paymentTransactionDAO, userDAO, orderEmailService, inventoryBatchDAO)).build();
+                orderDAO, paymentTransactionDAO, userDAO, orderEmailService, inventoryBatchDAO, notificationDAO)).build();
 
         testUser = new User();
         testUser.setId(1);

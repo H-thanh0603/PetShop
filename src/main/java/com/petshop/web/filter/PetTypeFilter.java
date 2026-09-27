@@ -11,7 +11,7 @@ import jakarta.servlet.ServletRequest;
 import jakarta.servlet.ServletResponse;
 import jakarta.servlet.http.HttpServletRequest;
 
-import com.petshop.dao.PetTypeDAO;
+import com.petshop.repository.PetTypeRepository;
 import com.petshop.model.PetType;
 import services.PetTypeCache;
 import org.slf4j.Logger;
@@ -25,11 +25,10 @@ import org.slf4j.LoggerFactory;
 public class PetTypeFilter implements Filter {
 
     private static final Logger logger = LoggerFactory.getLogger(PetTypeFilter.class);
-    private PetTypeDAO petTypeDao;
+    private final PetTypeRepository petTypeDao;
 
-    @Override
-    public void init(FilterConfig filterConfig) throws ServletException {
-        petTypeDao = new PetTypeDAO();
+    public PetTypeFilter(PetTypeRepository petTypeDao) {
+        this.petTypeDao = petTypeDao;
     }
 
     @Override

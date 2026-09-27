@@ -93,7 +93,7 @@ class UserAiSupportControllerTest {
         AiChatSession foreign = new AiChatSession();
         foreign.setId(9);
         foreign.setUserId(999);
-        when(sessionDAO.getById(9)).thenReturn(foreign);
+        when(sessionDAO.findById(9)).thenReturn(java.util.Optional.of(foreign));
 
         mockMvc.perform(get("/ai-support/messages").param("sessionId", "9").session(session))
                 .andExpect(status().isForbidden());

@@ -12,6 +12,7 @@ import java.util.Map;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -23,7 +24,8 @@ import com.petshop.context.DBContext;
 import com.petshop.dao.OrderDAO;
 import com.petshop.dao.PaymentTransactionDAO;
 import com.petshop.dao.ProductDAO;
-import com.petshop.dao.ReviewDAO;
+import com.petshop.repository.ReviewRepository;
+import com.petshop.repository.ReviewRepository;
 import com.petshop.model.Order;
 import com.petshop.model.PaymentTransaction;
 import com.petshop.model.Product;
@@ -45,16 +47,16 @@ public class ShopApiController {
     private final ProductDAO productDAO;
     private final OrderDAO orderDAO;
     private final PaymentTransactionDAO paymentTransactionDAO;
+    private final ReviewRepository reviewDAO;
     private static final Logger logger = LoggerFactory.getLogger(ShopApiController.class);
 
-    public ShopApiController() {
-        this(new ProductDAO(), new OrderDAO(), new PaymentTransactionDAO());
-    }
-
-    ShopApiController(ProductDAO productDAO, OrderDAO orderDAO, PaymentTransactionDAO paymentTransactionDAO) {
+    @Autowired
+    public ShopApiController(ProductDAO productDAO, OrderDAO orderDAO, PaymentTransactionDAO paymentTransactionDAO,
+                             ReviewRepository reviewDAO) {
         this.productDAO = productDAO;
         this.orderDAO = orderDAO;
         this.paymentTransactionDAO = paymentTransactionDAO;
+        this.reviewDAO = reviewDAO;
     }
 
     @GetMapping(value = "/api/search-autocomplete", produces = "application/json;charset=UTF-8")
@@ -239,7 +241,7 @@ public class ShopApiController {
                 return "redirect:" + request.getContextPath() + "/product-detail?id=" + productId;
             }
 
-            ReviewDAO dao = new ReviewDAO();
+            ReviewRepository dao = reviewDAO;
 
             if (rating < 1 || rating > 5) {
                 session.setAttribute("error", "Số sao đánh giá phải từ 1 đến 5.");
@@ -262,7 +264,7 @@ public class ShopApiController {
             }
 
             // Rate limit: max 5 reviews per 60 minutes
-            int reviewsInLastHour = dao.countReviewsByUserInLastHour(user.getId());
+            int reviewsInLastHour = dao.countReviewsByUserInLastHourSafe(user.getId());
             if (reviewsInLastHour >= 5) {
                 session.setAttribute("error", "Bạn đã gửi quá nhiều đánh giá. Vui lòng thử lại sau.");
                 return "redirect:" + request.getContextPath() + "/product-detail?id=" + productId;

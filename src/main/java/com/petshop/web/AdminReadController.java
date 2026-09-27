@@ -11,6 +11,7 @@ import java.util.Map;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -18,7 +19,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 
 import com.petshop.context.DBContext;
-import com.petshop.dao.PetTypeDAO;
+import com.petshop.repository.PetTypeRepository;
 import com.petshop.dao.ReportDAO;
 import com.petshop.model.Order;
 import com.petshop.model.PetType;
@@ -40,16 +41,14 @@ public class AdminReadController {
     private static final Logger logger = LoggerFactory.getLogger(AdminReadController.class);
 
     private final ReportDAO reportDAO;
-    private final PetTypeDAO petTypeDAO;
+    private final PetTypeRepository petTypeDAO;
 
-    public AdminReadController() {
-        this(new ReportDAO(), new PetTypeDAO());
-    }
-
-    AdminReadController(ReportDAO reportDAO, PetTypeDAO petTypeDAO) {
+    @Autowired
+    public AdminReadController(ReportDAO reportDAO, PetTypeRepository petTypeDAO) {
         this.reportDAO = reportDAO;
         this.petTypeDAO = petTypeDAO;
     }
+
 
     // ── DASHBOARD (/pages/admin/dashboard) ──
 

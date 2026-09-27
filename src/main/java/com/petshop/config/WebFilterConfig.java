@@ -3,6 +3,7 @@ package com.petshop.config;
 import com.petshop.web.filter.AuthorizationFilter;
 import com.petshop.web.filter.CookieAttributeFilter;
 import com.petshop.web.filter.CsrfFilter;
+import com.petshop.repository.PetTypeRepository;
 import com.petshop.web.filter.PetTypeFilter;
 import com.petshop.web.filter.RateLimitFilter;
 import com.petshop.web.filter.StaticAssetCacheFilter;
@@ -66,8 +67,8 @@ public class WebFilterConfig {
     }
 
     @Bean
-    public FilterRegistrationBean<PetTypeFilter> petTypeFilter() {
-        FilterRegistrationBean<PetTypeFilter> bean = new FilterRegistrationBean<>(new PetTypeFilter());
+    public FilterRegistrationBean<PetTypeFilter> petTypeFilter(PetTypeRepository petTypeRepository) {
+        FilterRegistrationBean<PetTypeFilter> bean = new FilterRegistrationBean<>(new PetTypeFilter(petTypeRepository));
         bean.addUrlPatterns("/*");
         bean.setOrder(60);
         return bean;

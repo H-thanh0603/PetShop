@@ -23,7 +23,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
-import com.petshop.dao.AdminActionLogDAO;
+import com.petshop.repository.AdminActionLogRepository;
 import com.petshop.dao.InventoryBatchDAO;
 import com.petshop.dao.ProductDAO;
 import com.petshop.model.User;
@@ -36,7 +36,7 @@ class AdminInventoryControllerTest {
     @Mock
     InventoryBatchDAO inventoryBatchDAO;
     @Mock
-    AdminActionLogDAO actionLog;
+    AdminActionLogRepository actionLog;
 
     MockMvc mockMvc;
 

@@ -8,6 +8,7 @@ import java.util.Map;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -15,7 +16,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 
-import com.petshop.dao.AdminActionLogDAO;
+import com.petshop.repository.AdminActionLogRepository;
 import com.petshop.dao.OrderDAO;
 import com.petshop.dao.UserDAO;
 import com.petshop.model.Order;
@@ -37,17 +38,15 @@ public class AdminUserController {
 
     private final UserDAO userDAO;
     private final OrderDAO orderDAO;
-    private final AdminActionLogDAO actionLog;
+    private final AdminActionLogRepository actionLog;
 
-    public AdminUserController() {
-        this(new UserDAO(), new OrderDAO(), new AdminActionLogDAO());
-    }
-
-    AdminUserController(UserDAO userDAO, OrderDAO orderDAO, AdminActionLogDAO actionLog) {
+    @Autowired
+    public AdminUserController(UserDAO userDAO, OrderDAO orderDAO, AdminActionLogRepository actionLog) {
         this.userDAO = userDAO;
         this.orderDAO = orderDAO;
         this.actionLog = actionLog;
     }
+
 
     @GetMapping("/admin/users")
     public String users(

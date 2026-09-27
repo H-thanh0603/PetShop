@@ -21,8 +21,8 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
-import com.petshop.dao.AdminActionLogDAO;
-import com.petshop.dao.ReviewDAO;
+import com.petshop.repository.AdminActionLogRepository;
+import com.petshop.repository.ReviewRepository;
 import com.petshop.model.Review;
 import com.petshop.model.User;
 
@@ -30,9 +30,9 @@ import com.petshop.model.User;
 class AdminReviewControllerTest {
 
     @Mock
-    ReviewDAO reviewDAO;
+    ReviewRepository reviewDAO;
     @Mock
-    AdminActionLogDAO actionLog;
+    AdminActionLogRepository actionLog;
 
     MockMvc mockMvc;
 
