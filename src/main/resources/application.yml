@@ -17,6 +17,11 @@ spring:
     enabled: false
     baseline-on-migrate: true
     baseline-version: 0
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    open-in-view: false
+    show-sql: false
 
 server:
   port: 8080

@@ -19,23 +19,26 @@ import org.springframework.mock.web.MockHttpSession;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
-import com.petshop.dao.RememberTokenDAO;
 import com.petshop.dao.UserDAO;
 import com.petshop.model.User;
+import com.petshop.repository.RememberTokenRepository;
+import com.petshop.repository.SecurityEventRepository;
 
 @ExtendWith(MockitoExtension.class)
 class AuthControllerTest {
 
     @Mock
-    RememberTokenDAO rememberTokenDAO;
+    RememberTokenRepository rememberTokenDAO;
     @Mock
     UserDAO userDAO;
+    @Mock
+    SecurityEventRepository securityEventDAO;
 
     MockMvc mockMvc;
 
     @BeforeEach
     void setUp() {
-        mockMvc = MockMvcBuilders.standaloneSetup(new AuthController(rememberTokenDAO, userDAO)).build();
+        mockMvc = MockMvcBuilders.standaloneSetup(new AuthController(rememberTokenDAO, userDAO, securityEventDAO)).build();
     }
 
     @Test

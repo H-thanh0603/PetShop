@@ -8,6 +8,7 @@ import java.util.Map;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -16,9 +17,9 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 
 import com.petshop.dao.CartDAO;
-import com.petshop.dao.RememberTokenDAO;
-import com.petshop.dao.SecurityEventDAO;
 import com.petshop.dao.UserDAO;
+import com.petshop.repository.RememberTokenRepository;
+import com.petshop.repository.SecurityEventRepository;
 import com.petshop.model.CartItem;
 import com.petshop.model.FbAccount.Account;
 import com.petshop.model.GgAccount.GoogleAccount;
@@ -48,23 +49,20 @@ public class AuthController {
     private static final int REMEMBER_ME_DAYS = 7;
     private static final SecureRandom SECURE_RANDOM = new SecureRandom();
 
-    private final RememberTokenDAO rememberTokenDAO;
+    private final RememberTokenRepository rememberTokenDAO;
     private final UserDAO userDAO;
-    private final SecurityEventDAO securityEventDAO;
+    private final SecurityEventRepository securityEventDAO;
 
-    public AuthController() {
-        this(new RememberTokenDAO(), new UserDAO(), new SecurityEventDAO());
+    @Autowired
+    public AuthController(RememberTokenRepository rememberTokenDAO, SecurityEventRepository securityEventDAO) {
+        this(rememberTokenDAO, new UserDAO(), securityEventDAO);
     }
 
-    AuthController(RememberTokenDAO rememberTokenDAO) {
-        this(rememberTokenDAO, new UserDAO(), new SecurityEventDAO());
+    AuthController(RememberTokenRepository rememberTokenDAO, UserDAO userDAO) {
+        this(rememberTokenDAO, userDAO, null);
     }
 
-    AuthController(RememberTokenDAO rememberTokenDAO, UserDAO userDAO) {
-        this(rememberTokenDAO, userDAO, new SecurityEventDAO());
-    }
-
-    AuthController(RememberTokenDAO rememberTokenDAO, UserDAO userDAO, SecurityEventDAO securityEventDAO) {
+    AuthController(RememberTokenRepository rememberTokenDAO, UserDAO userDAO, SecurityEventRepository securityEventDAO) {
         this.rememberTokenDAO = rememberTokenDAO;
         this.userDAO = userDAO;
         this.securityEventDAO = securityEventDAO;

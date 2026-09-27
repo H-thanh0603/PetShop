@@ -14,6 +14,7 @@ PetShop là đồ án web e-commerce bán sản phẩm cho thú cưng, tập tru
 - Gradle Wrapper đi kèm project
 - Spring Boot 4.1.1 (Gradle plugin + BOM `spring-boot-dependencies`)
 - MySQL 8.4 LTS
+- MySQL bắt buộc chạy local cho test suite từ P2 (DB `petshop_test`, user `petshop`, password qua `PETSHOP_DB_PASSWORD`); thiếu DB suite fail rõ, không skip.
 - Hạ dev từ `mysql:8.0` sang `mysql:8.4` (2026-09): backup dữ liệu trước khi `docker compose up` lần đầu:
   `docker exec petshop-mysql-dev mysqldump -uroot -p"$MYSQL_ROOT_PASSWORD" petvaccine > backup-8.4.sql`
 
