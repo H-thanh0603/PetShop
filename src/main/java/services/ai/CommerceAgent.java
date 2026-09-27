@@ -1,10 +1,10 @@
 package services.ai;
 
 import DAO.AiSupportSettingDAO;
-import Model.AiChatMessage;
-import Model.Order;
-import Model.Product;
-import Model.User;
+import com.petshop.model.AiChatMessage;
+import com.petshop.model.Order;
+import com.petshop.model.Product;
+import com.petshop.model.User;
 import com.petshop.util.Json;
 import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.node.ArrayNode;

@@ -1,9 +1,9 @@
 package services;
 
 import DAO.PromotionDAO;
-import Model.Product;
-import Model.ProductPricing;
-import Model.PromotionCandidate;
+import com.petshop.model.Product;
+import com.petshop.model.ProductPricing;
+import com.petshop.model.PromotionCandidate;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;

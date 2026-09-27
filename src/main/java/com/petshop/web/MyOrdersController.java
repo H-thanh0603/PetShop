@@ -10,10 +10,10 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 
 import DAO.OrderDAO;
-import Model.CustomerRepurchaseSuggestion;
-import Model.Order;
-import Model.OrderStatus;
-import Model.User;
+import com.petshop.model.CustomerRepurchaseSuggestion;
+import com.petshop.model.Order;
+import com.petshop.model.OrderStatus;
+import com.petshop.model.User;
 import com.petshop.util.VnpayUtil;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpSession;

@@ -1,7 +1,7 @@
 package DAO;
 
 import com.petshop.context.DBContext;
-import Model.Certificate;
+import com.petshop.model.Certificate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

@@ -19,9 +19,9 @@ import org.springframework.web.bind.annotation.RequestParam;
 import DAO.ProductDAO;
 import DAO.ReviewDAO;
 import DAO.WishlistDAO;
-import Model.Product;
-import Model.Review;
-import Model.User;
+import com.petshop.model.Product;
+import com.petshop.model.Review;
+import com.petshop.model.User;
 import jakarta.servlet.http.HttpSession;
 
 /**

@@ -1,6 +1,6 @@
 package DAO;
 
-import Model.BankWebhookEvent;
+import com.petshop.model.BankWebhookEvent;
 
 import java.math.BigDecimal;
 import java.sql.Connection;

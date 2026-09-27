@@ -22,7 +22,7 @@ import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
 import DAO.OrderDAO;
 import DAO.PaymentTransactionDAO;
-import Model.Order;
+import com.petshop.model.Order;
 
 @ExtendWith(MockitoExtension.class)
 class VnpayIpnControllerTest {

@@ -13,14 +13,14 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import com.petshop.context.DBContext;
-import Model.Order;
-import Model.OrderItem;
-import Model.OrderLog;
-import Model.OrderStatus;
-import Model.OrderStatusHistory;
-import Model.PaymentTransaction;
-import Model.Product;
-import Model.CustomerRepurchaseSuggestion;
+import com.petshop.model.Order;
+import com.petshop.model.OrderItem;
+import com.petshop.model.OrderLog;
+import com.petshop.model.OrderStatus;
+import com.petshop.model.OrderStatusHistory;
+import com.petshop.model.PaymentTransaction;
+import com.petshop.model.Product;
+import com.petshop.model.CustomerRepurchaseSuggestion;
 
 public class OrderDAO {
 

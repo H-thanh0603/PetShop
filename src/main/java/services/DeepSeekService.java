@@ -1,7 +1,7 @@
 package services;
 
 import DAO.AiSupportSettingDAO;
-import Model.*;
+import com.petshop.model.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import services.ai.CommerceAgent;

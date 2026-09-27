@@ -4,8 +4,8 @@ import net.jqwik.api.*;
 import services.SeverityMatrix;
 import services.SeverityMatrix.Impact;
 import services.SeverityMatrix.Likelihood;
-import Model.Priority;
-import Model.Severity;
+import com.petshop.model.Priority;
+import com.petshop.model.Severity;
 
 import static org.junit.jupiter.api.Assertions.*;
 

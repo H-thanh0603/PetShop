@@ -1,7 +1,7 @@
 package services.ai.common;
 
-import Model.Order;
-import Model.Product;
+import com.petshop.model.Order;
+import com.petshop.model.Product;
 import com.petshop.util.Json;
 import tools.jackson.databind.node.ArrayNode;
 import tools.jackson.databind.node.ObjectNode;

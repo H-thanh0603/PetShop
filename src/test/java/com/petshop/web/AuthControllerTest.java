@@ -21,7 +21,7 @@ import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
 import DAO.RememberTokenDAO;
 import DAO.UserDAO;
-import Model.User;
+import com.petshop.model.User;
 
 @ExtendWith(MockitoExtension.class)
 class AuthControllerTest {

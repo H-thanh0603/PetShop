@@ -20,8 +20,8 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
 import DAO.OrderDAO;
-import Model.Order;
-import Model.User;
+import com.petshop.model.Order;
+import com.petshop.model.User;
 import services.ReorderService;
 
 @ExtendWith(MockitoExtension.class)

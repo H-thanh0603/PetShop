@@ -31,11 +31,11 @@ import DAO.OrderDAO;
 import DAO.PaymentTransactionDAO;
 import DAO.ProductDAO;
 import DAO.UserDAO;
-import Model.Address;
-import Model.CartItem;
-import Model.Coupon;
-import Model.Product;
-import Model.User;
+import com.petshop.model.Address;
+import com.petshop.model.CartItem;
+import com.petshop.model.Coupon;
+import com.petshop.model.Product;
+import com.petshop.model.User;
 import services.InventoryService;
 import services.OrderEmailService;
 

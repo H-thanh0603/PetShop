@@ -26,7 +26,7 @@ import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import DAO.AdminActionLogDAO;
 import DAO.InventoryBatchDAO;
 import DAO.ProductDAO;
-import Model.User;
+import com.petshop.model.User;
 
 @ExtendWith(MockitoExtension.class)
 class AdminInventoryControllerTest {

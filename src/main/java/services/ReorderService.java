@@ -2,8 +2,8 @@ package services;
 
 import DAO.CartDAO;
 import DAO.OrderDAO;
-import Model.Order;
-import Model.OrderItem;
+import com.petshop.model.Order;
+import com.petshop.model.OrderItem;
 
 public class ReorderService {
     private final OrderDAO orderDAO;

@@ -12,7 +12,7 @@ import jakarta.servlet.ServletResponse;
 import jakarta.servlet.http.HttpServletRequest;
 
 import DAO.PetTypeDAO;
-import Model.PetType;
+import com.petshop.model.PetType;
 import services.PetTypeCache;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

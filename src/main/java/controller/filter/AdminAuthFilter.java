@@ -3,7 +3,7 @@ package controller.filter;
 import jakarta.servlet.*;
 import jakarta.servlet.http.*;
 import java.io.IOException;
-import Model.User;
+import com.petshop.model.User;
 
 public class AdminAuthFilter implements Filter {
     private static final String[] STATIC_EXTENSIONS = {

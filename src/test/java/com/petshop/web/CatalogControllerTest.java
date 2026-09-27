@@ -23,8 +23,8 @@ import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import DAO.ProductDAO;
 import DAO.ReviewDAO;
 import DAO.WishlistDAO;
-import Model.Product;
-import Model.User;
+import com.petshop.model.Product;
+import com.petshop.model.User;
 
 @ExtendWith(MockitoExtension.class)
 class CatalogControllerTest {

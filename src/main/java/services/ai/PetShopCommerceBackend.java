@@ -3,10 +3,10 @@ package services.ai;
 import DAO.CustomerSupportKnowledgeDAO;
 import DAO.OrderDAO;
 import DAO.ProductDAO;
-import Model.CustomerSupportKnowledge;
-import Model.Order;
-import Model.Product;
-import Model.User;
+import com.petshop.model.CustomerSupportKnowledge;
+import com.petshop.model.Order;
+import com.petshop.model.Product;
+import com.petshop.model.User;
 
 import java.util.ArrayList;
 import java.util.List;

@@ -1,7 +1,7 @@
 package services;
 
-import Model.AiChatMessage;
-import Model.User;
+import com.petshop.model.AiChatMessage;
+import com.petshop.model.User;
 import org.junit.jupiter.api.Test;
 import java.util.ArrayList;
 import java.util.List;
@@ -88,9 +88,9 @@ public class DeepSeekServiceTest {
     @Test
     public void testSearchProductsForAdvice() {
         DAO.ProductDAO dao = new DAO.ProductDAO();
-        List<Model.Product> products = dao.searchProductsForAdvice("Mèo con nên ăn gì?", 5);
+        List<com.petshop.model.Product> products = dao.searchProductsForAdvice("Mèo con nên ăn gì?", 5);
         System.out.println("=== SEARCH RESULTS FOR 'Mèo con nên ăn gì?' ===");
-        for (Model.Product p : products) {
+        for (com.petshop.model.Product p : products) {
             System.out.println("ID: " + p.getId() + ", Name: " + p.getName() + ", Price: " + p.getPrice() + ", Stock: " + p.getStock() + ", Active: " + p.isActive());
         }
     }

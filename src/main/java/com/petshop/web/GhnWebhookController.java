@@ -23,7 +23,7 @@ import tools.jackson.databind.node.ObjectNode;
 
 import com.petshop.context.DBContext;
 import DAO.OrderDAO;
-import Model.Order;
+import com.petshop.model.Order;
 import com.petshop.util.AppConfig;
 import com.petshop.util.Json;
 import services.ShippingService;

@@ -1,7 +1,7 @@
 package DAO;
 
 import com.petshop.context.DBContext;
-import Model.Address;
+import com.petshop.model.Address;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -193,7 +193,7 @@ public class AddressDao {
 
             ResultSet rs = ps.executeQuery();
             if (rs.next()) {
-                Model.Address a = new Model.Address();
+                com.petshop.model.Address a = new com.petshop.model.Address();
                 a.setId(rs.getInt("id"));
                 a.setUserId(rs.getInt("user_id"));
                 a.setDefaultt(rs.getBoolean("is_default"));

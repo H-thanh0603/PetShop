@@ -1,7 +1,7 @@
 package DAO;
 
 import com.petshop.context.DBContext;
-import Model.OrderSignature;
+import com.petshop.model.OrderSignature;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

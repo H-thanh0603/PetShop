@@ -3,10 +3,10 @@ package audit;
 import net.jqwik.api.*;
 import net.jqwik.api.constraints.IntRange;
 import net.jqwik.api.constraints.NotBlank;
-import Model.AuditFinding;
-import Model.Domain;
-import Model.Priority;
-import Model.Severity;
+import com.petshop.model.AuditFinding;
+import com.petshop.model.Domain;
+import com.petshop.model.Priority;
+import com.petshop.model.Severity;
 
 import static org.junit.jupiter.api.Assertions.*;
 

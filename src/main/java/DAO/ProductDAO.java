@@ -11,8 +11,8 @@ import java.util.List;
 import java.util.concurrent.ThreadLocalRandom;
 
 import com.petshop.context.DBContext;
-import Model.Product;
-import Model.ProductFilterCriteria;
+import com.petshop.model.Product;
+import com.petshop.model.ProductFilterCriteria;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import services.ProductPricingService;

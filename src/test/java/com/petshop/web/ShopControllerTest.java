@@ -24,7 +24,7 @@ import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import DAO.PetTypeDAO;
 import DAO.ProductDAO;
 import DAO.WishlistDAO;
-import Model.Product;
+import com.petshop.model.Product;
 
 @ExtendWith(MockitoExtension.class)
 class ShopControllerTest {

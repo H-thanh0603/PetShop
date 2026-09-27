@@ -17,10 +17,10 @@ import org.springframework.web.bind.annotation.RequestParam;
 import DAO.AdminActionLogDAO;
 import DAO.InventoryBatchDAO;
 import DAO.ProductDAO;
-import Model.InventoryBatch;
-import Model.Product;
-import Model.ProductAdminInventoryView;
-import Model.User;
+import com.petshop.model.InventoryBatch;
+import com.petshop.model.Product;
+import com.petshop.model.ProductAdminInventoryView;
+import com.petshop.model.User;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpSession;
 

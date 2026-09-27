@@ -1,9 +1,9 @@
 package DAO;
 
 import com.petshop.context.DBContext;
-import Model.Order;
-import Model.Product;
-import Model.Review;
+import com.petshop.model.Order;
+import com.petshop.model.Product;
+import com.petshop.model.Review;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

@@ -30,8 +30,8 @@ import DAO.AiChatSessionDAO;
 import DAO.AiSupportSettingDAO;
 import DAO.CustomerSupportKnowledgeDAO;
 import DAO.NotificationDAO;
-import Model.AiChatSession;
-import Model.User;
+import com.petshop.model.AiChatSession;
+import com.petshop.model.User;
 
 @ExtendWith(MockitoExtension.class)
 class AdminAiSupportControllerTest {

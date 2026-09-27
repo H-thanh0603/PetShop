@@ -19,7 +19,7 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
 import DAO.NotificationDAO;
-import Model.User;
+import com.petshop.model.User;
 
 @ExtendWith(MockitoExtension.class)
 class NotificationControllerTest {

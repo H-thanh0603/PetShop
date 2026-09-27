@@ -1,6 +1,6 @@
 package controller.filter;
 
-import Model.User;
+import com.petshop.model.User;
 import jakarta.servlet.*;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;

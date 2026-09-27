@@ -26,8 +26,8 @@ import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import DAO.AiChatMessageDAO;
 import DAO.AiChatSessionDAO;
 import DAO.AiSupportSettingDAO;
-import Model.AiChatSession;
-import Model.User;
+import com.petshop.model.AiChatSession;
+import com.petshop.model.User;
 import services.DeepSeekService;
 
 @ExtendWith(MockitoExtension.class)

@@ -21,8 +21,8 @@ import DAO.CertificateDAO;
 import DAO.OrderDAO;
 import DAO.OrderSignDAO;
 import DAO.OrderSignatureDAO;
-import Model.OrderSign;
-import Model.User;
+import com.petshop.model.OrderSign;
+import com.petshop.model.User;
 
 @ExtendWith(MockitoExtension.class)
 class SignatureControllerTest {

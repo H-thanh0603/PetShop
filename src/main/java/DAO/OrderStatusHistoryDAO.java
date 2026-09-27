@@ -7,7 +7,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import com.petshop.context.DBContext;
-import Model.OrderStatusHistory;
+import com.petshop.model.OrderStatusHistory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

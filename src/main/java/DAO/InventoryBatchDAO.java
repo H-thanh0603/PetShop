@@ -4,10 +4,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.petshop.context.DBContext;
-import Model.InventoryAgingSnapshot;
-import Model.InventoryBatch;
-import Model.ProductAdminInventoryView;
-import Model.ReorderRecommendation;
+import com.petshop.model.InventoryAgingSnapshot;
+import com.petshop.model.InventoryBatch;
+import com.petshop.model.ProductAdminInventoryView;
+import com.petshop.model.ReorderRecommendation;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;

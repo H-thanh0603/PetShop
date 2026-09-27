@@ -24,7 +24,7 @@ import DAO.OrderDAO;
 import DAO.OrderSignDAO;
 import DAO.OrderSignatureDAO;
 import DAO.UserDAO;
-import Model.User;
+import com.petshop.model.User;
 
 @ExtendWith(MockitoExtension.class)
 class AccountControllerTest {

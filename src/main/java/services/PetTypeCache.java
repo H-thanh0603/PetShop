@@ -1,6 +1,6 @@
 package services;
 
-import Model.PetType;
+import com.petshop.model.PetType;
 
 import java.util.Collections;
 import java.util.List;

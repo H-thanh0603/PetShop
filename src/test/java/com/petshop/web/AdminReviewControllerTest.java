@@ -23,8 +23,8 @@ import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
 import DAO.AdminActionLogDAO;
 import DAO.ReviewDAO;
-import Model.Review;
-import Model.User;
+import com.petshop.model.Review;
+import com.petshop.model.User;
 
 @ExtendWith(MockitoExtension.class)
 class AdminReviewControllerTest {

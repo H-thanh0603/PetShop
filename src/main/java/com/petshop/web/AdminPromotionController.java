@@ -14,8 +14,8 @@ import org.springframework.web.bind.annotation.RequestParam;
 
 import DAO.ProductDAO;
 import DAO.PromotionDAO;
-import Model.Product;
-import Model.Promotion;
+import com.petshop.model.Product;
+import com.petshop.model.Promotion;
 import com.petshop.util.ValidationUtil;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpSession;

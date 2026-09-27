@@ -1,6 +1,6 @@
 package services.ai;
 
-import Model.AiChatMessage;
+import com.petshop.model.AiChatMessage;
 import org.junit.jupiter.api.Test;
 import services.ai.common.Fence;
 import services.ai.common.SessionStateStore;

@@ -28,7 +28,7 @@ import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import DAO.AdminActionLogDAO;
 import DAO.OrderDAO;
 import DAO.UserDAO;
-import Model.User;
+import com.petshop.model.User;
 
 @ExtendWith(MockitoExtension.class)
 class AdminUserControllerTest {

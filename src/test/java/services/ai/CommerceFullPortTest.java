@@ -1,6 +1,6 @@
 package services.ai;
 
-import Model.Product;
+import com.petshop.model.Product;
 import org.junit.jupiter.api.Test;
 import services.ai.common.AppEventBus;
 import services.ai.common.Cards;

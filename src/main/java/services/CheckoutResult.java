@@ -1,6 +1,6 @@
 package services;
 
-import Model.PaymentTransaction;
+import com.petshop.model.PaymentTransaction;
 
 import java.math.BigDecimal;
 

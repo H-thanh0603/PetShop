@@ -1,7 +1,7 @@
 package DAO;
 
 import com.petshop.context.DBContext;
-import Model.AiChatSession;
+import com.petshop.model.AiChatSession;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

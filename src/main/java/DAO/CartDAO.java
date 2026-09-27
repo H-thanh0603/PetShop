@@ -8,8 +8,8 @@ import java.sql.ResultSet;
 import java.util.HashMap;
 import java.util.Map;
 import com.petshop.context.DBContext;
-import Model.CartItem;
-import Model.Product;
+import com.petshop.model.CartItem;
+import com.petshop.model.Product;
 
 public class CartDAO {
 

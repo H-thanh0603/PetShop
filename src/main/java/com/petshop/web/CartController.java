@@ -14,9 +14,9 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 
 import DAO.CartDAO;
-import Model.CartItem;
-import Model.Product;
-import Model.User;
+import com.petshop.model.CartItem;
+import com.petshop.model.Product;
+import com.petshop.model.User;
 import com.petshop.util.Json;
 import jakarta.servlet.http.HttpSession;
 import services.InventoryService;

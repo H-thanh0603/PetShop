@@ -1,7 +1,7 @@
 package DAO;
 
 import com.petshop.context.DBContext;
-import Model.Coupon;
+import com.petshop.model.Coupon;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

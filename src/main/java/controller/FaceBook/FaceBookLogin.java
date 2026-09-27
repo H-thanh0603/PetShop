@@ -1,6 +1,6 @@
 package controller.FaceBook;
 import com.petshop.constant.IConstant;
-import Model.FbAccount.Account;
+import com.petshop.model.FbAccount.Account;
 import com.petshop.util.Json;
 import com.petshop.util.SecretConfig;
 import com.petshop.util.SocialAuthUtil;

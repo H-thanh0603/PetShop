@@ -10,8 +10,8 @@ import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.node.ArrayNode;
 import tools.jackson.databind.node.ObjectNode;
 
-import Model.Order;
-import Model.OrderItem;
+import com.petshop.model.Order;
+import com.petshop.model.OrderItem;
 
 import java.io.IOException;
 import java.net.URI;

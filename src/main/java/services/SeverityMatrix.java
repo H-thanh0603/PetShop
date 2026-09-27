@@ -1,7 +1,7 @@
 package services;
 
-import Model.Priority;
-import Model.Severity;
+import com.petshop.model.Priority;
+import com.petshop.model.Severity;
 
 /**
  * Computes audit finding severity and remediation priority from impact and likelihood.
@@ -66,7 +66,7 @@ public final class SeverityMatrix {
     // ── Severity calculation ──────────────────────────────────────────────────
 
     /**
-     * Computes the {@link Model.Severity} for a finding given its impact and likelihood.
+     * Computes the {@link com.petshop.model.Severity} for a finding given its impact and likelihood.
      *
      * <p>The matrix is defined as follows:</p>
      * <ul>
@@ -81,7 +81,7 @@ public final class SeverityMatrix {
      *
      * @param impact      the potential impact of the finding (must not be {@code null})
      * @param likelihood  the likelihood of the finding being triggered (must not be {@code null})
-     * @return the computed {@link Model.Severity}
+     * @return the computed {@link com.petshop.model.Severity}
      * @throws NullPointerException if either argument is {@code null}
      */
     public static Severity calculate(Impact impact, Likelihood likelihood) {

@@ -12,8 +12,8 @@ import org.springframework.web.bind.annotation.RequestParam;
 
 import DAO.AdminActionLogDAO;
 import DAO.ReviewDAO;
-import Model.Review;
-import Model.User;
+import com.petshop.model.Review;
+import com.petshop.model.User;
 import com.petshop.util.ValidationUtil;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpSession;

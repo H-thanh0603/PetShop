@@ -18,7 +18,7 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
 import DAO.PromotionDAO;
-import Model.Product;
+import com.petshop.model.Product;
 
 @ExtendWith(MockitoExtension.class)
 class PageControllerTest {

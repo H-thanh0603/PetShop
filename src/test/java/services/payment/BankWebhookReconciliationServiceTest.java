@@ -5,8 +5,8 @@ import DAO.BankWebhookEventDAO;
 import DAO.OrderLogDAO;
 import DAO.OrderDAO;
 import DAO.PaymentTransactionDAO;
-import Model.BankWebhookEvent;
-import Model.PaymentTransaction;
+import com.petshop.model.BankWebhookEvent;
+import com.petshop.model.PaymentTransaction;
 import org.junit.jupiter.api.Test;
 import org.mockito.MockedStatic;
 

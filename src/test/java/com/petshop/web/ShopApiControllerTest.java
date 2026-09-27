@@ -23,8 +23,8 @@ import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import DAO.OrderDAO;
 import DAO.PaymentTransactionDAO;
 import DAO.ProductDAO;
-import Model.Product;
-import Model.User;
+import com.petshop.model.Product;
+import com.petshop.model.User;
 
 @ExtendWith(MockitoExtension.class)
 class ShopApiControllerTest {
@@ -70,7 +70,7 @@ class ShopApiControllerTest {
 
     @Test
     void vnpayMismatchedAmountDoesNotMarkOrderPaid() throws Exception {
-        Model.Order order = new Model.Order();
+        com.petshop.model.Order order = new com.petshop.model.Order();
         order.setId(456);
         order.setTotalAmount(new BigDecimal("258000"));
         when(orderDAO.getOrderById(456)).thenReturn(order);
@@ -95,7 +95,7 @@ class ShopApiControllerTest {
 
     @Test
     void vnpaySuccessMarksOrderPaid() throws Exception {
-        Model.Order order = new Model.Order();
+        com.petshop.model.Order order = new com.petshop.model.Order();
         order.setId(456);
         order.setTotalAmount(new BigDecimal("258000"));
         when(orderDAO.getOrderById(456)).thenReturn(order);

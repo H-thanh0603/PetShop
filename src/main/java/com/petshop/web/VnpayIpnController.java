@@ -16,7 +16,7 @@ import org.springframework.web.bind.annotation.ResponseBody;
 
 import DAO.OrderDAO;
 import DAO.PaymentTransactionDAO;
-import Model.Order;
+import com.petshop.model.Order;
 import com.petshop.util.Json;
 import com.petshop.util.VnpayConfig;
 import com.petshop.util.VnpayUtil;

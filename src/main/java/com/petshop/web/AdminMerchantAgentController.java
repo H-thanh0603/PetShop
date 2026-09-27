@@ -19,7 +19,7 @@ import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.node.ArrayNode;
 import tools.jackson.databind.node.ObjectNode;
 
-import Model.User;
+import com.petshop.model.User;
 import com.petshop.util.Json;
 import jakarta.servlet.http.HttpSession;
 import services.ai.common.AppEventBus;

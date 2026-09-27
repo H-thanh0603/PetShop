@@ -2,9 +2,9 @@ package services;
 
 import DAO.CartDAO;
 import DAO.OrderDAO;
-import Model.Order;
-import Model.OrderItem;
-import Model.Product;
+import com.petshop.model.Order;
+import com.petshop.model.OrderItem;
+import com.petshop.model.Product;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;

@@ -23,8 +23,8 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
 import DAO.CartDAO;
-import Model.CartItem;
-import Model.Product;
+import com.petshop.model.CartItem;
+import com.petshop.model.Product;
 import services.InventoryService;
 
 @ExtendWith(MockitoExtension.class)

@@ -8,12 +8,12 @@ import DAO.OrderDAO;
 import DAO.PaymentTransactionDAO;
 import DAO.ProductDAO;
 import DAO.UserDAO;
-import Model.CartItem;
-import Model.CouponValidationResult;
-import Model.Order;
-import Model.PaymentTransaction;
-import Model.Product;
-import Model.User;
+import com.petshop.model.CartItem;
+import com.petshop.model.CouponValidationResult;
+import com.petshop.model.Order;
+import com.petshop.model.PaymentTransaction;
+import com.petshop.model.Product;
+import com.petshop.model.User;
 import org.junit.jupiter.api.Test;
 import org.mockito.MockedStatic;
 
@@ -191,7 +191,7 @@ class CheckoutServiceInventoryBatchTest {
         cartProduct.setId(11);
         cartProduct.setPrice(new BigDecimal("80000"));
 
-        Model.Coupon coupon = new Model.Coupon();
+        com.petshop.model.Coupon coupon = new com.petshop.model.Coupon();
         coupon.setId(3);
         coupon.setCode("SAVE20K");
         coupon.setDiscountType("fixed");
@@ -492,7 +492,7 @@ class CheckoutServiceInventoryBatchTest {
             assertTrue(result.isSuccess());
         }
 
-        ArgumentCaptor<Model.OrderItem> itemCaptor = ArgumentCaptor.forClass(Model.OrderItem.class);
+        ArgumentCaptor<com.petshop.model.OrderItem> itemCaptor = ArgumentCaptor.forClass(com.petshop.model.OrderItem.class);
         verify(orderDAO).saveOrderItem(eq(conn), itemCaptor.capture());
         assertEquals("Pate meo snapshot", itemCaptor.getValue().getProductNameSnapshot());
         assertEquals("pate.jpg", itemCaptor.getValue().getProductImageSnapshot());

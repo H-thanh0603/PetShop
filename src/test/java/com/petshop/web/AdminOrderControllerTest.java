@@ -29,8 +29,8 @@ import tools.jackson.databind.node.ObjectNode;
 import DAO.AdminActionLogDAO;
 import DAO.NotificationDAO;
 import DAO.OrderDAO;
-import Model.Order;
-import Model.User;
+import com.petshop.model.Order;
+import com.petshop.model.User;
 import com.petshop.util.Json;
 import services.ShippingService;
 

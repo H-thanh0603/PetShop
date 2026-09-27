@@ -1,7 +1,7 @@
 package controller.Google;
 
 import com.petshop.constant.IConstant;
-import Model.GgAccount.GoogleAccount;
+import com.petshop.model.GgAccount.GoogleAccount;
 import com.petshop.util.Json;
 import com.petshop.util.SecretConfig;
 import com.petshop.util.SocialAuthUtil;

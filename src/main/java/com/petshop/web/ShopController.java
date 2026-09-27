@@ -13,10 +13,10 @@ import org.springframework.web.bind.annotation.RequestParam;
 import DAO.PetTypeDAO;
 import DAO.ProductDAO;
 import DAO.WishlistDAO;
-import Model.PetType;
-import Model.Product;
-import Model.ProductFilterCriteria;
-import Model.User;
+import com.petshop.model.PetType;
+import com.petshop.model.Product;
+import com.petshop.model.ProductFilterCriteria;
+import com.petshop.model.User;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpSession;
 

@@ -17,10 +17,10 @@ import DAO.AiChatSessionDAO;
 import DAO.AiSupportSettingDAO;
 import DAO.CustomerSupportKnowledgeDAO;
 import DAO.NotificationDAO;
-import Model.AiChatMessage;
-import Model.AiChatSession;
-import Model.CustomerSupportKnowledge;
-import Model.User;
+import com.petshop.model.AiChatMessage;
+import com.petshop.model.AiChatSession;
+import com.petshop.model.CustomerSupportKnowledge;
+import com.petshop.model.User;
 import com.petshop.util.Json;
 import jakarta.servlet.http.HttpSession;
 

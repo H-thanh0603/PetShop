@@ -1,9 +1,9 @@
 package services.ai;
 
-import Model.CustomerSupportKnowledge;
-import Model.Order;
-import Model.OrderItem;
-import Model.Product;
+import com.petshop.model.CustomerSupportKnowledge;
+import com.petshop.model.Order;
+import com.petshop.model.OrderItem;
+import com.petshop.model.Product;
 import com.petshop.util.Json;
 import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.node.ArrayNode;

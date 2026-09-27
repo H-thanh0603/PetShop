@@ -1,0 +1,103 @@
+package com.petshop.model;
+
+import java.math.BigDecimal;
+import java.sql.Timestamp;
+
+public class User {
+    private int id;
+    private String username;
+    private String password;
+    private String fullname;
+    private String email;
+    private String phone;
+    private String address;
+    private String role;
+    private boolean status; // active, inactive, locked
+    private boolean discountUsed;
+    private Timestamp createdAt;
+    
+    // Brute-force protection
+    private int failedLoginAttempts;
+    private java.sql.Timestamp lockedUntil;
+    
+    // Thống kê
+    private int orderCount;
+    private BigDecimal totalSpent = BigDecimal.ZERO;
+
+    public User() {}
+
+    public User(int id, String username, String password, String fullname, String email, String role, String phone, String address) {
+        this.id = id;
+        this.username = username;
+        this.password = password;
+        this.fullname = fullname;
+        this.email = email;
+        this.role = role;
+        this.status = true;
+        this.discountUsed = false;
+        this.phone = phone;
+        this.address = address;
+    }
+    
+    // Constructor đầy đủ
+    public User(int id, String username, String password, String fullname, String email, 
+                String phone, String address, String role, Timestamp createdAt) {
+        this.id = id;
+        this.username = username;
+        this.password = password;
+        this.fullname = fullname;
+        this.email = email;
+        this.phone = phone;
+        this.address = address;
+        this.role = role;
+        this.createdAt = createdAt;
+        this.status = true;
+        this.discountUsed = false;
+    }
+
+    // Getters and Setters
+    public int getId() { return id; }
+    public void setId(int id) { this.id = id; }
+
+    public String getUsername() { return username; }
+    public void setUsername(String username) { this.username = username; }
+
+    public String getPassword() { return password; }
+    public void setPassword(String password) { this.password = password; }
+
+    public String getFullname() { return fullname; }
+    public void setFullname(String fullname) { this.fullname = fullname; }
+
+    public String getEmail() { return email; }
+    public void setEmail(String email) { this.email = email; }
+    
+    public String getPhone() { return phone; }
+    public void setPhone(String phone) { this.phone = phone; }
+    
+    public String getAddress() { return address; }
+    public void setAddress(String address) { this.address = address; }
+
+    public String getRole() { return role; }
+    public void setRole(String role) { this.role = role; }
+    
+    public boolean getStatus() { return status; }
+    public void setStatus(boolean status) { this.status = status; }
+
+    public boolean isDiscountUsed() { return discountUsed; }
+    public void setDiscountUsed(boolean discountUsed) { this.discountUsed = discountUsed; }
+    
+    public Timestamp getCreatedAt() { return createdAt; }
+    public void setCreatedAt(Timestamp createdAt) { this.createdAt = createdAt; }
+    
+    public int getOrderCount() { return orderCount; }
+    public void setOrderCount(int orderCount) { this.orderCount = orderCount; }
+    
+    public BigDecimal getTotalSpent() { return totalSpent; }
+    public void setTotalSpent(BigDecimal totalSpent) { this.totalSpent = totalSpent != null ? totalSpent : BigDecimal.ZERO; }
+    
+    public int getFailedLoginAttempts() { return failedLoginAttempts; }
+    public void setFailedLoginAttempts(int failedLoginAttempts) { this.failedLoginAttempts = failedLoginAttempts; }
+    
+    public java.sql.Timestamp getLockedUntil() { return lockedUntil; }
+    public void setLockedUntil(java.sql.Timestamp lockedUntil) { this.lockedUntil = lockedUntil; }
+}
