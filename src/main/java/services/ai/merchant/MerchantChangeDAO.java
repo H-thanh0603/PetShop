@@ -74,14 +74,18 @@ public class MerchantChangeDAO {
                     StagedChange.Kind kind = StagedChange.Kind.valueOf(rs.getString(2));
                     List<StagedChange.Item> items = new ArrayList<>();
                     JsonNode parsed = Json.MAPPER.readTree(rs.getString(4));
-                    if (parsed.isArray()) {
-                        for (JsonNode el : parsed) {
-                            items.add(new StagedChange.Item(
-                                    el.has("target") && !el.path("target").isNull() ? el.path("target").asString() : "",
-                                    el.has("field") && !el.path("field").isNull() ? el.path("field").asString() : "",
-                                    el.has("before") && !el.path("before").isNull() ? el.path("before").asString() : "",
-                                    el.has("after") && !el.path("after").isNull() ? el.path("after").asString() : ""));
-                        }
+                    // Strict like Gson (review fix): non-array items_json threw
+                    // (getAsJsonArray) → row dropped; non-object items threw
+                    // (getAsJsonObject) → row dropped; explicit-null fields threw
+                    // (getAsString) → row dropped. Missing fields stay "".
+                    if (!parsed.isArray()) continue;
+                    for (JsonNode el : parsed) {
+                        if (!el.isObject()) throw new IllegalArgumentException("not an object");
+                        items.add(new StagedChange.Item(
+                                !el.has("target") ? "" : gsonString(el.path("target")),
+                                !el.has("field") ? "" : gsonString(el.path("field")),
+                                !el.has("before") ? "" : gsonString(el.path("before")),
+                                !el.has("after") ? "" : gsonString(el.path("after"))));
                     }
                     String notes = rs.getString(6);
                     StagedChange change = new StagedChange(rs.getString(1), kind,
@@ -157,5 +161,17 @@ public class MerchantChangeDAO {
             arr.add(o);
         }
         return arr.toString();
+    }
+
+    /**
+     * Mirrors Gson {@code JsonElement.getAsString}: JSON primitives stringify,
+     * but missing / explicit null / objects / arrays throw so corrupt rows are
+     * dropped exactly like the Gson code did.
+     */
+    private static String gsonString(JsonNode n) {
+        if (n == null || n.isMissingNode() || n.isNull() || n.isObject() || n.isArray()) {
+            throw new IllegalArgumentException("not a JSON primitive");
+        }
+        return n.asString();
     }
 }

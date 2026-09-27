@@ -165,16 +165,31 @@ public class AnthropicProvider implements AiProvider {
             }
             StringBuilder text = new StringBuilder();
             List<ToolCall> calls = new ArrayList<>();
+            // Strict like Gson: missing content → skip (getAsJsonArray returned
+            // null); present-but-not-array, non-object blocks, explicit-null
+            // text, or missing id/name all threw → BAD_RESPONSE.
             JsonNode content = res.path("content");
-            if (content.isArray()) {
+            if (!content.isMissingNode()) {
+                if (!content.isArray()) {
+                    throw new AiException(AiException.Kind.BAD_RESPONSE, "anthropic",
+                            "Unparsable Anthropic response", null);
+                }
                 for (JsonNode block : content) {
-                    String type = block.has("type") ? block.path("type").asString() : "";
-                    if ("text".equals(type) && block.has("text") && !block.path("text").isNull()) {
-                        text.append(block.path("text").asString());
+                    if (!block.isObject()) {
+                        throw new AiException(AiException.Kind.BAD_RESPONSE, "anthropic",
+                                "Unparsable Anthropic response", null);
+                    }
+                    String type = block.has("type") ? gsonString(block.path("type")) : "";
+                    if ("text".equals(type) && block.has("text")) {
+                        text.append(gsonString(block.path("text")));
                     } else if ("tool_use".equals(type)) {
+                        if (!block.has("id") || !block.has("name")) {
+                            throw new AiException(AiException.Kind.BAD_RESPONSE, "anthropic",
+                                    "Unparsable Anthropic response", null);
+                        }
                         calls.add(new ToolCall(
-                                block.path("id").asString(),
-                                block.path("name").asString(),
+                                gsonString(block.path("id")),
+                                gsonString(block.path("name")),
                                 Json.MAPPER.writeValueAsString(block.path("input"))));
                     }
                 }
@@ -193,5 +208,17 @@ public class AnthropicProvider implements AiProvider {
             throw new AiException(AiException.Kind.BAD_RESPONSE, "anthropic",
                     "Unparsable Anthropic response", e);
         }
+    }
+
+    /**
+     * Mirrors Gson {@code JsonElement.getAsString}: JSON primitives stringify,
+     * but missing / explicit null / objects / arrays throw so the caller wraps
+     * them into BAD_RESPONSE exactly like the Gson code did.
+     */
+    private static String gsonString(JsonNode n) {
+        if (n == null || n.isMissingNode() || n.isNull() || n.isObject() || n.isArray()) {
+            throw new IllegalArgumentException("not a JSON primitive");
+        }
+        return n.asString();
     }
 }

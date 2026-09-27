@@ -77,17 +77,21 @@ public class MerchantAgent {
                             fr.usedProvider(), fr.usedModel(), requestId, toolMs);
                     request.getMessages().add(AiMessage.toolResult(tc.getId(), tc.getName(), result));
                     // Attach change preview cards for staged changes.
+                    // Strict like Gson (review fix): non-object bodies, corrupt
+                    // changeId/kind/summary (explicit null threw via getAsString)
+                    // and non-array items (getAsJsonArray threw) produced NO card.
                     try {
                         JsonNode parsed = Json.MAPPER.readTree(result);
-                        if (parsed.isObject() && parsed.has("changeId") && parsed.has("kind")) {
+                        if (!parsed.isObject()) continue;
+                        if (parsed.has("changeId") && parsed.has("kind")) {
+                            JsonNode items = parsed.has("items")
+                                    ? parsed.path("items") : Json.MAPPER.createArrayNode();
+                            if (!items.isArray()) continue;
                             cards.add(Cards.changePreviewCard(
-                                    parsed.path("changeId").asString(),
-                                    parsed.path("kind").asString(),
-                                    parsed.has("summary") && !parsed.path("summary").isNull()
-                                            ? parsed.path("summary").asString() : "",
-                                    parsed.path("items").isArray()
-                                            ? (ArrayNode) parsed.path("items")
-                                            : Json.MAPPER.createArrayNode(),
+                                    gsonString(parsed.path("changeId")),
+                                    gsonString(parsed.path("kind")),
+                                    parsed.has("summary") ? gsonString(parsed.path("summary")) : "",
+                                    (ArrayNode) items,
                                     List.of("Staged only — approve on "
                                             + MerchantConfig.approvalSurface())));
                         }
@@ -143,6 +147,18 @@ public class MerchantAgent {
             sb.append("(digest partially unavailable: ").append(e.getMessage()).append(")\n");
         }
         return sb.toString();
+    }
+
+    /**
+     * Mirrors Gson {@code JsonElement.getAsString}: JSON primitives stringify,
+     * but missing / explicit null / objects / arrays throw so corrupt tool
+     * results produce no card exactly like the Gson code did.
+     */
+    private static String gsonString(JsonNode n) {
+        if (n == null || n.isMissingNode() || n.isNull() || n.isObject() || n.isArray()) {
+            throw new IllegalArgumentException("not a JSON primitive");
+        }
+        return n.asString();
     }
 
     private String buildSystemPrompt() {

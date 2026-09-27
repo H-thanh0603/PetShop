@@ -2,7 +2,6 @@ package services.ai;
 
 import Util.AppConfig;
 import Util.Json;
-import tools.jackson.core.JacksonException;
 import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.node.ArrayNode;
 import tools.jackson.databind.node.ObjectNode;
@@ -261,12 +260,20 @@ public class OpenAiCompatibleProvider implements AiProvider {
             List<ToolCall> calls = new ArrayList<>();
             if (msg.path("tool_calls").isArray()) {
                 for (JsonNode t : msg.path("tool_calls")) {
+                    // Strict like Gson (review fix): non-object entries or a
+                    // non-object/missing function threw (getAsJsonObject / NPE
+                    // on get("name")) → BAD_RESPONSE. The brief's guard covers
+                    // only choices/message; tool_calls keeps the old outcome.
+                    if (!t.isObject() || !t.path("function").isObject()) {
+                        throw new AiException(AiException.Kind.BAD_RESPONSE, name,
+                                "Unparsable response from '" + name + "'", null);
+                    }
                     JsonNode fn = t.path("function");
                     calls.add(new ToolCall(
-                            t.has("id") ? t.path("id").asString() : UUID.randomUUID().toString(),
-                            fn.path("name").asString(),
+                            t.has("id") ? gsonString(t.path("id")) : UUID.randomUUID().toString(),
+                            gsonString(fn.path("name")),
                             fn.has("arguments") && !fn.path("arguments").isNull()
-                                    ? fn.path("arguments").asString() : "{}"));
+                                    ? gsonString(fn.path("arguments")) : "{}"));
                 }
             }
             Integer promptTokens = null, completionTokens = null;
@@ -278,10 +285,24 @@ public class OpenAiCompatibleProvider implements AiProvider {
             String respModel = res.has("model") ? res.path("model").asString() : model;
             return new ChatResponse(content, calls, respModel, name, requestId, latency,
                     promptTokens, completionTokens);
-        } catch (JacksonException e) {
+        } catch (AiException e) {
+            throw e;
+        } catch (RuntimeException e) {
             throw new AiException(AiException.Kind.BAD_RESPONSE, name,
                     "Unparsable response from '" + name + "'", e);
         }
+    }
+
+    /**
+     * Mirrors Gson {@code JsonElement.getAsString}: JSON primitives stringify,
+     * but missing / explicit null / objects / arrays throw so the caller wraps
+     * them into BAD_RESPONSE exactly like the Gson code did.
+     */
+    private static String gsonString(JsonNode n) {
+        if (n == null || n.isMissingNode() || n.isNull() || n.isObject() || n.isArray()) {
+            throw new IllegalArgumentException("not a JSON primitive");
+        }
+        return n.asString();
     }
 
     /** OpenRouter-style "provider/model" prefixes must not be sent to native endpoints. */

@@ -217,9 +217,11 @@ public class CommerceAgent {
             String answer = o.has("answer") && !o.path("answer").isNull()
                     ? o.path("answer").asString() : null;
             if (answer == null || answer.isBlank()) throw new IllegalArgumentException("missing answer");
-            String intent = o.has("intent") && !o.path("intent").isNull()
-                    ? o.path("intent").asString() : "UNKNOWN";
-            double conf = o.has("confidence") ? o.path("confidence").asDouble() : 0.7;
+            // Strict like Gson: present-but-null/container intent or confidence threw
+            // (getAsString/getAsDouble) → whole turn fell back. Coercion must not
+            // turn those into a continued model answer.
+            String intent = o.has("intent") ? gsonString(o.path("intent")) : "UNKNOWN";
+            double conf = o.has("confidence") ? gsonDouble(o.path("confidence")) : 0.7;
             boolean needAdmin = o.has("needAdminSupport") && o.path("needAdminSupport").asBoolean();
             String note = o.has("suggestedAdminNote") && !o.path("suggestedAdminNote").isNull()
                     ? o.path("suggestedAdminNote").asString() : "";
@@ -309,4 +311,26 @@ public class CommerceAgent {
     }
 
     private static String nullSafe(String s) { return s == null ? "" : s; }
+
+    /**
+     * Mirrors Gson {@code JsonElement.getAsString} for strict fields: JSON
+     * primitives stringify, but explicit null / objects / arrays throw so the
+     * caller routes to fallback exactly like the Gson code did.
+     */
+    private static String gsonString(JsonNode n) {
+        if (n == null || n.isMissingNode() || n.isNull() || n.isObject() || n.isArray()) {
+            throw new IllegalArgumentException("not a JSON primitive");
+        }
+        return n.asString();
+    }
+
+    /** Mirrors Gson {@code getAsDouble}: numbers and numeric strings parse, everything else throws. */
+    private static double gsonDouble(JsonNode n) {
+        if (n == null || n.isMissingNode() || n.isNull() || n.isObject() || n.isArray()) {
+            throw new IllegalArgumentException("not a JSON number");
+        }
+        if (n.isNumber()) return n.asDouble();
+        if (n.isTextual()) return Double.parseDouble(n.asString());
+        throw new IllegalArgumentException("not a JSON number");
+    }
 }
