@@ -1,14 +1,31 @@
 package com.petshop.model;
 
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.Table;
 import java.sql.Timestamp;
 
+@Entity
+@Table(name = "customer_support_knowledge")
 public class CustomerSupportKnowledge {
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "id")
     private int id;
+    @Column(name = "title", nullable = false)
     private String title;
+    @Column(name = "category", nullable = false, length = 50)
     private String category;
+    @Column(name = "content", nullable = false, columnDefinition = "TEXT")
     private String content;
+    @Column(name = "is_active")
     private boolean isActive;
+    @Column(name = "created_at", insertable = false, updatable = false)
     private Timestamp createdAt;
+    @Column(name = "updated_at", insertable = false, updatable = false)
     private Timestamp updatedAt;
 
     public CustomerSupportKnowledge() {}
