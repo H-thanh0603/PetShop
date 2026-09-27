@@ -1,7 +1,17 @@
 package com.petshop.model;
 
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.Table;
 import java.sql.Timestamp;
 
+@Entity
+@Table(name = "order_signatures")
 public class OrderSignature {
 
     public enum VerifyStatus {
@@ -10,13 +20,24 @@ public class OrderSignature {
         failed
     }
 
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "id")
     private int id;
+    @Column(name = "order_id", nullable = false)
     private int orderId;
+    @Column(name = "user_id", nullable = false)
     private int userId;
+    @Column(name = "signature", nullable = false, columnDefinition = "TEXT")
     private String signature;
+    @Enumerated(EnumType.STRING)
+    @Column(name = "verify_status", nullable = false, length = 20)
     private VerifyStatus verifyStatus;
+    @Column(name = "verify_message", columnDefinition = "TEXT")
     private String verifyMessage;
+    @Column(name = "verified_at")
     private Timestamp verifiedAt;
+    @Column(name = "created_at", insertable = false, updatable = false)
     private Timestamp createdAt;
 
     public OrderSignature() {

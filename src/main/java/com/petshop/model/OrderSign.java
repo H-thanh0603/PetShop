@@ -1,16 +1,34 @@
 package com.petshop.model;
 
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.Table;
 import java.sql.Timestamp;
 
+@Entity
+@Table(name = "order_signs")
 public class OrderSign {
 
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "id")
     private int id;
+    @Column(name = "order_id", nullable = false)
     private int orderId;
+    @Column(name = "user_id", nullable = false)
     private int userId;
+    @Column(name = "order_data", nullable = false, columnDefinition = "TEXT")
     private String orderData;
+    @Column(name = "order_hash", nullable = false, length = 64)
     private String orderHash;
+    @Column(name = "public_key", nullable = false, columnDefinition = "TEXT")
     private String publicKey;
+    @Column(name = "private_key", columnDefinition = "TEXT")
     private String privateKey;
+    @Column(name = "created_at", insertable = false, updatable = false)
     private Timestamp createdAt;
 
     public OrderSign() {

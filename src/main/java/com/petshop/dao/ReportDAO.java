@@ -394,7 +394,7 @@ public class ReportDAO {
         review.setUserName(rs.getString("fullname"));
         review.setRating(rs.getInt("rating"));
         review.setComment(rs.getString("comment"));
-        review.setCreatedAt(rs.getDate("created_at"));
+        review.setCreatedAt(rs.getTimestamp("created_at"));
         return review;
     }
 }
