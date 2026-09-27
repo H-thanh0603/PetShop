@@ -9,6 +9,7 @@ import com.petshop.util.Json;
 import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.node.ArrayNode;
 import tools.jackson.databind.node.ObjectNode;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -39,10 +40,7 @@ public class CommerceAgent {
     private final AiSupportSettingRepository settingDAO;
     private final PetShopCommerceBackend backend;
 
-    public CommerceAgent() {
-        this(null, null);
-    }
-
+    @Autowired
     public CommerceAgent(AiSupportSettingRepository settingDAO, PetShopCommerceBackend backend) {
         this.settingDAO = settingDAO;
         this.backend = backend;

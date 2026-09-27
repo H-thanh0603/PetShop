@@ -33,10 +33,6 @@ public class PetShopCommerceBackend {
         this.knowledgeDAO = knowledgeDAO;
     }
 
-    public PetShopCommerceBackend(CustomerSupportKnowledgeRepository knowledgeDAO) {
-        this(null, knowledgeDAO);
-    }
-
 
     public record SessionContext(Integer userId, boolean guest) {
         public static SessionContext of(User user) {

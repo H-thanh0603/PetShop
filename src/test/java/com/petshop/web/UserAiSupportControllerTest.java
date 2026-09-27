@@ -29,6 +29,7 @@ import com.petshop.repository.AiSupportSettingRepository;
 import com.petshop.model.AiChatSession;
 import com.petshop.model.User;
 import services.DeepSeekService;
+import services.ai.CommerceAgent;
 
 @ExtendWith(MockitoExtension.class)
 class UserAiSupportControllerTest {
@@ -41,13 +42,15 @@ class UserAiSupportControllerTest {
     AiSupportSettingRepository settingDAO;
     @Mock
     DeepSeekService deepSeekService;
+    @Mock
+    CommerceAgent commerceAgent;
 
     MockMvc mockMvc;
 
     @BeforeEach
     void setUp() {
         mockMvc = MockMvcBuilders.standaloneSetup(new UserAiSupportController(
-                sessionDAO, messageDAO, settingDAO, deepSeekService)).build();
+                sessionDAO, messageDAO, settingDAO, deepSeekService, commerceAgent)).build();
     }
 
     @Test

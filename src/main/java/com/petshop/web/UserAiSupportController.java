@@ -32,6 +32,7 @@ import com.petshop.util.Json;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpSession;
 import services.DeepSeekService;
+import services.ai.CommerceAgent;
 
 /**
  * Replaces UserAiSupportServlet (/ai-support/*) 1:1 — same session ownership
@@ -47,14 +48,17 @@ public class UserAiSupportController {
     private final AiChatMessageRepository messageDAO;
     private final AiSupportSettingRepository settingDAO;
     private final DeepSeekService deepSeekService;
+    private final CommerceAgent commerceAgent;
 
     @Autowired
     public UserAiSupportController(AiChatSessionRepository sessionDAO, AiChatMessageRepository messageDAO,
-                                   AiSupportSettingRepository settingDAO, DeepSeekService deepSeekService) {
+                                   AiSupportSettingRepository settingDAO, DeepSeekService deepSeekService,
+                                   CommerceAgent commerceAgent) {
         this.sessionDAO = sessionDAO;
         this.messageDAO = messageDAO;
         this.settingDAO = settingDAO;
         this.deepSeekService = deepSeekService;
+        this.commerceAgent = commerceAgent;
     }
 
 
@@ -414,7 +418,7 @@ public class UserAiSupportController {
                 List<AiChatMessage> history = messageDAO.getRecentMessagesBySessionId(resolvedSessionId, 10);
                 if (!history.isEmpty()) history.remove(history.size() - 1);
 
-                services.ai.CommerceAgent agent = new services.ai.CommerceAgent();
+                CommerceAgent agent = commerceAgent;
                 services.ai.CommerceAgent.AgentResult result;
                 try {
                     result = agent.run(resolvedMessage, history, user);
