@@ -12,8 +12,6 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 
-import com.google.gson.Gson;
-
 import DAO.AiChatMessageDAO;
 import DAO.AiChatSessionDAO;
 import DAO.AiSupportSettingDAO;
@@ -23,6 +21,7 @@ import Model.AiChatMessage;
 import Model.AiChatSession;
 import Model.CustomerSupportKnowledge;
 import Model.User;
+import Util.Json;
 import jakarta.servlet.http.HttpSession;
 
 /**
@@ -39,7 +38,6 @@ public class AdminAiSupportController {
     private final CustomerSupportKnowledgeDAO knowledgeDAO;
     private final AiSupportSettingDAO settingDAO;
     private final NotificationDAO notificationDAO;
-    private final Gson gson = new Gson();
 
     public AdminAiSupportController() {
         this(new AiChatSessionDAO(), new AiChatMessageDAO(),
@@ -114,7 +112,7 @@ public class AdminAiSupportController {
         data.put("answeredByAI", answeredByAI);
         data.put("topIntents", topIntents);
 
-        return gson.toJson(data);
+        return Json.MAPPER.writeValueAsString(data);
     }
 
     @GetMapping(value = "/admin/ai-support/sessions", produces = "application/json;charset=UTF-8")
@@ -141,7 +139,7 @@ public class AdminAiSupportController {
             map.put("lastMessage", lastMsg);
             list.add(map);
         }
-        return gson.toJson(list);
+        return Json.MAPPER.writeValueAsString(list);
     }
 
     @GetMapping(value = "/admin/ai-support/sessions/detail", produces = "application/json;charset=UTF-8")
@@ -150,7 +148,7 @@ public class AdminAiSupportController {
         if (sessIdStr != null && !sessIdStr.isEmpty()) {
             int sessionId = Integer.parseInt(sessIdStr);
             List<AiChatMessage> messages = messageDAO.getMessagesBySessionId(sessionId);
-            return gson.toJson(messages);
+            return Json.MAPPER.writeValueAsString(messages);
         }
         return "[]";
     }
@@ -159,14 +157,26 @@ public class AdminAiSupportController {
     @ResponseBody
     public String knowledge() {
         List<CustomerSupportKnowledge> list = knowledgeDAO.getAll();
-        return gson.toJson(list);
+        List<Map<String, Object>> items = new ArrayList<>();
+        for (CustomerSupportKnowledge k : list) {
+            Map<String, Object> item = new HashMap<>();
+            item.put("id", k.getId());
+            item.put("title", k.getTitle());
+            item.put("category", k.getCategory());
+            item.put("content", k.getContent());
+            item.put("isActive", k.isActive());
+            item.put("createdAt", k.getCreatedAt());
+            item.put("updatedAt", k.getUpdatedAt());
+            items.add(item);
+        }
+        return Json.MAPPER.writeValueAsString(items);
     }
 
     @GetMapping(value = "/admin/ai-support/settings", produces = "application/json;charset=UTF-8")
     @ResponseBody
     public String settings() {
         Map<String, String> map = settingDAO.getAllSettings();
-        return gson.toJson(map);
+        return Json.MAPPER.writeValueAsString(map);
     }
 
     @PostMapping(value = "/admin/ai-support/sessions/reply", produces = "application/json;charset=UTF-8")

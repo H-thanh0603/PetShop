@@ -19,8 +19,6 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 
-import com.google.gson.Gson;
-
 import Context.DBContext;
 import DAO.OrderDAO;
 import DAO.PaymentTransactionDAO;
@@ -31,6 +29,7 @@ import Model.PaymentTransaction;
 import Model.Product;
 import Model.Review;
 import Model.User;
+import Util.Json;
 import Util.ValidationUtil;
 import Util.VnpayUtil;
 import jakarta.servlet.http.HttpServletRequest;
@@ -46,7 +45,6 @@ public class ShopApiController {
     private final ProductDAO productDAO;
     private final OrderDAO orderDAO;
     private final PaymentTransactionDAO paymentTransactionDAO;
-    private final Gson gson = new Gson();
     private static final Logger logger = LoggerFactory.getLogger(ShopApiController.class);
 
     public ShopApiController() {
@@ -86,7 +84,7 @@ public class ShopApiController {
             results.add(item);
         }
 
-        return gson.toJson(results);
+        return Json.MAPPER.writeValueAsString(results);
     }
 
     @GetMapping("/vnpay-return")

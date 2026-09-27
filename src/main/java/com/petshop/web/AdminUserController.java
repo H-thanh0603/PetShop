@@ -15,13 +15,12 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 
-import com.google.gson.Gson;
-
 import DAO.AdminActionLogDAO;
 import DAO.OrderDAO;
 import DAO.UserDAO;
 import Model.Order;
 import Model.User;
+import Util.Json;
 import Util.PasswordUtil;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpSession;
@@ -39,7 +38,6 @@ public class AdminUserController {
     private final UserDAO userDAO;
     private final OrderDAO orderDAO;
     private final AdminActionLogDAO actionLog;
-    private final Gson gson = new Gson();
 
     public AdminUserController() {
         this(new UserDAO(), new OrderDAO(), new AdminActionLogDAO());
@@ -96,7 +94,7 @@ public class AdminUserController {
             @RequestParam(value = "action", required = false) String action,
             @RequestParam(value = "userId", required = false) String userIdStr) {
         if (userIdStr == null || userIdStr.isEmpty()) {
-            return gson.toJson(Map.of("error", "Missing userId"));
+            return Json.MAPPER.writeValueAsString(Map.of("error", "Missing userId"));
         }
 
         try {
@@ -117,11 +115,11 @@ public class AdminUserController {
                     orderData.put("createdAt", o.getCreatedAt() != null ? sdf.format(o.getCreatedAt()) : "");
                     orderList.add(orderData);
                 }
-                return gson.toJson(orderList);
+                return Json.MAPPER.writeValueAsString(orderList);
             }
-            return gson.toJson(Map.of("error", "Invalid action"));
+            return Json.MAPPER.writeValueAsString(Map.of("error", "Invalid action"));
         } catch (Exception e) {
-            return gson.toJson(Map.of("error", "An error occurred"));
+            return Json.MAPPER.writeValueAsString(Map.of("error", "An error occurred"));
         }
     }
 

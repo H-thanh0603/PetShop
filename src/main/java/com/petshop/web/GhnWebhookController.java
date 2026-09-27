@@ -18,13 +18,14 @@ import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 
-import com.google.gson.Gson;
-import com.google.gson.JsonObject;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.node.ObjectNode;
 
 import Context.DBContext;
 import DAO.OrderDAO;
 import Model.Order;
 import Util.AppConfig;
+import Util.Json;
 import services.ShippingService;
 
 /**
@@ -41,7 +42,6 @@ public class GhnWebhookController {
     private static final String HEADER_SECRET = "X-GHN-Webhook-Secret";
 
     private final OrderDAO orderDAO;
-    private final Gson gson = new Gson();
 
     public GhnWebhookController() {
         this(new OrderDAO());
@@ -64,14 +64,18 @@ public class GhnWebhookController {
         }
 
         try {
-            JsonObject payload = gson.fromJson(rawBody == null ? "" : rawBody, JsonObject.class);
-            if (payload == null) {
+            if (rawBody == null || rawBody.isBlank()) {
                 return sendError(400, "Empty payload");
             }
+            JsonNode parsed = Json.MAPPER.readTree(rawBody);
+            if (parsed == null || !parsed.isObject()) {
+                throw new IllegalStateException("GHN webhook payload không phải JSON object.");
+            }
+            ObjectNode payload = (ObjectNode) parsed;
 
-            String orderCode = payload.has("order_code") ? payload.get("order_code").getAsString() : null;
-            String ghnStatus = payload.has("status") ? payload.get("status").getAsString() : null;
-            String trackingCode = payload.has("tracking_code") ? payload.get("tracking_code").getAsString() : null;
+            String orderCode = payload.has("order_code") ? payload.path("order_code").asString() : null;
+            String ghnStatus = payload.has("status") ? payload.path("status").asString() : null;
+            String trackingCode = payload.has("tracking_code") ? payload.path("tracking_code").asString() : null;
 
             if (orderCode == null || ghnStatus == null) {
                 return sendError(400, "Missing order_code or status");

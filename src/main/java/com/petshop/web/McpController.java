@@ -7,12 +7,12 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.ResponseBody;
 
-import com.google.gson.Gson;
-import com.google.gson.JsonArray;
-import com.google.gson.JsonObject;
-import com.google.gson.JsonParser;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.node.ArrayNode;
+import tools.jackson.databind.node.ObjectNode;
 
 import Model.User;
+import Util.Json;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpSession;
 import services.ai.CommerceTools;
@@ -32,14 +32,12 @@ public class McpController {
 
     private static final Logger log = LoggerFactory.getLogger(McpController.class);
 
-    private final Gson gson = new Gson();
-
     @PostMapping(value = "/mcp", produces = "application/json;charset=UTF-8")
     @ResponseBody
     public String mcp(@RequestBody(required = false) String rawBody, HttpServletRequest request) {
-        JsonObject req = readJson(rawBody);
-        Object id = req.has("id") ? req.get("id") : null;
-        String method = req.has("method") ? req.get("method").getAsString() : "";
+        ObjectNode req = readJson(rawBody);
+        JsonNode id = req.has("id") ? req.get("id") : null;
+        String method = req.has("method") ? req.path("method").asString() : "";
 
         HttpSession session = request.getSession(false);
         User user = session == null ? null : (User) session.getAttribute("user");
@@ -50,9 +48,11 @@ public class McpController {
                 case "tools/list":
                     return writeResult(id, toolsList(isAdmin));
                 case "tools/call": {
-                    JsonObject params = req.has("params") ? req.getAsJsonObject("params") : new JsonObject();
-                    String name = params.has("name") ? params.get("name").getAsString() : "";
-                    String args = params.has("arguments") ? gson.toJson(params.get("arguments")) : "{}";
+                    ObjectNode params = req.has("params") ? (ObjectNode) req.path("params")
+                            : Json.MAPPER.createObjectNode();
+                    String name = params.has("name") ? params.path("name").asString() : "";
+                    String args = params.has("arguments")
+                            ? Json.MAPPER.writeValueAsString(params.get("arguments")) : "{}";
                     return writeResult(id, toolsCall(name, args, user, isAdmin));
                 }
                 default:
@@ -64,8 +64,8 @@ public class McpController {
         }
     }
 
-    private JsonObject toolsList(boolean isAdmin) {
-        JsonArray tools = new JsonArray();
+    private ObjectNode toolsList(boolean isAdmin) {
+        ArrayNode tools = Json.MAPPER.createArrayNode();
         var shopping = new CommerceTools(new PetShopCommerceBackend(),
                 PetShopCommerceBackend.SessionContext.of(null));
         for (ToolDefinition d : shopping.definitions()) tools.add(toolJson(d));
@@ -73,20 +73,20 @@ public class McpController {
             var merchant = new MerchantTools(new PetShopMerchantBackend(), "mcp");
             for (ToolDefinition d : merchant.definitions()) tools.add(toolJson(d));
         }
-        JsonObject o = new JsonObject();
-        o.add("tools", tools);
+        ObjectNode o = Json.MAPPER.createObjectNode();
+        o.set("tools", tools);
         return o;
     }
 
-    private JsonObject toolsCall(String name, String args, User user, boolean isAdmin) {
+    private ObjectNode toolsCall(String name, String args, User user, boolean isAdmin) {
         boolean merchantTool = name.startsWith("stage_") || name.startsWith("get_pending")
                 || name.equals("get_business_snapshot") || name.equals("query_metrics")
                 || name.equals("get_campaign_performance") || name.equals("search_listings")
                 || name.equals("get_listing") || name.equals("get_inventory_alerts")
                 || name.equals("get_order_issues") || name.equals("get_pricing_context");
-        JsonObject o = new JsonObject();
+        ObjectNode o = Json.MAPPER.createObjectNode();
         if (merchantTool && !isAdmin) {
-            o.addProperty("error", "Admin session required for '" + name + "'");
+            o.put("error", "Admin session required for '" + name + "'");
             return o;
         }
         String result;
@@ -101,52 +101,55 @@ public class McpController {
                 user == null ? "guest" : "user:" + user.getId(), null,
                 result.length() > 500 ? result.substring(0, 500) : result, "", "", "", 0);
         try {
-            o.add("result", JsonParser.parseString(result));
+            o.set("result", Json.MAPPER.readTree(result));
         } catch (Exception e) {
-            o.addProperty("result", result);
+            o.put("result", result);
         }
         return o;
     }
 
-    private static JsonObject toolJson(ToolDefinition d) {
-        JsonObject o = new JsonObject();
-        o.addProperty("name", d.getName());
-        o.addProperty("description", d.getDescription());
+    private static ObjectNode toolJson(ToolDefinition d) {
+        ObjectNode o = Json.MAPPER.createObjectNode();
+        o.put("name", d.getName());
+        o.put("description", d.getDescription());
         try {
-            o.add("inputSchema", JsonParser.parseString(d.getParametersSchemaJson()));
+            o.set("inputSchema", Json.MAPPER.readTree(d.getParametersSchemaJson()));
         } catch (Exception e) {
-            JsonObject s = new JsonObject();
-            s.addProperty("type", "object");
-            o.add("inputSchema", s);
+            ObjectNode s = Json.MAPPER.createObjectNode();
+            s.put("type", "object");
+            o.set("inputSchema", s);
         }
         return o;
     }
 
-    private JsonObject readJson(String rawBody) {
+    private ObjectNode readJson(String rawBody) {
         try {
             if (rawBody != null && !rawBody.isBlank()) {
-                return JsonParser.parseString(rawBody).getAsJsonObject();
+                JsonNode parsed = Json.MAPPER.readTree(rawBody);
+                if (parsed != null && parsed.isObject()) {
+                    return (ObjectNode) parsed;
+                }
             }
         } catch (Exception ignored) {}
-        return new JsonObject();
+        return Json.MAPPER.createObjectNode();
     }
 
-    private String writeResult(Object id, JsonObject result) {
-        JsonObject o = new JsonObject();
-        o.addProperty("jsonrpc", "2.0");
-        if (id != null) o.add("id", (com.google.gson.JsonElement) id);
-        o.add("result", result);
-        return gson.toJson(o);
+    private String writeResult(JsonNode id, ObjectNode result) {
+        ObjectNode o = Json.MAPPER.createObjectNode();
+        o.put("jsonrpc", "2.0");
+        if (id != null) o.set("id", id);
+        o.set("result", result);
+        return Json.MAPPER.writeValueAsString(o);
     }
 
-    private String writeError(Object id, int code, String message) {
-        JsonObject o = new JsonObject();
-        o.addProperty("jsonrpc", "2.0");
-        if (id != null) o.add("id", (com.google.gson.JsonElement) id);
-        JsonObject e = new JsonObject();
-        e.addProperty("code", code);
-        e.addProperty("message", message);
-        o.add("error", e);
-        return gson.toJson(o);
+    private String writeError(JsonNode id, int code, String message) {
+        ObjectNode o = Json.MAPPER.createObjectNode();
+        o.put("jsonrpc", "2.0");
+        if (id != null) o.set("id", id);
+        ObjectNode e = Json.MAPPER.createObjectNode();
+        e.put("code", code);
+        e.put("message", message);
+        o.set("error", e);
+        return Json.MAPPER.writeValueAsString(o);
     }
 }

@@ -20,8 +20,6 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 
-import com.google.gson.Gson;
-
 import DAO.CertificateDAO;
 import DAO.OrderDAO;
 import DAO.OrderSignDAO;
@@ -32,6 +30,7 @@ import Model.OrderSignature;
 import Model.User;
 import Util.CertificateGenerator;
 import Util.DigitalSigner;
+import Util.Json;
 import jakarta.servlet.http.HttpSession;
 
 /**
@@ -47,7 +46,6 @@ public class SignatureController {
     private final OrderSignatureDAO orderSignatureDAO;
     private final CertificateDAO certificateDAO;
     private final OrderDAO orderDAO;
-    private final Gson gson = new Gson();
 
     public SignatureController() {
         this(new OrderSignDAO(), new OrderSignatureDAO(), new CertificateDAO(), new OrderDAO());
@@ -74,20 +72,20 @@ public class SignatureController {
             if (userObj == null) {
                 result.put("success", false);
                 result.put("message", "Vui lòng đăng nhập.");
-                return gson.toJson(result);
+                return Json.MAPPER.writeValueAsString(result);
             }
             User user = (User) userObj;
 
             if (orderIdRaw == null || orderIdRaw.trim().isEmpty()) {
                 result.put("success", false);
                 result.put("message", "Thiếu orderId.");
-                return gson.toJson(result);
+                return Json.MAPPER.writeValueAsString(result);
             }
 
             if (signatureBase64 == null || signatureBase64.trim().isEmpty()) {
                 result.put("success", false);
                 result.put("message", "Thiếu chữ ký điện tử.");
-                return gson.toJson(result);
+                return Json.MAPPER.writeValueAsString(result);
             }
 
             int orderId = Integer.parseInt(orderIdRaw);
@@ -96,14 +94,14 @@ public class SignatureController {
             if (orderSign == null) {
                 result.put("success", false);
                 result.put("message", "Không tìm thấy dữ liệu ký của đơn hàng.");
-                return gson.toJson(result);
+                return Json.MAPPER.writeValueAsString(result);
             }
 
             Certificate certificate = certificateDAO.findByOrderId(orderId);
             if (certificate == null) {
                 result.put("success", false);
                 result.put("message", "Không tìm thấy chứng thư số.");
-                return gson.toJson(result);
+                return Json.MAPPER.writeValueAsString(result);
             }
 
             OrderSignature existing = orderSignatureDAO.findByOrderId(orderId);
@@ -178,7 +176,7 @@ public class SignatureController {
             result.put("message", e.getMessage());
         }
 
-        return gson.toJson(result);
+        return Json.MAPPER.writeValueAsString(result);
     }
 
     @GetMapping("/user/download-private-key")

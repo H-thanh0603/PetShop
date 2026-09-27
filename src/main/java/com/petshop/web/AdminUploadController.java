@@ -13,11 +13,10 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.multipart.MultipartFile;
 
-import com.google.gson.Gson;
-
 import Util.AppConfig;
 import Util.FileUploadUtil;
 import Util.FileUploadValidator;
+import Util.Json;
 import jakarta.servlet.http.HttpServletRequest;
 
 /**
@@ -32,8 +31,6 @@ public class AdminUploadController {
 
     private static final String UPLOAD_FOLDER_PRODUCT = "shop_pic";
     private static final String UPLOAD_FOLDER_DEFAULT = "uploads";
-
-    private final Gson gson = new Gson();
 
     @PostMapping(value = "/admin/upload", produces = "application/json;charset=UTF-8")
     @ResponseBody
@@ -78,7 +75,7 @@ public class AdminUploadController {
             result.put("fileUrl", fileUrl);
             result.put("fileSize", FileUploadUtil.formatFileSize(file.getSize()));
             result.put("message", "Upload thành công!");
-            return gson.toJson(result);
+            return Json.MAPPER.writeValueAsString(result);
         } catch (Exception e) {
             logger.error("Error uploading file", e);
             try {
@@ -93,7 +90,7 @@ public class AdminUploadController {
         Map<String, Object> result = new HashMap<>();
         result.put("success", success);
         result.put("message", message);
-        return gson.toJson(result);
+        return Json.MAPPER.writeValueAsString(result);
     }
 
     @GetMapping("/admin/upload")

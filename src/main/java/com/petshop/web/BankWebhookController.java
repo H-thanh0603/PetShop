@@ -19,11 +19,11 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.ResponseBody;
 
-import com.google.gson.Gson;
-import com.google.gson.JsonObject;
-import com.google.gson.JsonParser;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.node.ObjectNode;
 
 import Util.AppConfig;
+import Util.Json;
 import jakarta.servlet.http.HttpServletRequest;
 import services.payment.BankWebhookPayload;
 import services.payment.BankWebhookReconciliationResult;
@@ -41,7 +41,6 @@ public class BankWebhookController {
     private static final Logger logger = LoggerFactory.getLogger(BankWebhookController.class);
 
     private final BankWebhookReconciliationService reconciliationService;
-    private final Gson gson = new Gson();
 
     public BankWebhookController() {
         this(new BankWebhookReconciliationService());
@@ -72,7 +71,7 @@ public class BankWebhookController {
                     result.getPaymentTransactionId(), result.getMessage());
             Map<String, Object> body = new HashMap<>();
             body.put("success", true);
-            return ResponseEntity.ok(gson.toJson(body));
+            return ResponseEntity.ok(Json.MAPPER.writeValueAsString(body));
         } catch (IllegalArgumentException e) {
             logger.warn("Invalid bank webhook payload: {}", e.getMessage());
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
@@ -108,7 +107,11 @@ public class BankWebhookController {
     }
 
     private BankWebhookPayload parsePayload(String rawPayload) {
-        JsonObject json = JsonParser.parseString(rawPayload).getAsJsonObject();
+        JsonNode parsed = Json.MAPPER.readTree(rawPayload);
+        if (parsed == null || !parsed.isObject()) {
+            throw new IllegalArgumentException("Webhook payload không phải JSON object.");
+        }
+        ObjectNode json = (ObjectNode) parsed;
         String transferType = getOptionalString(json, "transferType");
         if (transferType != null && !"in".equalsIgnoreCase(transferType.trim())) {
             throw new IllegalArgumentException("Webhook không phải giao dịch tiền vào.");
@@ -124,7 +127,7 @@ public class BankWebhookController {
         return new BankWebhookPayload(transactionId, amount, content, bankAccount, rawPayload, paidAt);
     }
 
-    private String firstRequiredString(JsonObject json, String... fieldNames) {
+    private String firstRequiredString(JsonNode json, String... fieldNames) {
         String value = firstOptionalString(json, fieldNames);
         if (value == null || value.isBlank()) {
             throw new IllegalArgumentException("Webhook thiếu trường " + String.join("/", fieldNames) + ".");
@@ -132,7 +135,7 @@ public class BankWebhookController {
         return value.trim();
     }
 
-    private String firstOptionalString(JsonObject json, String... fieldNames) {
+    private String firstOptionalString(JsonNode json, String... fieldNames) {
         for (String fieldName : fieldNames) {
             String value = getOptionalString(json, fieldName);
             if (value != null && !value.isBlank()) {
@@ -142,11 +145,11 @@ public class BankWebhookController {
         return null;
     }
 
-    private String getOptionalString(JsonObject json, String fieldName) {
-        if (!json.has(fieldName) || json.get(fieldName).isJsonNull()) {
+    private String getOptionalString(JsonNode json, String fieldName) {
+        if (!json.has(fieldName) || json.get(fieldName).isNull()) {
             return null;
         }
-        return json.get(fieldName).getAsString();
+        return json.path(fieldName).asString();
     }
 
     private LocalDateTime parseTime(String value) {
@@ -176,6 +179,6 @@ public class BankWebhookController {
         if (extra != null) {
             body.putAll(extra);
         }
-        return gson.toJson(body);
+        return Json.MAPPER.writeValueAsString(body);
     }
 }

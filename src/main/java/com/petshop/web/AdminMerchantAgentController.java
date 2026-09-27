@@ -15,12 +15,12 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 
-import com.google.gson.Gson;
-import com.google.gson.JsonArray;
-import com.google.gson.JsonObject;
-import com.google.gson.JsonParser;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.node.ArrayNode;
+import tools.jackson.databind.node.ObjectNode;
 
 import Model.User;
+import Util.Json;
 import jakarta.servlet.http.HttpSession;
 import services.ai.common.AppEventBus;
 import services.ai.common.AuditLog;
@@ -44,7 +44,6 @@ public class AdminMerchantAgentController {
     private final PetShopMerchantBackend backend;
     private final MerchantChangeDAO changeDAO;
     private final MemoryService memory;
-    private final Gson gson = new Gson();
 
     public AdminMerchantAgentController() {
         this(new MerchantAgent(), new PetShopMerchantBackend(),
@@ -67,31 +66,32 @@ public class AdminMerchantAgentController {
     @GetMapping(value = "/admin/ai-merchant/pending", produces = "application/json;charset=UTF-8")
     @ResponseBody
     public String pending() {
-        return gson.toJson(changeDAO.pendingJson());
+        return Json.MAPPER.writeValueAsString(
+                Json.MAPPER.readTree(String.valueOf(changeDAO.pendingJson())));
     }
 
     @GetMapping(value = "/admin/ai-merchant/digest", produces = "application/json;charset=UTF-8")
     @ResponseBody
     public String digest() {
-        JsonObject o = new JsonObject();
-        o.addProperty("digest", agent.digest());
-        return gson.toJson(o);
+        ObjectNode o = Json.MAPPER.createObjectNode();
+        o.put("digest", agent.digest());
+        return Json.MAPPER.writeValueAsString(o);
     }
 
     @GetMapping(value = "/admin/ai-merchant/escalations", produces = "application/json;charset=UTF-8")
     @ResponseBody
     public String escalations() {
-        JsonArray arr = new JsonArray();
+        ArrayNode arr = Json.MAPPER.createArrayNode();
         for (AppEventBus.AppEvent ev : AppEventBus.peek("merchant:queue")) {
-            JsonObject e = new JsonObject();
-            e.addProperty("type", ev.type());
-            e.addProperty("payload", ev.payload());
-            e.addProperty("timestamp", ev.timestamp());
+            ObjectNode e = Json.MAPPER.createObjectNode();
+            e.put("type", ev.type());
+            e.put("payload", ev.payload());
+            e.put("timestamp", ev.timestamp());
             arr.add(e);
         }
-        JsonObject o = new JsonObject();
-        o.add("escalations", arr);
-        return gson.toJson(o);
+        ObjectNode o = Json.MAPPER.createObjectNode();
+        o.set("escalations", arr);
+        return Json.MAPPER.writeValueAsString(o);
     }
 
     @GetMapping(value = "/admin/ai-merchant/memory", produces = "application/json;charset=UTF-8")
@@ -102,9 +102,9 @@ public class AdminMerchantAgentController {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                     .body("{\"error\":\"Missing subject (e.g. user:123)\"}");
         }
-        JsonObject o = new JsonObject();
-        o.add("facts", memory.factsJson(subject));
-        return ResponseEntity.ok(gson.toJson(o));
+        ObjectNode o = Json.MAPPER.createObjectNode();
+        o.set("facts", Json.MAPPER.readTree(String.valueOf(memory.factsJson(subject))));
+        return ResponseEntity.ok(Json.MAPPER.writeValueAsString(o));
     }
 
     @PostMapping(value = "/admin/ai-merchant/chat", produces = "application/json;charset=UTF-8")
@@ -115,8 +115,8 @@ public class AdminMerchantAgentController {
         User admin = (User) session.getAttribute("user");
         String operator = admin == null ? "admin" : ("admin:" + admin.getId());
 
-        JsonObject body = readJson(rawBody);
-        String message = body.has("message") ? body.get("message").getAsString() : "";
+        ObjectNode body = readJson(rawBody);
+        String message = body.has("message") ? body.path("message").asString() : "";
         if (message.isBlank()) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                     .body("{\"error\":\"Message is required\"}");
@@ -129,12 +129,12 @@ public class AdminMerchantAgentController {
         history.add("Assistant: " + result.answer());
         while (history.size() > 12) history.remove(0);
         session.setAttribute("merchant_chat_history", history);
-        JsonObject o = new JsonObject();
-        o.addProperty("answer", result.answer());
-        o.addProperty("provider", result.usedProvider());
-        o.addProperty("model", result.usedModel());
-        o.add("cards", result.cards());
-        return ResponseEntity.ok(gson.toJson(o));
+        ObjectNode o = Json.MAPPER.createObjectNode();
+        o.put("answer", result.answer());
+        o.put("provider", result.usedProvider());
+        o.put("model", result.usedModel());
+        o.set("cards", Json.MAPPER.readTree(String.valueOf(result.cards())));
+        return ResponseEntity.ok(Json.MAPPER.writeValueAsString(o));
     }
 
     @PostMapping(value = "/admin/ai-merchant/approve", produces = "application/json;charset=UTF-8")
@@ -143,16 +143,16 @@ public class AdminMerchantAgentController {
         User admin = (User) session.getAttribute("user");
         String operator = admin == null ? "admin" : ("admin:" + admin.getId());
 
-        JsonObject body = readJson(rawBody);
+        ObjectNode body = readJson(rawBody);
         String changeId = str(body, "changeId");
         if (changeId.isEmpty()) return "{}";
         changeDAO.markApproved(changeId, operator);
         AuditLog.record("merchant", "approve", operator, null, changeId, "", "", "", 0);
         log.info("merchant change approved id={} by={}", changeId, operator);
-        JsonObject o = new JsonObject();
-        o.addProperty("changeId", changeId);
-        o.addProperty("approved", true);
-        return gson.toJson(o);
+        ObjectNode o = Json.MAPPER.createObjectNode();
+        o.put("changeId", changeId);
+        o.put("approved", true);
+        return Json.MAPPER.writeValueAsString(o);
     }
 
     @PostMapping(value = "/admin/ai-merchant/apply", produces = "application/json;charset=UTF-8")
@@ -163,21 +163,21 @@ public class AdminMerchantAgentController {
         User admin = (User) session.getAttribute("user");
         String operator = admin == null ? "admin" : ("admin:" + admin.getId());
 
-        JsonObject body = readJson(rawBody);
+        ObjectNode body = readJson(rawBody);
         String changeId = str(body, "changeId");
         if (changeId.isEmpty()) return ResponseEntity.ok("{}");
         try {
             backend.apply(changeId, operator, true);
             AuditLog.record("merchant", "apply", operator, null, changeId, "", "", "", 0);
-            JsonObject o = new JsonObject();
-            o.addProperty("changeId", changeId);
-            o.addProperty("applied", true);
-            return ResponseEntity.ok(gson.toJson(o));
+            ObjectNode o = Json.MAPPER.createObjectNode();
+            o.put("changeId", changeId);
+            o.put("applied", true);
+            return ResponseEntity.ok(Json.MAPPER.writeValueAsString(o));
         } catch (Exception e) {
             log.warn("merchant apply refused id={}", changeId, e);
-            JsonObject o = new JsonObject();
-            o.addProperty("error", e.getMessage());
-            return ResponseEntity.status(422).body(gson.toJson(o));
+            ObjectNode o = Json.MAPPER.createObjectNode();
+            o.put("error", e.getMessage());
+            return ResponseEntity.status(422).body(Json.MAPPER.writeValueAsString(o));
         }
     }
 
@@ -187,15 +187,15 @@ public class AdminMerchantAgentController {
         User admin = (User) session.getAttribute("user");
         String operator = admin == null ? "admin" : ("admin:" + admin.getId());
 
-        JsonObject body = readJson(rawBody);
+        ObjectNode body = readJson(rawBody);
         String changeId = str(body, "changeId");
         if (changeId.isEmpty()) return "{}";
         backend.discard(changeId, operator);
         AuditLog.record("merchant", "discard", operator, null, changeId, "", "", "", 0);
-        JsonObject o = new JsonObject();
-        o.addProperty("changeId", changeId);
-        o.addProperty("discarded", true);
-        return gson.toJson(o);
+        ObjectNode o = Json.MAPPER.createObjectNode();
+        o.put("changeId", changeId);
+        o.put("discarded", true);
+        return Json.MAPPER.writeValueAsString(o);
     }
 
     @DeleteMapping(value = "/admin/ai-merchant/memory", produces = "application/json;charset=UTF-8")
@@ -204,28 +204,31 @@ public class AdminMerchantAgentController {
             @RequestParam(value = "subject", required = false) String subject,
             @RequestParam(value = "key", required = false) String key) {
         DbMemoryStore store = new DbMemoryStore();
-        JsonObject o = new JsonObject();
+        ObjectNode o = Json.MAPPER.createObjectNode();
         if (key != null && !key.isBlank()) {
-            o.addProperty("deleted", store.deleteFact(subject, key));
+            o.put("deleted", store.deleteFact(subject, key));
         } else {
             store.clear(subject);
-            o.addProperty("purged", true);
+            o.put("purged", true);
         }
-        return ResponseEntity.ok(gson.toJson(o));
+        return ResponseEntity.ok(Json.MAPPER.writeValueAsString(o));
     }
 
-    private JsonObject readJson(String rawBody) {
+    private ObjectNode readJson(String rawBody) {
         try {
             if (rawBody != null && !rawBody.isBlank()) {
-                return JsonParser.parseString(rawBody).getAsJsonObject();
+                JsonNode parsed = Json.MAPPER.readTree(rawBody);
+                if (parsed != null && parsed.isObject()) {
+                    return (ObjectNode) parsed;
+                }
             }
         } catch (Exception ignored) {}
-        return new JsonObject();
+        return Json.MAPPER.createObjectNode();
     }
 
-    private String str(JsonObject body, String key) {
+    private String str(ObjectNode body, String key) {
         try {
-            return body.has(key) && !body.get(key).isJsonNull() ? body.get(key).getAsString() : "";
+            return body.has(key) && !body.get(key).isNull() ? body.path(key).asString() : "";
         } catch (Exception e) {
             return "";
         }

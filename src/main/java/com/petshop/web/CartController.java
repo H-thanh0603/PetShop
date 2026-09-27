@@ -13,12 +13,11 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 
-import com.google.gson.Gson;
-
 import DAO.CartDAO;
 import Model.CartItem;
 import Model.Product;
 import Model.User;
+import Util.Json;
 import jakarta.servlet.http.HttpSession;
 import services.InventoryService;
 import services.InventoryService.StockValidationResult;
@@ -34,7 +33,6 @@ public class CartController {
 
     private final CartDAO cartDAO;
     private final InventoryService inventoryService;
-    private final Gson gson = new Gson();
 
     public CartController() {
         this(new CartDAO(), new InventoryService());
@@ -147,7 +145,7 @@ public class CartController {
                 result.put("quantity", 0);
                 result.put("stock", existingItem.getProduct().getAvailablePurchaseQuantity());
                 result.put("totalQuantity", recalculateTotalQuantity(session, cart));
-                return gson.toJson(result);
+                return Json.MAPPER.writeValueAsString(result);
             }
 
             StockValidationResult validation = inventoryService.validateCartQuantity(cart, productId, quantity);
@@ -172,7 +170,7 @@ public class CartController {
                     result.put("removed", true);
                     result.put("quantity", 0);
                     result.put("totalQuantity", recalculateTotalQuantity(session, cart));
-                    return gson.toJson(result);
+                    return Json.MAPPER.writeValueAsString(result);
                 }
 
                 existingItem.setQuantity(validation.getSuggestedQuantity());
@@ -184,7 +182,7 @@ public class CartController {
 
                 result.put("quantity", syncedItem != null ? syncedItem.getQuantity() : validation.getSuggestedQuantity());
                 result.put("totalQuantity", recalculateTotalQuantity(session, cart));
-                return gson.toJson(result);
+                return Json.MAPPER.writeValueAsString(result);
             }
 
             existingItem.setQuantity(validation.getSuggestedQuantity());
@@ -200,7 +198,7 @@ public class CartController {
             result.put("stock", syncedItem != null ? syncedItem.getProduct().getAvailablePurchaseQuantity()
                     : (latestProduct != null ? latestProduct.getAvailablePurchaseQuantity() : 0));
             result.put("totalQuantity", recalculateTotalQuantity(session, cart));
-            return gson.toJson(result);
+            return Json.MAPPER.writeValueAsString(result);
         } catch (Exception e) {
             logger.error("Error updating cart with stock check for product id={}", idStr, e);
             return json(false, "Loi server");
@@ -401,7 +399,7 @@ public class CartController {
         }
         result.put("items", items);
 
-        return gson.toJson(result);
+        return Json.MAPPER.writeValueAsString(result);
     }
 
     private Map<Integer, CartItem> reloadCart(HttpSession session, User user, Map<Integer, CartItem> fallbackCart) {
@@ -429,7 +427,7 @@ public class CartController {
         Map<String, Object> result = new HashMap<>();
         result.put("success", success);
         result.put("message", message);
-        return gson.toJson(result);
+        return Json.MAPPER.writeValueAsString(result);
     }
 
     private QuantityInputValidation validateRequestedQuantity(String rawQuantity) {

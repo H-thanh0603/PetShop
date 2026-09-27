@@ -18,9 +18,8 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
-import com.google.gson.Gson;
-import com.google.gson.JsonObject;
-import com.google.gson.JsonParser;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.node.ObjectNode;
 
 import DAO.AiChatMessageDAO;
 import DAO.AiChatSessionDAO;
@@ -28,6 +27,7 @@ import DAO.AiSupportSettingDAO;
 import Model.AiChatMessage;
 import Model.AiChatSession;
 import Model.User;
+import Util.Json;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpSession;
 import services.DeepSeekService;
@@ -46,7 +46,6 @@ public class UserAiSupportController {
     private final AiChatMessageDAO messageDAO;
     private final AiSupportSettingDAO settingDAO;
     private final DeepSeekService deepSeekService;
-    private final Gson gson = new Gson();
 
     public UserAiSupportController() {
         this(new AiChatSessionDAO(), new AiChatMessageDAO(), new AiSupportSettingDAO(), new DeepSeekService());
@@ -91,7 +90,7 @@ public class UserAiSupportController {
             map.put("lastMessage", lastMsg);
             result.add(map);
         }
-        return gson.toJson(result);
+        return Json.MAPPER.writeValueAsString(result);
     }
 
     @GetMapping(value = "/ai-support/messages", produces = "application/json;charset=UTF-8")
@@ -124,7 +123,7 @@ public class UserAiSupportController {
             messageDAO.markMessagesAsRead(sessionId, "ADMIN");
             messageDAO.markMessagesAsRead(sessionId, "AI");
             List<AiChatMessage> messages = messageDAO.getMessagesBySessionId(sessionId);
-            return gson.toJson(messages);
+            return Json.MAPPER.writeValueAsString(messages);
         } catch (NumberFormatException e) {
             response.setStatus(jakarta.servlet.http.HttpServletResponse.SC_BAD_REQUEST);
             return "{\"error\":\"Invalid sessionId format\"}";
@@ -152,9 +151,9 @@ public class UserAiSupportController {
                 }
             } catch (NumberFormatException ignored) {}
         }
-        JsonObject result = new JsonObject();
-        result.addProperty("unreadCount", unreadCount);
-        return gson.toJson(result);
+        ObjectNode result = Json.MAPPER.createObjectNode();
+        result.put("unreadCount", unreadCount);
+        return Json.MAPPER.writeValueAsString(result);
     }
 
     @PostMapping(value = "/ai-support/chat", produces = "application/json;charset=UTF-8")
@@ -173,13 +172,21 @@ public class UserAiSupportController {
         String contentType = request.getContentType();
         if (contentType != null && contentType.contains("application/json")) {
             try {
-                JsonObject reqJson = rawBody == null || rawBody.isBlank()
-                        ? new JsonObject() : JsonParser.parseString(rawBody).getAsJsonObject();
-                if (reqJson.has("sessionId") && !reqJson.get("sessionId").isJsonNull()) {
-                    sessionId = reqJson.get("sessionId").getAsInt();
+                ObjectNode reqJson;
+                if (rawBody == null || rawBody.isBlank()) {
+                    reqJson = Json.MAPPER.createObjectNode();
+                } else {
+                    JsonNode parsed = Json.MAPPER.readTree(rawBody);
+                    if (parsed == null || !parsed.isObject()) {
+                        throw new IllegalArgumentException("Payload không phải JSON object.");
+                    }
+                    reqJson = (ObjectNode) parsed;
+                }
+                if (reqJson.has("sessionId") && !reqJson.get("sessionId").isNull()) {
+                    sessionId = reqJson.path("sessionId").asInt();
                 }
                 if (reqJson.has("message")) {
-                    message = reqJson.get("message").getAsString();
+                    message = reqJson.path("message").asString();
                 }
             } catch (Exception e) {
                 response.setStatus(jakarta.servlet.http.HttpServletResponse.SC_BAD_REQUEST);
@@ -316,34 +323,36 @@ public class UserAiSupportController {
 
         // Write JSON response (provider details are non-sensitive metadata only;
         // keys never leave the server — see services.ai.AiConfig)
-        JsonObject responseJson = new JsonObject();
-        responseJson.addProperty("sessionId", sessionId);
-        responseJson.addProperty("answer", aiRes.getAnswer());
-        responseJson.addProperty("intent", aiRes.getIntent());
-        responseJson.addProperty("needAdminSupport", escalate);
-        responseJson.addProperty("provider", aiRes.getUsedProvider());
-        responseJson.addProperty("model", aiRes.getUsedModel());
-        responseJson.addProperty("requestId", aiRes.getRequestId());
-        try {
-            responseJson.add("cards", JsonParser.parseString(aiRes.getCardsJson()));
-        } catch (Exception ignored) {
-            responseJson.add("cards", new com.google.gson.JsonArray());
+        ObjectNode responseJson = Json.MAPPER.createObjectNode();
+        responseJson.put("sessionId", sessionId);
+        responseJson.put("answer", aiRes.getAnswer());
+        responseJson.put("intent", aiRes.getIntent());
+        responseJson.put("needAdminSupport", escalate);
+        responseJson.put("provider", aiRes.getUsedProvider());
+        responseJson.put("model", aiRes.getUsedModel());
+        responseJson.put("requestId", aiRes.getRequestId());
+        JsonNode cards = null;
+        if (aiRes.getCardsJson() != null) {
+            try {
+                cards = Json.MAPPER.readTree(aiRes.getCardsJson());
+            } catch (Exception ignored) {}
         }
+        responseJson.set("cards", cards != null ? cards : Json.MAPPER.createArrayNode());
 
         // Attach related details if present
         if (aiRes.getRelatedProducts() != null) {
-            responseJson.add("relatedProducts", gson.toJsonTree(aiRes.getRelatedProducts()));
+            responseJson.set("relatedProducts", Json.MAPPER.valueToTree(aiRes.getRelatedProducts()));
         } else {
-            responseJson.add("relatedProducts", gson.toJsonTree(new ArrayList<>()));
+            responseJson.set("relatedProducts", Json.MAPPER.valueToTree(new ArrayList<>()));
         }
 
         if (aiRes.getRelatedOrder() != null) {
-            responseJson.add("relatedOrder", gson.toJsonTree(aiRes.getRelatedOrder()));
+            responseJson.set("relatedOrder", Json.MAPPER.valueToTree(aiRes.getRelatedOrder()));
         } else {
-            responseJson.addProperty("relatedOrder", (String) null);
+            responseJson.put("relatedOrder", (String) null);
         }
 
-        return gson.toJson(responseJson);
+        return Json.MAPPER.writeValueAsString(responseJson);
     }
 
     /**
@@ -364,11 +373,15 @@ public class UserAiSupportController {
         String message = "";
         try {
             if (rawBody != null && !rawBody.isBlank()) {
-                JsonObject reqJson = JsonParser.parseString(rawBody).getAsJsonObject();
-                if (reqJson.has("sessionId") && !reqJson.get("sessionId").isJsonNull()) {
-                    sessionId = reqJson.get("sessionId").getAsInt();
+                JsonNode parsed = Json.MAPPER.readTree(rawBody);
+                if (parsed == null || !parsed.isObject()) {
+                    throw new IllegalArgumentException("Payload không phải JSON object.");
                 }
-                if (reqJson.has("message")) message = reqJson.get("message").getAsString();
+                ObjectNode reqJson = (ObjectNode) parsed;
+                if (reqJson.has("sessionId") && !reqJson.get("sessionId").isNull()) {
+                    sessionId = reqJson.path("sessionId").asInt();
+                }
+                if (reqJson.has("message")) message = reqJson.path("message").asString();
             }
         } catch (Exception e) {
             sendSse(emitter, "error", "{\"error\":\"Invalid JSON payload\"}");
@@ -434,17 +447,17 @@ public class UserAiSupportController {
 
                 String answer = result.answer() == null ? "" : result.answer();
                 for (int i = 0; i < answer.length(); i += 60) {
-                    JsonObject delta = new JsonObject();
-                    delta.addProperty("text", answer.substring(i, Math.min(answer.length(), i + 60)));
-                    sendSse(emitter, "delta", gson.toJson(delta));
+                    ObjectNode delta = Json.MAPPER.createObjectNode();
+                    delta.put("text", answer.substring(i, Math.min(answer.length(), i + 60)));
+                    sendSse(emitter, "delta", Json.MAPPER.writeValueAsString(delta));
                 }
-                JsonObject done = new JsonObject();
-                done.addProperty("sessionId", resolvedSessionId);
-                done.addProperty("intent", result.intent());
-                done.addProperty("needAdminSupport", result.needAdminSupport());
-                done.addProperty("provider", result.usedProvider());
-                done.addProperty("model", result.usedModel());
-                sendSse(emitter, "done", gson.toJson(done));
+                ObjectNode done = Json.MAPPER.createObjectNode();
+                done.put("sessionId", resolvedSessionId);
+                done.put("intent", result.intent());
+                done.put("needAdminSupport", result.needAdminSupport());
+                done.put("provider", result.usedProvider());
+                done.put("model", result.usedModel());
+                sendSse(emitter, "done", Json.MAPPER.writeValueAsString(done));
                 emitter.complete();
             } catch (Exception e) {
                 emitter.completeWithError(e);

@@ -15,8 +15,6 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 
-import com.google.gson.Gson;
-
 import DAO.CartDAO;
 import DAO.RememberTokenDAO;
 import DAO.SecurityEventDAO;
@@ -28,6 +26,7 @@ import Model.User;
 import Util.AppConfig;
 import Util.AuthRedirectUtil;
 import Util.FormHelper;
+import Util.Json;
 import Util.LoginLockout;
 import Util.OTPUtil;
 import Util.PasswordUtil;
@@ -52,7 +51,6 @@ public class AuthController {
     private final RememberTokenDAO rememberTokenDAO;
     private final UserDAO userDAO;
     private final SecurityEventDAO securityEventDAO;
-    private final Gson gson = new Gson();
 
     public AuthController() {
         this(new RememberTokenDAO(), new UserDAO(), new SecurityEventDAO());
@@ -634,12 +632,12 @@ public class AuthController {
         Map<String, Object> result = new HashMap<>();
         if (username == null || username.trim().isEmpty()) {
             result.put("available", false);
-            return gson.toJson(result);
+            return Json.MAPPER.writeValueAsString(result);
         }
 
         boolean exists = userDAO.checkUsernameExists(username.trim().toLowerCase());
         result.put("available", !exists);
-        return gson.toJson(result);
+        return Json.MAPPER.writeValueAsString(result);
     }
 
     @PostMapping("/register")
@@ -789,7 +787,7 @@ public class AuthController {
         Map<String, Object> result = new HashMap<>();
         result.put("success", success);
         result.put("message", message);
-        return gson.toJson(result);
+        return Json.MAPPER.writeValueAsString(result);
     }
 
     // ── SOCIAL LOGIN (/LoginByGoogleServlet, /LoginByFacebookServlet) ──

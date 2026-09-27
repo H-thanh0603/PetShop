@@ -21,8 +21,6 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 
-import com.google.gson.Gson;
-
 import Context.DBContext;
 import DAO.AddressDao;
 import DAO.CartDAO;
@@ -41,6 +39,7 @@ import Model.PaymentTransaction;
 import Model.Product;
 import Model.User;
 import Util.AppConfig;
+import Util.Json;
 import Util.ValidationUtil;
 import Util.VnpayUtil;
 import jakarta.servlet.http.HttpServletRequest;
@@ -78,7 +77,6 @@ public class CheckoutController {
     private final UserDAO userDAO;
     private final OrderEmailService orderEmailService;
     private final InventoryBatchDAO inventoryBatchDAO;
-    private final Gson gson = new Gson();
 
     public CheckoutController() {
         this(new CouponDao(), new AddressDao(), new InventoryService(), new CartDAO(),
@@ -175,7 +173,7 @@ public class CheckoutController {
             Map<String, Object> errorResult = new HashMap<>();
             errorResult.put("success", false);
             errorResult.put("message", resolveCheckoutErrorMessage(e));
-            return gson.toJson(errorResult);
+            return Json.MAPPER.writeValueAsString(errorResult);
         }
     }
 
@@ -263,7 +261,7 @@ public class CheckoutController {
             if (user == null) {
                 result.put("success", false);
                 result.put("message", "Phiên đăng nhập đã hết hạn.");
-                return gson.toJson(result);
+                return Json.MAPPER.writeValueAsString(result);
             }
             @SuppressWarnings("unchecked")
             Map<Integer, CartItem> sessionBuyNowCart =
@@ -279,7 +277,7 @@ public class CheckoutController {
             if (checkoutCart == null || checkoutCart.isEmpty()) {
                 result.put("success", false);
                 result.put("message", "Giỏ hàng đang trống.");
-                return gson.toJson(result);
+                return Json.MAPPER.writeValueAsString(result);
             }
 
             List<Address> addressList = addressDAO.getAddressesByUserId(user.getId());
@@ -287,14 +285,14 @@ public class CheckoutController {
             if (defaultAddress == null) {
                 result.put("success", false);
                 result.put("message", "Bạn chưa có địa chỉ mặc định.");
-                return gson.toJson(result);
+                return Json.MAPPER.writeValueAsString(result);
             }
 
             String addressDetailError = ValidationUtil.validateAddressDetail(defaultAddress.getAddress());
             if (addressDetailError != null) {
                 result.put("success", false);
                 result.put("message", "Địa chỉ giao hàng hiện tại không hợp lệ. Vui lòng cập nhật lại.");
-                return gson.toJson(result);
+                return Json.MAPPER.writeValueAsString(result);
             }
 
             Coupon appliedCoupon = (Coupon) session.getAttribute("appliedCoupon");
@@ -306,7 +304,7 @@ public class CheckoutController {
                 session.removeAttribute("appliedCoupon");
                 result.put("success", false);
                 result.put("message", couponState.getMessage());
-                return gson.toJson(result);
+                return Json.MAPPER.writeValueAsString(result);
             }
 
             CheckoutSummary baseSummary = buildCheckoutSummary(checkoutCart, defaultAddress, null);
@@ -315,7 +313,7 @@ public class CheckoutController {
             if (!ValidationUtil.validateMaxLength(note, 500)) {
                 result.put("success", false);
                 result.put("message", "Ghi chú không được vượt quá 500 ký tự.");
-                return gson.toJson(result);
+                return Json.MAPPER.writeValueAsString(result);
             }
 
             String fullAddress = formatFullAddress(defaultAddress);
@@ -330,25 +328,25 @@ public class CheckoutController {
             if (recipientNameError != null) {
                 result.put("success", false);
                 result.put("message", recipientNameError);
-                return gson.toJson(result);
+                return Json.MAPPER.writeValueAsString(result);
             }
 
             String recipientPhoneError = ValidationUtil.validateRecipientPhone(recipientPhone);
             if (recipientPhoneError != null) {
                 result.put("success", false);
                 result.put("message", recipientPhoneError);
-                return gson.toJson(result);
+                return Json.MAPPER.writeValueAsString(result);
             }
 
             if (isBlank(shippingAddress)) {
                 result.put("success", false);
                 result.put("message", "Địa chỉ giao hàng không được để trống.");
-                return gson.toJson(result);
+                return Json.MAPPER.writeValueAsString(result);
             }
             if (!ValidationUtil.validateMaxLength(shippingAddress, 500)) {
                 result.put("success", false);
                 result.put("message", "Địa chỉ giao hàng không được vượt quá 500 ký tự.");
-                return gson.toJson(result);
+                return Json.MAPPER.writeValueAsString(result);
             }
 
             String paymentMethodKey = resolvePaymentMethodKey(request);
@@ -373,7 +371,7 @@ public class CheckoutController {
             if (!checkoutResult.isSuccess()) {
                 result.put("success", false);
                 result.put("message", checkoutResult.getMessage());
-                return gson.toJson(result);
+                return Json.MAPPER.writeValueAsString(result);
             }
 
             completedPaymentMethod = isVnpay ? "VNPAY" : checkoutResult.getPaymentMethodDb();
@@ -443,7 +441,7 @@ public class CheckoutController {
                 result.put("success", true);
                 result.put("redirectUrl", vnpayUrl);
                 // Với VNPay, không trả về showSignatureModal trong JSON để tránh hiện modal ngay lập tức
-                return gson.toJson(result);
+                return Json.MAPPER.writeValueAsString(result);
             }
 
             if ("BANK_TRANSFER".equalsIgnoreCase(completedPaymentMethod) && completedPaymentTransaction != null) {
@@ -476,7 +474,7 @@ public class CheckoutController {
 
                 // Modal signature cho bank_transfer: dùng button "Tải chữ ký" thay vì popup
                 result.put("showSignatureModal", true);
-                return gson.toJson(result);
+                return Json.MAPPER.writeValueAsString(result);
             }
             session.setAttribute("successOrderId", completedOrderId);
             session.setAttribute("successUser", user);
@@ -496,13 +494,13 @@ public class CheckoutController {
             result.put("orderId", completedOrderId);
             result.put("redirectUrl", request.getContextPath() + "/order-success");
             logger.info("DEBUG COD redirectUrl=" + result.get("redirectUrl"));
-            return gson.toJson(result);
+            return Json.MAPPER.writeValueAsString(result);
 
         } catch (Throwable t) {
             logger.error("Unexpected error during checkout for user id={}", userSession.getId(), t);
             result.put("success", false);
             result.put("message", resolveCheckoutErrorMessage(t));
-            return gson.toJson(result);
+            return Json.MAPPER.writeValueAsString(result);
         }
     }
 

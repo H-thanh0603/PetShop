@@ -14,11 +14,10 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 
-import com.google.gson.Gson;
-
 import DAO.OrderDAO;
 import DAO.PaymentTransactionDAO;
 import Model.Order;
+import Util.Json;
 import Util.VnpayConfig;
 import Util.VnpayUtil;
 import jakarta.servlet.http.HttpServletRequest;
@@ -35,7 +34,6 @@ public class VnpayIpnController {
 
     private final OrderDAO orderDAO;
     private final PaymentTransactionDAO paymentTransactionDAO;
-    private final Gson gson = new Gson();
 
     public VnpayIpnController() {
         this(new OrderDAO(), new PaymentTransactionDAO());
@@ -138,7 +136,7 @@ public class VnpayIpnController {
     private String write(Map<String, String> rsp, String code, String message) {
         rsp.put("RspCode", code);
         rsp.put("Message", message);
-        return new Gson().toJson(rsp);
+        return Json.MAPPER.writeValueAsString(rsp);
     }
 
     private BigDecimal parseVnpayAmount(String rawAmount) {

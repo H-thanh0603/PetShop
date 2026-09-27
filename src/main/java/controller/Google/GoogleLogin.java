@@ -2,10 +2,10 @@ package controller.Google;
 
 import Constant.IConstant;
 import Model.GgAccount.GoogleAccount;
+import Util.Json;
 import Util.SecretConfig;
 import Util.SocialAuthUtil;
-import com.google.gson.Gson;
-import com.google.gson.JsonObject;
+import tools.jackson.databind.JsonNode;
 
 import java.io.IOException;
 import java.net.URI;
@@ -17,7 +17,6 @@ import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 
 public class GoogleLogin {
-    private static final Gson GSON = new Gson();
     private static final HttpClient HTTP_CLIENT = HttpClient.newBuilder()
             .connectTimeout(Duration.ofSeconds(15))
             .followRedirects(HttpClient.Redirect.NORMAL)
@@ -51,12 +50,12 @@ public class GoogleLogin {
                     + httpResponse.statusCode() + ": " + abbreviate(response));
         }
 
-        JsonObject body = GSON.fromJson(response, JsonObject.class);
+        JsonNode body = Json.MAPPER.readTree(response);
         if (body == null || !body.has("access_token")) {
             throw new IllegalStateException("Khong lay duoc access token tu Google: " + abbreviate(response));
         }
 
-        return body.get("access_token").getAsString();
+        return body.path("access_token").asString();
     }
 
     public static GoogleAccount getUserInfo(final String accessToken) throws IOException {
@@ -79,12 +78,34 @@ public class GoogleLogin {
                     + httpResponse.statusCode() + ": " + abbreviate(response));
         }
 
-        GoogleAccount googleAccount = GSON.fromJson(response, GoogleAccount.class);
+        JsonNode json = Json.MAPPER.readTree(response);
+        if (json == null || !json.isObject()) {
+            throw new IllegalStateException("Google userinfo response did not include an email: " + abbreviate(response));
+        }
+        GoogleAccount googleAccount = new GoogleAccount(
+                str(json, "id"),
+                str(json, "email"),
+                str(json, "name"),
+                str(json, "first_name"),
+                str(json, "given_name"),
+                str(json, "family_name"),
+                str(json, "picture"),
+                bool(json, "verified_email"));
         if (googleAccount == null || googleAccount.getEmail() == null || googleAccount.getEmail().isBlank()) {
             throw new IllegalStateException("Google userinfo response did not include an email: " + abbreviate(response));
         }
 
         return googleAccount;
+    }
+
+    private static String str(JsonNode json, String field) {
+        JsonNode value = json.get(field);
+        return value == null || value.isNull() ? null : value.asString();
+    }
+
+    private static boolean bool(JsonNode json, String field) {
+        JsonNode value = json.get(field);
+        return value != null && !value.isNull() && value.asBoolean();
     }
 
     private static HttpResponse<String> send(HttpRequest request) throws IOException {

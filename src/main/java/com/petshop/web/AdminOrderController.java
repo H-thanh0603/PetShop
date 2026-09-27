@@ -8,8 +8,6 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 
-import com.google.gson.JsonObject;
-
 import DAO.AdminActionLogDAO;
 import DAO.NotificationDAO;
 import DAO.OrderDAO;
@@ -17,9 +15,11 @@ import Model.Order;
 import Model.OrderLog;
 import Model.OrderStatusHistory;
 import Model.User;
+import Util.Json;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpSession;
 import services.ShippingService;
+import tools.jackson.databind.JsonNode;
 
 /**
  * Replaces ManageOrderServlet (/admin/orders) 1:1 — same list/view pages,
@@ -178,11 +178,11 @@ public class AdminOrderController {
                 session.setAttribute("messageType", "warning");
             } else {
                 try {
-                    JsonObject ghnResult = shippingService.createGhnOrder(order);
+                    JsonNode ghnResult = Json.MAPPER.readTree(shippingService.createGhnOrder(order).toString());
                     String ghnOrderId = ghnResult.get("order_code") != null
-                            ? ghnResult.get("order_code").getAsString() : "";
+                            ? ghnResult.path("order_code").asString() : "";
                     String ghnTrackingCode = ghnResult.get("sort_code") != null
-                            ? ghnResult.get("sort_code").getAsString() : "";
+                            ? ghnResult.path("sort_code").asString() : "";
                     String ghnStatus = "picking";
 
                     orderDAO.updateGhnInfo(orderId, ghnOrderId, ghnTrackingCode, ghnStatus, null);

@@ -1,10 +1,10 @@
 package controller.FaceBook;
 import Constant.IConstant;
 import Model.FbAccount.Account;
+import Util.Json;
 import Util.SecretConfig;
 import Util.SocialAuthUtil;
-import com.google.gson.Gson;
-import com.google.gson.JsonObject;
+import tools.jackson.databind.JsonNode;
 
 import java.io.IOException;
 import java.net.URI;
@@ -17,7 +17,6 @@ import java.time.Duration;
 
 
 public class FaceBookLogin {
-    private static final Gson GSON = new Gson();
     private static final HttpClient HTTP_CLIENT = HttpClient.newBuilder()
             .connectTimeout(Duration.ofSeconds(15))
             .followRedirects(HttpClient.Redirect.NORMAL)
@@ -36,13 +35,13 @@ public class FaceBookLogin {
                 + "&code=" + encode(code);
 
         String response = sendGet(link);
-        JsonObject json = GSON.fromJson(response, JsonObject.class);
+        JsonNode json = Json.MAPPER.readTree(response);
 
         if (json == null || !json.has("access_token")) {
             throw new IllegalStateException("Không lấy được access token từ Facebook.");
         }
 
-        return json.get("access_token").getAsString();
+        return json.path("access_token").asString();
     }
     public static Account getUserInfo(final String accessToken) throws IOException {
         if (accessToken == null || accessToken.isBlank()) {
@@ -50,7 +49,19 @@ public class FaceBookLogin {
         }
         String link = IConstant.facebook_link_get_user_info + URLEncoder.encode(accessToken, StandardCharsets.UTF_8);
         String response = sendGet(link);
-        return GSON.fromJson(response, Account.class);
+        JsonNode json = Json.MAPPER.readTree(response);
+        if (json == null || json.isMissingNode() || json.isNull()) {
+            return null;
+        }
+        if (!json.isObject()) {
+            throw new IllegalStateException("Facebook userinfo không phải JSON object.");
+        }
+        return new Account(str(json, "id"), str(json, "email"), str(json, "name"));
+    }
+
+    private static String str(JsonNode json, String field) {
+        JsonNode value = json.get(field);
+        return value == null || value.isNull() ? null : value.asString();
     }
 
     private static String sendGet(String url) throws IOException {

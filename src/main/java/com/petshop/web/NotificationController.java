@@ -10,10 +10,9 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.ResponseBody;
 
-import com.google.gson.Gson;
-
 import DAO.NotificationDAO;
 import Model.User;
+import Util.Json;
 import jakarta.servlet.http.HttpSession;
 
 /**
@@ -24,7 +23,6 @@ import jakarta.servlet.http.HttpSession;
 public class NotificationController {
 
     private final NotificationDAO notificationDAO;
-    private final Gson gson = new Gson();
 
     public NotificationController() {
         this(new NotificationDAO());
@@ -40,7 +38,7 @@ public class NotificationController {
         User user = (User) session.getAttribute("user");
         Map<String, Object> result = new HashMap<>();
         result.put("unreadCount", user == null ? 0 : notificationDAO.getUnreadCountByUserId(user.getId()));
-        return gson.toJson(result);
+        return Json.MAPPER.writeValueAsString(result);
     }
 
     @GetMapping(value = "/notifications/list", produces = "application/json;charset=UTF-8")
@@ -48,10 +46,10 @@ public class NotificationController {
     public String list(HttpSession session) {
         User user = (User) session.getAttribute("user");
         if (user == null) {
-            return gson.toJson(new ArrayList<>());
+            return Json.MAPPER.writeValueAsString(new ArrayList<>());
         }
         List<Map<String, Object>> list = notificationDAO.getNotificationsByUserId(user.getId(), 10);
-        return gson.toJson(list);
+        return Json.MAPPER.writeValueAsString(list);
     }
 
     @PostMapping(value = "/notifications/mark-read", produces = "application/json;charset=UTF-8")
@@ -66,6 +64,6 @@ public class NotificationController {
         boolean success = notificationDAO.markAllAsRead(user.getId());
         Map<String, Object> result = new HashMap<>();
         result.put("success", success);
-        return gson.toJson(result);
+        return Json.MAPPER.writeValueAsString(result);
     }
 }
