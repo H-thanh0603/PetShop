@@ -187,6 +187,14 @@ grep -rln "^import Util\." src/ | xargs sed -i 's/^import Util\./import com.pets
 
 Expected: `0`
 
+- [ ] **Step 3b: Sweep fully-qualified usages (non-import)**
+
+```bash
+grep -rlnE "\bUtil\.[A-Z]" src/ --include='*.java' | xargs sed -i 's/\bUtil\./com.petshop.util./g' ; grep -rn "[^a-zA-Z_.'\"]Util\.[A-Z]" src/ --include='*.java' | grep -v ":import " | wc -l
+```
+
+Expected: `0`. Rationale: code dùng `Util.Foo` fully-qualified (gồm `mockStatic`/`mockConstruction` trong test) không có dòng import nên Step 3 bỏ sót — Task 2 đã gặp case này với `Context.DBContext`. `sed \b` an toàn với `XxxUtil.` (không match vì thiếu word boundary) và idempotent với text đã migrate (case-sensitive).
+
 - [ ] **Step 4: Compile**
 
 ```bash
@@ -247,6 +255,14 @@ grep -rln "^import Model\." src/ | xargs sed -i 's/^import Model\./import com.pe
 ```
 
 Expected: `0`
+
+- [ ] **Step 3b: Sweep fully-qualified usages (non-import)**
+
+```bash
+grep -rlnE "\bModel\.[A-Z]" src/ --include='*.java' | xargs sed -i 's/\bModel\./com.petshop.model./g' ; grep -rn "[^a-zA-Z_.'\"]Model\.[A-Z]" src/ --include='*.java' | grep -v ":import " | wc -l
+```
+
+Expected: `0` (lý do như Task 3 Step 3b; `XxxModel.` không bị match nhờ `\b`).
 
 - [ ] **Step 4: Compile**
 
@@ -309,6 +325,14 @@ grep -rln "^import DAO\." src/ | xargs sed -i 's/^import DAO\./import com.petsho
 
 Expected: `0`
 
+- [ ] **Step 3b: Sweep fully-qualified usages (non-import)**
+
+```bash
+grep -rlnE "\bDAO\.[A-Z]" src/ --include='*.java' | xargs sed -i 's/\bDAO\./com.petshop.dao./g' ; grep -rn "[^a-zA-Z_.'\"]DAO\.[A-Z]" src/ --include='*.java' | grep -v ":import " | wc -l
+```
+
+Expected: `0` (lý do như Task 3 Step 3b; `XxxDAO.` không bị match nhờ `\b`).
+
 - [ ] **Step 4: Compile**
 
 ```bash
@@ -369,7 +393,13 @@ Expected: `0`. If a `package` line differs from these three variants (e.g. plain
 grep -rln "^import controller\.FaceBook\.\|^import controller\.Google\." src/ | xargs sed -i -e 's/^import controller\.FaceBook\./import com.petshop.web.oauth./' -e 's/^import controller\.Google\./import com.petshop.web.oauth./' ; grep -rln "^import controller\.filter\." src/ | xargs sed -i 's/^import controller\.filter\./import com.petshop.web.filter./' ; grep -rn "^import controller\." src/ | wc -l
 ```
 
-Expected: `0`. If any `import controller.` (non-subpackage) remains, it is unexpected — escalate (BLOCKED/NEEDS_CONTEXT), do not guess.
+Expected: `0`. If any `import controller.` (non-subpackage) remains, it is unexpected — escalate (BLOCKED/NEEDS_CONTEXT), do not guess. Then verify no fully-qualified class refs remain (`controller.isAuthorized(...)` với biến local là false positive, bỏ qua):
+
+```bash
+grep -rn "[^a-zA-Z_.'\"]controller\.[A-Z]" src/ --include='*.java' | grep -v ":import " | wc -l
+```
+
+Expected: `0`.
 
 - [ ] **Step 4: Verify filter registration + OAuth consumers (Review Focus pins)**
 
