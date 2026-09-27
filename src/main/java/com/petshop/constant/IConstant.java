@@ -1,4 +1,4 @@
-package Constant;
+package com.petshop.constant;
 
 public interface IConstant {
     public static final String FACEBOOK_REDIRECT_PATH = "/LoginByFacebookServlet";

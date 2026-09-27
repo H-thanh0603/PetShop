@@ -1,5 +1,5 @@
 package controller.FaceBook;
-import Constant.IConstant;
+import com.petshop.constant.IConstant;
 import Model.FbAccount.Account;
 import Util.Json;
 import Util.SecretConfig;

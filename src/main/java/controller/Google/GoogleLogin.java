@@ -1,6 +1,6 @@
 package controller.Google;
 
-import Constant.IConstant;
+import com.petshop.constant.IConstant;
 import Model.GgAccount.GoogleAccount;
 import Util.Json;
 import Util.SecretConfig;
