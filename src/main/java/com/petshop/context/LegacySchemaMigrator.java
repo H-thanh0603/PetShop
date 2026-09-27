@@ -374,6 +374,22 @@ public final class LegacySchemaMigrator {
                     "created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP" +
                     ")");
 
+            // The addresses table exists in production but no migration ever
+            // created it (out-of-band history). Create idempotently to match
+            // the production DDL exactly.
+            stmt.execute("CREATE TABLE IF NOT EXISTS addresses (" +
+                    "id INT AUTO_INCREMENT PRIMARY KEY," +
+                    "user_id INT NOT NULL," +
+                    "province VARCHAR(100) NOT NULL," +
+                    "district VARCHAR(100) NOT NULL," +
+                    "ward VARCHAR(100) NOT NULL," +
+                    "address VARCHAR(255) NOT NULL," +
+                    "is_default TINYINT(1) NOT NULL DEFAULT 0," +
+                    "created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP," +
+                    "KEY user_id (user_id)," +
+                    "CONSTRAINT fk_addresses_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE" +
+                    ")");
+
             // Seed settings if empty
             try (ResultSet rs = stmt.executeQuery("SELECT COUNT(*) FROM ai_support_settings")) {
                 if (rs.next() && rs.getInt(1) == 0) {

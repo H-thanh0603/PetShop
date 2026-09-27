@@ -23,7 +23,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 
 import com.petshop.context.DBContext;
-import com.petshop.dao.AddressDao;
+import com.petshop.repository.AddressRepository;
 import com.petshop.repository.CartRepository;
 import com.petshop.dao.CouponDao;
 import com.petshop.dao.InventoryBatchDAO;
@@ -69,7 +69,7 @@ public class CheckoutController {
     private static final String BANK_TRANSFER_REFERENCE_SESSION_KEY = "bankTransferReference";
 
     private final CouponDao couponDao;
-    private final AddressDao addressDAO;
+    private final AddressRepository addressDAO;
     private final InventoryService inventoryService;
     private final CartRepository cartDAO;
     private final ProductDAO productDAO;
@@ -81,7 +81,7 @@ public class CheckoutController {
     private final com.petshop.repository.NotificationRepository notificationDAO;
 
     @Autowired
-    public CheckoutController(CouponDao couponDao, AddressDao addressDAO, InventoryService inventoryService,
+    public CheckoutController(CouponDao couponDao, AddressRepository addressDAO, InventoryService inventoryService,
                               CartRepository cartDAO, ProductDAO productDAO, OrderDAO orderDAO,
                               PaymentTransactionDAO paymentTransactionDAO, UserRepository userDAO,
                               OrderEmailService orderEmailService, InventoryBatchDAO inventoryBatchDAO,

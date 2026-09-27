@@ -49,4 +49,15 @@ public class JpaTestConfig {
                 .baselineVersion("0")
                 .load();
     }
+
+    @Bean
+    public com.petshop.repository.ProductRepositoryHolder productRepositoryHolder(
+            jakarta.persistence.EntityManager entityManager) {
+        // @DataJpaTest slices exclude @Components, so the holder would stay
+        // empty in tests; declare it explicitly.
+        com.petshop.repository.ProductRepositoryHolder holder =
+                new com.petshop.repository.ProductRepositoryHolder();
+        holder.setEntityManager(entityManager);
+        return holder;
+    }
 }

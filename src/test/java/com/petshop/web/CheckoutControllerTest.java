@@ -23,7 +23,7 @@ import org.springframework.mock.web.MockHttpSession;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
-import com.petshop.dao.AddressDao;
+import com.petshop.repository.AddressRepository;
 import com.petshop.repository.CartRepository;
 import com.petshop.dao.CouponDao;
 import com.petshop.dao.InventoryBatchDAO;
@@ -50,7 +50,7 @@ class CheckoutControllerTest {
     @Mock
     CouponDao couponDao;
     @Mock
-    AddressDao addressDAO;
+    AddressRepository addressDAO;
     @Mock
     InventoryService inventoryService;
     @Mock

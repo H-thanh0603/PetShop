@@ -2,14 +2,33 @@ package com.petshop.model;
 
 import java.sql.Timestamp;
 
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.Table;
+
+@Entity
+@Table(name = "addresses")
 public class Address {
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "id")
     private int id;
+    @Column(name = "user_id", nullable = false)
     private int userId;
+    @Column(name = "is_default", nullable = false)
     private boolean defaultt;
+    @Column(name = "address", nullable = false)
     private String address;
+    @Column(name = "created_at", nullable = false)
     private Timestamp createAt;
+    @Column(name = "province", nullable = false, length = 100)
     private String province;
+    @Column(name = "district", nullable = false, length = 100)
     private String district;
+    @Column(name = "ward", nullable = false, length = 100)
     private String ward;
     public Address(){}
 

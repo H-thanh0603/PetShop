@@ -11,7 +11,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 
-import com.petshop.dao.AddressDao;
+import com.petshop.repository.AddressRepository;
 import com.petshop.dao.OrderDAO;
 import com.petshop.repository.OrderSignRepository;
 import com.petshop.repository.OrderSignatureRepository;
@@ -33,14 +33,14 @@ import jakarta.servlet.http.HttpSession;
 @Controller
 public class AccountController {
 
-    private final AddressDao addressDao;
+    private final AddressRepository addressDao;
     private final OrderDAO orderDAO;
     private final UserRepository userDAO;
     private final OrderSignRepository orderSignDAO;
     private final OrderSignatureRepository orderSignatureDAO;
 
     @Autowired
-    public AccountController(AddressDao addressDao, OrderDAO orderDAO, UserRepository userDAO,
+    public AccountController(AddressRepository addressDao, OrderDAO orderDAO, UserRepository userDAO,
                              OrderSignRepository orderSignDAO, OrderSignatureRepository orderSignatureDAO) {
         this.addressDao = addressDao;
         this.orderDAO = orderDAO;
