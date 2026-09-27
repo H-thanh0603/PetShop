@@ -1,16 +1,34 @@
 package com.petshop.model;
 
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.Table;
 import java.sql.Timestamp;
 
+@Entity
+@Table(name = "certificates")
 public class Certificate {
 
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "id")
     private int id;
+    @Column(name = "order_id", nullable = false)
     private int orderId;
+    @Column(name = "user_id", nullable = false)
     private int userId;
+    @Column(name = "order_code", nullable = false, length = 50)
     private String orderCode;
+    @Column(name = "certificate_data", nullable = false, columnDefinition = "TEXT")
     private String certificateData;
+    @Column(name = "cert_subject", nullable = false)
     private String certSubject;
+    @Column(name = "expires_at")
     private Timestamp expiresAt;
+    @Column(name = "created_at", insertable = false, updatable = false)
     private Timestamp createdAt;
 
     public Certificate() {
