@@ -23,7 +23,7 @@ import com.petshop.dao.AddressDao;
 import com.petshop.dao.OrderDAO;
 import com.petshop.repository.OrderSignRepository;
 import com.petshop.repository.OrderSignatureRepository;
-import com.petshop.dao.UserDAO;
+import com.petshop.repository.UserRepository;
 import com.petshop.model.User;
 
 @ExtendWith(MockitoExtension.class)
@@ -34,7 +34,7 @@ class AccountControllerTest {
     @Mock
     OrderDAO orderDAO;
     @Mock
-    UserDAO userDAO;
+    UserRepository userDAO;
     @Mock
     OrderSignRepository orderSignDAO;
     @Mock

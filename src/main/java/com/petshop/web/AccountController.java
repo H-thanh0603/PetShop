@@ -15,7 +15,7 @@ import com.petshop.dao.AddressDao;
 import com.petshop.dao.OrderDAO;
 import com.petshop.repository.OrderSignRepository;
 import com.petshop.repository.OrderSignatureRepository;
-import com.petshop.dao.UserDAO;
+import com.petshop.repository.UserRepository;
 import com.petshop.model.Address;
 import com.petshop.model.Order;
 import com.petshop.model.OrderSign;
@@ -35,12 +35,12 @@ public class AccountController {
 
     private final AddressDao addressDao;
     private final OrderDAO orderDAO;
-    private final UserDAO userDAO;
+    private final UserRepository userDAO;
     private final OrderSignRepository orderSignDAO;
     private final OrderSignatureRepository orderSignatureDAO;
 
     @Autowired
-    public AccountController(AddressDao addressDao, OrderDAO orderDAO, UserDAO userDAO,
+    public AccountController(AddressDao addressDao, OrderDAO orderDAO, UserRepository userDAO,
                              OrderSignRepository orderSignDAO, OrderSignatureRepository orderSignatureDAO) {
         this.addressDao = addressDao;
         this.orderDAO = orderDAO;

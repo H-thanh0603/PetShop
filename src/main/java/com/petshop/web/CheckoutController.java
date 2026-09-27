@@ -30,7 +30,7 @@ import com.petshop.dao.InventoryBatchDAO;
 import com.petshop.dao.OrderDAO;
 import com.petshop.dao.PaymentTransactionDAO;
 import com.petshop.dao.ProductDAO;
-import com.petshop.dao.UserDAO;
+import com.petshop.repository.UserRepository;
 import com.petshop.model.Address;
 import com.petshop.model.CartItem;
 import com.petshop.model.Coupon;
@@ -75,7 +75,7 @@ public class CheckoutController {
     private final ProductDAO productDAO;
     private final OrderDAO orderDAO;
     private final PaymentTransactionDAO paymentTransactionDAO;
-    private final UserDAO userDAO;
+    private final UserRepository userDAO;
     private final OrderEmailService orderEmailService;
     private final InventoryBatchDAO inventoryBatchDAO;
     private final com.petshop.repository.NotificationRepository notificationDAO;
@@ -83,7 +83,7 @@ public class CheckoutController {
     @Autowired
     public CheckoutController(CouponDao couponDao, AddressDao addressDAO, InventoryService inventoryService,
                               CartDAO cartDAO, ProductDAO productDAO, OrderDAO orderDAO,
-                              PaymentTransactionDAO paymentTransactionDAO, UserDAO userDAO,
+                              PaymentTransactionDAO paymentTransactionDAO, UserRepository userDAO,
                               OrderEmailService orderEmailService, InventoryBatchDAO inventoryBatchDAO,
                               com.petshop.repository.NotificationRepository notificationDAO) {
         this.couponDao = couponDao;

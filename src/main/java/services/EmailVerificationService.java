@@ -3,7 +3,7 @@ package services;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.petshop.dao.UserDAO;
+import com.petshop.repository.UserRepository;
 import com.petshop.util.EmailUtil;
 
 import java.security.SecureRandom;
@@ -19,9 +19,9 @@ public class EmailVerificationService {
     private static final SecureRandom RANDOM = new SecureRandom();
     private static final long EXPIRY_MS = 24L * 60 * 60 * 1000; // 24 hours
 
-    private final UserDAO userDAO;
+    private final UserRepository userDAO;
 
-    public EmailVerificationService(UserDAO userDAO) {
+    public EmailVerificationService(UserRepository userDAO) {
         this.userDAO = userDAO;
     }
 

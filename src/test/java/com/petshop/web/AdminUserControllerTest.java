@@ -27,14 +27,14 @@ import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
 import com.petshop.repository.AdminActionLogRepository;
 import com.petshop.dao.OrderDAO;
-import com.petshop.dao.UserDAO;
+import com.petshop.repository.UserRepository;
 import com.petshop.model.User;
 
 @ExtendWith(MockitoExtension.class)
 class AdminUserControllerTest {
 
     @Mock
-    UserDAO userDAO;
+    UserRepository userDAO;
     @Mock
     OrderDAO orderDAO;
     @Mock

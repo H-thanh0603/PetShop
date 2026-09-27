@@ -7,7 +7,7 @@ import com.petshop.dao.InventoryBatchDAO;
 import com.petshop.dao.OrderDAO;
 import com.petshop.dao.PaymentTransactionDAO;
 import com.petshop.dao.ProductDAO;
-import com.petshop.dao.UserDAO;
+import com.petshop.repository.UserRepository;
 import com.petshop.model.CartItem;
 import com.petshop.model.CouponValidationResult;
 import com.petshop.model.Order;
@@ -43,7 +43,7 @@ class CheckoutServiceInventoryBatchTest {
     @Test
     void processCheckoutReservesTrackedProductStockBeforeSavingOrderItems() throws Exception {
         ProductDAO productDAO = mock(ProductDAO.class);
-        UserDAO userDAO = mock(UserDAO.class);
+        UserRepository userDAO = mock(UserRepository.class);
         CouponDao couponDao = mock(CouponDao.class);
         OrderDAO orderDAO = mock(OrderDAO.class);
         PaymentTransactionDAO paymentTransactionDAO = mock(PaymentTransactionDAO.class);
@@ -104,7 +104,7 @@ class CheckoutServiceInventoryBatchTest {
     @Test
     void processCheckoutReservesStockInsteadOfSellingWhilePaymentCanStillExpire() throws Exception {
         ProductDAO productDAO = mock(ProductDAO.class);
-        UserDAO userDAO = mock(UserDAO.class);
+        UserRepository userDAO = mock(UserRepository.class);
         CouponDao couponDao = mock(CouponDao.class);
         OrderDAO orderDAO = mock(OrderDAO.class);
         PaymentTransactionDAO paymentTransactionDAO = mock(PaymentTransactionDAO.class);
@@ -167,7 +167,7 @@ class CheckoutServiceInventoryBatchTest {
     @Test
     void couponBelowMinimumOrderIsRejectedBeforeMarkingUserDiscountUsed() throws Exception {
         ProductDAO productDAO = mock(ProductDAO.class);
-        UserDAO userDAO = mock(UserDAO.class);
+        UserRepository userDAO = mock(UserRepository.class);
         CouponDao couponDao = mock(CouponDao.class);
         OrderDAO orderDAO = mock(OrderDAO.class);
         PaymentTransactionDAO paymentTransactionDAO = mock(PaymentTransactionDAO.class);
@@ -227,14 +227,14 @@ class CheckoutServiceInventoryBatchTest {
         }
 
         assertFalse(result.isSuccess());
-        verify(userDAO, never()).markDiscountAsUsed(conn, 7);
+        verify(userDAO, never()).markDiscountAsUsed(7);
         verify(couponDao, never()).increaseUsedIfAvailable(conn, 3);
     }
 
     @Test
     void bankTransferCheckoutUsesReservedReferenceAndExpiresInTenMinutes() throws Exception {
         ProductDAO productDAO = mock(ProductDAO.class);
-        UserDAO userDAO = mock(UserDAO.class);
+        UserRepository userDAO = mock(UserRepository.class);
         CouponDao couponDao = mock(CouponDao.class);
         OrderDAO orderDAO = mock(OrderDAO.class);
         PaymentTransactionDAO paymentTransactionDAO = mock(PaymentTransactionDAO.class);
@@ -307,7 +307,7 @@ class CheckoutServiceInventoryBatchTest {
     @Test
     void bankTransferCheckoutCreatesAwaitingPaymentOrder() throws Exception {
         ProductDAO productDAO = mock(ProductDAO.class);
-        UserDAO userDAO = mock(UserDAO.class);
+        UserRepository userDAO = mock(UserRepository.class);
         CouponDao couponDao = mock(CouponDao.class);
         OrderDAO orderDAO = mock(OrderDAO.class);
         PaymentTransactionDAO paymentTransactionDAO = mock(PaymentTransactionDAO.class);
@@ -372,7 +372,7 @@ class CheckoutServiceInventoryBatchTest {
     @Test
     void vnpayCheckoutCreatesUnpaidVnpayTransaction() throws Exception {
         ProductDAO productDAO = mock(ProductDAO.class);
-        UserDAO userDAO = mock(UserDAO.class);
+        UserRepository userDAO = mock(UserRepository.class);
         CouponDao couponDao = mock(CouponDao.class);
         OrderDAO orderDAO = mock(OrderDAO.class);
         PaymentTransactionDAO paymentTransactionDAO = mock(PaymentTransactionDAO.class);
@@ -437,7 +437,7 @@ class CheckoutServiceInventoryBatchTest {
     @Test
     void processCheckoutPersistsOrderItemProductSnapshot() throws Exception {
         ProductDAO productDAO = mock(ProductDAO.class);
-        UserDAO userDAO = mock(UserDAO.class);
+        UserRepository userDAO = mock(UserRepository.class);
         CouponDao couponDao = mock(CouponDao.class);
         OrderDAO orderDAO = mock(OrderDAO.class);
         PaymentTransactionDAO paymentTransactionDAO = mock(PaymentTransactionDAO.class);

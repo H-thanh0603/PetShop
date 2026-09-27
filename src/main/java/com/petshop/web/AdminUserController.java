@@ -18,7 +18,7 @@ import org.springframework.web.bind.annotation.ResponseBody;
 
 import com.petshop.repository.AdminActionLogRepository;
 import com.petshop.dao.OrderDAO;
-import com.petshop.dao.UserDAO;
+import com.petshop.repository.UserRepository;
 import com.petshop.model.Order;
 import com.petshop.model.User;
 import com.petshop.util.Json;
@@ -36,12 +36,12 @@ public class AdminUserController {
 
     private static final Logger logger = LoggerFactory.getLogger(AdminUserController.class);
 
-    private final UserDAO userDAO;
+    private final UserRepository userDAO;
     private final OrderDAO orderDAO;
     private final AdminActionLogRepository actionLog;
 
     @Autowired
-    public AdminUserController(UserDAO userDAO, OrderDAO orderDAO, AdminActionLogRepository actionLog) {
+    public AdminUserController(UserRepository userDAO, OrderDAO orderDAO, AdminActionLogRepository actionLog) {
         this.userDAO = userDAO;
         this.orderDAO = orderDAO;
         this.actionLog = actionLog;

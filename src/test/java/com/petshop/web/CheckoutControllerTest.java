@@ -30,7 +30,7 @@ import com.petshop.dao.InventoryBatchDAO;
 import com.petshop.dao.OrderDAO;
 import com.petshop.dao.PaymentTransactionDAO;
 import com.petshop.dao.ProductDAO;
-import com.petshop.dao.UserDAO;
+import com.petshop.repository.UserRepository;
 import com.petshop.model.Address;
 import com.petshop.model.CartItem;
 import com.petshop.model.Coupon;
@@ -62,7 +62,7 @@ class CheckoutControllerTest {
     @Mock
     PaymentTransactionDAO paymentTransactionDAO;
     @Mock
-    UserDAO userDAO;
+    UserRepository userDAO;
     @Mock
     OrderEmailService orderEmailService;
     @Mock

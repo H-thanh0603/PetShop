@@ -6,7 +6,7 @@ import com.petshop.dao.CouponDao;
 import com.petshop.dao.OrderDAO;
 import com.petshop.dao.PaymentTransactionDAO;
 import com.petshop.dao.ProductDAO;
-import com.petshop.dao.UserDAO;
+import com.petshop.repository.UserRepository;
 import com.petshop.model.CartItem;
 import com.petshop.model.Product;
 import com.petshop.model.User;
@@ -110,7 +110,7 @@ class CheckoutConcurrencyTest {
         assertEquals(2, users.size());
 
         CheckoutService checkoutService = new CheckoutService(
-                new ProductDAO(), new UserDAO(), new CouponDao(),
+                new ProductDAO(), null, new CouponDao(),
                 new OrderDAO(), new PaymentTransactionDAO(),
                 new CartDAO(), new OrderEmailService());
 

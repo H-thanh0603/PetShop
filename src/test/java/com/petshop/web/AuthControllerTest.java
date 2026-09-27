@@ -19,7 +19,7 @@ import org.springframework.mock.web.MockHttpSession;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
-import com.petshop.dao.UserDAO;
+import com.petshop.repository.UserRepository;
 import com.petshop.model.User;
 import com.petshop.repository.RememberTokenRepository;
 import com.petshop.repository.SecurityEventRepository;
@@ -30,7 +30,7 @@ class AuthControllerTest {
     @Mock
     RememberTokenRepository rememberTokenDAO;
     @Mock
-    UserDAO userDAO;
+    UserRepository userDAO;
     @Mock
     SecurityEventRepository securityEventDAO;
 

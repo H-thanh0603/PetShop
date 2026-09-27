@@ -10,7 +10,7 @@ import com.petshop.repository.CertificateRepository;
 import com.petshop.dao.PaymentTransactionDAO;
 import com.petshop.dao.ProductDAO;
 import com.petshop.dao.PromotionDAO;
-import com.petshop.dao.UserDAO;
+import com.petshop.repository.UserRepository;
 import com.petshop.model.CartItem;
 import com.petshop.model.Coupon;
 import com.petshop.model.CouponValidationResult;
@@ -49,7 +49,7 @@ public class CheckoutService {
     private static final String SIGNATURE_TOOL_URL = "/tools/CryptoToolMVC.exe";
 
     private final ProductDAO productDAO;
-    private final UserDAO userDAO;
+    private final UserRepository userDAO;
     private final CouponDao couponDao;
     private final OrderDAO orderDAO;
     private final PaymentTransactionDAO paymentTransactionDAO;
@@ -61,7 +61,7 @@ public class CheckoutService {
     private final OrderSignRepository orderSignDAO;
     private final CertificateRepository certificateDAO;
 
-    public CheckoutService(ProductDAO productDAO, UserDAO userDAO, CouponDao couponDao,
+    public CheckoutService(ProductDAO productDAO, UserRepository userDAO, CouponDao couponDao,
                            OrderDAO orderDAO, PaymentTransactionDAO paymentTransactionDAO,
                            CartDAO cartDAO, OrderEmailService orderEmailService) {
         this(productDAO, userDAO, couponDao, orderDAO, paymentTransactionDAO,
@@ -69,7 +69,7 @@ public class CheckoutService {
                 null, null);
     }
 
-    public CheckoutService(ProductDAO productDAO, UserDAO userDAO, CouponDao couponDao,
+    public CheckoutService(ProductDAO productDAO, UserRepository userDAO, CouponDao couponDao,
                            OrderDAO orderDAO, PaymentTransactionDAO paymentTransactionDAO,
                            CartDAO cartDAO, OrderEmailService orderEmailService,
                            InventoryBatchDAO inventoryBatchDAO) {
@@ -78,7 +78,7 @@ public class CheckoutService {
                 null, null);
     }
 
-    public CheckoutService(ProductDAO productDAO, UserDAO userDAO, CouponDao couponDao,
+    public CheckoutService(ProductDAO productDAO, UserRepository userDAO, CouponDao couponDao,
                            OrderDAO orderDAO, PaymentTransactionDAO paymentTransactionDAO,
                            CartDAO cartDAO, OrderEmailService orderEmailService,
                            InventoryBatchDAO inventoryBatchDAO,
@@ -182,7 +182,8 @@ public class CheckoutService {
                         conn.rollback();
                         return new CheckoutResult(false, "Đơn hàng chưa đạt giá trị tối thiểu để dùng mã giảm giá.");
                     }
-                    if (!userDAO.markDiscountAsUsed(conn, user.getId())) {
+                    // P2-Task4 intermediate: ambient-tx call until Task 9 wraps checkout in @Transactional.
+                    if (!userDAO.markDiscountAsUsed(user.getId())) {
                         conn.rollback();
                         return new CheckoutResult(false, "Tài khoản này đã sử dụng mã giảm giá trước đó.");
                     }

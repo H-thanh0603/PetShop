@@ -17,7 +17,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 
 import com.petshop.dao.CartDAO;
-import com.petshop.dao.UserDAO;
+import com.petshop.repository.UserRepository;
 import com.petshop.repository.RememberTokenRepository;
 import com.petshop.repository.SecurityEventRepository;
 import com.petshop.model.CartItem;
@@ -50,22 +50,18 @@ public class AuthController {
     private static final SecureRandom SECURE_RANDOM = new SecureRandom();
 
     private final RememberTokenRepository rememberTokenDAO;
-    private final UserDAO userDAO;
+    private final UserRepository userDAO;
     private final SecurityEventRepository securityEventDAO;
 
     @Autowired
-    public AuthController(RememberTokenRepository rememberTokenDAO, SecurityEventRepository securityEventDAO) {
-        this(rememberTokenDAO, new UserDAO(), securityEventDAO);
-    }
-
-    AuthController(RememberTokenRepository rememberTokenDAO, UserDAO userDAO) {
-        this(rememberTokenDAO, userDAO, null);
-    }
-
-    AuthController(RememberTokenRepository rememberTokenDAO, UserDAO userDAO, SecurityEventRepository securityEventDAO) {
+    public AuthController(RememberTokenRepository rememberTokenDAO, UserRepository userDAO, SecurityEventRepository securityEventDAO) {
         this.rememberTokenDAO = rememberTokenDAO;
         this.userDAO = userDAO;
         this.securityEventDAO = securityEventDAO;
+    }
+
+    AuthController(RememberTokenRepository rememberTokenDAO, UserRepository userDAO) {
+        this(rememberTokenDAO, userDAO, null);
     }
 
     @GetMapping("/logout")
