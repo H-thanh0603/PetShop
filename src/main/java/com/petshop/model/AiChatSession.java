@@ -1,19 +1,40 @@
 package com.petshop.model;
 
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.Table;
+import jakarta.persistence.Transient;
 import java.sql.Timestamp;
 
+@Entity
+@Table(name = "ai_chat_sessions")
 public class AiChatSession {
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "id")
     private int id;
+    @Column(name = "user_id")
     private Integer userId;
+    @Column(name = "guest_name")
     private String guestName;
+    @Column(name = "guest_email")
     private String guestEmail;
+    @Column(name = "status", length = 50)
     private String status; // OPEN, WAITING_ADMIN, ANSWERED_BY_ADMIN, CLOSED
+    @Column(name = "need_admin_support")
     private boolean needAdminSupport;
+    @Column(name = "created_at", insertable = false, updatable = false)
     private Timestamp createdAt;
+    @Column(name = "updated_at", insertable = false, updatable = false)
     private Timestamp updatedAt;
-    
-    // Additional user fields for admin dashboard convenience
+
+    // Additional user fields for admin dashboard convenience (JOIN-filled, not columns)
+    @Transient
     private String userFullname;
+    @Transient
     private String userEmail;
 
     public AiChatSession() {}
