@@ -1,11 +1,25 @@
 package com.petshop.model;
 
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.Table;
 import java.sql.Timestamp;
 
+@Entity
+@Table(name = "ai_support_settings")
 public class AiSupportSetting {
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "id")
     private int id;
+    @Column(name = "setting_key", nullable = false, length = 100)
     private String settingKey;
+    @Column(name = "setting_value", columnDefinition = "TEXT")
     private String settingValue;
+    @Column(name = "updated_at", insertable = false, updatable = false)
     private Timestamp updatedAt;
 
     public AiSupportSetting() {}
