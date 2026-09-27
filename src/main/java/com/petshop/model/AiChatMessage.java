@@ -1,18 +1,39 @@
 package com.petshop.model;
 
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.Table;
 import java.math.BigDecimal;
 import java.sql.Timestamp;
 
+@Entity
+@Table(name = "ai_chat_messages")
 public class AiChatMessage {
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "id")
     private int id;
+    @Column(name = "session_id", nullable = false)
     private int sessionId;
+    @Column(name = "sender_type", nullable = false, length = 20)
     private String senderType; // USER, AI, ADMIN, SYSTEM
+    @Column(name = "message", nullable = false, columnDefinition = "TEXT")
     private String message;
+    @Column(name = "intent", length = 50)
     private String intent;
+    @Column(name = "confidence", precision = 4, scale = 2)
     private BigDecimal confidence;
+    @Column(name = "need_admin_support")
     private boolean needAdminSupport;
+    @Column(name = "suggested_admin_note", columnDefinition = "TEXT")
     private String suggestedAdminNote;
+    @Column(name = "created_at", insertable = false, updatable = false)
     private Timestamp createdAt;
+    @Column(name = "is_read", insertable = false, updatable = false)
+    private boolean read;
 
     public AiChatMessage() {}
 
