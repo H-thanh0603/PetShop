@@ -103,6 +103,13 @@ public final class LegacySchemaMigrator {
      */
     public static void migrate(Connection conn) {
         runLegacySqlScripts(conn);
+        // 09_update_pet_type_id.sql re-enables SQL_SAFE_UPDATES at its end; the
+        // inline statements below (UPDATE users ...) need it off on this session.
+        try (Statement reset = conn.createStatement()) {
+            reset.execute("SET SQL_SAFE_UPDATES = 0");
+        } catch (Exception e) {
+            logger.warn("[DBContext] Could not reset SQL_SAFE_UPDATES: " + e.getMessage());
+        }
         try (Statement stmt = conn.createStatement()) {
             addColumnIfMissing(conn, stmt, "products", "weight", "INT NOT NULL DEFAULT 0");
             addColumnIfMissing(conn, stmt, "products", "is_active", "TINYINT(1) NOT NULL DEFAULT 1");
@@ -131,7 +138,6 @@ public final class LegacySchemaMigrator {
             addColumnIfMissing(conn, stmt, "order_items", "product_name_snapshot", "VARCHAR(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NULL");
             addColumnIfMissing(conn, stmt, "order_items", "product_image_snapshot", "VARCHAR(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NULL");
             addColumnIfMissing(conn, stmt, "order_signs", "private_key", "TEXT NULL");
-            addColumnIfMissing(conn, stmt, "ai_chat_messages", "is_read", "TINYINT(1) NOT NULL DEFAULT 0");
             executeIgnore(stmt, "UPDATE orders SET createdAt = created_at WHERE createdAt IS NULL AND created_at IS NOT NULL");
             executeIgnore(stmt, "UPDATE orders SET recipient_fullname = COALESCE(NULLIF(recipient_fullname, ''), fullname), " +
                     "recipient_phone = COALESCE(NULLIF(recipient_phone, ''), phone), " +
@@ -346,6 +352,7 @@ public final class LegacySchemaMigrator {
                     "need_admin_support BOOLEAN DEFAULT FALSE," +
                     "suggested_admin_note TEXT NULL," +
                     "created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP," +
+                    "is_read TINYINT(1) NOT NULL DEFAULT 0," +
                     "CONSTRAINT fk_ai_chat_messages_session FOREIGN KEY (session_id) REFERENCES ai_chat_sessions(id) ON DELETE CASCADE" +
                     ")");
 
