@@ -24,13 +24,14 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
-import com.google.gson.JsonObject;
+import tools.jackson.databind.node.ObjectNode;
 
 import DAO.AdminActionLogDAO;
 import DAO.NotificationDAO;
 import DAO.OrderDAO;
 import Model.Order;
 import Model.User;
+import Util.Json;
 import services.ShippingService;
 
 @ExtendWith(MockitoExtension.class)
@@ -150,9 +151,9 @@ class AdminOrderControllerTest {
         Order order = new Order();
         order.setId(7);
         when(orderDAO.getOrderById(7)).thenReturn(order);
-        JsonObject ghn = new JsonObject();
-        ghn.addProperty("order_code", "GHN1");
-        ghn.addProperty("sort_code", "S1");
+        ObjectNode ghn = Json.MAPPER.createObjectNode();
+        ghn.put("order_code", "GHN1");
+        ghn.put("sort_code", "S1");
         when(shippingService.createGhnOrder(order)).thenReturn(ghn);
 
         mockMvc.perform(post("/admin/orders")

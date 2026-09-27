@@ -15,7 +15,6 @@ import Model.Order;
 import Model.OrderLog;
 import Model.OrderStatusHistory;
 import Model.User;
-import Util.Json;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpSession;
 import services.ShippingService;
@@ -178,7 +177,7 @@ public class AdminOrderController {
                 session.setAttribute("messageType", "warning");
             } else {
                 try {
-                    JsonNode ghnResult = Json.MAPPER.readTree(shippingService.createGhnOrder(order).toString());
+                    JsonNode ghnResult = shippingService.createGhnOrder(order);
                     String ghnOrderId = ghnResult.get("order_code") != null
                             ? ghnResult.path("order_code").asString() : "";
                     String ghnTrackingCode = ghnResult.get("sort_code") != null

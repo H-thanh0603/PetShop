@@ -7,7 +7,7 @@ import java.lang.reflect.Method;
 
 import org.junit.jupiter.api.Test;
 
-import com.google.gson.JsonObject;   // Task 8 Step 2 sẽ đổi sang JsonNode — assertion giữ nguyên
+import tools.jackson.databind.JsonNode;
 
 class ShippingServiceJsonLenientTest {
 
@@ -19,15 +19,15 @@ class ShippingServiceJsonLenientTest {
 
     @Test
     void parsesStrictJson() throws Exception {
-        JsonObject node = (JsonObject) parse("{\"ok\":true,\"n\":1}");
-        assertEquals("1", node.get("n").getAsString());
+        JsonNode node = (JsonNode) parse("{\"ok\":true,\"n\":1}");
+        assertEquals("1", node.path("n").asString());
     }
 
     @Test
     void parsesLenientJsonThatStrictRejects() throws Exception {
         // GHN từng trả JSON lỗi; Gson lenient vẫn đọc được
-        JsonObject node = (JsonObject) parse("{ok:true,'note':'xà'}");
-        assertEquals("xà", node.get("note").getAsString());
+        JsonNode node = (JsonNode) parse("{ok:true,'note':'xà'}");
+        assertEquals("xà", node.path("note").asString());
     }
 
     @Test

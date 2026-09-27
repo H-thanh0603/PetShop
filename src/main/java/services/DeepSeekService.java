@@ -2,7 +2,6 @@ package services;
 
 import DAO.AiSupportSettingDAO;
 import Model.*;
-import com.google.gson.Gson;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import services.ai.CommerceAgent;
@@ -13,7 +12,6 @@ public class DeepSeekService {
     private static final Logger log = LoggerFactory.getLogger(DeepSeekService.class);
     private final AiSupportSettingDAO settingDAO = new AiSupportSettingDAO();
     private final CommerceAgent commerceAgent = new CommerceAgent();
-    private final Gson gson = new Gson();
 
     public static class AiResponse {
         private String answer;

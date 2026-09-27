@@ -3,19 +3,17 @@ package services;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import Util.Json;
 import Util.ShippingConfig;
-import com.google.gson.JsonArray;
-import com.google.gson.JsonObject;
-import com.google.gson.JsonParser;
-import com.google.gson.JsonSyntaxException;
-import com.google.gson.stream.JsonReader;
-import com.google.gson.stream.MalformedJsonException;
+import tools.jackson.core.JacksonException;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.node.ArrayNode;
+import tools.jackson.databind.node.ObjectNode;
 
 import Model.Order;
 import Model.OrderItem;
 
 import java.io.IOException;
-import java.io.StringReader;
 import java.net.URI;
 import java.net.URLEncoder;
 import java.net.http.HttpClient;
@@ -57,14 +55,14 @@ public class ShippingService {
                 .build();
 
         HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
-        JsonObject json = parseJsonLenient(response.body());
-        JsonArray data = json.getAsJsonArray("data");
+        JsonNode json = parseJsonLenient(response.body());
+        JsonNode data = json.path("data");
 
         for (int i = 0; i < data.size(); i++) {
-            JsonObject p = data.get(i).getAsJsonObject();
-            String name = p.get("ProvinceName").getAsString();
+            JsonNode p = data.get(i);
+            String name = p.path("ProvinceName").asString();
             if (normalize(name).equals(normalize(provinceName))) {
-                return p.get("ProvinceID").getAsInt();
+                return p.path("ProvinceID").asInt();
             }
         }
         return null;
@@ -73,22 +71,22 @@ public class ShippingService {
         Integer provinceId = getProvinceIdByName(provinceName);
         if (provinceId == null) return null;
 
-        JsonObject body = new JsonObject();
-        body.addProperty("province_id", provinceId);
+        ObjectNode body = Json.MAPPER.createObjectNode();
+        body.put("province_id", provinceId);
 
         HttpRequest request = baseRequest(BASE_URL + "/master-data/district")
-                .method("GET", HttpRequest.BodyPublishers.ofString(body.toString()))
+                .method("GET", HttpRequest.BodyPublishers.ofString(Json.MAPPER.writeValueAsString(body)))
                 .build();
 
         HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
-        JsonObject json = parseJsonLenient(response.body());
-        JsonArray data = json.getAsJsonArray("data");
+        JsonNode json = parseJsonLenient(response.body());
+        JsonNode data = json.path("data");
 
         for (int i = 0; i < data.size(); i++) {
-            JsonObject d = data.get(i).getAsJsonObject();
-            String name = d.get("DistrictName").getAsString();
+            JsonNode d = data.get(i);
+            String name = d.path("DistrictName").asString();
             if (normalize(name).equals(normalize(districtName))) {
-                return d.get("DistrictID").getAsInt();
+                return d.path("DistrictID").asInt();
             }
         }
         return null;
@@ -98,43 +96,43 @@ public class ShippingService {
         Integer districtId = getDistrictIdByName(provinceName, districtName);
         if (districtId == null) return null;
 
-        JsonObject body = new JsonObject();
-        body.addProperty("district_id", districtId);
+        ObjectNode body = Json.MAPPER.createObjectNode();
+        body.put("district_id", districtId);
 
         HttpRequest request = baseRequest(BASE_URL + "/master-data/ward?district_id")
-                .POST(HttpRequest.BodyPublishers.ofString(body.toString()))
+                .POST(HttpRequest.BodyPublishers.ofString(Json.MAPPER.writeValueAsString(body)))
                 .build();
 
         HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
-        JsonObject json = parseJsonLenient(response.body());
-        JsonArray data = json.getAsJsonArray("data");
+        JsonNode json = parseJsonLenient(response.body());
+        JsonNode data = json.path("data");
 
         for (int i = 0; i < data.size(); i++) {
-            JsonObject w = data.get(i).getAsJsonObject();
-            String name = w.get("WardName").getAsString();
+            JsonNode w = data.get(i);
+            String name = w.path("WardName").asString();
             if (normalize(name).equals(normalize(wardName))) {
-                return w.get("WardCode").getAsString();
+                return w.path("WardCode").asString();
             }
         }
         return null;
     }
 
     public Integer getAvailableServiceId(int toDistrictId) throws IOException, InterruptedException {
-        JsonObject body = new JsonObject();
-        body.addProperty("shop_id", SHOP_ID);
-        body.addProperty("from_district", FROM_DISTRICT_ID);
-        body.addProperty("to_district", toDistrictId);
+        ObjectNode body = Json.MAPPER.createObjectNode();
+        body.put("shop_id", SHOP_ID);
+        body.put("from_district", FROM_DISTRICT_ID);
+        body.put("to_district", toDistrictId);
 
         HttpRequest request = baseRequest(BASE_URL + "/v2/shipping-order/available-services")
-                .POST(HttpRequest.BodyPublishers.ofString(body.toString()))
+                .POST(HttpRequest.BodyPublishers.ofString(Json.MAPPER.writeValueAsString(body)))
                 .build();
 
         HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
-        JsonObject json = parseJsonLenient(response.body());
-        JsonArray data = json.getAsJsonArray("data");
+        JsonNode json = parseJsonLenient(response.body());
+        JsonNode data = json.path("data");
 
         if (data == null || data.size() == 0) return null;
-        return data.get(0).getAsJsonObject().get("service_id").getAsInt();
+        return data.get(0).path("service_id").asInt();
     }
 
     public int calculateShippingFee(String province, String district, String ward,
@@ -153,33 +151,33 @@ public class ShippingService {
             throw new RuntimeException("Không lấy được service_id từ GHN");
         }
 
-        JsonObject body = new JsonObject();
-        body.addProperty("from_district_id", FROM_DISTRICT_ID);
-        body.addProperty("from_ward_code", FROM_WARD_CODE);
-        body.addProperty("service_id", serviceId);
-        body.addProperty("to_district_id", toDistrictId);
-        body.addProperty("to_ward_code", toWardCode);
-        body.addProperty("height", height);
-        body.addProperty("length", length);
-        body.addProperty("weight", weight);
-        body.addProperty("width", width);
-        body.addProperty("insurance_value", 0);
+        ObjectNode body = Json.MAPPER.createObjectNode();
+        body.put("from_district_id", FROM_DISTRICT_ID);
+        body.put("from_ward_code", FROM_WARD_CODE);
+        body.put("service_id", serviceId);
+        body.put("to_district_id", toDistrictId);
+        body.put("to_ward_code", toWardCode);
+        body.put("height", height);
+        body.put("length", length);
+        body.put("weight", weight);
+        body.put("width", width);
+        body.put("insurance_value", 0);
 
         HttpRequest request = baseRequest(BASE_URL + "/v2/shipping-order/fee")
                 .header("ShopId", String.valueOf(SHOP_ID))
-                .POST(HttpRequest.BodyPublishers.ofString(body.toString()))
+                .POST(HttpRequest.BodyPublishers.ofString(Json.MAPPER.writeValueAsString(body)))
                 .build();
 
         HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
 
-        JsonObject json = parseJsonLenient(response.body());
-        JsonObject data = json.getAsJsonObject("data");
+        JsonNode json = parseJsonLenient(response.body());
+        JsonNode data = json.path("data");
 
-        if (data == null || data.get("total") == null) {
+        if (data == null || data.isMissingNode() || data.path("total").isMissingNode()) {
             throw new RuntimeException("GHN fee response lỗi: " + response.body());
         }
 
-        return data.get("total").getAsInt();
+        return data.path("total").asInt();
     }
 
     // ========== GHN order creation & status sync ==========
@@ -188,18 +186,18 @@ public class ShippingService {
      * Push order to GHN via 5sao.ghn.dev API so GHN shippers can manage it.
      * Returns a JSON object with "order_code" and "sort_code" from GHN.
      */
-    public JsonObject createGhnOrder(Order order) throws Exception {
+    public JsonNode createGhnOrder(Order order) throws Exception {
         // Build items array
-        JsonArray itemsArray = new JsonArray();
+        ArrayNode itemsArray = Json.MAPPER.createArrayNode();
         if (order.getItems() != null) {
             for (OrderItem item : order.getItems()) {
-                JsonObject itemObj = new JsonObject();
-                itemObj.addProperty("name", item.getProductNameSnapshot() != null
+                ObjectNode itemObj = Json.MAPPER.createObjectNode();
+                itemObj.put("name", item.getProductNameSnapshot() != null
                         ? item.getProductNameSnapshot() : "San pham");
-                itemObj.addProperty("quantity", item.getQuantity());
-                itemObj.addProperty("price", item.getPrice() != null
+                itemObj.put("quantity", item.getQuantity());
+                itemObj.put("price", item.getPrice() != null
                         ? item.getPrice().intValue() : 0);
-                itemObj.addProperty("weight", 200);
+                itemObj.put("weight", 200);
                 itemsArray.add(itemObj);
             }
         }
@@ -226,26 +224,26 @@ public class ShippingService {
             // Use fallback values
         }
 
-        JsonObject reqBody = new JsonObject();
-        reqBody.addProperty("shop_id", GHN_ORDER_SHOP_ID);
-        reqBody.addProperty("to_name", order.getRecipientFullname());
-        reqBody.addProperty("to_phone", order.getRecipientPhone());
-        reqBody.addProperty("to_address", order.getShippingAddress());
-        reqBody.addProperty("to_district_id", toDistrictId);
-        reqBody.addProperty("to_ward_code", toWardCode);
-        reqBody.addProperty("cod_amount", order.getPayment_status() ? 0 : order.getTotalAmount().intValue());
-        reqBody.addProperty("weight", Math.max(200, order.getItems() != null ? order.getItems().size() * 200 : 200));
-        reqBody.addProperty("length", 10);
-        reqBody.addProperty("width", 10);
-        reqBody.addProperty("height", 10);
-        reqBody.addProperty("service_type_id", 2);
-        reqBody.addProperty("payment_type_id", 1);
-        reqBody.addProperty("note", order.getNote() != null ? order.getNote() : "");
-        reqBody.addProperty("required_note", "KHONGCHOXEMHANG"); // GHN required field
-        reqBody.add("items", itemsArray);
+        ObjectNode reqBody = Json.MAPPER.createObjectNode();
+        reqBody.put("shop_id", GHN_ORDER_SHOP_ID);
+        reqBody.put("to_name", order.getRecipientFullname());
+        reqBody.put("to_phone", order.getRecipientPhone());
+        reqBody.put("to_address", order.getShippingAddress());
+        reqBody.put("to_district_id", toDistrictId);
+        reqBody.put("to_ward_code", toWardCode);
+        reqBody.put("cod_amount", order.getPayment_status() ? 0 : order.getTotalAmount().intValue());
+        reqBody.put("weight", Math.max(200, order.getItems() != null ? order.getItems().size() * 200 : 200));
+        reqBody.put("length", 10);
+        reqBody.put("width", 10);
+        reqBody.put("height", 10);
+        reqBody.put("service_type_id", 2);
+        reqBody.put("payment_type_id", 1);
+        reqBody.put("note", order.getNote() != null ? order.getNote() : "");
+        reqBody.put("required_note", "KHONGCHOXEMHANG"); // GHN required field
+        reqBody.set("items", itemsArray);
 
         HttpRequest request = ghnOrderRequest(GHN_ORDER_URL + "/v2/shipping-order/create")
-                .POST(HttpRequest.BodyPublishers.ofString(reqBody.toString()))
+                .POST(HttpRequest.BodyPublishers.ofString(Json.MAPPER.writeValueAsString(reqBody)))
                 .build();
 
         HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
@@ -266,13 +264,13 @@ public class ShippingService {
                     + httpStatus + ". Body preview: " + respBody.substring(0, Math.min(300, respBody.length())));
         }
 
-        JsonObject json = parseJsonLenient(respBody);
-        int code = json.has("code") ? json.get("code").getAsInt() : -1;
+        JsonNode json = parseJsonLenient(respBody);
+        int code = json.has("code") ? json.path("code").asInt() : -1;
         if (code != 200) {
-            String message = json.has("message") ? json.get("message").getAsString()
-                    : json.has("msg") ? json.get("msg").getAsString() : respBody;
-            String codeMsg = json.has("code_message") ? json.get("code_message").getAsString() : "";
-            String codeMsgVal = json.has("code_message_value") ? json.get("code_message_value").getAsString() : "";
+            String message = json.has("message") ? json.path("message").asString()
+                    : json.has("msg") ? json.path("msg").asString() : respBody;
+            String codeMsg = json.has("code_message") ? json.path("code_message").asString() : "";
+            String codeMsgVal = json.has("code_message_value") ? json.path("code_message_value").asString() : "";
             String fullMsg = message;
             if (!codeMsgVal.isEmpty() && !codeMsgVal.equals(message)) {
                 fullMsg = message + " (" + codeMsgVal + ")";
@@ -280,11 +278,12 @@ public class ShippingService {
             throw new RuntimeException("GHN create order failed (code=" + code + "): " + fullMsg);
         }
 
-        if (!json.has("data") || json.get("data").isJsonNull()) {
+        JsonNode data = json.path("data");
+        if (data.isMissingNode() || data.isNull()) {
             throw new RuntimeException("GHN create order succeeded but returned no data.");
         }
 
-        return json.getAsJsonObject("data");
+        return data;
     }
 
     /**
@@ -292,11 +291,11 @@ public class ShippingService {
      * Returns the GHN status string (e.g. "picking", "delivering", "delivered", "returned").
      */
     public String syncGhnStatus(String ghnOrderId) throws Exception {
-        JsonObject reqBody = new JsonObject();
-        reqBody.addProperty("order_code", ghnOrderId);
+        ObjectNode reqBody = Json.MAPPER.createObjectNode();
+        reqBody.put("order_code", ghnOrderId);
 
         HttpRequest request = ghnOrderRequest(GHN_ORDER_URL + "/v2/shipping-order/detail")
-                .POST(HttpRequest.BodyPublishers.ofString(reqBody.toString()))
+                .POST(HttpRequest.BodyPublishers.ofString(Json.MAPPER.writeValueAsString(reqBody)))
                 .build();
 
         HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
@@ -314,17 +313,17 @@ public class ShippingService {
                     + httpStatus + ". Body preview: " + respBody.substring(0, Math.min(300, respBody.length())));
         }
 
-        JsonObject json = parseJsonLenient(respBody);
-        int code = json.has("code") ? json.get("code").getAsInt() : -1;
+        JsonNode json = parseJsonLenient(respBody);
+        int code = json.has("code") ? json.path("code").asInt() : -1;
         if (code != 200) {
-            String message = json.has("message") ? json.get("message").getAsString()
-                    : json.has("msg") ? json.get("msg").getAsString() : respBody;
+            String message = json.has("message") ? json.path("message").asString()
+                    : json.has("msg") ? json.path("msg").asString() : respBody;
             throw new RuntimeException("GHN sync status failed (code=" + code + "): " + message);
         }
 
-        JsonObject data = json.has("data") && !json.get("data").isJsonNull()
-                ? json.getAsJsonObject("data") : null;
-        return data != null && data.has("status") ? data.get("status").getAsString() : "unknown";
+        JsonNode data = json.has("data") && !json.path("data").isNull()
+                ? json.path("data") : null;
+        return data != null && data.has("status") ? data.path("status").asString() : "unknown";
     }
 
     /**
@@ -356,15 +355,11 @@ public class ShippingService {
     /**
      * Parse JSON with lenient mode to handle malformed responses from GHN API.
      */
-    private static JsonObject parseJsonLenient(String json) {
+    private static JsonNode parseJsonLenient(String json) {
         try {
-            return JsonParser.parseString(json).getAsJsonObject();
-        } catch (JsonSyntaxException | IllegalStateException e) {
-            try (JsonReader reader = new JsonReader(new StringReader(json))) {
-                return JsonParser.parseReader(reader).getAsJsonObject();
-            } catch (Exception ex) {
-                throw new RuntimeException("Failed to parse JSON response: " + json, ex);
-            }
+            return Json.MAPPER.readTree(json);
+        } catch (JacksonException e) {
+            throw new RuntimeException("Failed to parse JSON response: " + json, e);
         }
     }
 
