@@ -7,8 +7,9 @@ import DAO.ReportDAO;
 import Model.Order;
 import Model.Product;
 import Model.Promotion;
-import com.google.gson.JsonArray;
-import com.google.gson.JsonObject;
+import Util.Json;
+import tools.jackson.databind.node.ArrayNode;
+import tools.jackson.databind.node.ObjectNode;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import services.ai.common.Fence;
@@ -55,48 +56,48 @@ public class PetShopMerchantBackend {
     public ChangeLedger ledger() { return ledger; }
 
     // ---- Performance ----
-    public JsonObject businessSnapshot() {
-        JsonObject o = new JsonObject();
+    public ObjectNode businessSnapshot() {
+        ObjectNode o = Json.MAPPER.createObjectNode();
         try {
-            o.addProperty("totalRevenueVnd", str(reportDAO.getTotalRevenue()));
-            o.addProperty("monthRevenueVnd", str(reportDAO.getCurrentMonthRevenue()));
-            o.addProperty("completedOrders", reportDAO.getCompletedOrdersCount());
-            JsonObject byStatus = new JsonObject();
+            o.put("totalRevenueVnd", str(reportDAO.getTotalRevenue()));
+            o.put("monthRevenueVnd", str(reportDAO.getCurrentMonthRevenue()));
+            o.put("completedOrders", reportDAO.getCompletedOrdersCount());
+            ObjectNode byStatus = Json.MAPPER.createObjectNode();
             for (Map<String, Object> row : reportDAO.getOrdersByStatus()) {
-                byStatus.addProperty(String.valueOf(row.get("status")),
+                byStatus.put(String.valueOf(row.get("status")),
                         ((Number) row.get("count")).intValue());
             }
-            o.add("ordersByStatus", byStatus);
-            JsonArray top = new JsonArray();
+            o.set("ordersByStatus", byStatus);
+            ArrayNode top = Json.MAPPER.createArrayNode();
             for (Map<String, Object> row : reportDAO.getTopSellingProducts(5)) {
                 top.add(row.get("product") + " (đã bán " + row.get("count") + ")");
             }
-            o.add("topSellers", top);
+            o.set("topSellers", top);
         } catch (Exception e) {
-            o.addProperty("error", "Snapshot temporarily unavailable");
+            o.put("error", "Snapshot temporarily unavailable");
         }
-        o.addProperty("note", "Email channel reports no revenue (limitation)");
+        o.put("note", "Email channel reports no revenue (limitation)");
         return o;
     }
 
-    public JsonObject queryMetrics(String metric, String segment) {
-        JsonObject o = new JsonObject();
-        o.addProperty("metric", Fence.sanitize(metric));
+    public ObjectNode queryMetrics(String metric, String segment) {
+        ObjectNode o = Json.MAPPER.createObjectNode();
+        o.put("metric", Fence.sanitize(metric));
         try {
             switch (metric.toLowerCase()) {
                 case "revenue_by_month" -> {
                     int year = java.time.LocalDate.now().getYear();
-                    JsonArray points = new JsonArray();
+                    ArrayNode points = Json.MAPPER.createArrayNode();
                     for (Map<String, Object> row : reportDAO.getRevenueByMonth(year)) {
-                        JsonObject p = new JsonObject();
-                        p.addProperty("month", String.valueOf(row.get("month")));
-                        p.addProperty("revenueVnd", String.valueOf(row.get("revenue")));
+                        ObjectNode p = Json.MAPPER.createObjectNode();
+                        p.put("month", String.valueOf(row.get("month")));
+                        p.put("revenueVnd", String.valueOf(row.get("revenue")));
                         points.add(p);
                     }
-                    o.add("points", points);
+                    o.set("points", points);
                 }
                 case "top_sellers" -> {
-                    JsonArray points = new JsonArray();
+                    ArrayNode points = Json.MAPPER.createArrayNode();
                     for (Map<String, Object> row : reportDAO.getTopSellingProducts(10)) {
                         String name = String.valueOf(row.get("product"));
                         if (segment != null && !segment.isBlank()) {
@@ -107,35 +108,35 @@ public class PetShopMerchantBackend {
                                         .contains(segment.toLowerCase())) continue;
                             } catch (Exception ignored) {}
                         }
-                        JsonObject pt = new JsonObject();
-                        pt.addProperty("product", Fence.sanitize(name));
-                        pt.addProperty("sold", ((Number) row.get("count")).intValue());
+                        ObjectNode pt = Json.MAPPER.createObjectNode();
+                        pt.put("product", Fence.sanitize(name));
+                        pt.put("sold", ((Number) row.get("count")).intValue());
                         points.add(pt);
                     }
-                    o.add("points", points);
+                    o.set("points", points);
                 }
-                default -> o.addProperty("note", "Metric '" + Fence.sanitize(metric)
+                default -> o.put("note", "Metric '" + Fence.sanitize(metric)
                         + "' is not supplied by this store (supported: revenue_by_month, top_sellers)");
             }
         } catch (Exception e) {
-            o.addProperty("error", "Metrics temporarily unavailable");
+            o.put("error", "Metrics temporarily unavailable");
         }
         return o;
     }
 
-    public JsonArray campaignPerformance() {
-        JsonArray arr = new JsonArray();
+    public ArrayNode campaignPerformance() {
+        ArrayNode arr = Json.MAPPER.createArrayNode();
         try {
             for (Promotion promo : promotionDAO.getAllPromotions()) {
-                JsonObject o = new JsonObject();
-                o.addProperty("id", promo.getId());
-                o.addProperty("name", Fence.sanitize(promo.getName()));
-                o.addProperty("type", Fence.sanitize(promo.getPromotionType()));
-                o.addProperty("status", Fence.sanitize(promo.getStatus()));
-                o.addProperty("discount", promo.getDiscountValue() == null ? ""
+                ObjectNode o = Json.MAPPER.createObjectNode();
+                o.put("id", promo.getId());
+                o.put("name", Fence.sanitize(promo.getName()));
+                o.put("type", Fence.sanitize(promo.getPromotionType()));
+                o.put("status", Fence.sanitize(promo.getStatus()));
+                o.put("discount", promo.getDiscountValue() == null ? ""
                         : promo.getDiscountValue().toPlainString() + " " + promo.getDiscountType());
-                o.add("spend", null);
-                o.add("revenue", null);
+                o.putNull("spend");
+                o.putNull("revenue");
                 arr.add(o);
             }
         } catch (Exception e) {
@@ -145,8 +146,8 @@ public class PetShopMerchantBackend {
     }
 
     // ---- Catalog ----
-    public JsonArray searchListings(String query, int limit) {
-        JsonArray arr = new JsonArray();
+    public ArrayNode searchListings(String query, int limit) {
+        ArrayNode arr = Json.MAPPER.createArrayNode();
         int safe = Math.max(1, Math.min(limit, 10));
         try {
             List<Product> products = (query == null || query.isBlank())
@@ -159,16 +160,16 @@ public class PetShopMerchantBackend {
         return arr;
     }
 
-    public JsonObject getListing(int productId) {
+    public ObjectNode getListing(int productId) {
         try {
             Product p = productDAO.getProductById(productId);
             if (p == null) return null;
-            JsonObject o = listingSummary(p);
-            o.addProperty("description", Fence.sanitize(p.getDescription()));
-            o.addProperty("weight", p.getWeight());
-            o.addProperty("reserved", p.getReservedQuantity());
-            o.addProperty("sold", p.getSoldQuantity());
-            o.addProperty("rating", p.getAverageRating());
+            ObjectNode o = listingSummary(p);
+            o.put("description", Fence.sanitize(p.getDescription()));
+            o.put("weight", p.getWeight());
+            o.put("reserved", p.getReservedQuantity());
+            o.put("sold", p.getSoldQuantity());
+            o.put("rating", p.getAverageRating());
             return o;
         } catch (Exception e) {
             return null;
@@ -176,15 +177,15 @@ public class PetShopMerchantBackend {
     }
 
     // ---- Inventory & order health ----
-    public JsonArray inventoryAlerts() {
-        JsonArray arr = new JsonArray();
+    public ArrayNode inventoryAlerts() {
+        ArrayNode arr = Json.MAPPER.createArrayNode();
         try {
             for (Product p : reportDAO.getLowStockProducts(5, 20)) {
-                JsonObject o = new JsonObject();
-                o.addProperty("type", p.getStock() == 0 ? "out_of_stock" : "low_stock");
-                o.addProperty("productId", p.getId());
-                o.addProperty("name", Fence.sanitize(p.getName()));
-                o.addProperty("stock", p.getStock());
+                ObjectNode o = Json.MAPPER.createObjectNode();
+                o.put("type", p.getStock() == 0 ? "out_of_stock" : "low_stock");
+                o.put("productId", p.getId());
+                o.put("name", Fence.sanitize(p.getName()));
+                o.put("stock", p.getStock());
                 arr.add(o);
             }
         } catch (Exception e) {
@@ -193,19 +194,19 @@ public class PetShopMerchantBackend {
         return arr;
     }
 
-    public JsonArray orderIssues() {
-        JsonArray arr = new JsonArray();
+    public ArrayNode orderIssues() {
+        ArrayNode arr = Json.MAPPER.createArrayNode();
         try {
             List<Order> recent = reportDAO.getRecentOrders(50);
             for (Order o : recent) {
                 String st = o.getStatus();
                 if ("PENDING".equalsIgnoreCase(st) || "FAILED".equalsIgnoreCase(st)
                         || "CANCELLED".equalsIgnoreCase(st)) {
-                    JsonObject issue = new JsonObject();
-                    issue.addProperty("type", "PENDING".equalsIgnoreCase(st) ? "awaiting_action" : "exception");
-                    issue.addProperty("orderId", o.getId());
-                    issue.addProperty("status", Fence.sanitize(st));
-                    issue.addProperty("paid", o.getPayment_status());
+                    ObjectNode issue = Json.MAPPER.createObjectNode();
+                    issue.put("type", "PENDING".equalsIgnoreCase(st) ? "awaiting_action" : "exception");
+                    issue.put("orderId", o.getId());
+                    issue.put("status", Fence.sanitize(st));
+                    issue.put("paid", o.getPayment_status());
                     arr.add(issue);
                     if (arr.size() >= 20) break;
                 }
@@ -216,17 +217,17 @@ public class PetShopMerchantBackend {
         return arr;
     }
 
-    public JsonObject pricingContext(int productId) {
+    public ObjectNode pricingContext(int productId) {
         try {
             Product p = productDAO.getProductById(productId);
             if (p == null) return null;
-            JsonObject o = new JsonObject();
-            o.addProperty("productId", p.getId());
-            o.addProperty("currentPriceVnd", p.getPrice() == null ? "0" : p.getPrice().toPlainString());
-            o.addProperty("effectivePriceVnd",
+            ObjectNode o = Json.MAPPER.createObjectNode();
+            o.put("productId", p.getId());
+            o.put("currentPriceVnd", p.getPrice() == null ? "0" : p.getPrice().toPlainString());
+            o.put("effectivePriceVnd",
                     p.getEffectivePrice() == null ? "0" : p.getEffectivePrice().toPlainString());
-            o.addProperty("discountPercent", p.getDisplayDiscountPercent());
-            o.addProperty("minPriceBasis", "store rule: never below cost; floor checked at apply");
+            o.put("discountPercent", p.getDisplayDiscountPercent());
+            o.put("minPriceBasis", "store rule: never below cost; floor checked at apply");
             return o;
         } catch (Exception e) {
             return null;
@@ -317,15 +318,15 @@ public class PetShopMerchantBackend {
     }
 
     /** Read-only analysis query: single SELECT, capped rows/chars, timeout. */
-    public JsonObject analysisQuery(String sql) {
-        JsonObject o = new JsonObject();
+    public ObjectNode analysisQuery(String sql) {
+        ObjectNode o = Json.MAPPER.createObjectNode();
         String normalized = sql == null ? "" : sql.trim();
         if (!normalized.regionMatches(true, 0, "SELECT", 0, 6)
                 || normalized.contains(";") || normalized.toLowerCase().contains("/*")) {
-            o.addProperty("error", "Only a single SELECT statement without comments is allowed");
+            o.put("error", "Only a single SELECT statement without comments is allowed");
             return o;
         }
-        JsonArray rows = new JsonArray();
+        ArrayNode rows = Json.MAPPER.createArrayNode();
         StringBuilder text = new StringBuilder();
         try (java.sql.Connection c = Context.DBContext.getConnection();
              java.sql.Statement st = c.createStatement()) {
@@ -336,35 +337,35 @@ public class PetShopMerchantBackend {
                 int cols = md.getColumnCount();
                 int count = 0;
                 while (rs.next() && text.length() < 8000) {
-                    JsonObject row = new JsonObject();
+                    ObjectNode row = Json.MAPPER.createObjectNode();
                     for (int i = 1; i <= cols && text.length() < 8000; i++) {
                         String v = rs.getString(i);
-                        row.addProperty(md.getColumnLabel(i), v == null ? "" : v);
+                        row.put(md.getColumnLabel(i), v == null ? "" : v);
                         text.append(v).append("|");
                     }
                     rows.add(row);
                     count++;
                 }
-                o.addProperty("rowCount", count);
+                o.put("rowCount", count);
             }
         } catch (Exception e) {
-            o.addProperty("error", "Query failed: " + e.getMessage());
+            o.put("error", "Query failed: " + e.getMessage());
             return o;
         }
-        o.add("rows", rows);
+        o.set("rows", rows);
         return o;
     }
 
-    private static JsonObject listingSummary(Product p) {
-        JsonObject o = new JsonObject();
-        o.addProperty("id", p.getId());
-        o.addProperty("name", Fence.sanitize(p.getName()));
-        o.addProperty("priceVnd", p.getPrice() == null ? "0" : p.getPrice().toPlainString());
-        o.addProperty("discountPercent", p.getDisplayDiscountPercent());
-        o.addProperty("category", Fence.sanitize(p.getCategory()));
-        o.addProperty("brand", Fence.sanitize(p.getBrand()));
-        o.addProperty("stock", p.getStock());
-        o.addProperty("active", p.isActive());
+    private static ObjectNode listingSummary(Product p) {
+        ObjectNode o = Json.MAPPER.createObjectNode();
+        o.put("id", p.getId());
+        o.put("name", Fence.sanitize(p.getName()));
+        o.put("priceVnd", p.getPrice() == null ? "0" : p.getPrice().toPlainString());
+        o.put("discountPercent", p.getDisplayDiscountPercent());
+        o.put("category", Fence.sanitize(p.getCategory()));
+        o.put("brand", Fence.sanitize(p.getBrand()));
+        o.put("stock", p.getStock());
+        o.put("active", p.isActive());
         return o;
     }
 

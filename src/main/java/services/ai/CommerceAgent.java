@@ -5,10 +5,10 @@ import Model.AiChatMessage;
 import Model.Order;
 import Model.Product;
 import Model.User;
-import com.google.gson.Gson;
-import com.google.gson.JsonArray;
-import com.google.gson.JsonObject;
-import com.google.gson.JsonParser;
+import Util.Json;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.node.ArrayNode;
+import tools.jackson.databind.node.ObjectNode;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import services.ai.common.AppEventBus;
@@ -33,7 +33,6 @@ import java.util.Locale;
  */
 public class CommerceAgent {
     private static final Logger log = LoggerFactory.getLogger(CommerceAgent.class);
-    private static final Gson GSON = new Gson();
 
     private final AiSupportSettingDAO settingDAO = new AiSupportSettingDAO();
     private final PetShopCommerceBackend backend = new PetShopCommerceBackend();
@@ -45,7 +44,7 @@ public class CommerceAgent {
                               List<Product> relatedProducts, Order relatedOrder,
                               String usedProvider, String usedModel, String requestId,
                               long latencyMs, List<String> attemptedProviders,
-                              com.google.gson.JsonArray cards) {}
+                               ArrayNode cards) {}
 
     public AgentResult run(String userMessage, List<AiChatMessage> history, User user) {
         return run(userMessage, history, user, null);
@@ -85,10 +84,10 @@ public class CommerceAgent {
             if ("USER".equals(h.getSenderType())) {
                 messages.add(AiMessage.user(CommerceTools.sanitize(h.getMessage())));
             } else {
-                JsonObject past = new JsonObject();
-                past.addProperty("answer", h.getMessage());
-                past.addProperty("intent", h.getIntent() == null ? "UNKNOWN" : h.getIntent());
-                messages.add(AiMessage.user("[Previous assistant answer as JSON] " + GSON.toJson(past)));
+                ObjectNode past = Json.MAPPER.createObjectNode();
+                past.put("answer", h.getMessage());
+                past.put("intent", h.getIntent() == null ? "UNKNOWN" : h.getIntent());
+                messages.add(AiMessage.user("[Previous assistant answer as JSON] " + Json.MAPPER.writeValueAsString(past)));
             }
         }
         messages.add(AiMessage.user(CommerceTools.sanitize(userMessage)));
@@ -213,30 +212,32 @@ public class CommerceAgent {
         int brace = c.indexOf('{');
         if (brace > 0) c = c.substring(brace);
         try {
-            JsonObject o = JsonParser.parseString(c).getAsJsonObject();
-            String answer = o.has("answer") && !o.get("answer").isJsonNull()
-                    ? o.get("answer").getAsString() : null;
+            JsonNode o = Json.MAPPER.readTree(c);
+            if (!o.isObject()) throw new IllegalArgumentException("not an object");
+            String answer = o.has("answer") && !o.path("answer").isNull()
+                    ? o.path("answer").asString() : null;
             if (answer == null || answer.isBlank()) throw new IllegalArgumentException("missing answer");
-            String intent = o.has("intent") ? o.get("intent").getAsString() : "UNKNOWN";
-            double conf = o.has("confidence") ? o.get("confidence").getAsDouble() : 0.7;
-            boolean needAdmin = o.has("needAdminSupport") && o.get("needAdminSupport").getAsBoolean();
-            String note = o.has("suggestedAdminNote") && !o.get("suggestedAdminNote").isJsonNull()
-                    ? o.get("suggestedAdminNote").getAsString() : "";
+            String intent = o.has("intent") && !o.path("intent").isNull()
+                    ? o.path("intent").asString() : "UNKNOWN";
+            double conf = o.has("confidence") ? o.path("confidence").asDouble() : 0.7;
+            boolean needAdmin = o.has("needAdminSupport") && o.path("needAdminSupport").asBoolean();
+            String note = o.has("suggestedAdminNote") && !o.path("suggestedAdminNote").isNull()
+                    ? o.path("suggestedAdminNote").asString() : "";
             List<Integer> pids = new ArrayList<>();
-            if (o.has("relatedProductIds") && o.get("relatedProductIds").isJsonArray()) {
-                JsonArray arr = o.getAsJsonArray("relatedProductIds");
+            if (o.has("relatedProductIds") && o.path("relatedProductIds").isArray()) {
+                JsonNode arr = o.path("relatedProductIds");
                 // Provenance gate: only ids returned by tools this session are honored.
-                for (var el : arr) {
+                for (JsonNode el : arr) {
                     try {
-                        int id = el.getAsInt();
+                        int id = el.asInt();
                         if (tools.getSeenProductIds().contains(id)) pids.add(id);
                     } catch (Exception ignored) {}
                 }
             }
             Integer oid = null;
-            if (o.has("relatedOrderId") && !o.get("relatedOrderId").isJsonNull()) {
+            if (o.has("relatedOrderId") && !o.path("relatedOrderId").isNull()) {
                 try {
-                    int id = o.get("relatedOrderId").getAsInt();
+                    int id = o.path("relatedOrderId").asInt();
                     if (tools.getSeenOrderId() != null && tools.getSeenOrderId() == id) oid = id;
                 } catch (Exception ignored) {}
             }
@@ -250,7 +251,7 @@ public class CommerceAgent {
                 order = backend.getOrder(PetShopCommerceBackend.SessionContext.of(user), oid);
                 if (order == null) oid = null;
             }
-            com.google.gson.JsonArray cards = new com.google.gson.JsonArray();
+            ArrayNode cards = Json.MAPPER.createArrayNode();
             for (Product p : products) cards.add(Cards.productCard(p));
             if (products.size() > 1) cards.add(Cards.comparisonCard(products));
             if (order != null) cards.add(Cards.orderCard(order));
@@ -266,7 +267,7 @@ public class CommerceAgent {
     private AgentResult fallback(String msg, String provider, String model, List<String> attempted) {
         return new AgentResult(msg, "UNKNOWN", 0.0, true, "AI error / fallback",
                 List.of(), null, List.of(), null, provider, model, "-", 0, attempted,
-                new com.google.gson.JsonArray());
+                Json.MAPPER.createArrayNode());
     }
 
     private AgentResult guestOrderRefusal() {
@@ -275,7 +276,7 @@ public class CommerceAgent {
                         + "Sau khi đăng nhập, tôi có thể hỗ trợ kiểm tra trạng thái đơn hàng của bạn.",
                 "ORDER_STATUS", 1.0, false, "", List.of(), null, List.of(), null,
                 AiConfig.provider(), AiConfig.model(), "local-guard", 0, List.of(),
-                new com.google.gson.JsonArray());
+                Json.MAPPER.createArrayNode());
     }
 
     /**

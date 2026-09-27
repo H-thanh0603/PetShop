@@ -66,8 +66,7 @@ public class AdminMerchantAgentController {
     @GetMapping(value = "/admin/ai-merchant/pending", produces = "application/json;charset=UTF-8")
     @ResponseBody
     public String pending() {
-        return Json.MAPPER.writeValueAsString(
-                Json.MAPPER.readTree(String.valueOf(changeDAO.pendingJson())));
+        return Json.MAPPER.writeValueAsString(changeDAO.pendingJson());
     }
 
     @GetMapping(value = "/admin/ai-merchant/digest", produces = "application/json;charset=UTF-8")
@@ -103,7 +102,7 @@ public class AdminMerchantAgentController {
                     .body("{\"error\":\"Missing subject (e.g. user:123)\"}");
         }
         ObjectNode o = Json.MAPPER.createObjectNode();
-        o.set("facts", Json.MAPPER.readTree(String.valueOf(memory.factsJson(subject))));
+        o.set("facts", memory.factsJson(subject));
         return ResponseEntity.ok(Json.MAPPER.writeValueAsString(o));
     }
 
@@ -133,7 +132,7 @@ public class AdminMerchantAgentController {
         o.put("answer", result.answer());
         o.put("provider", result.usedProvider());
         o.put("model", result.usedModel());
-        o.set("cards", Json.MAPPER.readTree(String.valueOf(result.cards())));
+        o.set("cards", result.cards());
         return ResponseEntity.ok(Json.MAPPER.writeValueAsString(o));
     }
 

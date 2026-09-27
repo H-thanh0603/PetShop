@@ -4,10 +4,10 @@ import Model.CustomerSupportKnowledge;
 import Model.Order;
 import Model.OrderItem;
 import Model.Product;
-import com.google.gson.Gson;
-import com.google.gson.JsonArray;
-import com.google.gson.JsonObject;
-import com.google.gson.JsonParser;
+import Util.Json;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.node.ArrayNode;
+import tools.jackson.databind.node.ObjectNode;
 
 import java.util.ArrayList;
 import java.util.LinkedHashSet;
@@ -22,10 +22,9 @@ import java.util.function.Function;
  * back as sanitized JSON the model reads as fenced data.
  */
 public final class CommerceTools {
-    private static final Gson GSON = new Gson();
 
     public record ToolExecutor(ToolDefinition definition,
-                               Function<JsonObject, String> handler) {}
+                               Function<ObjectNode, String> handler) {}
 
     private final PetShopCommerceBackend backend;
     private final PetShopCommerceBackend.SessionContext session;
@@ -48,7 +47,7 @@ public final class CommerceTools {
                     String q = str(args, "query", "");
                     int limit = intArg(args, "limit", 5);
                     List<Product> products = backend.searchProducts(q, limit);
-                    JsonArray arr = new JsonArray();
+                    ArrayNode arr = Json.MAPPER.createArrayNode();
                     for (Product p : products) {
                         seenProductIds.add(p.getId());
                         arr.add(toProductJson(p, true));
@@ -72,7 +71,7 @@ public final class CommerceTools {
                 args -> {
                     List<Integer> ids = intList(args, "productIds");
                     if (ids.size() < 2 || ids.size() > 4) return error("Provide 2-4 productIds");
-                    JsonArray arr = new JsonArray();
+                    ArrayNode arr = Json.MAPPER.createArrayNode();
                     for (int id : ids) {
                         Product p = backend.getProductDetails(id);
                         if (p != null) {
@@ -88,11 +87,11 @@ public final class CommerceTools {
                 args -> {
                     String need = str(args, "need", "");
                     int limit = intArg(args, "limit", 4);
-                    JsonArray arr = new JsonArray();
+                    ArrayNode arr = Json.MAPPER.createArrayNode();
                     for (Product p : backend.recommendProducts(need, limit)) {
                         seenProductIds.add(p.getId());
-                        JsonObject o = toProductJson(p, true);
-                        o.addProperty("why", "Matches: " + sanitize(need));
+                        ObjectNode o = toProductJson(p, true);
+                        o.put("why", "Matches: " + sanitize(need));
                         arr.add(o);
                     }
                     return arr.toString();
@@ -112,12 +111,12 @@ public final class CommerceTools {
                 new ToolDefinition("searchPolicies", "Search shop policies/FAQ entries.",
                         schema(new String[]{"query"}, new String[]{"query"})),
                 args -> {
-                    JsonArray arr = new JsonArray();
+                    ArrayNode arr = Json.MAPPER.createArrayNode();
                     for (CustomerSupportKnowledge k : backend.searchPolicies(str(args, "query", ""))) {
-                        JsonObject o = new JsonObject();
-                        o.addProperty("category", sanitize(k.getCategory()));
-                        o.addProperty("title", sanitize(k.getTitle()));
-                        o.addProperty("content", sanitize(k.getContent()));
+                        ObjectNode o = Json.MAPPER.createObjectNode();
+                        o.put("category", sanitize(k.getCategory()));
+                        o.put("title", sanitize(k.getTitle()));
+                        o.put("content", sanitize(k.getContent()));
                         arr.add(o);
                     }
                     return arr.toString();
@@ -133,9 +132,11 @@ public final class CommerceTools {
 
     /** Executes a model-requested call; unknown tools and bad input are safe errors, not throws. */
     public String execute(String name, String argumentsJson) {
-        JsonObject args;
+        ObjectNode args;
         try {
-            args = JsonParser.parseString(argumentsJson == null ? "{}" : argumentsJson).getAsJsonObject();
+            JsonNode parsed = Json.MAPPER.readTree(argumentsJson == null ? "{}" : argumentsJson);
+            if (!parsed.isObject()) return error("Invalid tool arguments");
+            args = (ObjectNode) parsed;
         } catch (Exception e) {
             return error("Invalid tool arguments");
         }
@@ -163,86 +164,87 @@ public final class CommerceTools {
 
     // ---- helpers ----
     private static String schema(String[] props, String[] required) {
-        JsonObject s = new JsonObject();
-        s.addProperty("type", "object");
-        JsonObject p = new JsonObject();
+        ObjectNode s = Json.MAPPER.createObjectNode();
+        s.put("type", "object");
+        ObjectNode p = Json.MAPPER.createObjectNode();
         for (String name : props) {
-            JsonObject f = new JsonObject();
-            if (name.toLowerCase().contains("id") || name.equals("limit")) f.addProperty("type", "integer");
-            else f.addProperty("type", "string");
-            p.add(name, f);
+            ObjectNode f = Json.MAPPER.createObjectNode();
+            if (name.toLowerCase().contains("id") || name.equals("limit")) f.put("type", "integer");
+            else f.put("type", "string");
+            p.set(name, f);
         }
-        s.add("properties", p);
-        JsonArray r = new JsonArray();
+        s.set("properties", p);
+        ArrayNode r = Json.MAPPER.createArrayNode();
         for (String name : required) r.add(name);
-        s.add("required", r);
+        s.set("required", r);
         return s.toString();
     }
 
-    private static String str(JsonObject args, String key, String def) {
+    private static String str(ObjectNode args, String key, String def) {
         try {
-            return args.has(key) && !args.get(key).isJsonNull() ? args.get(key).getAsString() : def;
+            return args.has(key) && !args.path(key).isNull() ? args.path(key).asString() : def;
         } catch (Exception e) { return def; }
     }
 
-    private static int intArg(JsonObject args, String key, int def) {
+    private static int intArg(ObjectNode args, String key, int def) {
         try {
-            if (!args.has(key) || args.get(key).isJsonNull()) return def;
-            if (args.get(key).isJsonPrimitive() && args.get(key).getAsJsonPrimitive().isNumber()) {
-                return args.get(key).getAsInt();
+            if (!args.has(key) || args.path(key).isNull()) return def;
+            if (args.path(key).isNumber()) {
+                return args.path(key).asInt();
             }
-            return Integer.parseInt(args.get(key).getAsString().trim());
+            return Integer.parseInt(args.path(key).asString().trim());
         } catch (Exception e) { return def; }
     }
 
-    private static List<Integer> intList(JsonObject args, String key) {
+    private static List<Integer> intList(ObjectNode args, String key) {
         List<Integer> out = new ArrayList<>();
         try {
-            for (var el : args.getAsJsonArray(key)) out.add(el.getAsInt());
+            JsonNode arr = args.path(key);
+            if (arr.isArray()) for (JsonNode el : arr) out.add(el.asInt());
         } catch (Exception ignored) {}
         return out;
     }
 
     private static String error(String msg) {
-        JsonObject o = new JsonObject();
-        o.addProperty("error", msg);
+        ObjectNode o = Json.MAPPER.createObjectNode();
+        o.put("error", msg);
         return o.toString();
     }
 
-    static JsonObject toProductJson(Product p, boolean compact) {
-        JsonObject o = new JsonObject();
-        o.addProperty("id", p.getId());
-        o.addProperty("name", sanitize(p.getName()));
-        o.addProperty("priceVnd", p.getEffectivePrice() == null ? "0" : p.getEffectivePrice().toPlainString());
-        o.addProperty("discountPercent", p.getDisplayDiscountPercent());
-        o.addProperty("category", sanitize(p.getCategory()));
-        o.addProperty("brand", sanitize(p.getBrand()));
-        o.addProperty("stock", p.getStock());
-        o.addProperty("inStock", p.getStock() > 0);
-        if (!compact) o.addProperty("description", sanitize(p.getDescription()));
+    static ObjectNode toProductJson(Product p, boolean compact) {
+        ObjectNode o = Json.MAPPER.createObjectNode();
+        o.put("id", p.getId());
+        o.put("name", sanitize(p.getName()));
+        o.put("priceVnd", p.getEffectivePrice() == null ? "0" : p.getEffectivePrice().toPlainString());
+        o.put("discountPercent", p.getDisplayDiscountPercent());
+        o.put("category", sanitize(p.getCategory()));
+        o.put("brand", sanitize(p.getBrand()));
+        o.put("stock", p.getStock());
+        o.put("inStock", p.getStock() > 0);
+        if (!compact) o.put("description", sanitize(p.getDescription()));
         return o;
     }
 
-    static JsonObject toOrderJson(Order o) {
-        JsonObject j = new JsonObject();
-        j.addProperty("id", o.getId());
-        j.addProperty("status", sanitize(o.getStatus()));
-        j.addProperty("statusLabel", sanitize(o.getStatusLabel()));
-        j.addProperty("paymentMethod", sanitize(o.getPayment_method()));
-        j.addProperty("paid", o.getPayment_status());
-        j.addProperty("totalVnd", o.getTotalAmount() == null ? "0" : o.getTotalAmount().toPlainString());
-        j.addProperty("createdAt", o.getCreatedAt() == null ? "" : o.getCreatedAt().toString());
-        JsonArray items = new JsonArray();
+    static ObjectNode toOrderJson(Order o) {
+        ObjectNode j = Json.MAPPER.createObjectNode();
+        j.put("id", o.getId());
+        j.put("status", sanitize(o.getStatus()));
+        j.put("statusLabel", sanitize(o.getStatusLabel()));
+        j.put("paymentMethod", sanitize(o.getPayment_method()));
+        j.put("paid", o.getPayment_status());
+        j.put("totalVnd", o.getTotalAmount() == null ? "0" : o.getTotalAmount().toPlainString());
+        j.put("createdAt", o.getCreatedAt() == null ? "" : o.getCreatedAt().toString());
+        ArrayNode items = Json.MAPPER.createArrayNode();
         if (o.getItems() != null) {
             for (OrderItem it : o.getItems()) {
-                JsonObject i = new JsonObject();
-                i.addProperty("name", sanitize(it.getProductName()));
-                i.addProperty("qty", it.getQuantity());
-                i.addProperty("priceVnd", it.getPrice() == null ? "0" : it.getPrice().toPlainString());
+                ObjectNode i = Json.MAPPER.createObjectNode();
+                i.put("name", sanitize(it.getProductName()));
+                i.put("qty", it.getQuantity());
+                i.put("priceVnd", it.getPrice() == null ? "0" : it.getPrice().toPlainString());
                 items.add(i);
             }
         }
-        j.add("items", items);
+        j.set("items", items);
         return j;
     }
 

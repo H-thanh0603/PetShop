@@ -1,8 +1,9 @@
 package services.ai.merchant;
 
-import com.google.gson.JsonArray;
-import com.google.gson.JsonObject;
-import com.google.gson.JsonParser;
+import Util.Json;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.node.ArrayNode;
+import tools.jackson.databind.node.ObjectNode;
 import services.ai.ToolDefinition;
 import services.ai.common.Fence;
 
@@ -19,7 +20,7 @@ import java.util.function.Function;
  * The tool surface is a function of {@link MerchantConfig} switches.
  */
 public final class MerchantTools {
-    public record ToolExecutor(ToolDefinition definition, Function<JsonObject, String> handler) {}
+    public record ToolExecutor(ToolDefinition definition, Function<ObjectNode, String> handler) {}
 
     private final PetShopMerchantBackend backend;
     private final String operator;
@@ -46,9 +47,9 @@ public final class MerchantTools {
         tools.add(new ToolExecutor(def("search_listings", "Search product listings by text.",
                 req("query")),
                 args -> {
-                    JsonArray arr = backend.searchListings(str(args, "query", ""), intArg(args, "limit", 8));
-                    for (var el : arr) {
-                        try { seenListings.add(el.getAsJsonObject().get("id").getAsInt()); }
+                    ArrayNode arr = backend.searchListings(str(args, "query", ""), intArg(args, "limit", 8));
+                    for (JsonNode el : arr) {
+                        try { seenListings.add(el.path("id").asInt()); }
                         catch (Exception ignored) {}
                     }
                     return arr.toString();
@@ -57,7 +58,7 @@ public final class MerchantTools {
                 req("productId")),
                 args -> {
                     int id = intArg(args, "productId", -1);
-                    JsonObject o = backend.getListing(id);
+                    ObjectNode o = backend.getListing(id);
                     if (o == null) return error("Listing not found");
                     seenListings.add(id);
                     return o.toString();
@@ -74,7 +75,7 @@ public final class MerchantTools {
                     "Current grounded price for a listing (needed before any price move).",
                     req("productId")),
                     args -> {
-                        JsonObject o = backend.pricingContext(intArg(args, "productId", -1));
+                        ObjectNode o = backend.pricingContext(intArg(args, "productId", -1));
                         return o == null ? error("Listing not found") : o.toString();
                     }));
         }
@@ -94,15 +95,19 @@ public final class MerchantTools {
                     args -> {
                         List<StagedChange.Item> items = new ArrayList<>();
                         try {
-                            for (var el : args.getAsJsonArray("items")) {
-                                JsonObject it = el.getAsJsonObject();
-                                int pid = it.get("productId").getAsInt();
+                            JsonNode rawItems = args.path("items");
+                            if (!rawItems.isArray()) return error("items must be [{productId, newPrice}]");
+                            for (JsonNode el : rawItems) {
+                                if (!el.isObject() || !el.has("productId") || !el.has("newPrice")) {
+                                    return error("items must be [{productId, newPrice}]");
+                                }
+                                int pid = el.path("productId").asInt();
                                 String gate = provenanceGate(pid);
                                 if (gate != null) return gate;
-                                JsonObject ctx = backend.pricingContext(pid);
-                                String before = ctx == null ? "" : ctx.get("currentPriceVnd").getAsString();
+                                ObjectNode ctx = backend.pricingContext(pid);
+                                String before = ctx == null ? "" : ctx.path("currentPriceVnd").asString();
                                 items.add(new StagedChange.Item(String.valueOf(pid), "price", before,
-                                        it.get("newPrice").getAsString()));
+                                        el.path("newPrice").asString()));
                             }
                         } catch (Exception e) {
                             return error("items must be [{productId, newPrice}]");
@@ -116,7 +121,7 @@ public final class MerchantTools {
                             + "\"required\":[\"productIds\",\"discountPct\"]}"),
                     args -> {
                         double pct;
-                        try { pct = args.get("discountPct").getAsDouble(); }
+                        try { pct = Double.parseDouble(args.path("discountPct").asString().trim()); }
                         catch (Exception e) { return error("discountPct must be a number"); }
                         if (Math.abs(pct) > MerchantConfig.maxPromotionDiscountPct()) {
                             return error("A " + pct + "% move exceeds the "
@@ -125,13 +130,15 @@ public final class MerchantTools {
                         }
                         List<StagedChange.Item> items = new ArrayList<>();
                         try {
-                            for (var el : args.getAsJsonArray("productIds")) {
-                                int pid = el.getAsInt();
+                            JsonNode rawIds = args.path("productIds");
+                            if (!rawIds.isArray()) return error("productIds must be an id array");
+                            for (JsonNode el : rawIds) {
+                                int pid = el.asInt();
                                 String gate = provenanceGate(pid);
                                 if (gate != null) return gate;
-                                JsonObject ctx = backend.pricingContext(pid);
+                                ObjectNode ctx = backend.pricingContext(pid);
                                 if (ctx == null) return error("Listing " + pid + " not found");
-                                double before = Double.parseDouble(ctx.get("currentPriceVnd").getAsString());
+                                double before = Double.parseDouble(ctx.path("currentPriceVnd").asString());
                                 double after = before * (1 - pct / 100.0);
                                 items.add(new StagedChange.Item(String.valueOf(pid), "price",
                                         String.valueOf(before), String.valueOf(Math.round(after))));
@@ -150,16 +157,20 @@ public final class MerchantTools {
                     args -> {
                         List<StagedChange.Item> items = new ArrayList<>();
                         try {
-                            for (var el : args.getAsJsonArray("items")) {
-                                JsonObject it = el.getAsJsonObject();
-                                int pid = it.get("productId").getAsInt();
+                            JsonNode rawItems = args.path("items");
+                            if (!rawItems.isArray()) return error("items must be [{productId, newStock}]");
+                            for (JsonNode el : rawItems) {
+                                if (!el.isObject() || !el.has("productId") || !el.has("newStock")) {
+                                    return error("items must be [{productId, newStock}]");
+                                }
+                                int pid = el.path("productId").asInt();
                                 String gate = provenanceGate(pid);
                                 if (gate != null) return gate;
-                                JsonObject listing = backend.getListing(pid);
+                                ObjectNode listing = backend.getListing(pid);
                                 String before = listing == null ? "0"
-                                        : String.valueOf(listing.get("stock").getAsInt());
+                                        : String.valueOf(listing.path("stock").asInt());
                                 items.add(new StagedChange.Item(String.valueOf(pid), "stock", before,
-                                        it.get("newStock").getAsString()));
+                                        el.path("newStock").asString()));
                             }
                         } catch (Exception e) {
                             return error("items must be [{productId, newStock}]");
@@ -180,7 +191,7 @@ public final class MerchantTools {
             tools.add(new ToolExecutor(def("get_pending_changes",
                     "Changes staged but not yet applied or discarded.", "{}"),
                     args -> {
-                        JsonArray arr = new JsonArray();
+                        ArrayNode arr = Json.MAPPER.createArrayNode();
                         for (StagedChange c : backend.ledger().pending()) {
                             seenChanges.add(c.getChangeId());
                             arr.add(changeJson(c));
@@ -198,9 +209,11 @@ public final class MerchantTools {
     }
 
     public String execute(String name, String argumentsJson) {
-        JsonObject args;
+        ObjectNode args;
         try {
-            args = JsonParser.parseString(argumentsJson == null ? "{}" : argumentsJson).getAsJsonObject();
+            JsonNode parsed = Json.MAPPER.readTree(argumentsJson == null ? "{}" : argumentsJson);
+            if (!parsed.isObject()) return error("Invalid tool arguments");
+            args = (ObjectNode) parsed;
         } catch (Exception e) {
             return error("Invalid tool arguments");
         }
@@ -223,37 +236,36 @@ public final class MerchantTools {
         return error("Unknown tool: " + Fence.sanitize(name));
     }
 
-    private String stage(StagedChange.Kind kind, JsonObject args, String summary) {
+    private String stage(StagedChange.Kind kind, ObjectNode args, String summary) {
         int pid = intArg(args, "productId", -1);
         String gate = provenanceGate(pid);
         if (gate != null) return gate;
         if (pid > 0 && backend.getListing(pid) == null) return error("Listing not found");
-        JsonObject fields;
-        try {
-            fields = args.getAsJsonObject("fields");
-        } catch (Exception e) {
+        JsonNode fields = args.path("fields");
+        if (!fields.isObject()) {
             return error("fields must be an object like {\"name\": \"...\"}");
         }
         List<StagedChange.Item> items = new ArrayList<>();
-        for (String field : fields.keySet()) {
-            JsonObject current = backend.getListing(pid);
-            String before = current != null && current.has(field) ? current.get(field).getAsString() : "";
+        for (String field : fields.propertyNames()) {
+            ObjectNode current = backend.getListing(pid);
+            String before = current != null && current.has(field) && !current.path(field).isNull()
+                    ? current.path(field).asString() : "";
             items.add(new StagedChange.Item(String.valueOf(pid), field, before,
-                    fields.get(field).getAsString()));
+                    fields.path(field).asString()));
         }
         return doStage(kind, summary + " for listing " + pid, items, args);
     }
 
     private String doStage(StagedChange.Kind kind, String summary,
-                           List<StagedChange.Item> items, JsonObject args) {
+                           List<StagedChange.Item> items, ObjectNode args) {
         if (items.isEmpty()) return error("Nothing to stage");
         try {
             StagedChange c = backend.stage(kind, summary, items, operator,
                     List.of("Staged only — apply it only after the operator approves on "
                             + MerchantConfig.approvalSurface()));
             seenChanges.add(c.getChangeId());
-            JsonObject o = changeJson(c);
-            o.addProperty("note", "Staged only — staged, waiting approval on "
+            ObjectNode o = changeJson(c);
+            o.put("note", "Staged only — staged, waiting approval on "
                     + MerchantConfig.approvalSurface());
             return o.toString();
         } catch (ChangeLedger.GuardrailViolation gv) {
@@ -265,30 +277,30 @@ public final class MerchantTools {
     /** Provenance gate: staged writes accept only ids tools returned this session. */
     private String provenanceGate(int productId) {
         if (seenListings.contains(productId)) return null;
-        JsonObject o = new JsonObject();
-        o.addProperty("error", "listing id " + productId + " was not returned by catalog tools "
+        ObjectNode o = Json.MAPPER.createObjectNode();
+        o.put("error", "listing id " + productId + " was not returned by catalog tools "
                 + "in this session. Search or look the listing up first and use ids from the results.");
-        o.addProperty("gate", "provenance");
+        o.put("gate", "provenance");
         return o.toString();
     }
 
-    static JsonObject changeJson(StagedChange c) {
-        JsonObject o = new JsonObject();
-        o.addProperty("changeId", c.getChangeId());
-        o.addProperty("kind", c.getKind().name());
-        o.addProperty("status", c.getStatus().name());
-        o.addProperty("summary", c.getSummary());
-        JsonArray arr = new JsonArray();
+    static ObjectNode changeJson(StagedChange c) {
+        ObjectNode o = Json.MAPPER.createObjectNode();
+        o.put("changeId", c.getChangeId());
+        o.put("kind", c.getKind().name());
+        o.put("status", c.getStatus().name());
+        o.put("summary", c.getSummary());
+        ArrayNode arr = Json.MAPPER.createArrayNode();
         for (StagedChange.Item it : c.getItems()) {
-            JsonObject i = new JsonObject();
-            i.addProperty("target", it.target());
-            i.addProperty("field", it.field());
-            i.addProperty("before", it.before());
-            i.addProperty("after", it.after());
+            ObjectNode i = Json.MAPPER.createObjectNode();
+            i.put("target", it.target());
+            i.put("field", it.field());
+            i.put("before", it.before());
+            i.put("after", it.after());
             arr.add(i);
         }
-        o.add("items", arr);
-        o.addProperty("createdBy", c.getCreatedBy());
+        o.set("items", arr);
+        o.put("createdBy", c.getCreatedBy());
         return o;
     }
 
@@ -301,25 +313,25 @@ public final class MerchantTools {
                 + "\"required\":[\"" + prop + "\"]}";
     }
 
-    private static String str(JsonObject args, String key, String def) {
+    private static String str(ObjectNode args, String key, String def) {
         try {
-            return args.has(key) && !args.get(key).isJsonNull() ? args.get(key).getAsString() : def;
+            return args.has(key) && !args.path(key).isNull() ? args.path(key).asString() : def;
         } catch (Exception e) { return def; }
     }
 
-    private static int intArg(JsonObject args, String key, int def) {
+    private static int intArg(ObjectNode args, String key, int def) {
         try {
-            if (!args.has(key) || args.get(key).isJsonNull()) return def;
-            if (args.get(key).isJsonPrimitive() && args.get(key).getAsJsonPrimitive().isNumber()) {
-                return args.get(key).getAsInt();
+            if (!args.has(key) || args.path(key).isNull()) return def;
+            if (args.path(key).isNumber()) {
+                return args.path(key).asInt();
             }
-            return Integer.parseInt(args.get(key).getAsString().trim());
+            return Integer.parseInt(args.path(key).asString().trim());
         } catch (Exception e) { return def; }
     }
 
     private static String error(String msg) {
-        JsonObject o = new JsonObject();
-        o.addProperty("error", msg);
+        ObjectNode o = Json.MAPPER.createObjectNode();
+        o.put("error", msg);
         return o.toString();
     }
 }

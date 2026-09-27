@@ -1,11 +1,11 @@
 package services.ai;
 
 import Util.AppConfig;
-import com.google.gson.Gson;
-import com.google.gson.JsonArray;
-import com.google.gson.JsonElement;
-import com.google.gson.JsonObject;
-import com.google.gson.JsonParser;
+import Util.Json;
+import tools.jackson.core.JacksonException;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.node.ArrayNode;
+import tools.jackson.databind.node.ObjectNode;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -33,7 +33,6 @@ public class OpenAiCompatibleProvider implements AiProvider {
     private final String apiKey;
     private final String model;
     private final int timeoutSeconds;
-    private final Gson gson = new Gson();
 
     public OpenAiCompatibleProvider(String name, String baseUrl, String apiKey,
                                     String model, int timeoutSeconds) {
@@ -52,7 +51,7 @@ public class OpenAiCompatibleProvider implements AiProvider {
     public ChatResponse complete(ChatRequest request) throws AiException {
         String requestId = UUID.randomUUID().toString().substring(0, 8);
         long start = System.currentTimeMillis();
-        JsonObject payload = buildPayload(request);
+        ObjectNode payload = buildPayload(request);
         HttpClient client = HttpClient.newBuilder()
                 .connectTimeout(Duration.ofSeconds(Math.min(timeoutSeconds, 15))).build();
         HttpRequest httpRequest = HttpRequest.newBuilder()
@@ -61,7 +60,7 @@ public class OpenAiCompatibleProvider implements AiProvider {
                 .header("Authorization", "Bearer " + apiKey)
                 .header("HTTP-Referer", AppConfig.getOrDefault("app.base-url", "http://localhost:8080/PetShop"))
                 .header("X-Title", "PetShop Commerce Agent")
-                .POST(HttpRequest.BodyPublishers.ofString(gson.toJson(payload)))
+                .POST(HttpRequest.BodyPublishers.ofString(Json.MAPPER.writeValueAsString(payload)))
                 .timeout(Duration.ofSeconds(timeoutSeconds))
                 .build();
         try {
@@ -87,8 +86,8 @@ public class OpenAiCompatibleProvider implements AiProvider {
                        Consumer<ChatResponse> onComplete) throws AiException {
         String requestId = UUID.randomUUID().toString().substring(0, 8);
         long start = System.currentTimeMillis();
-        JsonObject payload = buildPayload(request);
-        payload.addProperty("stream", true);
+        ObjectNode payload = buildPayload(request);
+        payload.put("stream", true);
         HttpClient client = HttpClient.newBuilder()
                 .connectTimeout(Duration.ofSeconds(Math.min(timeoutSeconds, 15))).build();
         HttpRequest httpRequest = HttpRequest.newBuilder()
@@ -96,7 +95,7 @@ public class OpenAiCompatibleProvider implements AiProvider {
                 .header("Content-Type", "application/json")
                 .header("Authorization", "Bearer " + apiKey)
                 .header("Accept", "text/event-stream")
-                .POST(HttpRequest.BodyPublishers.ofString(gson.toJson(payload)))
+                .POST(HttpRequest.BodyPublishers.ofString(Json.MAPPER.writeValueAsString(payload)))
                 .timeout(Duration.ofSeconds(timeoutSeconds))
                 .build();
         StringBuilder full = new StringBuilder();
@@ -120,19 +119,19 @@ public class OpenAiCompatibleProvider implements AiProvider {
                     String data = line.substring(5).trim();
                     if ("[DONE]".equals(data)) break;
                     try {
-                        JsonObject chunk = JsonParser.parseString(data).getAsJsonObject();
-                        JsonArray choices = chunk.getAsJsonArray("choices");
-                        if (choices == null || choices.isEmpty()) continue;
-                        JsonObject delta = choices.get(0).getAsJsonObject().getAsJsonObject("delta");
-                        if (delta == null) continue;
-                        if (delta.has("content") && !delta.get("content").isJsonNull()) {
-                            String piece = delta.get("content").getAsString();
+                        JsonNode chunk = Json.MAPPER.readTree(data);
+                        JsonNode choices = chunk.path("choices");
+                        if (!choices.isArray() || choices.isEmpty()) continue;
+                        JsonNode delta = choices.path(0).path("delta");
+                        if (!delta.isObject()) continue;
+                        if (delta.has("content") && !delta.path("content").isNull()) {
+                            String piece = delta.path("content").asString();
                             full.append(piece);
                             onDelta.accept(piece);
                         }
                         // Streaming tool calls: accumulate per index (OpenAI chunk shape).
-                        if (delta.has("tool_calls") && delta.get("tool_calls").isJsonArray()) {
-                            mergeStreamedToolCalls(toolCalls, delta.getAsJsonArray("tool_calls"));
+                        if (delta.path("tool_calls").isArray()) {
+                            mergeStreamedToolCalls(toolCalls, (ArrayNode) delta.path("tool_calls"));
                         }
                     } catch (Exception parseEx) {
                         log.debug("[{}] Skipping unparsable SSE chunk", requestId);
@@ -149,126 +148,137 @@ public class OpenAiCompatibleProvider implements AiProvider {
         }
     }
 
-    private void mergeStreamedToolCalls(List<ToolCall> acc, JsonArray deltas) {
-        for (JsonElement el : deltas) {
-            JsonObject tc = el.getAsJsonObject();
-            int index = tc.has("index") ? tc.get("index").getAsInt() : acc.size();
+    private void mergeStreamedToolCalls(List<ToolCall> acc, ArrayNode deltas) {
+        for (JsonNode el : deltas) {
+            JsonNode tc = el;
+            if (!tc.isObject()) continue;
+            int index = tc.has("index") ? tc.path("index").asInt() : acc.size();
             while (acc.size() <= index) acc.add(new ToolCall("stream-" + acc.size(), "", "{}"));
-            String id = tc.has("id") && !tc.get("id").isJsonNull() ? tc.get("id").getAsString() : acc.get(index).getId();
+            String id = tc.has("id") && !tc.path("id").isNull() ? tc.path("id").asString() : acc.get(index).getId();
             String fname = acc.get(index).getName();
             String fargs = acc.get(index).getArgumentsJson();
-            if (tc.has("function") && tc.get("function").isJsonObject()) {
-                JsonObject fn = tc.getAsJsonObject("function");
-                if (fn.has("name") && !fn.get("name").isJsonNull()) fname = fname + fn.get("name").getAsString();
-                if (fn.has("arguments") && !fn.get("arguments").isJsonNull()) fargs = fargs + fn.get("arguments").getAsString();
+            if (tc.has("function") && tc.path("function").isObject()) {
+                JsonNode fn = tc.path("function");
+                if (fn.has("name") && !fn.path("name").isNull()) fname = fname + fn.path("name").asString();
+                if (fn.has("arguments") && !fn.path("arguments").isNull()) fargs = fargs + fn.path("arguments").asString();
             }
             acc.set(index, new ToolCall(id, fname, fargs));
         }
     }
 
-    private JsonObject buildPayload(ChatRequest request) {
-        JsonObject payload = new JsonObject();
-        payload.addProperty("model", stripPrefix(model));
-        payload.addProperty("temperature", request.getTemperature());
-        payload.addProperty("max_tokens", request.getMaxTokens());
-        JsonArray messages = new JsonArray();
+    private ObjectNode buildPayload(ChatRequest request) {
+        ObjectNode payload = Json.MAPPER.createObjectNode();
+        payload.put("model", stripPrefix(model));
+        payload.put("temperature", request.getTemperature());
+        payload.put("max_tokens", request.getMaxTokens());
+        ArrayNode messages = Json.MAPPER.createArrayNode();
         for (AiMessage m : request.getMessages()) {
             messages.add(toWireMessage(m));
         }
-        payload.add("messages", messages);
+        payload.set("messages", messages);
         if (!request.getTools().isEmpty()) {
-            JsonArray tools = new JsonArray();
+            ArrayNode tools = Json.MAPPER.createArrayNode();
             for (ToolDefinition t : request.getTools()) {
-                JsonObject tool = new JsonObject();
-                tool.addProperty("type", "function");
-                JsonObject fn = new JsonObject();
-                fn.addProperty("name", t.getName());
-                fn.addProperty("description", t.getDescription());
+                ObjectNode tool = Json.MAPPER.createObjectNode();
+                tool.put("type", "function");
+                ObjectNode fn = Json.MAPPER.createObjectNode();
+                fn.put("name", t.getName());
+                fn.put("description", t.getDescription());
                 try {
-                    fn.add("parameters", JsonParser.parseString(t.getParametersSchemaJson()));
+                    fn.set("parameters", Json.MAPPER.readTree(t.getParametersSchemaJson()));
                 } catch (Exception e) {
-                    JsonObject fallback = new JsonObject();
-                    fallback.addProperty("type", "object");
-                    fn.add("parameters", fallback);
+                    ObjectNode fallback = Json.MAPPER.createObjectNode();
+                    fallback.put("type", "object");
+                    fn.set("parameters", fallback);
                 }
-                tool.add("function", fn);
+                tool.set("function", fn);
                 tools.add(tool);
             }
-            payload.add("tools", tools);
-            payload.addProperty("tool_choice", "auto");
+            payload.set("tools", tools);
+            payload.put("tool_choice", "auto");
         }
         if (request.isJsonMode()) {
-            JsonObject fmt = new JsonObject();
-            fmt.addProperty("type", "json_object");
-            payload.add("response_format", fmt);
+            ObjectNode fmt = Json.MAPPER.createObjectNode();
+            fmt.put("type", "json_object");
+            payload.set("response_format", fmt);
         }
         return payload;
     }
 
-    private JsonObject toWireMessage(AiMessage m) {
-        JsonObject o = new JsonObject();
+    private ObjectNode toWireMessage(AiMessage m) {
+        ObjectNode o = Json.MAPPER.createObjectNode();
         switch (m.getRole()) {
-            case SYSTEM -> o.addProperty("role", "system");
-            case USER -> o.addProperty("role", "user");
+            case SYSTEM -> o.put("role", "system");
+            case USER -> o.put("role", "user");
             case TOOL -> {
-                o.addProperty("role", "tool");
-                o.addProperty("tool_call_id", m.getToolCallId());
-                o.addProperty("content", m.getContent());
+                o.put("role", "tool");
+                o.put("tool_call_id", m.getToolCallId());
+                o.put("content", m.getContent());
                 return o;
             }
             case ASSISTANT -> {
-                o.addProperty("role", "assistant");
+                o.put("role", "assistant");
                 if (!m.getToolCalls().isEmpty()) {
-                    o.addProperty("content", m.getContent() == null ? "" : m.getContent());
-                    JsonArray tcs = new JsonArray();
+                    o.put("content", m.getContent() == null ? "" : m.getContent());
+                    ArrayNode tcs = Json.MAPPER.createArrayNode();
                     for (ToolCall tc : m.getToolCalls()) {
-                        JsonObject t = new JsonObject();
-                        t.addProperty("id", tc.getId());
-                        t.addProperty("type", "function");
-                        JsonObject fn = new JsonObject();
-                        fn.addProperty("name", tc.getName());
-                        fn.addProperty("arguments", tc.getArgumentsJson());
-                        t.add("function", fn);
+                        ObjectNode t = Json.MAPPER.createObjectNode();
+                        t.put("id", tc.getId());
+                        t.put("type", "function");
+                        ObjectNode fn = Json.MAPPER.createObjectNode();
+                        fn.put("name", tc.getName());
+                        fn.put("arguments", tc.getArgumentsJson());
+                        t.set("function", fn);
                         tcs.add(t);
                     }
-                    o.add("tool_calls", tcs);
+                    o.set("tool_calls", tcs);
                     return o;
                 }
             }
         }
-        o.addProperty("content", m.getContent() == null ? "" : m.getContent());
+        o.put("content", m.getContent() == null ? "" : m.getContent());
         return o;
     }
 
     private ChatResponse parseResponse(String body, String requestId, long latency) throws AiException {
         try {
-            JsonObject res = JsonParser.parseString(body).getAsJsonObject();
-            JsonObject choice = res.getAsJsonArray("choices").get(0).getAsJsonObject();
-            JsonObject msg = choice.getAsJsonObject("message");
-            String content = msg.has("content") && !msg.get("content").isJsonNull()
-                    ? msg.get("content").getAsString() : "";
+            JsonNode res = Json.MAPPER.readTree(body);
+            // Giữ hành vi cũ: body thiếu "choices"/"message" phải ném AiException
+            // (Gson ném IllegalStateException khigetAsJsonObject/get(0) trượt →
+            // catch(Exception) gói thành BAD_RESPONSE). Jackson path() trả missing
+            // node thay vì ném, nên phải kiểm tra tường minh.
+            if (!res.isObject()
+                    || !res.path("choices").isArray()
+                    || res.path("choices").isEmpty()
+                    || !res.path("choices").path(0).isObject()
+                    || !res.path("choices").path(0).path("message").isObject()) {
+                throw new AiException(AiException.Kind.BAD_RESPONSE, name,
+                        "Unparsable response from '" + name + "'", null);
+            }
+            JsonNode msg = res.path("choices").path(0).path("message");
+            String content = msg.has("content") && !msg.path("content").isNull()
+                    ? msg.path("content").asString() : "";
             List<ToolCall> calls = new ArrayList<>();
-            if (msg.has("tool_calls") && msg.get("tool_calls").isJsonArray()) {
-                for (JsonElement el : msg.getAsJsonArray("tool_calls")) {
-                    JsonObject t = el.getAsJsonObject();
-                    JsonObject fn = t.getAsJsonObject("function");
+            if (msg.path("tool_calls").isArray()) {
+                for (JsonNode t : msg.path("tool_calls")) {
+                    JsonNode fn = t.path("function");
                     calls.add(new ToolCall(
-                            t.has("id") ? t.get("id").getAsString() : UUID.randomUUID().toString(),
-                            fn.get("name").getAsString(),
-                            fn.has("arguments") && !fn.get("arguments").isJsonNull()
-                                    ? fn.get("arguments").getAsString() : "{}"));
+                            t.has("id") ? t.path("id").asString() : UUID.randomUUID().toString(),
+                            fn.path("name").asString(),
+                            fn.has("arguments") && !fn.path("arguments").isNull()
+                                    ? fn.path("arguments").asString() : "{}"));
                 }
             }
             Integer promptTokens = null, completionTokens = null;
-            if (res.has("usage") && res.get("usage").isJsonObject()) {
-                JsonObject u = res.getAsJsonObject("usage");
-                if (u.has("prompt_tokens")) promptTokens = u.get("prompt_tokens").getAsInt();
-                if (u.has("completion_tokens")) completionTokens = u.get("completion_tokens").getAsInt();
+            if (res.path("usage").isObject()) {
+                JsonNode u = res.path("usage");
+                if (u.has("prompt_tokens")) promptTokens = u.path("prompt_tokens").asInt();
+                if (u.has("completion_tokens")) completionTokens = u.path("completion_tokens").asInt();
             }
-            String respModel = res.has("model") ? res.get("model").getAsString() : model;
+            String respModel = res.has("model") ? res.path("model").asString() : model;
             return new ChatResponse(content, calls, respModel, name, requestId, latency,
                     promptTokens, completionTokens);
-        } catch (Exception e) {
+        } catch (JacksonException e) {
             throw new AiException(AiException.Kind.BAD_RESPONSE, name,
                     "Unparsable response from '" + name + "'", e);
         }

@@ -26,9 +26,8 @@ import org.springframework.mock.web.MockHttpSession;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
-import com.google.gson.JsonArray;
-
 import Model.User;
+import Util.Json;
 import services.ai.common.MemoryService;
 import services.ai.merchant.MerchantAgent;
 import services.ai.merchant.MerchantChangeDAO;
@@ -94,7 +93,7 @@ class AdminMerchantAgentControllerTest {
 
     @Test
     void memoryReturnsFacts() throws Exception {
-        when(memory.factsJson("user:1")).thenReturn(new JsonArray());
+        when(memory.factsJson("user:1")).thenReturn(Json.MAPPER.createArrayNode());
 
         mockMvc.perform(get("/admin/ai-merchant/memory").param("subject", "user:1"))
                 .andExpect(status().isOk())
@@ -112,7 +111,7 @@ class AdminMerchantAgentControllerTest {
     @Test
     void chatRunsAgent() throws Exception {
         when(agent.run(eq("hello"), anyList(), anyString())).thenReturn(
-                new MerchantAgent.MerchantResult("hi", "p", "m", "r", 1L, new JsonArray()));
+                new MerchantAgent.MerchantResult("hi", "p", "m", "r", 1L, Json.MAPPER.createArrayNode()));
 
         MockHttpSession session = new MockHttpSession();
         session.setAttribute("user", adminUser());

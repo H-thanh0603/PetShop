@@ -1,6 +1,8 @@
 package services.ai.merchant;
 
-import com.google.gson.JsonArray;
+import Util.Json;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.node.ArrayNode;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import services.ai.AiConfig;
@@ -29,7 +31,7 @@ public class MerchantAgent {
     private final PetShopMerchantBackend backend = new PetShopMerchantBackend();
 
     public record MerchantResult(String answer, String usedProvider, String usedModel,
-                                 String requestId, long latencyMs, JsonArray cards) {}
+                                 String requestId, long latencyMs, ArrayNode cards) {}
 
     public MerchantResult run(String operatorMessage, List<String> history, String operator) {
         MerchantTools tools = new MerchantTools(backend, operator == null ? "operator" : operator);
@@ -48,7 +50,7 @@ public class MerchantAgent {
         String requestId = "-";
         long totalLatency = 0;
         String finalContent = null;
-        JsonArray cards = new JsonArray();
+        ArrayNode cards = Json.MAPPER.createArrayNode();
 
         try {
             for (int step = 0; step < maxSteps; step++) {
@@ -76,13 +78,16 @@ public class MerchantAgent {
                     request.getMessages().add(AiMessage.toolResult(tc.getId(), tc.getName(), result));
                     // Attach change preview cards for staged changes.
                     try {
-                        var parsed = com.google.gson.JsonParser.parseString(result).getAsJsonObject();
-                        if (parsed.has("changeId") && parsed.has("kind")) {
+                        JsonNode parsed = Json.MAPPER.readTree(result);
+                        if (parsed.isObject() && parsed.has("changeId") && parsed.has("kind")) {
                             cards.add(Cards.changePreviewCard(
-                                    parsed.get("changeId").getAsString(),
-                                    parsed.get("kind").getAsString(),
-                                    parsed.has("summary") ? parsed.get("summary").getAsString() : "",
-                                    parsed.has("items") ? parsed.getAsJsonArray("items") : new JsonArray(),
+                                    parsed.path("changeId").asString(),
+                                    parsed.path("kind").asString(),
+                                    parsed.has("summary") && !parsed.path("summary").isNull()
+                                            ? parsed.path("summary").asString() : "",
+                                    parsed.path("items").isArray()
+                                            ? (ArrayNode) parsed.path("items")
+                                            : Json.MAPPER.createArrayNode(),
                                     List.of("Staged only — approve on "
                                             + MerchantConfig.approvalSurface())));
                         }
@@ -116,15 +121,15 @@ public class MerchantAgent {
         StringBuilder sb = new StringBuilder("=== Merchant digest ===\n");
         try {
             var snap = backend.businessSnapshot();
-            sb.append("Doanh thu tổng: ").append(snap.get("totalRevenueVnd").getAsString()).append(" VND\n");
-            sb.append("Doanh thu tháng: ").append(snap.get("monthRevenueVnd").getAsString()).append(" VND\n");
-            sb.append("Đơn hoàn tất: ").append(snap.get("completedOrders").getAsInt()).append("\n");
+            sb.append("Doanh thu tổng: ").append(snap.path("totalRevenueVnd").asString()).append(" VND\n");
+            sb.append("Doanh thu tháng: ").append(snap.path("monthRevenueVnd").asString()).append(" VND\n");
+            sb.append("Đơn hoàn tất: ").append(snap.path("completedOrders").asInt()).append("\n");
             var alerts = backend.inventoryAlerts();
             sb.append("Cảnh báo tồn kho: ").append(alerts.size()).append("\n");
             for (int i = 0; i < Math.min(alerts.size(), 5); i++) {
-                var a = alerts.get(i).getAsJsonObject();
-                sb.append("- ").append(a.get("name").getAsString())
-                        .append(" (tồn ").append(a.get("stock").getAsInt()).append(")\n");
+                var a = alerts.get(i);
+                sb.append("- ").append(a.path("name").asString())
+                        .append(" (tồn ").append(a.path("stock").asInt()).append(")\n");
             }
             var issues = backend.orderIssues();
             sb.append("Đơn cần chú ý: ").append(issues.size()).append("\n");

@@ -1,9 +1,10 @@
 package services.ai.common;
 
 import Util.AppConfig;
-import com.google.gson.JsonArray;
-import com.google.gson.JsonObject;
-import com.google.gson.JsonParser;
+import Util.Json;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.node.ArrayNode;
+import tools.jackson.databind.node.ObjectNode;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import services.ai.AiMessage;
@@ -102,10 +103,11 @@ public class MemoryService {
             for (ToolCall tc : result.response().getToolCalls()) {
                 if (!"record_fact".equals(tc.getName())) continue;
                 try {
-                    JsonObject args = JsonParser.parseString(tc.getArgumentsJson()).getAsJsonObject();
-                    String key = args.has("key") ? args.get("key").getAsString() : "";
-                    String value = args.has("value") ? args.get("value").getAsString() : "";
-                    String cat = args.has("category") ? args.get("category").getAsString() : "";
+                    JsonNode a = Json.MAPPER.readTree(tc.getArgumentsJson());
+                    if (!a.isObject()) continue;
+                    String key = a.has("key") && !a.path("key").isNull() ? a.path("key").asString() : "";
+                    String value = a.has("value") && !a.path("value").isNull() ? a.path("value").asString() : "";
+                    String cat = a.has("category") && !a.path("category").isNull() ? a.path("category").asString() : "";
                     if (validateFact(key.trim(), value.trim(), cat.trim())) {
                         toSave.add(new MemoryStore.Fact(key.trim(), value.trim(), cat.trim(), 0));
                     }
@@ -129,13 +131,13 @@ public class MemoryService {
         log.info("memory retention {} days (expired facts pruned by scheduled job)", days);
     }
 
-    public JsonArray factsJson(String subjectId) {
-        JsonArray arr = new JsonArray();
+    public ArrayNode factsJson(String subjectId) {
+        ArrayNode arr = Json.MAPPER.createArrayNode();
         for (MemoryStore.Fact f : store.getFacts(subjectId)) {
-            JsonObject o = new JsonObject();
-            o.addProperty("key", f.key());
-            o.addProperty("value", f.value());
-            o.addProperty("category", f.category());
+            ObjectNode o = Json.MAPPER.createObjectNode();
+            o.put("key", f.key());
+            o.put("value", f.value());
+            o.put("category", f.category());
             arr.add(o);
         }
         return arr;

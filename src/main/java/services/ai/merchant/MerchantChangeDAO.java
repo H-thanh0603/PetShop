@@ -1,10 +1,10 @@
 package services.ai.merchant;
 
 import Context.DBContext;
-import com.google.gson.Gson;
-import com.google.gson.JsonArray;
-import com.google.gson.JsonObject;
-import com.google.gson.JsonParser;
+import Util.Json;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.node.ArrayNode;
+import tools.jackson.databind.node.ObjectNode;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -17,7 +17,6 @@ import java.util.List;
 /** Persists staged changes (audit trail + approval queue survives restarts). */
 public class MerchantChangeDAO {
     private static final Logger log = LoggerFactory.getLogger(MerchantChangeDAO.class);
-    private static final Gson GSON = new Gson();
 
     public void save(StagedChange change) {
         String sql = "INSERT INTO ai_merchant_changes (change_id, kind, status, summary, items_json, "
@@ -74,13 +73,15 @@ public class MerchantChangeDAO {
                 try {
                     StagedChange.Kind kind = StagedChange.Kind.valueOf(rs.getString(2));
                     List<StagedChange.Item> items = new ArrayList<>();
-                    for (var el : JsonParser.parseString(rs.getString(4)).getAsJsonArray()) {
-                        JsonObject i = el.getAsJsonObject();
-                        items.add(new StagedChange.Item(
-                                i.has("target") ? i.get("target").getAsString() : "",
-                                i.has("field") ? i.get("field").getAsString() : "",
-                                i.has("before") ? i.get("before").getAsString() : "",
-                                i.has("after") ? i.get("after").getAsString() : ""));
+                    JsonNode parsed = Json.MAPPER.readTree(rs.getString(4));
+                    if (parsed.isArray()) {
+                        for (JsonNode el : parsed) {
+                            items.add(new StagedChange.Item(
+                                    el.has("target") && !el.path("target").isNull() ? el.path("target").asString() : "",
+                                    el.has("field") && !el.path("field").isNull() ? el.path("field").asString() : "",
+                                    el.has("before") && !el.path("before").isNull() ? el.path("before").asString() : "",
+                                    el.has("after") && !el.path("after").isNull() ? el.path("after").asString() : ""));
+                        }
                     }
                     String notes = rs.getString(6);
                     StagedChange change = new StagedChange(rs.getString(1), kind,
@@ -107,25 +108,25 @@ public class MerchantChangeDAO {
         }
     }
 
-    public List<JsonObject> pendingJson() {
-        List<JsonObject> out = new ArrayList<>();
+    public List<ObjectNode> pendingJson() {
+        List<ObjectNode> out = new ArrayList<>();
         String sql = "SELECT change_id, kind, summary, items_json, created_by, created_at "
                 + "FROM ai_merchant_changes WHERE status = 'STAGED' ORDER BY id DESC LIMIT 50";
         try (Connection c = DBContext.getConnection();
              PreparedStatement ps = c.prepareStatement(sql);
              ResultSet rs = ps.executeQuery()) {
             while (rs.next()) {
-                JsonObject o = new JsonObject();
-                o.addProperty("changeId", rs.getString(1));
-                o.addProperty("kind", rs.getString(2));
-                o.addProperty("summary", rs.getString(3));
+                ObjectNode o = Json.MAPPER.createObjectNode();
+                o.put("changeId", rs.getString(1));
+                o.put("kind", rs.getString(2));
+                o.put("summary", rs.getString(3));
                 try {
-                    o.add("items", JsonParser.parseString(rs.getString(4)));
+                    o.set("items", Json.MAPPER.readTree(rs.getString(4)));
                 } catch (Exception e) {
-                    o.add("items", new JsonArray());
+                    o.set("items", Json.MAPPER.createArrayNode());
                 }
-                o.addProperty("createdBy", rs.getString(5));
-                o.addProperty("createdAt", rs.getTimestamp(6) == null ? "" : rs.getTimestamp(6).toString());
+                o.put("createdBy", rs.getString(5));
+                o.put("createdAt", rs.getTimestamp(6) == null ? "" : rs.getTimestamp(6).toString());
                 out.add(o);
             }
         } catch (Exception e) {
@@ -146,13 +147,13 @@ public class MerchantChangeDAO {
     }
 
     static String itemsToJson(List<StagedChange.Item> items) {
-        JsonArray arr = new JsonArray();
+        ArrayNode arr = Json.MAPPER.createArrayNode();
         for (StagedChange.Item it : items) {
-            JsonObject o = new JsonObject();
-            o.addProperty("target", it.target());
-            o.addProperty("field", it.field());
-            o.addProperty("before", it.before());
-            o.addProperty("after", it.after());
+            ObjectNode o = Json.MAPPER.createObjectNode();
+            o.put("target", it.target());
+            o.put("field", it.field());
+            o.put("before", it.before());
+            o.put("after", it.after());
             arr.add(o);
         }
         return arr.toString();

@@ -143,9 +143,9 @@ public class CommerceFullPortTest {
     public void cardsBuiltFromServerRecords() {
         Product p = new Product(7, "Pate mèo", "img.jpg", new BigDecimal("50000"), 10, "ngon");
         var card = Cards.productCard(p);
-        assertEquals(7, card.get("id").getAsInt());
-        assertTrue(card.get("url").getAsString().contains("7"));
+        assertEquals(7, card.path("id").asInt());
+        assertTrue(card.path("url").asString().contains("7"));
         var checkout = Cards.checkoutCard(2, "100000", "/cart");
-        assertEquals("checkout", checkout.get("type").getAsString());
+        assertEquals("checkout", checkout.path("type").asString());
     }
 }

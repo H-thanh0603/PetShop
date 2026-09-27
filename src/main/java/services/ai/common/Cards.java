@@ -2,8 +2,9 @@ package services.ai.common;
 
 import Model.Order;
 import Model.Product;
-import com.google.gson.JsonArray;
-import com.google.gson.JsonObject;
+import Util.Json;
+import tools.jackson.databind.node.ArrayNode;
+import tools.jackson.databind.node.ObjectNode;
 import services.ai.CommerceTools;
 
 import java.util.List;
@@ -16,63 +17,63 @@ import java.util.List;
 public final class Cards {
     private Cards() {}
 
-    public static JsonObject productCard(Product p) {
-        JsonObject card = new JsonObject();
-        card.addProperty("type", "product");
-        card.addProperty("id", p.getId());
-        card.addProperty("name", Fence.sanitize(p.getName()));
-        card.addProperty("priceVnd",
+    public static ObjectNode productCard(Product p) {
+        ObjectNode card = Json.MAPPER.createObjectNode();
+        card.put("type", "product");
+        card.put("id", p.getId());
+        card.put("name", Fence.sanitize(p.getName()));
+        card.put("priceVnd",
                 p.getEffectivePrice() == null ? "0" : p.getEffectivePrice().toPlainString());
-        card.addProperty("discountPercent", p.getDisplayDiscountPercent());
-        card.addProperty("inStock", p.getStock() > 0);
-        card.addProperty("url", "/product-detail?id=" + p.getId());
+        card.put("discountPercent", p.getDisplayDiscountPercent());
+        card.put("inStock", p.getStock() > 0);
+        card.put("url", "/product-detail?id=" + p.getId());
         return card;
     }
 
-    public static JsonObject comparisonCard(List<Product> products) {
-        JsonObject card = new JsonObject();
-        card.addProperty("type", "comparison");
-        JsonArray rows = new JsonArray();
+    public static ObjectNode comparisonCard(List<Product> products) {
+        ObjectNode card = Json.MAPPER.createObjectNode();
+        card.put("type", "comparison");
+        ArrayNode rows = Json.MAPPER.createArrayNode();
         for (Product p : products) rows.add(productCard(p));
-        card.add("rows", rows);
+        card.set("rows", rows);
         return card;
     }
 
     /** Checkout card: links to the host checkout route; no order is placed. */
-    public static JsonObject checkoutCard(int itemCount, String totalVnd, String checkoutUrl) {
-        JsonObject card = new JsonObject();
-        card.addProperty("type", "checkout");
-        card.addProperty("itemCount", itemCount);
-        card.addProperty("totalVnd", totalVnd);
+    public static ObjectNode checkoutCard(int itemCount, String totalVnd, String checkoutUrl) {
+        ObjectNode card = Json.MAPPER.createObjectNode();
+        card.put("type", "checkout");
+        card.put("itemCount", itemCount);
+        card.put("totalVnd", totalVnd);
         String url = checkoutUrl != null && checkoutUrl.startsWith("https://") ? checkoutUrl : "/cart";
-        card.addProperty("url", url);
-        card.addProperty("note", "Thanh toán được thực hiện tại trang checkout của shop. AI không đặt hàng hay thu tiền.");
+        card.put("url", url);
+        card.put("note", "Thanh toán được thực hiện tại trang checkout của shop. AI không đặt hàng hay thu tiền.");
         return card;
     }
 
-    public static JsonObject orderCard(Order o) {
-        JsonObject card = new JsonObject();
-        card.addProperty("type", "order");
-        card.addProperty("id", o.getId());
-        card.addProperty("status", Fence.sanitize(o.getStatus()));
-        card.addProperty("statusLabel", Fence.sanitize(o.getStatusLabel()));
-        card.addProperty("totalVnd", o.getTotalAmount() == null ? "0" : o.getTotalAmount().toPlainString());
-        card.addProperty("url", "/my-orders");
+    public static ObjectNode orderCard(Order o) {
+        ObjectNode card = Json.MAPPER.createObjectNode();
+        card.put("type", "order");
+        card.put("id", o.getId());
+        card.put("status", Fence.sanitize(o.getStatus()));
+        card.put("statusLabel", Fence.sanitize(o.getStatusLabel()));
+        card.put("totalVnd", o.getTotalAmount() == null ? "0" : o.getTotalAmount().toPlainString());
+        card.put("url", "/my-orders");
         return card;
     }
 
-    public static JsonObject changePreviewCard(String changeId, String kind, String summary,
-                                               JsonArray items, List<String> notes) {
-        JsonObject card = new JsonObject();
-        card.addProperty("type", "change_preview");
-        card.addProperty("changeId", changeId);
-        card.addProperty("kind", kind);
-        card.addProperty("summary", Fence.sanitize(summary));
-        card.add("items", items);
-        JsonArray n = new JsonArray();
+    public static ObjectNode changePreviewCard(String changeId, String kind, String summary,
+                                               ArrayNode items, List<String> notes) {
+        ObjectNode card = Json.MAPPER.createObjectNode();
+        card.put("type", "change_preview");
+        card.put("changeId", changeId);
+        card.put("kind", kind);
+        card.put("summary", Fence.sanitize(summary));
+        card.set("items", items);
+        ArrayNode n = Json.MAPPER.createArrayNode();
         for (String note : Fence.sanitizeChips(notes)) n.add(note);
-        card.add("guardrailNotes", n);
-        card.addProperty("stagedOnly", true);
+        card.set("guardrailNotes", n);
+        card.put("stagedOnly", true);
         return card;
     }
 }
