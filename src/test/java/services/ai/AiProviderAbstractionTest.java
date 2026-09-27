@@ -81,7 +81,9 @@ public class AiProviderAbstractionTest {
 
     @Test
     public void commerceToolsRejectUnknownToolsAndProtectGuestOrders() {
-        PetShopCommerceBackend backend = new PetShopCommerceBackend();
+        PetShopCommerceBackend backend = new PetShopCommerceBackend(
+                org.mockito.Mockito.mock(com.petshop.repository.ProductRepository.class),
+                org.mockito.Mockito.mock(com.petshop.repository.CustomerSupportKnowledgeRepository.class));
         CommerceTools tools = new CommerceTools(backend,
                 new PetShopCommerceBackend.SessionContext(null, true));
 

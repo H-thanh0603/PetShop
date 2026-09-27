@@ -5,6 +5,7 @@ import com.petshop.model.AiChatMessage;
 import com.petshop.model.User;
 import com.petshop.repository.AiSupportSettingRepository;
 import com.petshop.repository.CustomerSupportKnowledgeRepository;
+import com.petshop.repository.ProductRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -28,12 +29,14 @@ public class DeepSeekServiceTest {
     AiSupportSettingRepository settingRepository;
     @Autowired
     CustomerSupportKnowledgeRepository knowledgeRepository;
+    @Autowired
+    ProductRepository productRepository;
 
     DeepSeekService service;
 
     @BeforeEach
     void setUp() {
-        PetShopCommerceBackend backend = new PetShopCommerceBackend(knowledgeRepository);
+        PetShopCommerceBackend backend = new PetShopCommerceBackend(productRepository, knowledgeRepository);
         CommerceAgent agent = new CommerceAgent(settingRepository, backend);
         service = new DeepSeekService(settingRepository, agent);
     }

@@ -22,7 +22,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
-import com.petshop.dao.ProductDAO;
+import com.petshop.repository.ProductRepository;
 import com.petshop.dao.PromotionDAO;
 
 @ExtendWith(MockitoExtension.class)
@@ -31,7 +31,7 @@ class AdminPromotionControllerTest {
     @Mock
     PromotionDAO promotionDAO;
     @Mock
-    ProductDAO productDAO;
+    ProductRepository productDAO;
 
     MockMvc mockMvc;
 

@@ -32,7 +32,7 @@ public class AgentAdversarialTest {
     public void toolResultCannotBecomeInstruction() {
         // A tool result telling the model to call another tool is inert data:
         // execute() only ever runs the name the caller requested.
-        PetShopCommerceBackend backend = new PetShopCommerceBackend();
+        PetShopCommerceBackend backend = new PetShopCommerceBackend(org.mockito.Mockito.mock(com.petshop.repository.ProductRepository.class), org.mockito.Mockito.mock(com.petshop.repository.CustomerSupportKnowledgeRepository.class));
         CommerceTools tools = new CommerceTools(backend,
                 new PetShopCommerceBackend.SessionContext(null, true));
         String out = tools.execute("searchProducts",
@@ -45,7 +45,7 @@ public class AgentAdversarialTest {
 
     @Test
     public void guestImpersonatingAdminStillRefusedOrders() {
-        PetShopCommerceBackend backend = new PetShopCommerceBackend();
+        PetShopCommerceBackend backend = new PetShopCommerceBackend(org.mockito.Mockito.mock(com.petshop.repository.ProductRepository.class), org.mockito.Mockito.mock(com.petshop.repository.CustomerSupportKnowledgeRepository.class));
         CommerceTools tools = new CommerceTools(backend,
                 new PetShopCommerceBackend.SessionContext(null, true));
         String out = tools.execute("getOrderStatus",
@@ -55,7 +55,7 @@ public class AgentAdversarialTest {
 
     @Test
     public void oversizedToolArgumentsDoNotBreakExecution() {
-        CommerceTools tools = new CommerceTools(new PetShopCommerceBackend(),
+        CommerceTools tools = new CommerceTools(new PetShopCommerceBackend(org.mockito.Mockito.mock(com.petshop.repository.ProductRepository.class), org.mockito.Mockito.mock(com.petshop.repository.CustomerSupportKnowledgeRepository.class)),
                 new PetShopCommerceBackend.SessionContext(null, true));
         String big = "x".repeat(50000);
         String out = tools.execute("searchProducts", "{\"query\": \"" + big + "\"}");
@@ -83,7 +83,7 @@ public class AgentAdversarialTest {
         SessionStateStore.rememberProducts(key, Set.of(7, 9));
         SessionStateStore.rememberOrder(key, 3);
 
-        CommerceTools fresh = new CommerceTools(new PetShopCommerceBackend(),
+        CommerceTools fresh = new CommerceTools(new PetShopCommerceBackend(org.mockito.Mockito.mock(com.petshop.repository.ProductRepository.class), org.mockito.Mockito.mock(com.petshop.repository.CustomerSupportKnowledgeRepository.class)),
                 new PetShopCommerceBackend.SessionContext(1, false));
         var state = SessionStateStore.get(key);
         synchronized (state) {

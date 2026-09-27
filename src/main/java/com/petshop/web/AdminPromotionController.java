@@ -6,13 +6,14 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 
-import com.petshop.dao.ProductDAO;
+import com.petshop.repository.ProductRepository;
 import com.petshop.dao.PromotionDAO;
 import com.petshop.model.Product;
 import com.petshop.model.Promotion;
@@ -29,13 +30,10 @@ import jakarta.servlet.http.HttpSession;
 public class AdminPromotionController {
 
     private final PromotionDAO promotionDAO;
-    private final ProductDAO productDAO;
+    private final ProductRepository productDAO;
 
-    public AdminPromotionController() {
-        this(new PromotionDAO(), new ProductDAO());
-    }
-
-    AdminPromotionController(PromotionDAO promotionDAO, ProductDAO productDAO) {
+    @Autowired
+    public AdminPromotionController(PromotionDAO promotionDAO, ProductRepository productDAO) {
         this.promotionDAO = promotionDAO;
         this.productDAO = productDAO;
     }

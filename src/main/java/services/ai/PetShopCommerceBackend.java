@@ -2,12 +2,13 @@ package services.ai;
 
 import com.petshop.repository.CustomerSupportKnowledgeRepository;
 import com.petshop.dao.OrderDAO;
-import com.petshop.dao.ProductDAO;
+import com.petshop.repository.ProductRepository;
 import com.petshop.model.CustomerSupportKnowledge;
 import com.petshop.model.Order;
 import com.petshop.model.Product;
 import com.petshop.model.User;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
@@ -22,16 +23,18 @@ import java.util.List;
  */
 @Service
 public class PetShopCommerceBackend {
-    private final ProductDAO productDAO = new ProductDAO();
+    private final ProductRepository productDAO;
     private final OrderDAO orderDAO = new OrderDAO();
     private final CustomerSupportKnowledgeRepository knowledgeDAO;
 
-    public PetShopCommerceBackend() {
-        this(null);
+    @Autowired
+    public PetShopCommerceBackend(ProductRepository productDAO, CustomerSupportKnowledgeRepository knowledgeDAO) {
+        this.productDAO = productDAO;
+        this.knowledgeDAO = knowledgeDAO;
     }
 
     public PetShopCommerceBackend(CustomerSupportKnowledgeRepository knowledgeDAO) {
-        this.knowledgeDAO = knowledgeDAO;
+        this(null, knowledgeDAO);
     }
 
 
