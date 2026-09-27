@@ -19,7 +19,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 
 import com.petshop.dao.ProductDAO;
 import com.petshop.repository.ReviewRepository;
-import com.petshop.dao.WishlistDAO;
+import com.petshop.repository.WishlistRepository;
 import com.petshop.model.Product;
 import com.petshop.model.Review;
 import com.petshop.model.User;
@@ -37,10 +37,10 @@ public class CatalogController {
 
     private final ProductDAO productDAO;
     private final ReviewRepository reviewDAO;
-    private final WishlistDAO wishlistDAO;
+    private final WishlistRepository wishlistDAO;
 
     @Autowired
-    public CatalogController(ProductDAO productDAO, ReviewRepository reviewDAO, WishlistDAO wishlistDAO) {
+    public CatalogController(ProductDAO productDAO, ReviewRepository reviewDAO, WishlistRepository wishlistDAO) {
         this.productDAO = productDAO;
         this.reviewDAO = reviewDAO;
         this.wishlistDAO = wishlistDAO;

@@ -22,7 +22,7 @@ import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
 import com.petshop.dao.ProductDAO;
 import com.petshop.repository.ReviewRepository;
-import com.petshop.dao.WishlistDAO;
+import com.petshop.repository.WishlistRepository;
 import com.petshop.model.Product;
 import com.petshop.model.User;
 
@@ -34,7 +34,7 @@ class CatalogControllerTest {
     @Mock
     ReviewRepository reviewDAO;
     @Mock
-    WishlistDAO wishlistDAO;
+    WishlistRepository wishlistDAO;
 
     MockMvc mockMvc;
 

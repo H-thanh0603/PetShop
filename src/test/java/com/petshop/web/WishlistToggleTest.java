@@ -19,7 +19,7 @@ import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import com.petshop.repository.CartRepository;
 import com.petshop.dao.ProductDAO;
 import com.petshop.repository.ReviewRepository;
-import com.petshop.dao.WishlistDAO;
+import com.petshop.repository.WishlistRepository;
 import com.petshop.model.Product;
 import com.petshop.model.User;
 import services.InventoryService;
@@ -32,7 +32,7 @@ class WishlistToggleTest {
     @Mock
     ReviewRepository reviewDAO;
     @Mock
-    WishlistDAO wishlistDAO;
+    WishlistRepository wishlistDAO;
     @Mock
     CartRepository cartDAO;
     @Mock

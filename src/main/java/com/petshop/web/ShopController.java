@@ -13,7 +13,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 
 import com.petshop.repository.PetTypeRepository;
 import com.petshop.dao.ProductDAO;
-import com.petshop.dao.WishlistDAO;
+import com.petshop.repository.WishlistRepository;
 import com.petshop.model.PetType;
 import com.petshop.model.Product;
 import com.petshop.model.ProductFilterCriteria;
@@ -33,10 +33,10 @@ public class ShopController {
 
     private final ProductDAO productDao;
     private final PetTypeRepository petTypeDao;
-    private final WishlistDAO wishlistDAO;
+    private final WishlistRepository wishlistDAO;
 
     @Autowired
-    public ShopController(ProductDAO productDao, PetTypeRepository petTypeDao, WishlistDAO wishlistDAO) {
+    public ShopController(ProductDAO productDao, PetTypeRepository petTypeDao, WishlistRepository wishlistDAO) {
         this.productDao = productDao;
         this.petTypeDao = petTypeDao;
         this.wishlistDAO = wishlistDAO;
