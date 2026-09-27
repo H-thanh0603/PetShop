@@ -1,7 +1,7 @@
 package com.petshop.config;
 
 import com.petshop.context.DBContext;
-import DAO.DBProperties;
+import com.petshop.dao.DBProperties;
 import com.zaxxer.hikari.HikariConfig;
 import com.zaxxer.hikari.HikariDataSource;
 import org.flywaydb.core.Flyway;

@@ -22,7 +22,7 @@ import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.node.ObjectNode;
 
 import com.petshop.context.DBContext;
-import DAO.OrderDAO;
+import com.petshop.dao.OrderDAO;
 import com.petshop.model.Order;
 import com.petshop.util.AppConfig;
 import com.petshop.util.Json;

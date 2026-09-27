@@ -1,9 +1,9 @@
 package services.ai.merchant;
 
-import DAO.OrderDAO;
-import DAO.ProductDAO;
-import DAO.PromotionDAO;
-import DAO.ReportDAO;
+import com.petshop.dao.OrderDAO;
+import com.petshop.dao.ProductDAO;
+import com.petshop.dao.PromotionDAO;
+import com.petshop.dao.ReportDAO;
 import com.petshop.model.Order;
 import com.petshop.model.Product;
 import com.petshop.model.Promotion;

@@ -1,7 +1,7 @@
 package services;
 
-import DAO.CartDAO;
-import DAO.OrderDAO;
+import com.petshop.dao.CartDAO;
+import com.petshop.dao.OrderDAO;
 import com.petshop.model.Order;
 import com.petshop.model.OrderItem;
 import com.petshop.model.Product;

@@ -16,10 +16,10 @@ import org.springframework.mock.web.MockHttpSession;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
-import DAO.CartDAO;
-import DAO.ProductDAO;
-import DAO.ReviewDAO;
-import DAO.WishlistDAO;
+import com.petshop.dao.CartDAO;
+import com.petshop.dao.ProductDAO;
+import com.petshop.dao.ReviewDAO;
+import com.petshop.dao.WishlistDAO;
 import com.petshop.model.Product;
 import com.petshop.model.User;
 import services.InventoryService;

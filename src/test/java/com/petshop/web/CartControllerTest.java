@@ -22,7 +22,7 @@ import org.springframework.mock.web.MockHttpSession;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
-import DAO.CartDAO;
+import com.petshop.dao.CartDAO;
 import com.petshop.model.CartItem;
 import com.petshop.model.Product;
 import services.InventoryService;

@@ -13,7 +13,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 
-import DAO.CartDAO;
+import com.petshop.dao.CartDAO;
 import com.petshop.model.CartItem;
 import com.petshop.model.Product;
 import com.petshop.model.User;

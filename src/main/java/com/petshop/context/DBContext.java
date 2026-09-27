@@ -1,6 +1,6 @@
 package com.petshop.context;
 
-import DAO.DBProperties;
+import com.petshop.dao.DBProperties;
 import com.zaxxer.hikari.HikariConfig;
 import com.zaxxer.hikari.HikariDataSource;
 

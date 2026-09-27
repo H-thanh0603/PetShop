@@ -20,10 +20,10 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 
 import com.petshop.context.DBContext;
-import DAO.OrderDAO;
-import DAO.PaymentTransactionDAO;
-import DAO.ProductDAO;
-import DAO.ReviewDAO;
+import com.petshop.dao.OrderDAO;
+import com.petshop.dao.PaymentTransactionDAO;
+import com.petshop.dao.ProductDAO;
+import com.petshop.dao.ReviewDAO;
 import com.petshop.model.Order;
 import com.petshop.model.PaymentTransaction;
 import com.petshop.model.Product;

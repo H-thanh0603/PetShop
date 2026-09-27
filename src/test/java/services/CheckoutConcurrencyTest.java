@@ -1,12 +1,12 @@
 package services;
 
 import com.petshop.context.DBContext;
-import DAO.CartDAO;
-import DAO.CouponDao;
-import DAO.OrderDAO;
-import DAO.PaymentTransactionDAO;
-import DAO.ProductDAO;
-import DAO.UserDAO;
+import com.petshop.dao.CartDAO;
+import com.petshop.dao.CouponDao;
+import com.petshop.dao.OrderDAO;
+import com.petshop.dao.PaymentTransactionDAO;
+import com.petshop.dao.ProductDAO;
+import com.petshop.dao.UserDAO;
 import com.petshop.model.CartItem;
 import com.petshop.model.Product;
 import com.petshop.model.User;

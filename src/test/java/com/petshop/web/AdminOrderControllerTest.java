@@ -26,9 +26,9 @@ import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
 import tools.jackson.databind.node.ObjectNode;
 
-import DAO.AdminActionLogDAO;
-import DAO.NotificationDAO;
-import DAO.OrderDAO;
+import com.petshop.dao.AdminActionLogDAO;
+import com.petshop.dao.NotificationDAO;
+import com.petshop.dao.OrderDAO;
 import com.petshop.model.Order;
 import com.petshop.model.User;
 import com.petshop.util.Json;

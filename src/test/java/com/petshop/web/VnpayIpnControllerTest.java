@@ -20,8 +20,8 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
-import DAO.OrderDAO;
-import DAO.PaymentTransactionDAO;
+import com.petshop.dao.OrderDAO;
+import com.petshop.dao.PaymentTransactionDAO;
 import com.petshop.model.Order;
 
 @ExtendWith(MockitoExtension.class)

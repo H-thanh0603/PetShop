@@ -15,10 +15,10 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 
-import DAO.CartDAO;
-import DAO.RememberTokenDAO;
-import DAO.SecurityEventDAO;
-import DAO.UserDAO;
+import com.petshop.dao.CartDAO;
+import com.petshop.dao.RememberTokenDAO;
+import com.petshop.dao.SecurityEventDAO;
+import com.petshop.dao.UserDAO;
 import com.petshop.model.CartItem;
 import com.petshop.model.FbAccount.Account;
 import com.petshop.model.GgAccount.GoogleAccount;

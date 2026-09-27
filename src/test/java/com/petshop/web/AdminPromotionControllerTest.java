@@ -22,8 +22,8 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
-import DAO.ProductDAO;
-import DAO.PromotionDAO;
+import com.petshop.dao.ProductDAO;
+import com.petshop.dao.PromotionDAO;
 
 @ExtendWith(MockitoExtension.class)
 class AdminPromotionControllerTest {

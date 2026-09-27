@@ -22,14 +22,14 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 
 import com.petshop.context.DBContext;
-import DAO.AddressDao;
-import DAO.CartDAO;
-import DAO.CouponDao;
-import DAO.InventoryBatchDAO;
-import DAO.OrderDAO;
-import DAO.PaymentTransactionDAO;
-import DAO.ProductDAO;
-import DAO.UserDAO;
+import com.petshop.dao.AddressDao;
+import com.petshop.dao.CartDAO;
+import com.petshop.dao.CouponDao;
+import com.petshop.dao.InventoryBatchDAO;
+import com.petshop.dao.OrderDAO;
+import com.petshop.dao.PaymentTransactionDAO;
+import com.petshop.dao.ProductDAO;
+import com.petshop.dao.UserDAO;
 import com.petshop.model.Address;
 import com.petshop.model.CartItem;
 import com.petshop.model.Coupon;
@@ -387,7 +387,7 @@ public class CheckoutController {
 
             // Create notification for user
             try {
-                new DAO.NotificationDAO().create(
+                new com.petshop.dao.NotificationDAO().create(
                     user.getId(),
                     "Đặt hàng thành công",
                     "Đơn hàng #" + completedOrderId + " đã được đặt thành công. Chúng tôi sẽ sớm xử lý.",

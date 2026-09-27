@@ -14,9 +14,9 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 
-import DAO.AdminActionLogDAO;
-import DAO.InventoryBatchDAO;
-import DAO.ProductDAO;
+import com.petshop.dao.AdminActionLogDAO;
+import com.petshop.dao.InventoryBatchDAO;
+import com.petshop.dao.ProductDAO;
 import com.petshop.model.InventoryBatch;
 import com.petshop.model.Product;
 import com.petshop.model.ProductAdminInventoryView;

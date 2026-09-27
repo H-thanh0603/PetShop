@@ -9,7 +9,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 
-import DAO.OrderDAO;
+import com.petshop.dao.OrderDAO;
 import com.petshop.model.CustomerRepurchaseSuggestion;
 import com.petshop.model.Order;
 import com.petshop.model.OrderStatus;

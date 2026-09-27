@@ -19,8 +19,8 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
-import DAO.PetTypeDAO;
-import DAO.ReportDAO;
+import com.petshop.dao.PetTypeDAO;
+import com.petshop.dao.ReportDAO;
 
 @ExtendWith(MockitoExtension.class)
 class AdminReadControllerTest {

@@ -17,10 +17,10 @@ import org.springframework.mock.web.MockHttpSession;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
-import DAO.CertificateDAO;
-import DAO.OrderDAO;
-import DAO.OrderSignDAO;
-import DAO.OrderSignatureDAO;
+import com.petshop.dao.CertificateDAO;
+import com.petshop.dao.OrderDAO;
+import com.petshop.dao.OrderSignDAO;
+import com.petshop.dao.OrderSignatureDAO;
 import com.petshop.model.OrderSign;
 import com.petshop.model.User;
 

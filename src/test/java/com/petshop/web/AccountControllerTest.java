@@ -19,11 +19,11 @@ import org.springframework.mock.web.MockHttpSession;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
-import DAO.AddressDao;
-import DAO.OrderDAO;
-import DAO.OrderSignDAO;
-import DAO.OrderSignatureDAO;
-import DAO.UserDAO;
+import com.petshop.dao.AddressDao;
+import com.petshop.dao.OrderDAO;
+import com.petshop.dao.OrderSignDAO;
+import com.petshop.dao.OrderSignatureDAO;
+import com.petshop.dao.UserDAO;
 import com.petshop.model.User;
 
 @ExtendWith(MockitoExtension.class)

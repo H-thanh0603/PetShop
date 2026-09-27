@@ -20,10 +20,10 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 
-import DAO.CertificateDAO;
-import DAO.OrderDAO;
-import DAO.OrderSignDAO;
-import DAO.OrderSignatureDAO;
+import com.petshop.dao.CertificateDAO;
+import com.petshop.dao.OrderDAO;
+import com.petshop.dao.OrderSignDAO;
+import com.petshop.dao.OrderSignatureDAO;
 import com.petshop.model.Certificate;
 import com.petshop.model.OrderSign;
 import com.petshop.model.OrderSignature;

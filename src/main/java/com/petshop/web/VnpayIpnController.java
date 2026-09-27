@@ -14,8 +14,8 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 
-import DAO.OrderDAO;
-import DAO.PaymentTransactionDAO;
+import com.petshop.dao.OrderDAO;
+import com.petshop.dao.PaymentTransactionDAO;
 import com.petshop.model.Order;
 import com.petshop.util.Json;
 import com.petshop.util.VnpayConfig;

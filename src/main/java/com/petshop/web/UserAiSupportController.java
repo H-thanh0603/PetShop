@@ -21,9 +21,9 @@ import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.node.ObjectNode;
 
-import DAO.AiChatMessageDAO;
-import DAO.AiChatSessionDAO;
-import DAO.AiSupportSettingDAO;
+import com.petshop.dao.AiChatMessageDAO;
+import com.petshop.dao.AiChatSessionDAO;
+import com.petshop.dao.AiSupportSettingDAO;
 import com.petshop.model.AiChatMessage;
 import com.petshop.model.AiChatSession;
 import com.petshop.model.User;

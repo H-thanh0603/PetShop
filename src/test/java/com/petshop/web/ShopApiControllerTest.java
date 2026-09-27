@@ -20,9 +20,9 @@ import org.springframework.mock.web.MockHttpSession;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
-import DAO.OrderDAO;
-import DAO.PaymentTransactionDAO;
-import DAO.ProductDAO;
+import com.petshop.dao.OrderDAO;
+import com.petshop.dao.PaymentTransactionDAO;
+import com.petshop.dao.ProductDAO;
 import com.petshop.model.Product;
 import com.petshop.model.User;
 
@@ -133,7 +133,7 @@ class ShopApiControllerTest {
         MockHttpSession session = new MockHttpSession();
         session.setAttribute("user", user);
 
-        try (var mocked = org.mockito.Mockito.mockConstruction(DAO.ReviewDAO.class,
+        try (var mocked = org.mockito.Mockito.mockConstruction(com.petshop.dao.ReviewDAO.class,
                 (dao, ctx) -> {
                     when(dao.hasUserPurchasedProduct(7, 1)).thenReturn(true);
                     when(dao.hasUserReviewedProduct(7, 1)).thenReturn(false);

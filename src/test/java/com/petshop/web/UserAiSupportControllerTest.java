@@ -23,9 +23,9 @@ import org.springframework.mock.web.MockHttpSession;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
-import DAO.AiChatMessageDAO;
-import DAO.AiChatSessionDAO;
-import DAO.AiSupportSettingDAO;
+import com.petshop.dao.AiChatMessageDAO;
+import com.petshop.dao.AiChatSessionDAO;
+import com.petshop.dao.AiSupportSettingDAO;
 import com.petshop.model.AiChatSession;
 import com.petshop.model.User;
 import services.DeepSeekService;

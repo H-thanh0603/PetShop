@@ -18,7 +18,7 @@ import org.springframework.mock.web.MockHttpSession;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
-import DAO.NotificationDAO;
+import com.petshop.dao.NotificationDAO;
 import com.petshop.model.User;
 
 @ExtendWith(MockitoExtension.class)

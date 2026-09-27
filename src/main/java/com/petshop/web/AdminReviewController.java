@@ -10,8 +10,8 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 
-import DAO.AdminActionLogDAO;
-import DAO.ReviewDAO;
+import com.petshop.dao.AdminActionLogDAO;
+import com.petshop.dao.ReviewDAO;
 import com.petshop.model.Review;
 import com.petshop.model.User;
 import com.petshop.util.ValidationUtil;

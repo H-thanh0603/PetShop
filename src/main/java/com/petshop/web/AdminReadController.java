@@ -18,8 +18,8 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 
 import com.petshop.context.DBContext;
-import DAO.PetTypeDAO;
-import DAO.ReportDAO;
+import com.petshop.dao.PetTypeDAO;
+import com.petshop.dao.ReportDAO;
 import com.petshop.model.Order;
 import com.petshop.model.PetType;
 import com.petshop.model.Product;

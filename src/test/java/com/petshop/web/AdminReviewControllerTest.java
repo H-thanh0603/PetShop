@@ -21,8 +21,8 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
-import DAO.AdminActionLogDAO;
-import DAO.ReviewDAO;
+import com.petshop.dao.AdminActionLogDAO;
+import com.petshop.dao.ReviewDAO;
 import com.petshop.model.Review;
 import com.petshop.model.User;
 

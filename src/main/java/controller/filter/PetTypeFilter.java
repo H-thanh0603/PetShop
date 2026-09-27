@@ -11,7 +11,7 @@ import jakarta.servlet.ServletRequest;
 import jakarta.servlet.ServletResponse;
 import jakarta.servlet.http.HttpServletRequest;
 
-import DAO.PetTypeDAO;
+import com.petshop.dao.PetTypeDAO;
 import com.petshop.model.PetType;
 import services.PetTypeCache;
 import org.slf4j.Logger;

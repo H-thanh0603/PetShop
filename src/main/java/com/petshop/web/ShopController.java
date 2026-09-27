@@ -10,9 +10,9 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 
-import DAO.PetTypeDAO;
-import DAO.ProductDAO;
-import DAO.WishlistDAO;
+import com.petshop.dao.PetTypeDAO;
+import com.petshop.dao.ProductDAO;
+import com.petshop.dao.WishlistDAO;
 import com.petshop.model.PetType;
 import com.petshop.model.Product;
 import com.petshop.model.ProductFilterCriteria;

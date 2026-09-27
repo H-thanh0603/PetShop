@@ -1,6 +1,6 @@
 package services.ai;
 
-import DAO.AiSupportSettingDAO;
+import com.petshop.dao.AiSupportSettingDAO;
 import com.petshop.model.AiChatMessage;
 import com.petshop.model.Order;
 import com.petshop.model.Product;

@@ -10,7 +10,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.ResponseBody;
 
-import DAO.NotificationDAO;
+import com.petshop.dao.NotificationDAO;
 import com.petshop.model.User;
 import com.petshop.util.Json;
 import jakarta.servlet.http.HttpSession;

@@ -19,8 +19,8 @@ import org.springframework.mock.web.MockHttpSession;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
-import DAO.RememberTokenDAO;
-import DAO.UserDAO;
+import com.petshop.dao.RememberTokenDAO;
+import com.petshop.dao.UserDAO;
 import com.petshop.model.User;
 
 @ExtendWith(MockitoExtension.class)
@@ -88,7 +88,7 @@ class AuthControllerTest {
                 org.mockito.ArgumentMatchers.eq("user@example.com"),
                 org.mockito.ArgumentMatchers.anyString())).thenReturn(user);
 
-        try (var mocked = org.mockito.Mockito.mockConstruction(DAO.CartDAO.class,
+        try (var mocked = org.mockito.Mockito.mockConstruction(com.petshop.dao.CartDAO.class,
                 (dao, ctx) -> when(dao.getCartByUserId(7))
                         .thenReturn(new java.util.HashMap<>()))) {
             mockMvc.perform(post("/login")

@@ -10,11 +10,11 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 
-import DAO.AddressDao;
-import DAO.OrderDAO;
-import DAO.OrderSignDAO;
-import DAO.OrderSignatureDAO;
-import DAO.UserDAO;
+import com.petshop.dao.AddressDao;
+import com.petshop.dao.OrderDAO;
+import com.petshop.dao.OrderSignDAO;
+import com.petshop.dao.OrderSignatureDAO;
+import com.petshop.dao.UserDAO;
 import com.petshop.model.Address;
 import com.petshop.model.Order;
 import com.petshop.model.OrderSign;

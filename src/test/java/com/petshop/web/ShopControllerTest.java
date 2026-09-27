@@ -21,9 +21,9 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
-import DAO.PetTypeDAO;
-import DAO.ProductDAO;
-import DAO.WishlistDAO;
+import com.petshop.dao.PetTypeDAO;
+import com.petshop.dao.ProductDAO;
+import com.petshop.dao.WishlistDAO;
 import com.petshop.model.Product;
 
 @ExtendWith(MockitoExtension.class)

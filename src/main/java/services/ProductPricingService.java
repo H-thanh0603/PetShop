@@ -1,6 +1,6 @@
 package services;
 
-import DAO.PromotionDAO;
+import com.petshop.dao.PromotionDAO;
 import com.petshop.model.Product;
 import com.petshop.model.ProductPricing;
 import com.petshop.model.PromotionCandidate;

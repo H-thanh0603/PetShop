@@ -8,9 +8,9 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 
-import DAO.AdminActionLogDAO;
-import DAO.NotificationDAO;
-import DAO.OrderDAO;
+import com.petshop.dao.AdminActionLogDAO;
+import com.petshop.dao.NotificationDAO;
+import com.petshop.dao.OrderDAO;
 import com.petshop.model.Order;
 import com.petshop.model.OrderLog;
 import com.petshop.model.OrderStatusHistory;

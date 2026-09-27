@@ -25,9 +25,9 @@ import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
-import DAO.AdminActionLogDAO;
-import DAO.PetTypeDAO;
-import DAO.ProductDAO;
+import com.petshop.dao.AdminActionLogDAO;
+import com.petshop.dao.PetTypeDAO;
+import com.petshop.dao.ProductDAO;
 
 @ExtendWith(MockitoExtension.class)
 class AdminProductControllerTest {

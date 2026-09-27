@@ -11,9 +11,9 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.multipart.MultipartFile;
 
-import DAO.AdminActionLogDAO;
-import DAO.PetTypeDAO;
-import DAO.ProductDAO;
+import com.petshop.dao.AdminActionLogDAO;
+import com.petshop.dao.PetTypeDAO;
+import com.petshop.dao.ProductDAO;
 import com.petshop.model.PetType;
 import com.petshop.model.Product;
 import com.petshop.model.User;

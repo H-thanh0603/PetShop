@@ -12,11 +12,11 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 
-import DAO.AiChatMessageDAO;
-import DAO.AiChatSessionDAO;
-import DAO.AiSupportSettingDAO;
-import DAO.CustomerSupportKnowledgeDAO;
-import DAO.NotificationDAO;
+import com.petshop.dao.AiChatMessageDAO;
+import com.petshop.dao.AiChatSessionDAO;
+import com.petshop.dao.AiSupportSettingDAO;
+import com.petshop.dao.CustomerSupportKnowledgeDAO;
+import com.petshop.dao.NotificationDAO;
 import com.petshop.model.AiChatMessage;
 import com.petshop.model.AiChatSession;
 import com.petshop.model.CustomerSupportKnowledge;

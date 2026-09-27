@@ -1,6 +1,6 @@
 package services;
 
-import DAO.ProductDAO;
+import com.petshop.dao.ProductDAO;
 import com.petshop.model.CartItem;
 import com.petshop.model.Product;
 

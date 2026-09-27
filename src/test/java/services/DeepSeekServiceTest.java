@@ -87,7 +87,7 @@ public class DeepSeekServiceTest {
 
     @Test
     public void testSearchProductsForAdvice() {
-        DAO.ProductDAO dao = new DAO.ProductDAO();
+        com.petshop.dao.ProductDAO dao = new com.petshop.dao.ProductDAO();
         List<com.petshop.model.Product> products = dao.searchProductsForAdvice("Mèo con nên ăn gì?", 5);
         System.out.println("=== SEARCH RESULTS FOR 'Mèo con nên ăn gì?' ===");
         for (com.petshop.model.Product p : products) {

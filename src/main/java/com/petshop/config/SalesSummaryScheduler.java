@@ -1,6 +1,6 @@
 package com.petshop.config;
 
-import DAO.SalesSummaryDAO;
+import com.petshop.dao.SalesSummaryDAO;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.scheduling.annotation.Scheduled;

@@ -1,8 +1,8 @@
 package services.ai;
 
-import DAO.CustomerSupportKnowledgeDAO;
-import DAO.OrderDAO;
-import DAO.ProductDAO;
+import com.petshop.dao.CustomerSupportKnowledgeDAO;
+import com.petshop.dao.OrderDAO;
+import com.petshop.dao.ProductDAO;
 import com.petshop.model.CustomerSupportKnowledge;
 import com.petshop.model.Order;
 import com.petshop.model.Product;
