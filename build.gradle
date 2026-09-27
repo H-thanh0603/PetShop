@@ -20,7 +20,6 @@ repositories {
 
 dependencies {
     implementation platform('org.springframework.boot:spring-boot-dependencies:4.1.1')
-    providedRuntime platform('org.springframework.boot:spring-boot-dependencies:4.1.1')
 
     // Spring Boot 4: web -> webmvc
     implementation 'org.springframework.boot:spring-boot-starter-webmvc'

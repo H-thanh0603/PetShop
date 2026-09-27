@@ -138,3 +138,21 @@ Mỗi bước là một commit riêng trên nhánh `refactor/p0-baseline`. **C�
 | P4 | Spring Security thay filter tự chế, OAuth2 Google/Facebook | P2 + P3 |
 
 Mỗi phase sẽ có spec và kế hoạch riêng, gate là `./gradlew clean test` xanh và demo không vỡ.
+
+## 8. Kết quả nghiệm thu (2026-09-27, Task 12)
+
+- Số test: baseline 437 → **451** (`build/test-results/test`, failures=0, errors=0);
+  **160** `@Property` jqwik (18 file); 1 skip duy nhất `CheckoutConcurrencyTest`
+  (Docker daemon off, `@Testcontainers(disabledWithoutDocker = true)` — pre-existing).
+- Commit range nhánh `refactor/p0-baseline`: `5b8242d` (plan) → `9af0d9d` (+ commit acceptance này).
+- Checklist: suite xanh ≥447 ✓; `/actuator/health` = UP ✓; E2E HTTP mức tay
+  (login user_demo → add-to-cart → checkout COD order #12 Pending → admin xem đơn) ✓;
+  `NO_GSON` ✓; `NO_CONFIG_PROPERTIES` (secrets.properties gitignored, local-only) ✓;
+  task `war` disabled, `bootWar` sinh `petshop-boot.war` (205 MB) ✓;
+  3 dòng `mysql:8.4` trên 2 compose file, `compose config` hợp lệ ✓;
+  README: Spring Boot 4.1.1, MySQL 8.4 LTS, JDK 21, embedded Tomcat ✓;
+  mỗi task 1 commit riêng ✓.
+- Vệ sinh acceptance: xóa dòng `providedRuntime platform(...)` thừa trong `build.gradle`;
+  sửa README `/PetShop/home` → `/home`; giữ nguyên pin `mysql:8.0` trong
+  `CheckoutConcurrencyTest` (lệnh cấm sửa test từ Task 4; test skip khi không có Docker).
+- Chi tiết đầy đủ: `.superpowers/sdd/2026-09-25-p0-baseline-upgrade/task-12-report.md`.

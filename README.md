@@ -12,6 +12,7 @@ PetShop là đồ án web e-commerce bán sản phẩm cho thú cưng, tập tru
 
 - JDK 21
 - Gradle Wrapper đi kèm project
+- Spring Boot 4.1.1 (Gradle plugin + BOM `spring-boot-dependencies`)
 - MySQL 8.4 LTS
 - Hạ dev từ `mysql:8.0` sang `mysql:8.4` (2026-09): backup dữ liệu trước khi `docker compose up` lần đầu:
   `docker exec petshop-mysql-dev mysqldump -uroot -p"$MYSQL_ROOT_PASSWORD" petvaccine > backup-8.4.sql`
@@ -145,7 +146,7 @@ java -jar build\libs\petshop-boot.war
 3. Cấu hình `src/main/resources/application.yml` (xem mục "Chuẩn bị cấu hình")
 4. Set `PETSHOP_DB_PASSWORD`
 5. Chạy `Start.bat`
-6. Mở `http://localhost:8080/PetShop/home`
+6. Mở `http://localhost:8080/home`
 
 ## Ghi chú cho admin
 
