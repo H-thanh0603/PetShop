@@ -43,7 +43,6 @@ dependencies {
     implementation 'com.mysql:mysql-connector-j'
     implementation 'jakarta.mail:jakarta.mail-api'
     implementation 'org.eclipse.angus:jakarta.mail'
-    implementation 'com.google.code.gson:gson'          // gỡ ở Task 10
     implementation 'org.springframework.security:spring-security-crypto'
     implementation 'com.zaxxer:HikariCP'
     implementation 'org.slf4j:slf4j-api'

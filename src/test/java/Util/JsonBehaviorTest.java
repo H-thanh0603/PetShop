@@ -17,7 +17,7 @@ class JsonBehaviorTest {
     @Test
     void readsLenientJsonWithSingleQuotesAndUnquotedNames() throws Exception {
         JsonNode node = Json.MAPPER.readTree("{name:'xà', count:2}");
-        assertEquals("xà", node.path("name").asText());
+        assertEquals("xà", node.path("name").asString());
         assertEquals(2, node.path("count").asInt());
     }
 
