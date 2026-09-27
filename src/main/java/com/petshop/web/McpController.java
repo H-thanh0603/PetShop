@@ -17,6 +17,7 @@ import com.petshop.util.Json;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpSession;
 import services.ai.CommerceTools;
+import com.petshop.repository.PromotionRepository;
 import services.ai.PetShopCommerceBackend;
 import services.ai.ToolDefinition;
 import services.ai.common.AuditLog;
@@ -34,10 +35,12 @@ public class McpController {
     private static final Logger log = LoggerFactory.getLogger(McpController.class);
 
     private final PetShopCommerceBackend commerceBackend;
+    private final PromotionRepository promotionDAO;
 
     @Autowired
-    public McpController(PetShopCommerceBackend commerceBackend) {
+    public McpController(PetShopCommerceBackend commerceBackend, PromotionRepository promotionDAO) {
         this.commerceBackend = commerceBackend;
+        this.promotionDAO = promotionDAO;
     }
 
     @PostMapping(value = "/mcp", produces = "application/json;charset=UTF-8")
@@ -78,7 +81,7 @@ public class McpController {
                 PetShopCommerceBackend.SessionContext.of(null));
         for (ToolDefinition d : shopping.definitions()) tools.add(toolJson(d));
         if (isAdmin) {
-            var merchant = new MerchantTools(new PetShopMerchantBackend(), "mcp");
+            var merchant = new MerchantTools(new PetShopMerchantBackend(promotionDAO), "mcp");
             for (ToolDefinition d : merchant.definitions()) tools.add(toolJson(d));
         }
         ObjectNode o = Json.MAPPER.createObjectNode();
@@ -100,7 +103,7 @@ public class McpController {
         String result;
         if (merchantTool) {
             String operator = "mcp:" + (user == null ? "?" : user.getId());
-            result = new MerchantTools(new PetShopMerchantBackend(), operator).execute(name, args);
+            result = new MerchantTools(new PetShopMerchantBackend(promotionDAO), operator).execute(name, args);
         } else {
             result = new CommerceTools(commerceBackend,
                     PetShopCommerceBackend.SessionContext.of(user)).execute(name, args);

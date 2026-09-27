@@ -2,7 +2,7 @@ package services.ai.merchant;
 
 import com.petshop.dao.OrderDAO;
 import com.petshop.dao.ProductDAO;
-import com.petshop.dao.PromotionDAO;
+import com.petshop.repository.PromotionRepository;
 import com.petshop.dao.ReportDAO;
 import com.petshop.model.Order;
 import com.petshop.model.Product;
@@ -31,7 +31,7 @@ public class PetShopMerchantBackend {
     private final ReportDAO reportDAO = new ReportDAO();
     private final OrderDAO orderDAO = new OrderDAO();
     private final ProductDAO productDAO = new ProductDAO();
-    private final PromotionDAO promotionDAO = new PromotionDAO();
+    private final PromotionRepository promotionDAO;
     /**
      * Shared ledger: every backend instance (agent turns, MCP calls, approval
      * servlet) stages into and applies from the same lifecycle. Hydrated once
@@ -42,7 +42,8 @@ public class PetShopMerchantBackend {
     private final ChangeLedger ledger = SHARED_LEDGER;
     private final MerchantChangeDAO changeDAO = new MerchantChangeDAO();
 
-    public PetShopMerchantBackend() {
+    public PetShopMerchantBackend(PromotionRepository promotionDAO) {
+        this.promotionDAO = promotionDAO;
         if (!hydrated) {
             synchronized (PetShopMerchantBackend.class) {
                 if (!hydrated) {

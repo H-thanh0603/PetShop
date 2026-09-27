@@ -2,12 +2,13 @@ package com.petshop.web;
 
 import java.util.List;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 
-import com.petshop.dao.PromotionDAO;
+import com.petshop.repository.PromotionRepository;
 import jakarta.servlet.http.HttpServletRequest;
 
 /**
@@ -17,13 +18,10 @@ import jakarta.servlet.http.HttpServletRequest;
 @Controller
 public class PageController {
 
-    private final PromotionDAO promotionDAO;
+    private final PromotionRepository promotionDAO;
 
-    public PageController() {
-        this(new PromotionDAO());
-    }
-
-    PageController(PromotionDAO promotionDAO) {
+    @Autowired
+    public PageController(PromotionRepository promotionDAO) {
         this.promotionDAO = promotionDAO;
     }
 

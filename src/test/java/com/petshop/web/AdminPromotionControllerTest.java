@@ -23,13 +23,13 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
 import com.petshop.repository.ProductRepository;
-import com.petshop.dao.PromotionDAO;
+import com.petshop.repository.PromotionRepository;
 
 @ExtendWith(MockitoExtension.class)
 class AdminPromotionControllerTest {
 
     @Mock
-    PromotionDAO promotionDAO;
+    PromotionRepository promotionDAO;
     @Mock
     ProductRepository productDAO;
 

@@ -7,6 +7,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -26,6 +27,7 @@ import services.ai.common.AppEventBus;
 import services.ai.common.AuditLog;
 import services.ai.common.DbMemoryStore;
 import services.ai.common.MemoryService;
+import com.petshop.repository.PromotionRepository;
 import services.ai.merchant.MerchantAgent;
 import services.ai.merchant.MerchantChangeDAO;
 import services.ai.merchant.PetShopMerchantBackend;
@@ -45,8 +47,10 @@ public class AdminMerchantAgentController {
     private final MerchantChangeDAO changeDAO;
     private final MemoryService memory;
 
-    public AdminMerchantAgentController() {
-        this(new MerchantAgent(), new PetShopMerchantBackend(),
+    @Autowired
+    public AdminMerchantAgentController(PromotionRepository promotionDAO) {
+        this(new MerchantAgent(new PetShopMerchantBackend(promotionDAO)),
+                new PetShopMerchantBackend(promotionDAO),
                 new MerchantChangeDAO(), new MemoryService(new DbMemoryStore()));
     }
 

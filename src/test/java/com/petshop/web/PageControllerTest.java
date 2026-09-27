@@ -17,14 +17,14 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
-import com.petshop.dao.PromotionDAO;
+import com.petshop.repository.PromotionRepository;
 import com.petshop.model.Product;
 
 @ExtendWith(MockitoExtension.class)
 class PageControllerTest {
 
     @Mock
-    PromotionDAO promotionDAO;
+    PromotionRepository promotionDAO;
 
     MockMvc mockMvc;
 

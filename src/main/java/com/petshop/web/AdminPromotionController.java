@@ -14,7 +14,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 
 import com.petshop.repository.ProductRepository;
-import com.petshop.dao.PromotionDAO;
+import com.petshop.repository.PromotionRepository;
 import com.petshop.model.Product;
 import com.petshop.model.Promotion;
 import com.petshop.util.ValidationUtil;
@@ -29,11 +29,11 @@ import jakarta.servlet.http.HttpSession;
 @Controller
 public class AdminPromotionController {
 
-    private final PromotionDAO promotionDAO;
+    private final PromotionRepository promotionDAO;
     private final ProductRepository productDAO;
 
     @Autowired
-    public AdminPromotionController(PromotionDAO promotionDAO, ProductRepository productDAO) {
+    public AdminPromotionController(PromotionRepository promotionDAO, ProductRepository productDAO) {
         this.promotionDAO = promotionDAO;
         this.productDAO = productDAO;
     }

@@ -28,7 +28,11 @@ import java.util.List;
 public class MerchantAgent {
     private static final Logger log = LoggerFactory.getLogger(MerchantAgent.class);
 
-    private final PetShopMerchantBackend backend = new PetShopMerchantBackend();
+    private final PetShopMerchantBackend backend;
+
+    public MerchantAgent(PetShopMerchantBackend backend) {
+        this.backend = backend;
+    }
 
     public record MerchantResult(String answer, String usedProvider, String usedModel,
                                  String requestId, long latencyMs, ArrayNode cards) {}

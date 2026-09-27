@@ -18,7 +18,8 @@ class McpControllerTest {
     @BeforeEach
     void setUp() {
         mockMvc = MockMvcBuilders.standaloneSetup(new McpController(
-                org.mockito.Mockito.mock(services.ai.PetShopCommerceBackend.class))).build();
+                org.mockito.Mockito.mock(services.ai.PetShopCommerceBackend.class),
+                org.mockito.Mockito.mock(com.petshop.repository.PromotionRepository.class))).build();
     }
 
     @Test
