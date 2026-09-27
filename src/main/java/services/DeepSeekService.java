@@ -1,17 +1,29 @@
 package services;
 
-import com.petshop.dao.AiSupportSettingDAO;
+import com.petshop.repository.AiSupportSettingRepository;
 import com.petshop.model.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.stereotype.Service;
 import services.ai.CommerceAgent;
 
 import java.util.List;
 
+@Service
 public class DeepSeekService {
     private static final Logger log = LoggerFactory.getLogger(DeepSeekService.class);
-    private final AiSupportSettingDAO settingDAO = new AiSupportSettingDAO();
-    private final CommerceAgent commerceAgent = new CommerceAgent();
+    private final AiSupportSettingRepository settingDAO;
+    private final CommerceAgent commerceAgent;
+
+    public DeepSeekService() {
+        this(null, null);
+    }
+
+    public DeepSeekService(AiSupportSettingRepository settingDAO, CommerceAgent commerceAgent) {
+        this.settingDAO = settingDAO;
+        this.commerceAgent = commerceAgent;
+    }
+
 
     public static class AiResponse {
         private String answer;

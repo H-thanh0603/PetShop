@@ -1,6 +1,6 @@
 package services.ai;
 
-import com.petshop.dao.AiSupportSettingDAO;
+import com.petshop.repository.AiSupportSettingRepository;
 import com.petshop.model.AiChatMessage;
 import com.petshop.model.Order;
 import com.petshop.model.Product;
@@ -9,6 +9,7 @@ import com.petshop.util.Json;
 import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.node.ArrayNode;
 import tools.jackson.databind.node.ObjectNode;
+import org.springframework.stereotype.Service;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import services.ai.common.AppEventBus;
@@ -31,11 +32,22 @@ import java.util.Locale;
  * (related ids must have been returned by tools this session) → attach rich
  * product/order details. The model never touches DAOs directly.
  */
+@Service
 public class CommerceAgent {
     private static final Logger log = LoggerFactory.getLogger(CommerceAgent.class);
 
-    private final AiSupportSettingDAO settingDAO = new AiSupportSettingDAO();
-    private final PetShopCommerceBackend backend = new PetShopCommerceBackend();
+    private final AiSupportSettingRepository settingDAO;
+    private final PetShopCommerceBackend backend;
+
+    public CommerceAgent() {
+        this(null, null);
+    }
+
+    public CommerceAgent(AiSupportSettingRepository settingDAO, PetShopCommerceBackend backend) {
+        this.settingDAO = settingDAO;
+        this.backend = backend;
+    }
+
     private final MemoryService memory = new MemoryService(new DbMemoryStore());
 
     public record AgentResult(String answer, String intent, double confidence,

@@ -55,12 +55,12 @@ public interface RememberTokenRepository extends JpaRepository<RememberToken, In
         }
     }
 
-    @Modifying
+    @Modifying(clearAutomatically = true)
     @Transactional
     @Query("DELETE FROM RememberToken t WHERE t.userId = :userId")
     void deleteAllTokensForUser(@Param("userId") int userId);
 
-    @Modifying
+    @Modifying(clearAutomatically = true)
     @Transactional
     @Query("DELETE FROM RememberToken t WHERE t.expiresAt <= :now")
     void deleteExpiredTokens(@Param("now") LocalDateTime now);

@@ -1,12 +1,14 @@
 package services.ai;
 
-import com.petshop.dao.CustomerSupportKnowledgeDAO;
+import com.petshop.repository.CustomerSupportKnowledgeRepository;
 import com.petshop.dao.OrderDAO;
 import com.petshop.dao.ProductDAO;
 import com.petshop.model.CustomerSupportKnowledge;
 import com.petshop.model.Order;
 import com.petshop.model.Product;
 import com.petshop.model.User;
+
+import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -18,10 +20,20 @@ import java.util.List;
  * users' rows. Guest order reads are refused here — defense in depth behind the
  * agent's own guest guard.
  */
+@Service
 public class PetShopCommerceBackend {
     private final ProductDAO productDAO = new ProductDAO();
     private final OrderDAO orderDAO = new OrderDAO();
-    private final CustomerSupportKnowledgeDAO knowledgeDAO = new CustomerSupportKnowledgeDAO();
+    private final CustomerSupportKnowledgeRepository knowledgeDAO;
+
+    public PetShopCommerceBackend() {
+        this(null);
+    }
+
+    public PetShopCommerceBackend(CustomerSupportKnowledgeRepository knowledgeDAO) {
+        this.knowledgeDAO = knowledgeDAO;
+    }
+
 
     public record SessionContext(Integer userId, boolean guest) {
         public static SessionContext of(User user) {

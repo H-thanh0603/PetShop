@@ -14,13 +14,14 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 
-import com.petshop.dao.CertificateDAO;
+import com.petshop.repository.CertificateRepository;
 import com.petshop.dao.OrderDAO;
 import com.petshop.dao.OrderSignDAO;
 import com.petshop.dao.OrderSignatureDAO;
@@ -44,15 +45,12 @@ public class SignatureController {
 
     private final OrderSignDAO orderSignDAO;
     private final OrderSignatureDAO orderSignatureDAO;
-    private final CertificateDAO certificateDAO;
+    private final CertificateRepository certificateDAO;
     private final OrderDAO orderDAO;
 
-    public SignatureController() {
-        this(new OrderSignDAO(), new OrderSignatureDAO(), new CertificateDAO(), new OrderDAO());
-    }
-
-    SignatureController(OrderSignDAO orderSignDAO, OrderSignatureDAO orderSignatureDAO,
-                        CertificateDAO certificateDAO, OrderDAO orderDAO) {
+    @Autowired
+    public SignatureController(OrderSignDAO orderSignDAO, OrderSignatureDAO orderSignatureDAO,
+                               CertificateRepository certificateDAO, OrderDAO orderDAO) {
         this.orderSignDAO = orderSignDAO;
         this.orderSignatureDAO = orderSignatureDAO;
         this.certificateDAO = certificateDAO;

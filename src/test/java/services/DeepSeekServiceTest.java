@@ -1,17 +1,45 @@
 package services;
 
+import com.petshop.config.JpaTestConfig;
 import com.petshop.model.AiChatMessage;
 import com.petshop.model.User;
+import com.petshop.repository.AiSupportSettingRepository;
+import com.petshop.repository.CustomerSupportKnowledgeRepository;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.data.jpa.test.autoconfigure.DataJpaTest;
+import org.springframework.boot.jdbc.test.autoconfigure.AutoConfigureTestDatabase;
+import org.springframework.context.annotation.Import;
+import org.springframework.test.context.ContextConfiguration;
+import services.ai.CommerceAgent;
+import services.ai.PetShopCommerceBackend;
 import java.util.ArrayList;
 import java.util.List;
 import static org.junit.jupiter.api.Assertions.*;
 
+@DataJpaTest
+@Import(JpaTestConfig.class)
+@ContextConfiguration(classes = com.petshop.PetShopApplication.class)
+@AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE)
 public class DeepSeekServiceTest {
+
+    @Autowired
+    AiSupportSettingRepository settingRepository;
+    @Autowired
+    CustomerSupportKnowledgeRepository knowledgeRepository;
+
+    DeepSeekService service;
+
+    @BeforeEach
+    void setUp() {
+        PetShopCommerceBackend backend = new PetShopCommerceBackend(knowledgeRepository);
+        CommerceAgent agent = new CommerceAgent(settingRepository, backend);
+        service = new DeepSeekService(settingRepository, agent);
+    }
 
     @Test
     public void testGetChatResponseFAQ() {
-        DeepSeekService service = new DeepSeekService();
         List<AiChatMessage> history = new ArrayList<>();
         
         DeepSeekService.AiResponse response = service.getChatResponse("Shop ở đâu?", history, null);
@@ -27,7 +55,6 @@ public class DeepSeekServiceTest {
 
     @Test
     public void testGuestOrderCheckingDenied() {
-        DeepSeekService service = new DeepSeekService();
         List<AiChatMessage> history = new ArrayList<>();
         
         DeepSeekService.AiResponse response = service.getChatResponse("Đơn hàng của tôi đang ở đâu?", history, null);
@@ -40,7 +67,6 @@ public class DeepSeekServiceTest {
 
     @Test
     public void testProductAdvice() {
-        DeepSeekService service = new DeepSeekService();
         List<AiChatMessage> history = new ArrayList<>();
         
         DeepSeekService.AiResponse response = service.getChatResponse("Mèo con nên ăn gì?", history, null);
@@ -56,7 +82,6 @@ public class DeepSeekServiceTest {
 
     @Test
     public void testEscalationLogicForComplaint() {
-        DeepSeekService service = new DeepSeekService();
         List<AiChatMessage> history = new ArrayList<>();
         
         DeepSeekService.AiResponse response = service.getChatResponse("Tôi muốn khiếu nại về sản phẩm lỗi, nó bị hỏng.", history, null);

@@ -2,6 +2,7 @@ package com.petshop.web;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -31,6 +32,13 @@ import services.ai.merchant.PetShopMerchantBackend;
 public class McpController {
 
     private static final Logger log = LoggerFactory.getLogger(McpController.class);
+
+    private final PetShopCommerceBackend commerceBackend;
+
+    @Autowired
+    public McpController(PetShopCommerceBackend commerceBackend) {
+        this.commerceBackend = commerceBackend;
+    }
 
     @PostMapping(value = "/mcp", produces = "application/json;charset=UTF-8")
     @ResponseBody
@@ -66,7 +74,7 @@ public class McpController {
 
     private ObjectNode toolsList(boolean isAdmin) {
         ArrayNode tools = Json.MAPPER.createArrayNode();
-        var shopping = new CommerceTools(new PetShopCommerceBackend(),
+        var shopping = new CommerceTools(commerceBackend,
                 PetShopCommerceBackend.SessionContext.of(null));
         for (ToolDefinition d : shopping.definitions()) tools.add(toolJson(d));
         if (isAdmin) {
@@ -94,7 +102,7 @@ public class McpController {
             String operator = "mcp:" + (user == null ? "?" : user.getId());
             result = new MerchantTools(new PetShopMerchantBackend(), operator).execute(name, args);
         } else {
-            result = new CommerceTools(new PetShopCommerceBackend(),
+            result = new CommerceTools(commerceBackend,
                     PetShopCommerceBackend.SessionContext.of(user)).execute(name, args);
         }
         AuditLog.record("mcp", "tools/call:" + name,

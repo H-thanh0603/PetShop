@@ -23,9 +23,9 @@ import org.springframework.mock.web.MockHttpSession;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
-import com.petshop.dao.AiChatMessageDAO;
-import com.petshop.dao.AiChatSessionDAO;
-import com.petshop.dao.AiSupportSettingDAO;
+import com.petshop.repository.AiChatMessageRepository;
+import com.petshop.repository.AiChatSessionRepository;
+import com.petshop.repository.AiSupportSettingRepository;
 import com.petshop.model.AiChatSession;
 import com.petshop.model.User;
 import services.DeepSeekService;
@@ -34,11 +34,11 @@ import services.DeepSeekService;
 class UserAiSupportControllerTest {
 
     @Mock
-    AiChatSessionDAO sessionDAO;
+    AiChatSessionRepository sessionDAO;
     @Mock
-    AiChatMessageDAO messageDAO;
+    AiChatMessageRepository messageDAO;
     @Mock
-    AiSupportSettingDAO settingDAO;
+    AiSupportSettingRepository settingDAO;
     @Mock
     DeepSeekService deepSeekService;
 

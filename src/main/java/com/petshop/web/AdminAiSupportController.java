@@ -6,16 +6,17 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 
-import com.petshop.dao.AiChatMessageDAO;
-import com.petshop.dao.AiChatSessionDAO;
-import com.petshop.dao.AiSupportSettingDAO;
-import com.petshop.dao.CustomerSupportKnowledgeDAO;
+import com.petshop.repository.AiChatMessageRepository;
+import com.petshop.repository.AiChatSessionRepository;
+import com.petshop.repository.AiSupportSettingRepository;
+import com.petshop.repository.CustomerSupportKnowledgeRepository;
 import com.petshop.dao.NotificationDAO;
 import com.petshop.model.AiChatMessage;
 import com.petshop.model.AiChatSession;
@@ -33,26 +34,23 @@ import jakarta.servlet.http.HttpSession;
 @Controller
 public class AdminAiSupportController {
 
-    private final AiChatSessionDAO sessionDAO;
-    private final AiChatMessageDAO messageDAO;
-    private final CustomerSupportKnowledgeDAO knowledgeDAO;
-    private final AiSupportSettingDAO settingDAO;
+    private final AiChatSessionRepository sessionDAO;
+    private final AiChatMessageRepository messageDAO;
+    private final CustomerSupportKnowledgeRepository knowledgeDAO;
+    private final AiSupportSettingRepository settingDAO;
     private final NotificationDAO notificationDAO;
 
-    public AdminAiSupportController() {
-        this(new AiChatSessionDAO(), new AiChatMessageDAO(),
-                new CustomerSupportKnowledgeDAO(), new AiSupportSettingDAO(), new NotificationDAO());
-    }
-
-    AdminAiSupportController(AiChatSessionDAO sessionDAO, AiChatMessageDAO messageDAO,
-                             CustomerSupportKnowledgeDAO knowledgeDAO, AiSupportSettingDAO settingDAO,
-                             NotificationDAO notificationDAO) {
+    @Autowired
+    public AdminAiSupportController(AiChatSessionRepository sessionDAO, AiChatMessageRepository messageDAO,
+                                    CustomerSupportKnowledgeRepository knowledgeDAO, AiSupportSettingRepository settingDAO,
+                                    NotificationDAO notificationDAO) {
         this.sessionDAO = sessionDAO;
         this.messageDAO = messageDAO;
         this.knowledgeDAO = knowledgeDAO;
         this.settingDAO = settingDAO;
         this.notificationDAO = notificationDAO;
     }
+
 
     @GetMapping("/admin/ai-support")
     public String aiSupportPage() {
@@ -203,10 +201,10 @@ public class AdminAiSupportController {
         msg.setSessionId(sessionId);
         msg.setSenderType("ADMIN");
         msg.setMessage(message);
-        messageDAO.create(msg);
+        messageDAO.create(msg, sessionDAO);
 
         // Update session status to ANSWERED_BY_ADMIN and turn off needAdminSupport flag
-        sessionDAO.updateStatus(sessionId, "ANSWERED_BY_ADMIN", false);
+        sessionDAO.updateStatusBool(sessionId, "ANSWERED_BY_ADMIN", false);
 
         // Notify user
         AiChatSession chatSession = sessionDAO.getById(sessionId);
@@ -234,7 +232,7 @@ public class AdminAiSupportController {
             return "{\"error\":\"Forbidden. Access denied.\"}";
         }
         int sessionId = Integer.parseInt(sessionIdRaw);
-        sessionDAO.updateStatus(sessionId, "CLOSED", false);
+        sessionDAO.updateStatusBool(sessionId, "CLOSED", false);
         return "{\"success\":true}";
     }
 

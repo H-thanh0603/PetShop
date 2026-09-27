@@ -25,10 +25,10 @@ import org.springframework.mock.web.MockHttpSession;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
-import com.petshop.dao.AiChatMessageDAO;
-import com.petshop.dao.AiChatSessionDAO;
-import com.petshop.dao.AiSupportSettingDAO;
-import com.petshop.dao.CustomerSupportKnowledgeDAO;
+import com.petshop.repository.AiChatMessageRepository;
+import com.petshop.repository.AiChatSessionRepository;
+import com.petshop.repository.AiSupportSettingRepository;
+import com.petshop.repository.CustomerSupportKnowledgeRepository;
 import com.petshop.dao.NotificationDAO;
 import com.petshop.model.AiChatSession;
 import com.petshop.model.User;
@@ -37,13 +37,13 @@ import com.petshop.model.User;
 class AdminAiSupportControllerTest {
 
     @Mock
-    AiChatSessionDAO sessionDAO;
+    AiChatSessionRepository sessionDAO;
     @Mock
-    AiChatMessageDAO messageDAO;
+    AiChatMessageRepository messageDAO;
     @Mock
-    CustomerSupportKnowledgeDAO knowledgeDAO;
+    CustomerSupportKnowledgeRepository knowledgeDAO;
     @Mock
-    AiSupportSettingDAO settingDAO;
+    AiSupportSettingRepository settingDAO;
     @Mock
     NotificationDAO notificationDAO;
 

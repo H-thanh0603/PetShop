@@ -10,6 +10,7 @@ import java.util.Map;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.MediaType;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -21,9 +22,9 @@ import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.node.ObjectNode;
 
-import com.petshop.dao.AiChatMessageDAO;
-import com.petshop.dao.AiChatSessionDAO;
-import com.petshop.dao.AiSupportSettingDAO;
+import com.petshop.repository.AiChatMessageRepository;
+import com.petshop.repository.AiChatSessionRepository;
+import com.petshop.repository.AiSupportSettingRepository;
 import com.petshop.model.AiChatMessage;
 import com.petshop.model.AiChatSession;
 import com.petshop.model.User;
@@ -42,22 +43,20 @@ public class UserAiSupportController {
 
     private static final Logger log = LoggerFactory.getLogger(UserAiSupportController.class);
 
-    private final AiChatSessionDAO sessionDAO;
-    private final AiChatMessageDAO messageDAO;
-    private final AiSupportSettingDAO settingDAO;
+    private final AiChatSessionRepository sessionDAO;
+    private final AiChatMessageRepository messageDAO;
+    private final AiSupportSettingRepository settingDAO;
     private final DeepSeekService deepSeekService;
 
-    public UserAiSupportController() {
-        this(new AiChatSessionDAO(), new AiChatMessageDAO(), new AiSupportSettingDAO(), new DeepSeekService());
-    }
-
-    UserAiSupportController(AiChatSessionDAO sessionDAO, AiChatMessageDAO messageDAO,
-                            AiSupportSettingDAO settingDAO, DeepSeekService deepSeekService) {
+    @Autowired
+    public UserAiSupportController(AiChatSessionRepository sessionDAO, AiChatMessageRepository messageDAO,
+                                   AiSupportSettingRepository settingDAO, DeepSeekService deepSeekService) {
         this.sessionDAO = sessionDAO;
         this.messageDAO = messageDAO;
         this.settingDAO = settingDAO;
         this.deepSeekService = deepSeekService;
     }
+
 
     @GetMapping(value = "/ai-support/history", produces = "application/json;charset=UTF-8")
     @ResponseBody
@@ -120,8 +119,8 @@ public class UserAiSupportController {
                 return "{\"error\":\"Forbidden.\"}";
             }
 
-            messageDAO.markMessagesAsRead(sessionId, "ADMIN");
-            messageDAO.markMessagesAsRead(sessionId, "AI");
+            messageDAO.markMessagesAsReadBool(sessionId, "ADMIN");
+            messageDAO.markMessagesAsReadBool(sessionId, "AI");
             List<AiChatMessage> messages = messageDAO.getMessagesBySessionId(sessionId);
             return Json.MAPPER.writeValueAsString(messages);
         } catch (NumberFormatException e) {
@@ -260,7 +259,7 @@ public class UserAiSupportController {
         userMsg.setSessionId(sessionId);
         userMsg.setSenderType("USER");
         userMsg.setMessage(message);
-        messageDAO.create(userMsg);
+        messageDAO.create(userMsg, sessionDAO);
 
         // Fetch recent messages for memory context (e.g., last 10 messages)
         List<AiChatMessage> history = messageDAO.getRecentMessagesBySessionId(sessionId, 10);
@@ -291,7 +290,7 @@ public class UserAiSupportController {
         aiMsg.setConfidence(BigDecimal.valueOf(aiRes.getConfidence()));
         aiMsg.setNeedAdminSupport(aiRes.isNeedAdminSupport());
         aiMsg.setSuggestedAdminNote(aiRes.getSuggestedAdminNote());
-        messageDAO.create(aiMsg);
+        messageDAO.create(aiMsg, sessionDAO);
 
         // Update session status / admin escalation
         String newStatus = chatSession.getStatus();
@@ -308,7 +307,7 @@ public class UserAiSupportController {
             newStatus = escalate && autoEscalate ? "WAITING_ADMIN" : "OPEN";
         }
 
-        sessionDAO.updateStatus(sessionId, newStatus, chatSession.isNeedAdminSupport() || escalate);
+        sessionDAO.updateStatusBool(sessionId, newStatus, chatSession.isNeedAdminSupport() || escalate);
 
         // Agent-to-agent handoff: escalations enter the merchant queue so the
         // merchant agent surfaces them (digest + admin view).
@@ -410,7 +409,7 @@ public class UserAiSupportController {
                 userMsg.setSessionId(resolvedSessionId);
                 userMsg.setSenderType("USER");
                 userMsg.setMessage(resolvedMessage);
-                messageDAO.create(userMsg);
+                messageDAO.create(userMsg, sessionDAO);
 
                 List<AiChatMessage> history = messageDAO.getRecentMessagesBySessionId(resolvedSessionId, 10);
                 if (!history.isEmpty()) history.remove(history.size() - 1);
@@ -434,7 +433,7 @@ public class UserAiSupportController {
                 aiMsg.setConfidence(BigDecimal.valueOf(result.confidence()));
                 aiMsg.setNeedAdminSupport(result.needAdminSupport());
                 aiMsg.setSuggestedAdminNote(result.suggestedAdminNote());
-                messageDAO.create(aiMsg);
+                messageDAO.create(aiMsg, sessionDAO);
 
                 boolean autoEscalate = Boolean.parseBoolean(settingDAO.getSetting("AUTO_ESCALATE_TO_ADMIN", "true"));
                 String newStatus = chatSession.getStatus();
@@ -442,7 +441,7 @@ public class UserAiSupportController {
                 if ("ANSWERED_BY_ADMIN".equals(chatSession.getStatus())) {
                     newStatus = result.needAdminSupport() && autoEscalate ? "WAITING_ADMIN" : "OPEN";
                 }
-                sessionDAO.updateStatus(resolvedSessionId, newStatus,
+                sessionDAO.updateStatusBool(resolvedSessionId, newStatus,
                         chatSession.isNeedAdminSupport() || result.needAdminSupport());
 
                 String answer = result.answer() == null ? "" : result.answer();
