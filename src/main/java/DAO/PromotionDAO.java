@@ -1,6 +1,6 @@
 package DAO;
 
-import Context.DBContext;
+import com.petshop.context.DBContext;
 import Model.Product;
 import Model.Promotion;
 import Model.PromotionCandidate;

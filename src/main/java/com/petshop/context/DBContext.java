@@ -1,4 +1,4 @@
-package Context;
+package com.petshop.context;
 
 import DAO.DBProperties;
 import com.zaxxer.hikari.HikariConfig;

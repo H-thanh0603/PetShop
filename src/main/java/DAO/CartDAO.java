@@ -7,7 +7,7 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.util.HashMap;
 import java.util.Map;
-import Context.DBContext;
+import com.petshop.context.DBContext;
 import Model.CartItem;
 import Model.Product;
 

@@ -17,7 +17,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 
-import Context.DBContext;
+import com.petshop.context.DBContext;
 import DAO.PetTypeDAO;
 import DAO.ReportDAO;
 import Model.Order;

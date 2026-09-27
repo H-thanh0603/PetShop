@@ -21,7 +21,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 
-import Context.DBContext;
+import com.petshop.context.DBContext;
 import DAO.AddressDao;
 import DAO.CartDAO;
 import DAO.CouponDao;

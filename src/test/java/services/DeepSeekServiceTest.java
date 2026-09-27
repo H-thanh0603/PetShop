@@ -68,7 +68,7 @@ public class DeepSeekServiceTest {
 
     @Test
     public void testCheckDbProducts() {
-        try (java.sql.Connection conn = Context.DBContext.getConnection();
+        try (java.sql.Connection conn = com.petshop.context.DBContext.getConnection();
              java.sql.Statement stmt = conn.createStatement()) {
             java.sql.ResultSet rs = stmt.executeQuery("SELECT id, name, price, stock, is_active FROM products LIMIT 10");
             System.out.println("=== PRODUCTS IN DATABASE ===");

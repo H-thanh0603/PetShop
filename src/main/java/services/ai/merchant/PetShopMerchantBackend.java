@@ -328,7 +328,7 @@ public class PetShopMerchantBackend {
         }
         ArrayNode rows = Json.MAPPER.createArrayNode();
         StringBuilder text = new StringBuilder();
-        try (java.sql.Connection c = Context.DBContext.getConnection();
+        try (java.sql.Connection c = com.petshop.context.DBContext.getConnection();
              java.sql.Statement st = c.createStatement()) {
             st.setQueryTimeout(10);
             st.setMaxRows(200);

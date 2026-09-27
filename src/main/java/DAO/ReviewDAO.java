@@ -8,7 +8,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
-import Context.DBContext;
+import com.petshop.context.DBContext;
 import Model.Review;
 
 public class ReviewDAO {

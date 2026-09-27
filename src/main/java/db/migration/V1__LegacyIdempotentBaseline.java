@@ -1,6 +1,6 @@
 package db.migration;
 
-import Context.LegacySchemaMigrator;
+import com.petshop.context.LegacySchemaMigrator;
 import org.flywaydb.core.api.migration.BaseJavaMigration;
 import org.flywaydb.core.api.migration.Context;
 

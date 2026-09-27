@@ -1,6 +1,6 @@
 package DAO;
 
-import Context.DBContext;
+import com.petshop.context.DBContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
