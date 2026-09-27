@@ -1,4 +1,4 @@
-package controller.filter;
+package com.petshop.web.filter;
 
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;

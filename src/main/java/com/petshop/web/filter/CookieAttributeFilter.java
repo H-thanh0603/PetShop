@@ -1,4 +1,4 @@
-package controller.filter;
+package com.petshop.web.filter;
 
 import com.petshop.util.AppConfig;
 import jakarta.servlet.Filter;

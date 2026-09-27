@@ -1,11 +1,11 @@
 package com.petshop.config;
 
-import controller.filter.AuthorizationFilter;
-import controller.filter.CookieAttributeFilter;
-import controller.filter.CsrfFilter;
-import controller.filter.PetTypeFilter;
-import controller.filter.RateLimitFilter;
-import controller.filter.StaticAssetCacheFilter;
+import com.petshop.web.filter.AuthorizationFilter;
+import com.petshop.web.filter.CookieAttributeFilter;
+import com.petshop.web.filter.CsrfFilter;
+import com.petshop.web.filter.PetTypeFilter;
+import com.petshop.web.filter.RateLimitFilter;
+import com.petshop.web.filter.StaticAssetCacheFilter;
 import org.springframework.boot.web.servlet.FilterRegistrationBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;

@@ -812,7 +812,7 @@ public class AuthController {
         }
 
         try {
-            controller.Google.GoogleLogin gg = new controller.Google.GoogleLogin();
+            com.petshop.web.oauth.GoogleLogin gg = new com.petshop.web.oauth.GoogleLogin();
             String accessToken = gg.getToken(code, SocialAuthUtil.buildGoogleRedirectUri(request));
             GoogleAccount acc = gg.getUserInfo(accessToken);
 
@@ -848,7 +848,7 @@ public class AuthController {
         }
 
         try {
-            controller.FaceBook.FaceBookLogin fb = new controller.FaceBook.FaceBookLogin();
+            com.petshop.web.oauth.FaceBookLogin fb = new com.petshop.web.oauth.FaceBookLogin();
             String accessToken = fb.getToken(code, SocialAuthUtil.buildFacebookRedirectUri(request));
             Account acc = fb.getUserInfo(accessToken);
 

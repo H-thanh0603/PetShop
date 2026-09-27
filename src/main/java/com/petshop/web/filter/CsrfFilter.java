@@ -1,4 +1,4 @@
-package controller.filter;
+package com.petshop.web.filter;
 
 import jakarta.servlet.*;
 import jakarta.servlet.http.*;

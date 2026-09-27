@@ -1,4 +1,4 @@
-package controller.FaceBook;
+package com.petshop.web.oauth;
 import com.petshop.constant.IConstant;
 import com.petshop.model.FbAccount.Account;
 import com.petshop.util.Json;
