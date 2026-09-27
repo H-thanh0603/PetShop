@@ -13,7 +13,6 @@ PetShop là đồ án web e-commerce bán sản phẩm cho thú cưng, tập tru
 - JDK 21
 - Gradle Wrapper đi kèm project
 - MySQL 8.4 LTS
-- Tomcat 10.x
 - Hạ dev từ `mysql:8.0` sang `mysql:8.4` (2026-09): backup dữ liệu trước khi `docker compose up` lần đầu:
   `docker exec petshop-mysql-dev mysqldump -uroot -p"$MYSQL_ROOT_PASSWORD" petvaccine > backup-8.4.sql`
 
@@ -97,32 +96,27 @@ Nếu bạn đã có schema cũ, vẫn cần đảm bảo migration `sql/14_paym
 
 ## Chạy local bằng Start.bat
 
-`Start.bat` đã được sửa để ít phụ thuộc máy cá nhân hơn:
+`Start.bat` build `petshop-boot.war` rồi chạy bằng `java -jar` (embedded Tomcat, không cần cài Tomcat ngoài):
 
 - lấy `PROJECT_ROOT` từ chính thư mục chứa script
-- hỗ trợ `PETSHOP_TOMCAT_HOME`
-- hỗ trợ `PETSHOP_BASE_URL`
-- hỗ trợ `PETSHOP_CONTEXT_PATH`
-- hỗ trợ `PETSHOP_SKIP_BUILD=true`
+- hỗ trợ `PETSHOP_URL` (mặc định `http://localhost:8080/home`)
 - hỗ trợ `PETSHOP_OPEN_BROWSER=false`
-- dùng `shutdown.bat` của Tomcat thay vì `taskkill java.exe`
 
 Ví dụ:
 
 ```bat
-set PETSHOP_TOMCAT_HOME=E:\apache-tomcat-10.1.49-windows-x64\apache-tomcat-10.1.49
-set PETSHOP_CONTEXT_PATH=/PetShop
-set PETSHOP_BASE_URL=http://localhost:8080/PetShop/home
 set PETSHOP_DB_PASSWORD=your_mysql_password
 Start.bat
 ```
 
-Nếu chỉ muốn deploy lại WAR mà không build lại:
+### Chạy ứng dụng
 
 ```bat
-set PETSHOP_SKIP_BUILD=true
-Start.bat
+gradlew bootWar
+java -jar build\libs\petshop-boot.war
 ```
+
+Ứng dụng chạy embedded Tomcat (không cần cài Tomcat ngoài). Docker: `docker compose -f docker-compose.dev.yml up --build`.
 
 ## Luồng thanh toán hiện tại
 
@@ -146,10 +140,10 @@ Start.bat
 
 ## Gợi ý demo trên máy khác
 
-1. Cài JDK, MySQL, Tomcat 10
+1. Cài JDK 21, MySQL 8.4 (hoặc Docker)
 2. Import `sql/SETUP_ALL.sql`
 3. Cấu hình `src/main/resources/application.yml` (xem mục "Chuẩn bị cấu hình")
-4. Set `PETSHOP_DB_PASSWORD` và `PETSHOP_TOMCAT_HOME`
+4. Set `PETSHOP_DB_PASSWORD`
 5. Chạy `Start.bat`
 6. Mở `http://localhost:8080/PetShop/home`
 
