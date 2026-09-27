@@ -7,7 +7,7 @@ import DAO.ReportDAO;
 import Model.Order;
 import Model.Product;
 import Model.Promotion;
-import Util.Json;
+import com.petshop.util.Json;
 import tools.jackson.databind.node.ArrayNode;
 import tools.jackson.databind.node.ObjectNode;
 import org.slf4j.Logger;

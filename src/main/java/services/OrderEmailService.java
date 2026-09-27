@@ -2,7 +2,7 @@ package services;
 
 import Model.Order;
 import Model.OrderItem;
-import Util.EmailUtil;
+import com.petshop.util.EmailUtil;
 
 import java.text.NumberFormat;
 import java.util.List;

@@ -27,7 +27,7 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
 import Model.User;
-import Util.Json;
+import com.petshop.util.Json;
 import services.ai.common.MemoryService;
 import services.ai.merchant.MerchantAgent;
 import services.ai.merchant.MerchantChangeDAO;

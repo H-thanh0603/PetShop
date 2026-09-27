@@ -24,8 +24,8 @@ import tools.jackson.databind.node.ObjectNode;
 import com.petshop.context.DBContext;
 import DAO.OrderDAO;
 import Model.Order;
-import Util.AppConfig;
-import Util.Json;
+import com.petshop.util.AppConfig;
+import com.petshop.util.Json;
 import services.ShippingService;
 
 /**

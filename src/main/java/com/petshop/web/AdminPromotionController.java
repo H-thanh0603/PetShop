@@ -16,7 +16,7 @@ import DAO.ProductDAO;
 import DAO.PromotionDAO;
 import Model.Product;
 import Model.Promotion;
-import Util.ValidationUtil;
+import com.petshop.util.ValidationUtil;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpSession;
 

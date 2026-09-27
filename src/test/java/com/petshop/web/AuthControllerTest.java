@@ -275,8 +275,8 @@ class AuthControllerTest {
     @Test
     void knownEmailStillRedirectsToOtpFlow() throws Exception {
         when(userDAO.getUserByEmail("known@example.com")).thenReturn(new User());
-        try (var otpUtil = org.mockito.Mockito.mockStatic(Util.OTPUtil.class)) {
-            otpUtil.when(() -> Util.OTPUtil.generateAndSendOTP("known@example.com")).thenReturn(true);
+        try (var otpUtil = org.mockito.Mockito.mockStatic(com.petshop.util.OTPUtil.class)) {
+            otpUtil.when(() -> com.petshop.util.OTPUtil.generateAndSendOTP("known@example.com")).thenReturn(true);
 
             MockHttpSession session = new MockHttpSession();
             mockMvc.perform(post("/forgot-password").param("email", "known@example.com").session(session))

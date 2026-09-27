@@ -27,7 +27,7 @@ import DAO.AiSupportSettingDAO;
 import Model.AiChatMessage;
 import Model.AiChatSession;
 import Model.User;
-import Util.Json;
+import com.petshop.util.Json;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpSession;
 import services.DeepSeekService;

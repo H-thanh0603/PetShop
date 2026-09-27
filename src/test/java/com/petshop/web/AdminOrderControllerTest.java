@@ -31,7 +31,7 @@ import DAO.NotificationDAO;
 import DAO.OrderDAO;
 import Model.Order;
 import Model.User;
-import Util.Json;
+import com.petshop.util.Json;
 import services.ShippingService;
 
 @ExtendWith(MockitoExtension.class)

@@ -1,6 +1,6 @@
 package services.ai;
 
-import Util.AppConfig;
+import com.petshop.util.AppConfig;
 
 import java.util.ArrayList;
 import java.util.List;

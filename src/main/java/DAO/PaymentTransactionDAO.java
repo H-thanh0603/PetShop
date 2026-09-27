@@ -1,7 +1,7 @@
 package DAO;
 
 import com.petshop.context.DBContext;
-import Util.AppConfig;
+import com.petshop.util.AppConfig;
 import Model.Order;
 import Model.PaymentTransaction;
 import org.slf4j.Logger;

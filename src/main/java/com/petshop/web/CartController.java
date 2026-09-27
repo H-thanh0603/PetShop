@@ -17,7 +17,7 @@ import DAO.CartDAO;
 import Model.CartItem;
 import Model.Product;
 import Model.User;
-import Util.Json;
+import com.petshop.util.Json;
 import jakarta.servlet.http.HttpSession;
 import services.InventoryService;
 import services.InventoryService.StockValidationResult;

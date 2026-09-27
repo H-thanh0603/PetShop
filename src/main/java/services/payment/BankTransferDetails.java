@@ -1,6 +1,6 @@
 package services.payment;
 
-import Util.AppConfig;
+import com.petshop.util.AppConfig;
 
 public class BankTransferDetails {
     private final String bankId;

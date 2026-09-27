@@ -20,8 +20,8 @@ import DAO.OrderDAO;
 import DAO.UserDAO;
 import Model.Order;
 import Model.User;
-import Util.Json;
-import Util.PasswordUtil;
+import com.petshop.util.Json;
+import com.petshop.util.PasswordUtil;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpSession;
 

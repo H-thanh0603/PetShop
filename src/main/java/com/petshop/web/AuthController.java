@@ -23,15 +23,15 @@ import Model.CartItem;
 import Model.FbAccount.Account;
 import Model.GgAccount.GoogleAccount;
 import Model.User;
-import Util.AppConfig;
-import Util.AuthRedirectUtil;
-import Util.FormHelper;
-import Util.Json;
-import Util.LoginLockout;
-import Util.OTPUtil;
-import Util.PasswordUtil;
-import Util.SocialAuthUtil;
-import Util.ValidationUtil;
+import com.petshop.util.AppConfig;
+import com.petshop.util.AuthRedirectUtil;
+import com.petshop.util.FormHelper;
+import com.petshop.util.Json;
+import com.petshop.util.LoginLockout;
+import com.petshop.util.OTPUtil;
+import com.petshop.util.PasswordUtil;
+import com.petshop.util.SocialAuthUtil;
+import com.petshop.util.ValidationUtil;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -932,7 +932,7 @@ public class AuthController {
         }
 
         // Brute-force check for this (email, IP) pair
-        if (Util.LoginLockout.isLocked(email, request.getRemoteAddr())) {
+        if (com.petshop.util.LoginLockout.isLocked(email, request.getRemoteAddr())) {
             securityEventDAO.log("ACCOUNT_LOCKED_ATTEMPT", email, request.getRemoteAddr(), "Admin login attempt blocked while the (email, IP) lock is still active.");
             model.addAttribute("error", "Email hoặc mật khẩu không đúng.");
             return "pages/admin/login";
@@ -948,7 +948,7 @@ public class AuthController {
             if (isAdminOrStaffOrShipper && user.getStatus()) {
                 // Reset failed attempts
                 userDAO.resetFailedAttempts(email);
-                Util.LoginLockout.reset(email, request.getRemoteAddr());
+                com.petshop.util.LoginLockout.reset(email, request.getRemoteAddr());
 
                 // Session regeneration: invalidate the pre-auth session (and its
                 // fixed JSESSIONID + CSRF token) so a session-fixation attempt on
@@ -974,7 +974,7 @@ public class AuthController {
             return "pages/admin/login";
         }
         // Record failure per (email, IP); lock that pair after 5 failures
-        boolean nowLocked = Util.LoginLockout.recordFailure(email, request.getRemoteAddr());
+        boolean nowLocked = com.petshop.util.LoginLockout.recordFailure(email, request.getRemoteAddr());
         if (nowLocked) {
             securityEventDAO.log("ACCOUNT_LOCKED", email, request.getRemoteAddr(),
                     "Admin login locked for the (email, IP) pair for 15 minutes after repeated failures.");

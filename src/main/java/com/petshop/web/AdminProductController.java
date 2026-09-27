@@ -17,9 +17,9 @@ import DAO.ProductDAO;
 import Model.PetType;
 import Model.Product;
 import Model.User;
-import Util.AppConfig;
-import Util.FileUploadValidator;
-import Util.ValidationUtil;
+import com.petshop.util.AppConfig;
+import com.petshop.util.FileUploadValidator;
+import com.petshop.util.ValidationUtil;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpSession;
 

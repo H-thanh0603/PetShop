@@ -1,6 +1,6 @@
 package services.ai.merchant;
 
-import Util.AppConfig;
+import com.petshop.util.AppConfig;
 
 import java.util.List;
 import java.util.Set;

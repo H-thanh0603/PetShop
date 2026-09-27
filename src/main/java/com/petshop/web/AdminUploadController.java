@@ -13,10 +13,10 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.multipart.MultipartFile;
 
-import Util.AppConfig;
-import Util.FileUploadUtil;
-import Util.FileUploadValidator;
-import Util.Json;
+import com.petshop.util.AppConfig;
+import com.petshop.util.FileUploadUtil;
+import com.petshop.util.FileUploadValidator;
+import com.petshop.util.Json;
 import jakarta.servlet.http.HttpServletRequest;
 
 /**

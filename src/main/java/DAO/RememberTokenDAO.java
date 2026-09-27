@@ -6,7 +6,7 @@ import java.sql.ResultSet;
 import java.sql.Timestamp;
 
 import com.petshop.context.DBContext;
-import Util.PasswordUtil;
+import com.petshop.util.PasswordUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

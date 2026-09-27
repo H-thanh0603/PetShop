@@ -7,7 +7,7 @@ import java.util.UUID;
 
 import com.petshop.context.DBContext;
 import Model.User;
-import Util.PasswordUtil;
+import com.petshop.util.PasswordUtil;
 
 public class UserDAO {
 

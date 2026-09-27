@@ -75,8 +75,8 @@ class ShopApiControllerTest {
         order.setTotalAmount(new BigDecimal("258000"));
         when(orderDAO.getOrderById(456)).thenReturn(order);
 
-        try (var mockedVnpay = org.mockito.Mockito.mockStatic(Util.VnpayUtil.class)) {
-            mockedVnpay.when(() -> Util.VnpayUtil.verifyReturn(
+        try (var mockedVnpay = org.mockito.Mockito.mockStatic(com.petshop.util.VnpayUtil.class)) {
+            mockedVnpay.when(() -> com.petshop.util.VnpayUtil.verifyReturn(
                     org.mockito.ArgumentMatchers.any())).thenReturn(true);
 
             // vnp_Amount=10000 -> 100.00 VND vs order 258000 -> mismatch page
@@ -110,8 +110,8 @@ class ShopApiControllerTest {
                 org.mockito.ArgumentMatchers.eq("VNPAY payment verified."))).thenReturn(true);
         when(orderDAO.markOnlinePaymentPaidAndFinalize(456, "VNPAY")).thenReturn(true);
 
-        try (var mockedVnpay = org.mockito.Mockito.mockStatic(Util.VnpayUtil.class)) {
-            mockedVnpay.when(() -> Util.VnpayUtil.verifyReturn(
+        try (var mockedVnpay = org.mockito.Mockito.mockStatic(com.petshop.util.VnpayUtil.class)) {
+            mockedVnpay.when(() -> com.petshop.util.VnpayUtil.verifyReturn(
                     org.mockito.ArgumentMatchers.any())).thenReturn(true);
 
             mockMvc.perform(get("/vnpay-return")

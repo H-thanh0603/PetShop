@@ -3,8 +3,8 @@ package services;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import Util.Json;
-import Util.ShippingConfig;
+import com.petshop.util.Json;
+import com.petshop.util.ShippingConfig;
 import tools.jackson.core.JacksonException;
 import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.node.ArrayNode;

@@ -20,8 +20,8 @@ import Model.Order;
 import Model.OrderSign;
 import Model.OrderSignature;
 import Model.User;
-import Util.PasswordUtil;
-import Util.ValidationUtil;
+import com.petshop.util.PasswordUtil;
+import com.petshop.util.ValidationUtil;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpSession;
 

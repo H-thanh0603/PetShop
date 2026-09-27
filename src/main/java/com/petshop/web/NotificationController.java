@@ -12,7 +12,7 @@ import org.springframework.web.bind.annotation.ResponseBody;
 
 import DAO.NotificationDAO;
 import Model.User;
-import Util.Json;
+import com.petshop.util.Json;
 import jakarta.servlet.http.HttpSession;
 
 /**

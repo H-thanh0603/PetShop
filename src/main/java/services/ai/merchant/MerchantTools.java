@@ -1,6 +1,6 @@
 package services.ai.merchant;
 
-import Util.Json;
+import com.petshop.util.Json;
 import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.node.ArrayNode;
 import tools.jackson.databind.node.ObjectNode;

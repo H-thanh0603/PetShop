@@ -68,7 +68,7 @@ public class DataSourceConfig {
      */
     @Bean
     public Object appConfigBridge(Environment environment) {
-        Util.AppConfig.setSpringEnvironment(environment);
+        com.petshop.util.AppConfig.setSpringEnvironment(environment);
         return new Object();
     }
 }

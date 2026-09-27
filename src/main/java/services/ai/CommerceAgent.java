@@ -5,7 +5,7 @@ import Model.AiChatMessage;
 import Model.Order;
 import Model.Product;
 import Model.User;
-import Util.Json;
+import com.petshop.util.Json;
 import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.node.ArrayNode;
 import tools.jackson.databind.node.ObjectNode;
@@ -287,7 +287,7 @@ public class CommerceAgent {
      * (upstream compact_history, char-based instead of token-based).
      */
     static void capPrompt(List<AiMessage> messages) {
-        int max = Util.AppConfig.getInt("AI_MAX_PROMPT_CHARS", 12000);
+        int max = com.petshop.util.AppConfig.getInt("AI_MAX_PROMPT_CHARS", 12000);
         int total = messages.stream().mapToInt(m -> m.getContent() == null ? 0 : m.getContent().length()).sum();
         int idx = 1;
         while (total > max && messages.size() > 2 && idx < messages.size() - 1) {

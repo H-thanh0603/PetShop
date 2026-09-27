@@ -1,6 +1,6 @@
 package controller.filter;
 
-import Util.AppConfig;
+import com.petshop.util.AppConfig;
 import jakarta.servlet.Filter;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;

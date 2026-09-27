@@ -2,9 +2,9 @@ package controller.Google;
 
 import com.petshop.constant.IConstant;
 import Model.GgAccount.GoogleAccount;
-import Util.Json;
-import Util.SecretConfig;
-import Util.SocialAuthUtil;
+import com.petshop.util.Json;
+import com.petshop.util.SecretConfig;
+import com.petshop.util.SocialAuthUtil;
 import tools.jackson.databind.JsonNode;
 
 import java.io.IOException;

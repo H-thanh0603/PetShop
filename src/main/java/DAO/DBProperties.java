@@ -1,6 +1,6 @@
 package DAO;
 
-import Util.AppConfig;
+import com.petshop.util.AppConfig;
 
 public class DBProperties {
 
