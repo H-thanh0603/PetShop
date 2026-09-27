@@ -16,7 +16,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 
-import com.petshop.dao.CartDAO;
+import com.petshop.repository.CartRepository;
 import com.petshop.repository.UserRepository;
 import com.petshop.repository.RememberTokenRepository;
 import com.petshop.repository.SecurityEventRepository;
@@ -52,16 +52,14 @@ public class AuthController {
     private final RememberTokenRepository rememberTokenDAO;
     private final UserRepository userDAO;
     private final SecurityEventRepository securityEventDAO;
+    private final CartRepository cartDAO;
 
     @Autowired
-    public AuthController(RememberTokenRepository rememberTokenDAO, UserRepository userDAO, SecurityEventRepository securityEventDAO) {
+    public AuthController(RememberTokenRepository rememberTokenDAO, UserRepository userDAO, SecurityEventRepository securityEventDAO, CartRepository cartDAO) {
         this.rememberTokenDAO = rememberTokenDAO;
         this.userDAO = userDAO;
         this.securityEventDAO = securityEventDAO;
-    }
-
-    AuthController(RememberTokenRepository rememberTokenDAO, UserRepository userDAO) {
-        this(rememberTokenDAO, userDAO, null);
+        this.cartDAO = cartDAO;
     }
 
     @GetMapping("/logout")
@@ -442,7 +440,6 @@ public class AuthController {
             }
 
             // Load giỏ hàng từ database
-            CartDAO cartDAO = new CartDAO();
 
             // Nếu có giỏ hàng trong session (chưa đăng nhập mà đã thêm), sync vào database
             @SuppressWarnings("unchecked")
@@ -569,7 +566,6 @@ public class AuthController {
     }
 
     private void loadCartIntoSession(HttpSession session, User user) {
-        CartDAO cartDAO = new CartDAO();
         Map<Integer, CartItem> cart = cartDAO.getCartByUserId(user.getId());
         session.setAttribute("cart", cart);
         int totalQuantity = 0;
@@ -878,7 +874,6 @@ public class AuthController {
         session.setAttribute("username", user.getUsername());
         session.setAttribute("role", user.getRole());
 
-        CartDAO cartDAO = new CartDAO();
         @SuppressWarnings("unchecked")
         Map<Integer, CartItem> sessionCart = (Map<Integer, CartItem>) session.getAttribute("cart");
         if (sessionCart != null && !sessionCart.isEmpty()) {

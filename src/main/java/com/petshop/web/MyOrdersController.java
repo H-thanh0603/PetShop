@@ -3,6 +3,7 @@ package com.petshop.web;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -10,6 +11,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 
 import com.petshop.dao.OrderDAO;
+import com.petshop.repository.CartRepository;
 import com.petshop.model.CustomerRepurchaseSuggestion;
 import com.petshop.model.Order;
 import com.petshop.model.OrderStatus;
@@ -29,8 +31,9 @@ public class MyOrdersController {
     private final OrderDAO orderDAO;
     private final ReorderService reorderService;
 
-    public MyOrdersController() {
-        this(new OrderDAO(), new ReorderService());
+    @Autowired
+    public MyOrdersController(OrderDAO orderDAO, CartRepository cartDAO) {
+        this(orderDAO, new ReorderService(orderDAO, cartDAO));
     }
 
     MyOrdersController(OrderDAO orderDAO, ReorderService reorderService) {

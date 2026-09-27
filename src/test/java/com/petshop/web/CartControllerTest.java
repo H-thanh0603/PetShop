@@ -22,7 +22,7 @@ import org.springframework.mock.web.MockHttpSession;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
-import com.petshop.dao.CartDAO;
+import com.petshop.repository.CartRepository;
 import com.petshop.model.CartItem;
 import com.petshop.model.Product;
 import services.InventoryService;
@@ -31,7 +31,7 @@ import services.InventoryService;
 class CartControllerTest {
 
     @Mock
-    CartDAO cartDAO;
+    CartRepository cartDAO;
     @Mock
     InventoryService inventoryService;
 

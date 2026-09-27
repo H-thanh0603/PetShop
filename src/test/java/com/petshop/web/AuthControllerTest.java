@@ -19,6 +19,7 @@ import org.springframework.mock.web.MockHttpSession;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
+import com.petshop.repository.CartRepository;
 import com.petshop.repository.UserRepository;
 import com.petshop.model.User;
 import com.petshop.repository.RememberTokenRepository;
@@ -33,12 +34,14 @@ class AuthControllerTest {
     UserRepository userDAO;
     @Mock
     SecurityEventRepository securityEventDAO;
+    @Mock
+    CartRepository cartDAO;
 
     MockMvc mockMvc;
 
     @BeforeEach
     void setUp() {
-        mockMvc = MockMvcBuilders.standaloneSetup(new AuthController(rememberTokenDAO, userDAO, securityEventDAO)).build();
+        mockMvc = MockMvcBuilders.standaloneSetup(new AuthController(rememberTokenDAO, userDAO, securityEventDAO, cartDAO)).build();
     }
 
     @Test
@@ -91,14 +94,11 @@ class AuthControllerTest {
                 org.mockito.ArgumentMatchers.eq("user@example.com"),
                 org.mockito.ArgumentMatchers.anyString())).thenReturn(user);
 
-        try (var mocked = org.mockito.Mockito.mockConstruction(com.petshop.dao.CartDAO.class,
-                (dao, ctx) -> when(dao.getCartByUserId(7))
-                        .thenReturn(new java.util.HashMap<>()))) {
-            mockMvc.perform(post("/login")
-                            .param("email", "user@example.com")
-                            .param("password", "Goodpass1!"))
-                    .andExpect(status().is3xxRedirection());
-        }
+        when(cartDAO.getCartByUserId(7)).thenReturn(new java.util.HashMap<>());
+        mockMvc.perform(post("/login")
+                        .param("email", "user@example.com")
+                        .param("password", "Goodpass1!"))
+                .andExpect(status().is3xxRedirection());
     }
 
     @Test

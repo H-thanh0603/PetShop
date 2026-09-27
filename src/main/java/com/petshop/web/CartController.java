@@ -7,13 +7,14 @@ import java.util.Map;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 
-import com.petshop.dao.CartDAO;
+import com.petshop.repository.CartRepository;
 import com.petshop.model.CartItem;
 import com.petshop.model.Product;
 import com.petshop.model.User;
@@ -31,14 +32,11 @@ public class CartController {
 
     private static final Logger logger = LoggerFactory.getLogger(CartController.class);
 
-    private final CartDAO cartDAO;
+    private final CartRepository cartDAO;
     private final InventoryService inventoryService;
 
-    public CartController() {
-        this(new CartDAO(), new InventoryService());
-    }
-
-    CartController(CartDAO cartDAO, InventoryService inventoryService) {
+    @Autowired
+    public CartController(CartRepository cartDAO, InventoryService inventoryService) {
         this.cartDAO = cartDAO;
         this.inventoryService = inventoryService;
     }

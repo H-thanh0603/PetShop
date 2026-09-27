@@ -1,7 +1,7 @@
 package services;
 
 import com.petshop.context.DBContext;
-import com.petshop.dao.CartDAO;
+import com.petshop.repository.CartRepository;
 import com.petshop.dao.CouponDao;
 import com.petshop.dao.InventoryBatchDAO;
 import com.petshop.dao.OrderDAO;
@@ -47,7 +47,7 @@ class CheckoutServiceInventoryBatchTest {
         CouponDao couponDao = mock(CouponDao.class);
         OrderDAO orderDAO = mock(OrderDAO.class);
         PaymentTransactionDAO paymentTransactionDAO = mock(PaymentTransactionDAO.class);
-        CartDAO cartDAO = mock(CartDAO.class);
+        CartRepository cartDAO = mock(CartRepository.class);
         OrderEmailService orderEmailService = mock(OrderEmailService.class);
         InventoryBatchDAO inventoryBatchDAO = mock(InventoryBatchDAO.class);
 
@@ -108,7 +108,7 @@ class CheckoutServiceInventoryBatchTest {
         CouponDao couponDao = mock(CouponDao.class);
         OrderDAO orderDAO = mock(OrderDAO.class);
         PaymentTransactionDAO paymentTransactionDAO = mock(PaymentTransactionDAO.class);
-        CartDAO cartDAO = mock(CartDAO.class);
+        CartRepository cartDAO = mock(CartRepository.class);
         OrderEmailService orderEmailService = mock(OrderEmailService.class);
         InventoryBatchDAO inventoryBatchDAO = mock(InventoryBatchDAO.class);
 
@@ -171,7 +171,7 @@ class CheckoutServiceInventoryBatchTest {
         CouponDao couponDao = mock(CouponDao.class);
         OrderDAO orderDAO = mock(OrderDAO.class);
         PaymentTransactionDAO paymentTransactionDAO = mock(PaymentTransactionDAO.class);
-        CartDAO cartDAO = mock(CartDAO.class);
+        CartRepository cartDAO = mock(CartRepository.class);
         OrderEmailService orderEmailService = mock(OrderEmailService.class);
         InventoryBatchDAO inventoryBatchDAO = mock(InventoryBatchDAO.class);
 
@@ -238,7 +238,7 @@ class CheckoutServiceInventoryBatchTest {
         CouponDao couponDao = mock(CouponDao.class);
         OrderDAO orderDAO = mock(OrderDAO.class);
         PaymentTransactionDAO paymentTransactionDAO = mock(PaymentTransactionDAO.class);
-        CartDAO cartDAO = mock(CartDAO.class);
+        CartRepository cartDAO = mock(CartRepository.class);
         OrderEmailService orderEmailService = mock(OrderEmailService.class);
         InventoryBatchDAO inventoryBatchDAO = mock(InventoryBatchDAO.class);
 
@@ -311,7 +311,7 @@ class CheckoutServiceInventoryBatchTest {
         CouponDao couponDao = mock(CouponDao.class);
         OrderDAO orderDAO = mock(OrderDAO.class);
         PaymentTransactionDAO paymentTransactionDAO = mock(PaymentTransactionDAO.class);
-        CartDAO cartDAO = mock(CartDAO.class);
+        CartRepository cartDAO = mock(CartRepository.class);
         OrderEmailService orderEmailService = mock(OrderEmailService.class);
         InventoryBatchDAO inventoryBatchDAO = mock(InventoryBatchDAO.class);
 
@@ -376,7 +376,7 @@ class CheckoutServiceInventoryBatchTest {
         CouponDao couponDao = mock(CouponDao.class);
         OrderDAO orderDAO = mock(OrderDAO.class);
         PaymentTransactionDAO paymentTransactionDAO = mock(PaymentTransactionDAO.class);
-        CartDAO cartDAO = mock(CartDAO.class);
+        CartRepository cartDAO = mock(CartRepository.class);
         OrderEmailService orderEmailService = mock(OrderEmailService.class);
         InventoryBatchDAO inventoryBatchDAO = mock(InventoryBatchDAO.class);
 
@@ -441,7 +441,7 @@ class CheckoutServiceInventoryBatchTest {
         CouponDao couponDao = mock(CouponDao.class);
         OrderDAO orderDAO = mock(OrderDAO.class);
         PaymentTransactionDAO paymentTransactionDAO = mock(PaymentTransactionDAO.class);
-        CartDAO cartDAO = mock(CartDAO.class);
+        CartRepository cartDAO = mock(CartRepository.class);
         OrderEmailService orderEmailService = mock(OrderEmailService.class);
         InventoryBatchDAO inventoryBatchDAO = mock(InventoryBatchDAO.class);
 

@@ -1,19 +1,15 @@
 package services;
 
-import com.petshop.dao.CartDAO;
+import com.petshop.repository.CartRepository;
 import com.petshop.dao.OrderDAO;
 import com.petshop.model.Order;
 import com.petshop.model.OrderItem;
 
 public class ReorderService {
     private final OrderDAO orderDAO;
-    private final CartDAO cartDAO;
+    private final CartRepository cartDAO;
 
-    public ReorderService() {
-        this(new OrderDAO(), new CartDAO());
-    }
-
-    public ReorderService(OrderDAO orderDAO, CartDAO cartDAO) {
+    public ReorderService(OrderDAO orderDAO, CartRepository cartDAO) {
         this.orderDAO = orderDAO;
         this.cartDAO = cartDAO;
     }

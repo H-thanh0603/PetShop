@@ -1,7 +1,7 @@
 package services;
 
 import com.petshop.context.DBContext;
-import com.petshop.dao.CartDAO;
+import com.petshop.repository.CartRepository;
 import com.petshop.dao.CouponDao;
 import com.petshop.dao.InventoryBatchDAO;
 import com.petshop.dao.OrderDAO;
@@ -53,7 +53,7 @@ public class CheckoutService {
     private final CouponDao couponDao;
     private final OrderDAO orderDAO;
     private final PaymentTransactionDAO paymentTransactionDAO;
-    private final CartDAO cartDAO;
+    private final CartRepository cartDAO;
     private final OrderEmailService orderEmailService;
     private final InventoryBatchDAO inventoryBatchDAO;
     private final PromotionDAO promotionDAO;
@@ -63,7 +63,7 @@ public class CheckoutService {
 
     public CheckoutService(ProductDAO productDAO, UserRepository userDAO, CouponDao couponDao,
                            OrderDAO orderDAO, PaymentTransactionDAO paymentTransactionDAO,
-                           CartDAO cartDAO, OrderEmailService orderEmailService) {
+                           CartRepository cartDAO, OrderEmailService orderEmailService) {
         this(productDAO, userDAO, couponDao, orderDAO, paymentTransactionDAO,
                 cartDAO, orderEmailService, new InventoryBatchDAO(),
                 null, null);
@@ -71,7 +71,7 @@ public class CheckoutService {
 
     public CheckoutService(ProductDAO productDAO, UserRepository userDAO, CouponDao couponDao,
                            OrderDAO orderDAO, PaymentTransactionDAO paymentTransactionDAO,
-                           CartDAO cartDAO, OrderEmailService orderEmailService,
+                           CartRepository cartDAO, OrderEmailService orderEmailService,
                            InventoryBatchDAO inventoryBatchDAO) {
         this(productDAO, userDAO, couponDao, orderDAO, paymentTransactionDAO,
                 cartDAO, orderEmailService, inventoryBatchDAO,
@@ -80,7 +80,7 @@ public class CheckoutService {
 
     public CheckoutService(ProductDAO productDAO, UserRepository userDAO, CouponDao couponDao,
                            OrderDAO orderDAO, PaymentTransactionDAO paymentTransactionDAO,
-                           CartDAO cartDAO, OrderEmailService orderEmailService,
+                           CartRepository cartDAO, OrderEmailService orderEmailService,
                            InventoryBatchDAO inventoryBatchDAO,
                            OrderSignRepository orderSignDAO, CertificateRepository certificateDAO) {
         this.productDAO = productDAO;
@@ -279,7 +279,8 @@ public class CheckoutService {
                     return new CheckoutResult(false, "Không tạo được giao dịch thanh toán.");
                 }
 
-                cartDAO.clearCart(conn, user.getId());
+                // P2-Task6 intermediate: ambient-tx call until Task 9 wraps checkout in @Transactional.
+                cartDAO.clearCart(user.getId());
 
                 conn.commit();
 

@@ -1,6 +1,6 @@
 package services;
 
-import com.petshop.dao.CartDAO;
+import com.petshop.repository.CartRepository;
 import com.petshop.dao.OrderDAO;
 import com.petshop.model.Order;
 import com.petshop.model.OrderItem;
@@ -21,7 +21,7 @@ class ReorderServiceTest {
     @Test
     void reordersOnlyOrdersOwnedByCurrentUser() {
         OrderDAO orderDAO = mock(OrderDAO.class);
-        CartDAO cartDAO = mock(CartDAO.class);
+        CartRepository cartDAO = mock(CartRepository.class);
 
         Order order = new Order();
         order.setId(42);
@@ -39,7 +39,7 @@ class ReorderServiceTest {
     @Test
     void refusesToReorderAnotherUsersOrder() {
         OrderDAO orderDAO = mock(OrderDAO.class);
-        CartDAO cartDAO = mock(CartDAO.class);
+        CartRepository cartDAO = mock(CartRepository.class);
 
         Order order = new Order();
         order.setId(42);

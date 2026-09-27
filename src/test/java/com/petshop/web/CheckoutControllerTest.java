@@ -24,7 +24,7 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
 import com.petshop.dao.AddressDao;
-import com.petshop.dao.CartDAO;
+import com.petshop.repository.CartRepository;
 import com.petshop.dao.CouponDao;
 import com.petshop.dao.InventoryBatchDAO;
 import com.petshop.dao.OrderDAO;
@@ -54,7 +54,7 @@ class CheckoutControllerTest {
     @Mock
     InventoryService inventoryService;
     @Mock
-    CartDAO cartDAO;
+    CartRepository cartDAO;
     @Mock
     ProductDAO productDAO;
     @Mock

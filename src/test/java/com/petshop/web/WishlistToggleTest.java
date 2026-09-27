@@ -16,7 +16,7 @@ import org.springframework.mock.web.MockHttpSession;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
-import com.petshop.dao.CartDAO;
+import com.petshop.repository.CartRepository;
 import com.petshop.dao.ProductDAO;
 import com.petshop.repository.ReviewRepository;
 import com.petshop.dao.WishlistDAO;
@@ -34,7 +34,7 @@ class WishlistToggleTest {
     @Mock
     WishlistDAO wishlistDAO;
     @Mock
-    CartDAO cartDAO;
+    CartRepository cartDAO;
     @Mock
     InventoryService inventoryService;
 

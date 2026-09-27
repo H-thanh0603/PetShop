@@ -24,7 +24,7 @@ import org.springframework.web.bind.annotation.ResponseBody;
 
 import com.petshop.context.DBContext;
 import com.petshop.dao.AddressDao;
-import com.petshop.dao.CartDAO;
+import com.petshop.repository.CartRepository;
 import com.petshop.dao.CouponDao;
 import com.petshop.dao.InventoryBatchDAO;
 import com.petshop.dao.OrderDAO;
@@ -71,7 +71,7 @@ public class CheckoutController {
     private final CouponDao couponDao;
     private final AddressDao addressDAO;
     private final InventoryService inventoryService;
-    private final CartDAO cartDAO;
+    private final CartRepository cartDAO;
     private final ProductDAO productDAO;
     private final OrderDAO orderDAO;
     private final PaymentTransactionDAO paymentTransactionDAO;
@@ -82,7 +82,7 @@ public class CheckoutController {
 
     @Autowired
     public CheckoutController(CouponDao couponDao, AddressDao addressDAO, InventoryService inventoryService,
-                              CartDAO cartDAO, ProductDAO productDAO, OrderDAO orderDAO,
+                              CartRepository cartDAO, ProductDAO productDAO, OrderDAO orderDAO,
                               PaymentTransactionDAO paymentTransactionDAO, UserRepository userDAO,
                               OrderEmailService orderEmailService, InventoryBatchDAO inventoryBatchDAO,
                               com.petshop.repository.NotificationRepository notificationDAO) {
