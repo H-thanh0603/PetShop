@@ -1,6 +1,6 @@
 package com.petshop.config;
 
-import com.petshop.dao.SalesSummaryDAO;
+import com.petshop.repository.SalesSummaryRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -20,7 +20,11 @@ public class SalesSummaryScheduler {
 
     private static final Logger logger = LoggerFactory.getLogger(SalesSummaryScheduler.class);
 
-    private final SalesSummaryDAO salesSummaryDAO = new SalesSummaryDAO();
+    private final SalesSummaryRepository salesSummaryDAO;
+
+    public SalesSummaryScheduler(SalesSummaryRepository salesSummaryDAO) {
+        this.salesSummaryDAO = salesSummaryDAO;
+    }
     private final AtomicBoolean seeded = new AtomicBoolean(false);
 
     @Scheduled(initialDelay = 120_000, fixedDelay = 600_000)
