@@ -21,7 +21,7 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
 import com.petshop.dao.OrderDAO;
-import com.petshop.dao.PaymentTransactionDAO;
+import com.petshop.repository.PaymentTransactionRepository;
 import com.petshop.model.Order;
 
 @ExtendWith(MockitoExtension.class)
@@ -30,7 +30,7 @@ class VnpayIpnControllerTest {
     @Mock
     OrderDAO orderDAO;
     @Mock
-    PaymentTransactionDAO paymentTransactionDAO;
+    PaymentTransactionRepository paymentTransactionDAO;
 
     MockMvc mockMvc;
 

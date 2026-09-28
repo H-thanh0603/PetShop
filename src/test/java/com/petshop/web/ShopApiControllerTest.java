@@ -21,7 +21,7 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
 import com.petshop.dao.OrderDAO;
-import com.petshop.dao.PaymentTransactionDAO;
+import com.petshop.repository.PaymentTransactionRepository;
 import com.petshop.dao.ProductDAO;
 import com.petshop.model.Product;
 import com.petshop.model.User;
@@ -35,7 +35,7 @@ class ShopApiControllerTest {
     @Mock
     OrderDAO orderDAO;
     @Mock
-    PaymentTransactionDAO paymentTransactionDAO;
+    PaymentTransactionRepository paymentTransactionDAO;
     @Mock
     ReviewRepository reviewDAO;
 

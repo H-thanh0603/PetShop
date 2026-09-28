@@ -26,9 +26,9 @@ import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import com.petshop.repository.AddressRepository;
 import com.petshop.repository.CartRepository;
 import com.petshop.dao.CouponDao;
-import com.petshop.dao.InventoryBatchDAO;
+import com.petshop.repository.InventoryBatchRepository;
 import com.petshop.dao.OrderDAO;
-import com.petshop.dao.PaymentTransactionDAO;
+import com.petshop.repository.PaymentTransactionRepository;
 import com.petshop.dao.ProductDAO;
 import com.petshop.repository.UserRepository;
 import com.petshop.model.Address;
@@ -60,13 +60,13 @@ class CheckoutControllerTest {
     @Mock
     OrderDAO orderDAO;
     @Mock
-    PaymentTransactionDAO paymentTransactionDAO;
+    PaymentTransactionRepository paymentTransactionDAO;
     @Mock
     UserRepository userDAO;
     @Mock
     OrderEmailService orderEmailService;
     @Mock
-    InventoryBatchDAO inventoryBatchDAO;
+    InventoryBatchRepository inventoryBatchDAO;
     @Mock
     com.petshop.repository.NotificationRepository notificationDAO;
 

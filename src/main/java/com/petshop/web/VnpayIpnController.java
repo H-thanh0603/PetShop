@@ -8,6 +8,7 @@ import java.util.Map;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -15,7 +16,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 
 import com.petshop.dao.OrderDAO;
-import com.petshop.dao.PaymentTransactionDAO;
+import com.petshop.repository.PaymentTransactionRepository;
 import com.petshop.model.Order;
 import com.petshop.util.Json;
 import com.petshop.util.VnpayConfig;
@@ -33,13 +34,10 @@ public class VnpayIpnController {
     private static final Logger logger = LoggerFactory.getLogger(VnpayIpnController.class);
 
     private final OrderDAO orderDAO;
-    private final PaymentTransactionDAO paymentTransactionDAO;
+    private final PaymentTransactionRepository paymentTransactionDAO;
 
-    public VnpayIpnController() {
-        this(new OrderDAO(), new PaymentTransactionDAO());
-    }
-
-    VnpayIpnController(OrderDAO orderDAO, PaymentTransactionDAO paymentTransactionDAO) {
+    @Autowired
+    public VnpayIpnController(OrderDAO orderDAO, PaymentTransactionRepository paymentTransactionDAO) {
         this.orderDAO = orderDAO;
         this.paymentTransactionDAO = paymentTransactionDAO;
     }

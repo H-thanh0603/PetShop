@@ -5,7 +5,7 @@ import com.petshop.dao.CouponDao;
 import com.petshop.repository.CartRepository;
 import static org.mockito.Mockito.mock;
 import com.petshop.dao.OrderDAO;
-import com.petshop.dao.PaymentTransactionDAO;
+import com.petshop.repository.PaymentTransactionRepository;
 import com.petshop.dao.ProductDAO;
 import com.petshop.repository.UserRepository;
 import com.petshop.model.CartItem;
@@ -112,7 +112,7 @@ class CheckoutConcurrencyTest {
 
         CheckoutService checkoutService = new CheckoutService(
                 new ProductDAO(), null, new CouponDao(),
-                new OrderDAO(), new PaymentTransactionDAO(),
+                new OrderDAO(), mock(PaymentTransactionRepository.class),
                 mock(CartRepository.class), new OrderEmailService());
 
         Callable<CheckoutResult> firstCheckout =

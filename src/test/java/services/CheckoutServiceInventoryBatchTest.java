@@ -3,9 +3,9 @@ package services;
 import com.petshop.context.DBContext;
 import com.petshop.repository.CartRepository;
 import com.petshop.dao.CouponDao;
-import com.petshop.dao.InventoryBatchDAO;
+import com.petshop.repository.InventoryBatchRepository;
 import com.petshop.dao.OrderDAO;
-import com.petshop.dao.PaymentTransactionDAO;
+import com.petshop.repository.PaymentTransactionRepository;
 import com.petshop.dao.ProductDAO;
 import com.petshop.repository.UserRepository;
 import com.petshop.model.CartItem;
@@ -46,10 +46,10 @@ class CheckoutServiceInventoryBatchTest {
         UserRepository userDAO = mock(UserRepository.class);
         CouponDao couponDao = mock(CouponDao.class);
         OrderDAO orderDAO = mock(OrderDAO.class);
-        PaymentTransactionDAO paymentTransactionDAO = mock(PaymentTransactionDAO.class);
+        PaymentTransactionRepository paymentTransactionDAO = mock(PaymentTransactionRepository.class);
         CartRepository cartDAO = mock(CartRepository.class);
         OrderEmailService orderEmailService = mock(OrderEmailService.class);
-        InventoryBatchDAO inventoryBatchDAO = mock(InventoryBatchDAO.class);
+        InventoryBatchRepository inventoryBatchDAO = mock(InventoryBatchRepository.class);
 
         Connection conn = mock(Connection.class);
         User user = new User();
@@ -73,7 +73,7 @@ class CheckoutServiceInventoryBatchTest {
         when(productDAO.getProductByIdForUpdate(conn, 11)).thenReturn(latestProduct);
         when(orderDAO.saveOrder(eq(conn), any(Order.class))).thenReturn(901);
         when(orderDAO.saveOrderItem(eq(conn), any())).thenReturn(true);
-        when(paymentTransactionDAO.save(eq(conn), any())).thenReturn(77);
+        when(paymentTransactionDAO.saveTx(any())).thenReturn(77);
         when(productDAO.reserveStock(conn, 11, 2)).thenReturn(true);
 
         CheckoutService service = new CheckoutService(
@@ -107,10 +107,10 @@ class CheckoutServiceInventoryBatchTest {
         UserRepository userDAO = mock(UserRepository.class);
         CouponDao couponDao = mock(CouponDao.class);
         OrderDAO orderDAO = mock(OrderDAO.class);
-        PaymentTransactionDAO paymentTransactionDAO = mock(PaymentTransactionDAO.class);
+        PaymentTransactionRepository paymentTransactionDAO = mock(PaymentTransactionRepository.class);
         CartRepository cartDAO = mock(CartRepository.class);
         OrderEmailService orderEmailService = mock(OrderEmailService.class);
-        InventoryBatchDAO inventoryBatchDAO = mock(InventoryBatchDAO.class);
+        InventoryBatchRepository inventoryBatchDAO = mock(InventoryBatchRepository.class);
 
         Connection conn = mock(Connection.class);
         User user = new User();
@@ -135,7 +135,7 @@ class CheckoutServiceInventoryBatchTest {
         when(productDAO.reserveStock(conn, 11, 2)).thenReturn(true);
         when(orderDAO.saveOrder(eq(conn), any(Order.class))).thenReturn(901);
         when(orderDAO.saveOrderItem(eq(conn), any())).thenReturn(true);
-        when(paymentTransactionDAO.save(eq(conn), any())).thenReturn(77);
+        when(paymentTransactionDAO.saveTx(any())).thenReturn(77);
 
         CheckoutService service = new CheckoutService(
                 productDAO, userDAO, couponDao, orderDAO, paymentTransactionDAO,
@@ -170,10 +170,10 @@ class CheckoutServiceInventoryBatchTest {
         UserRepository userDAO = mock(UserRepository.class);
         CouponDao couponDao = mock(CouponDao.class);
         OrderDAO orderDAO = mock(OrderDAO.class);
-        PaymentTransactionDAO paymentTransactionDAO = mock(PaymentTransactionDAO.class);
+        PaymentTransactionRepository paymentTransactionDAO = mock(PaymentTransactionRepository.class);
         CartRepository cartDAO = mock(CartRepository.class);
         OrderEmailService orderEmailService = mock(OrderEmailService.class);
-        InventoryBatchDAO inventoryBatchDAO = mock(InventoryBatchDAO.class);
+        InventoryBatchRepository inventoryBatchDAO = mock(InventoryBatchRepository.class);
 
         Connection conn = mock(Connection.class);
         User user = new User();
@@ -237,10 +237,10 @@ class CheckoutServiceInventoryBatchTest {
         UserRepository userDAO = mock(UserRepository.class);
         CouponDao couponDao = mock(CouponDao.class);
         OrderDAO orderDAO = mock(OrderDAO.class);
-        PaymentTransactionDAO paymentTransactionDAO = mock(PaymentTransactionDAO.class);
+        PaymentTransactionRepository paymentTransactionDAO = mock(PaymentTransactionRepository.class);
         CartRepository cartDAO = mock(CartRepository.class);
         OrderEmailService orderEmailService = mock(OrderEmailService.class);
-        InventoryBatchDAO inventoryBatchDAO = mock(InventoryBatchDAO.class);
+        InventoryBatchRepository inventoryBatchDAO = mock(InventoryBatchRepository.class);
 
         Connection conn = mock(Connection.class);
         User user = new User();
@@ -264,7 +264,7 @@ class CheckoutServiceInventoryBatchTest {
         when(productDAO.getProductByIdForUpdate(conn, 11)).thenReturn(latestProduct);
         when(orderDAO.saveOrder(eq(conn), any(Order.class))).thenReturn(901);
         when(orderDAO.saveOrderItem(eq(conn), any())).thenReturn(true);
-        when(paymentTransactionDAO.save(eq(conn), any())).thenReturn(77);
+        when(paymentTransactionDAO.saveTx(any())).thenReturn(77);
         when(productDAO.reserveStock(conn, 11, 2)).thenReturn(true);
 
         CheckoutService service = new CheckoutService(
@@ -293,7 +293,7 @@ class CheckoutServiceInventoryBatchTest {
         }
 
         ArgumentCaptor<PaymentTransaction> transactionCaptor = ArgumentCaptor.forClass(PaymentTransaction.class);
-        verify(paymentTransactionDAO).save(eq(conn), transactionCaptor.capture());
+        verify(paymentTransactionDAO).saveTx(transactionCaptor.capture());
 
         PaymentTransaction transaction = transactionCaptor.getValue();
         assertEquals(reservedReference, transaction.getTransferReference());
@@ -310,10 +310,10 @@ class CheckoutServiceInventoryBatchTest {
         UserRepository userDAO = mock(UserRepository.class);
         CouponDao couponDao = mock(CouponDao.class);
         OrderDAO orderDAO = mock(OrderDAO.class);
-        PaymentTransactionDAO paymentTransactionDAO = mock(PaymentTransactionDAO.class);
+        PaymentTransactionRepository paymentTransactionDAO = mock(PaymentTransactionRepository.class);
         CartRepository cartDAO = mock(CartRepository.class);
         OrderEmailService orderEmailService = mock(OrderEmailService.class);
-        InventoryBatchDAO inventoryBatchDAO = mock(InventoryBatchDAO.class);
+        InventoryBatchRepository inventoryBatchDAO = mock(InventoryBatchRepository.class);
 
         Connection conn = mock(Connection.class);
         User user = new User();
@@ -338,7 +338,7 @@ class CheckoutServiceInventoryBatchTest {
         when(productDAO.reserveStock(conn, 11, 2)).thenReturn(true);
         when(orderDAO.saveOrder(eq(conn), any(Order.class))).thenReturn(901);
         when(orderDAO.saveOrderItem(eq(conn), any())).thenReturn(true);
-        when(paymentTransactionDAO.save(eq(conn), any())).thenReturn(77);
+        when(paymentTransactionDAO.saveTx(any())).thenReturn(77);
 
         CheckoutService service = new CheckoutService(
                 productDAO, userDAO, couponDao, orderDAO, paymentTransactionDAO,
@@ -375,10 +375,10 @@ class CheckoutServiceInventoryBatchTest {
         UserRepository userDAO = mock(UserRepository.class);
         CouponDao couponDao = mock(CouponDao.class);
         OrderDAO orderDAO = mock(OrderDAO.class);
-        PaymentTransactionDAO paymentTransactionDAO = mock(PaymentTransactionDAO.class);
+        PaymentTransactionRepository paymentTransactionDAO = mock(PaymentTransactionRepository.class);
         CartRepository cartDAO = mock(CartRepository.class);
         OrderEmailService orderEmailService = mock(OrderEmailService.class);
-        InventoryBatchDAO inventoryBatchDAO = mock(InventoryBatchDAO.class);
+        InventoryBatchRepository inventoryBatchDAO = mock(InventoryBatchRepository.class);
 
         Connection conn = mock(Connection.class);
         User user = new User();
@@ -403,7 +403,7 @@ class CheckoutServiceInventoryBatchTest {
         when(productDAO.reserveStock(conn, 11, 2)).thenReturn(true);
         when(orderDAO.saveOrder(eq(conn), any(Order.class))).thenReturn(901);
         when(orderDAO.saveOrderItem(eq(conn), any())).thenReturn(true);
-        when(paymentTransactionDAO.save(eq(conn), any())).thenReturn(77);
+        when(paymentTransactionDAO.saveTx(any())).thenReturn(77);
 
         CheckoutService service = new CheckoutService(
                 productDAO, userDAO, couponDao, orderDAO, paymentTransactionDAO,
@@ -427,7 +427,7 @@ class CheckoutServiceInventoryBatchTest {
         }
 
         ArgumentCaptor<PaymentTransaction> transactionCaptor = ArgumentCaptor.forClass(PaymentTransaction.class);
-        verify(paymentTransactionDAO).save(eq(conn), transactionCaptor.capture());
+        verify(paymentTransactionDAO).saveTx(transactionCaptor.capture());
         PaymentTransaction transaction = transactionCaptor.getValue();
         assertEquals("VNPAY", transaction.getProviderKey());
         assertEquals("CREATED", transaction.getStatus());
@@ -440,10 +440,10 @@ class CheckoutServiceInventoryBatchTest {
         UserRepository userDAO = mock(UserRepository.class);
         CouponDao couponDao = mock(CouponDao.class);
         OrderDAO orderDAO = mock(OrderDAO.class);
-        PaymentTransactionDAO paymentTransactionDAO = mock(PaymentTransactionDAO.class);
+        PaymentTransactionRepository paymentTransactionDAO = mock(PaymentTransactionRepository.class);
         CartRepository cartDAO = mock(CartRepository.class);
         OrderEmailService orderEmailService = mock(OrderEmailService.class);
-        InventoryBatchDAO inventoryBatchDAO = mock(InventoryBatchDAO.class);
+        InventoryBatchRepository inventoryBatchDAO = mock(InventoryBatchRepository.class);
 
         Connection conn = mock(Connection.class);
         User user = new User();
@@ -469,7 +469,7 @@ class CheckoutServiceInventoryBatchTest {
         when(productDAO.reserveStock(conn, 11, 2)).thenReturn(true);
         when(orderDAO.saveOrder(eq(conn), any(Order.class))).thenReturn(901);
         when(orderDAO.saveOrderItem(eq(conn), any())).thenReturn(true);
-        when(paymentTransactionDAO.save(eq(conn), any())).thenReturn(77);
+        when(paymentTransactionDAO.saveTx(any())).thenReturn(77);
 
         CheckoutService service = new CheckoutService(
                 productDAO, userDAO, couponDao, orderDAO, paymentTransactionDAO,

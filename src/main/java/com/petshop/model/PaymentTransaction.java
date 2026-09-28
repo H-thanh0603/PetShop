@@ -1,27 +1,56 @@
 package com.petshop.model;
 
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.Table;
 import java.math.BigDecimal;
 import java.sql.Timestamp;
 
+@Entity
+@Table(name = "payment_transactions")
 public class PaymentTransaction {
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "id")
     private int id;
+    @Column(name = "order_id", nullable = false)
     private int orderId;
+    @Column(name = "user_id", nullable = false)
     private int userId;
+    @Column(name = "provider_key", nullable = false, length = 50)
     private String providerKey;
+    @Column(name = "provider_display_name", length = 100)
     private String providerDisplayName;
+    @Column(name = "amount", nullable = false, precision = 15, scale = 2)
     private BigDecimal amount;
+    @Column(name = "currency", nullable = false, length = 10)
     private String currency;
+    @Column(name = "transfer_reference", length = 100)
     private String transferReference;
+    @Column(name = "provider_transaction_id")
     private String providerTransactionId;
+    @Column(name = "status", nullable = false, length = 50)
     private String status;
+    @Column(name = "verification_status", length = 50)
     private String verificationStatus;
+    @Column(name = "verification_message")
     private String verificationMessage;
+    @Column(name = "provider_metadata", columnDefinition = "TEXT")
     private String providerMetadata;
+    @Column(name = "amount_received", precision = 15, scale = 2)
     private BigDecimal amountReceived;
+    @Column(name = "bank_content", length = 500)
     private String bankContent;
+    @Column(name = "created_at", nullable = false)
     private Timestamp createdAt;
+    @Column(name = "updated_at", nullable = false)
     private Timestamp updatedAt;
+    @Column(name = "verified_at")
     private Timestamp verifiedAt;
+    @Column(name = "expires_at")
     private Timestamp expiresAt;
 
     public int getId() {

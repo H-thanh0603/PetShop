@@ -26,9 +26,9 @@ import com.petshop.context.DBContext;
 import com.petshop.repository.AddressRepository;
 import com.petshop.repository.CartRepository;
 import com.petshop.dao.CouponDao;
-import com.petshop.dao.InventoryBatchDAO;
+import com.petshop.repository.InventoryBatchRepository;
 import com.petshop.dao.OrderDAO;
-import com.petshop.dao.PaymentTransactionDAO;
+import com.petshop.repository.PaymentTransactionRepository;
 import com.petshop.dao.ProductDAO;
 import com.petshop.repository.UserRepository;
 import com.petshop.model.Address;
@@ -74,17 +74,17 @@ public class CheckoutController {
     private final CartRepository cartDAO;
     private final ProductDAO productDAO;
     private final OrderDAO orderDAO;
-    private final PaymentTransactionDAO paymentTransactionDAO;
+    private final PaymentTransactionRepository paymentTransactionDAO;
     private final UserRepository userDAO;
     private final OrderEmailService orderEmailService;
-    private final InventoryBatchDAO inventoryBatchDAO;
+    private final InventoryBatchRepository inventoryBatchDAO;
     private final com.petshop.repository.NotificationRepository notificationDAO;
 
     @Autowired
     public CheckoutController(CouponDao couponDao, AddressRepository addressDAO, InventoryService inventoryService,
                               CartRepository cartDAO, ProductDAO productDAO, OrderDAO orderDAO,
-                              PaymentTransactionDAO paymentTransactionDAO, UserRepository userDAO,
-                              OrderEmailService orderEmailService, InventoryBatchDAO inventoryBatchDAO,
+                              PaymentTransactionRepository paymentTransactionDAO, UserRepository userDAO,
+                              OrderEmailService orderEmailService, InventoryBatchRepository inventoryBatchDAO,
                               com.petshop.repository.NotificationRepository notificationDAO) {
         this.couponDao = couponDao;
         this.addressDAO = addressDAO;

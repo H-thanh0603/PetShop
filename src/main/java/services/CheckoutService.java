@@ -3,11 +3,11 @@ package services;
 import com.petshop.context.DBContext;
 import com.petshop.repository.CartRepository;
 import com.petshop.dao.CouponDao;
-import com.petshop.dao.InventoryBatchDAO;
+import com.petshop.repository.InventoryBatchRepository;
 import com.petshop.dao.OrderDAO;
 import com.petshop.repository.OrderSignRepository;
 import com.petshop.repository.CertificateRepository;
-import com.petshop.dao.PaymentTransactionDAO;
+import com.petshop.repository.PaymentTransactionRepository;
 import com.petshop.dao.ProductDAO;
 import com.petshop.dao.PromotionDAO;
 import com.petshop.repository.UserRepository;
@@ -52,36 +52,36 @@ public class CheckoutService {
     private final UserRepository userDAO;
     private final CouponDao couponDao;
     private final OrderDAO orderDAO;
-    private final PaymentTransactionDAO paymentTransactionDAO;
+    private final PaymentTransactionRepository paymentTransactionDAO;
     private final CartRepository cartDAO;
     private final OrderEmailService orderEmailService;
-    private final InventoryBatchDAO inventoryBatchDAO;
+    private final InventoryBatchRepository inventoryBatchDAO;
     private final PromotionDAO promotionDAO;
     private final ProductPricingService pricingService;
     private final OrderSignRepository orderSignDAO;
     private final CertificateRepository certificateDAO;
 
     public CheckoutService(ProductDAO productDAO, UserRepository userDAO, CouponDao couponDao,
-                           OrderDAO orderDAO, PaymentTransactionDAO paymentTransactionDAO,
+                           OrderDAO orderDAO, PaymentTransactionRepository paymentTransactionDAO,
                            CartRepository cartDAO, OrderEmailService orderEmailService) {
         this(productDAO, userDAO, couponDao, orderDAO, paymentTransactionDAO,
-                cartDAO, orderEmailService, new InventoryBatchDAO(),
+                cartDAO, orderEmailService, null,
                 null, null);
     }
 
     public CheckoutService(ProductDAO productDAO, UserRepository userDAO, CouponDao couponDao,
-                           OrderDAO orderDAO, PaymentTransactionDAO paymentTransactionDAO,
+                           OrderDAO orderDAO, PaymentTransactionRepository paymentTransactionDAO,
                            CartRepository cartDAO, OrderEmailService orderEmailService,
-                           InventoryBatchDAO inventoryBatchDAO) {
+                           InventoryBatchRepository inventoryBatchDAO) {
         this(productDAO, userDAO, couponDao, orderDAO, paymentTransactionDAO,
                 cartDAO, orderEmailService, inventoryBatchDAO,
                 null, null);
     }
 
     public CheckoutService(ProductDAO productDAO, UserRepository userDAO, CouponDao couponDao,
-                           OrderDAO orderDAO, PaymentTransactionDAO paymentTransactionDAO,
+                           OrderDAO orderDAO, PaymentTransactionRepository paymentTransactionDAO,
                            CartRepository cartDAO, OrderEmailService orderEmailService,
-                           InventoryBatchDAO inventoryBatchDAO,
+                           InventoryBatchRepository inventoryBatchDAO,
                            OrderSignRepository orderSignDAO, CertificateRepository certificateDAO) {
         this.productDAO = productDAO;
         this.userDAO = userDAO;
@@ -273,7 +273,8 @@ public class CheckoutService {
                 PaymentTransaction paymentTransaction = buildPaymentTransaction(
                         user, orderId, finalTotal, paymentResult, bankTransferDetails, reservedTransferReference
                 );
-                int paymentTransactionId = paymentTransactionDAO.save(conn, paymentTransaction);
+                // P2-Task8 intermediate: ambient-tx call until Task 9 wraps checkout in @Transactional.
+                int paymentTransactionId = paymentTransactionDAO.saveTx(paymentTransaction);
                 if (paymentTransactionId <= 0) {
                     conn.rollback();
                     return new CheckoutResult(false, "Không tạo được giao dịch thanh toán.");

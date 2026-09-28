@@ -22,7 +22,7 @@ import org.springframework.web.bind.annotation.ResponseBody;
 
 import com.petshop.context.DBContext;
 import com.petshop.dao.OrderDAO;
-import com.petshop.dao.PaymentTransactionDAO;
+import com.petshop.repository.PaymentTransactionRepository;
 import com.petshop.dao.ProductDAO;
 import com.petshop.repository.ReviewRepository;
 import com.petshop.repository.ReviewRepository;
@@ -46,12 +46,12 @@ public class ShopApiController {
 
     private final ProductDAO productDAO;
     private final OrderDAO orderDAO;
-    private final PaymentTransactionDAO paymentTransactionDAO;
+    private final PaymentTransactionRepository paymentTransactionDAO;
     private final ReviewRepository reviewDAO;
     private static final Logger logger = LoggerFactory.getLogger(ShopApiController.class);
 
     @Autowired
-    public ShopApiController(ProductDAO productDAO, OrderDAO orderDAO, PaymentTransactionDAO paymentTransactionDAO,
+    public ShopApiController(ProductDAO productDAO, OrderDAO orderDAO, PaymentTransactionRepository paymentTransactionDAO,
                              ReviewRepository reviewDAO) {
         this.productDAO = productDAO;
         this.orderDAO = orderDAO;
@@ -150,7 +150,7 @@ public class ShopApiController {
                     newTx.setVerificationMessage("VNPAY payment verified on return.");
                     newTx.setCreatedAt(Timestamp.valueOf(LocalDateTime.now()));
                     newTx.setUpdatedAt(Timestamp.valueOf(LocalDateTime.now()));
-                    paymentTransactionDAO.save(conn, newTx);
+                    paymentTransactionDAO.saveTx(newTx);
                 } catch (Exception ex) {
                     logger.error("Unexpected error", ex);
                 }
