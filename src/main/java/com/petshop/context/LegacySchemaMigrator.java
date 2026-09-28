@@ -117,6 +117,13 @@ public final class LegacySchemaMigrator {
             addColumnIfMissing(conn, stmt, "products", "category", "VARCHAR(255) NULL");
             addColumnIfMissing(conn, stmt, "products", "pet_type_id", "INT NULL");
             addColumnIfMissing(conn, stmt, "products", "brand", "VARCHAR(100) NULL");
+            // Out-of-band production columns (no migration ever created them;
+            // 15_operating_foundations.sql uses unsupported ADD COLUMN IF NOT EXISTS).
+            addColumnIfMissing(conn, stmt, "products", "category_id", "INT NULL");
+            addColumnIfMissing(conn, stmt, "products", "sku", "VARCHAR(50) NULL");
+            addColumnIfMissing(conn, stmt, "products", "stock_quantity", "INT NOT NULL DEFAULT 0");
+            addColumnIfMissing(conn, stmt, "products", "is_featured", "TINYINT(1) NOT NULL DEFAULT 0");
+            addColumnIfMissing(conn, stmt, "products", "is_new", "TINYINT(1) NOT NULL DEFAULT 0");
             addColumnIfMissing(conn, stmt, "users", "email_verified", "BOOLEAN NOT NULL DEFAULT FALSE");
             addColumnIfMissing(conn, stmt, "users", "verification_token", "VARCHAR(255) NULL");
             addColumnIfMissing(conn, stmt, "users", "verification_token_expiry", "TIMESTAMP NULL");
