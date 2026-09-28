@@ -16,7 +16,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 
 import com.petshop.repository.AdminActionLogRepository;
-import com.petshop.dao.InventoryBatchDAO;
+import com.petshop.repository.InventoryBatchRepository;
 import com.petshop.dao.ProductDAO;
 import com.petshop.model.InventoryBatch;
 import com.petshop.model.Product;
@@ -34,11 +34,11 @@ import jakarta.servlet.http.HttpSession;
 public class AdminInventoryController {
 
     private final ProductDAO productDAO;
-    private final InventoryBatchDAO inventoryBatchDAO;
+    private final InventoryBatchRepository inventoryBatchDAO;
     private final AdminActionLogRepository actionLog;
 
     @Autowired
-    public AdminInventoryController(ProductDAO productDAO, InventoryBatchDAO inventoryBatchDAO,
+    public AdminInventoryController(ProductDAO productDAO, InventoryBatchRepository inventoryBatchDAO,
                                     AdminActionLogRepository actionLog) {
         this.productDAO = productDAO;
         this.inventoryBatchDAO = inventoryBatchDAO;

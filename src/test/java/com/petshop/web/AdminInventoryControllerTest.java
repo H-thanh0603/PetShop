@@ -24,7 +24,7 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
 import com.petshop.repository.AdminActionLogRepository;
-import com.petshop.dao.InventoryBatchDAO;
+import com.petshop.repository.InventoryBatchRepository;
 import com.petshop.dao.ProductDAO;
 import com.petshop.model.User;
 
@@ -34,7 +34,7 @@ class AdminInventoryControllerTest {
     @Mock
     ProductDAO productDAO;
     @Mock
-    InventoryBatchDAO inventoryBatchDAO;
+    InventoryBatchRepository inventoryBatchDAO;
     @Mock
     AdminActionLogRepository actionLog;
 
