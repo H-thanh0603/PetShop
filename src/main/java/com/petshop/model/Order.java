@@ -1,46 +1,99 @@
 package com.petshop.model;
 
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.Table;
+import jakarta.persistence.Transient;
 import java.math.BigDecimal;
 import java.sql.Timestamp;
 import java.text.DecimalFormat;
 import java.util.List;
 
+@Entity
+@Table(name = "orders")
 public class Order {
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "id")
     private int id;
+    @Column(name = "user_id", nullable = false)
     private int userId;
+    @Column(name = "fullname", nullable = false, length = 100)
     private String fullname;
+    @Column(name = "phone", nullable = false, length = 20)
     private String phone;
+    @Column(name = "address", nullable = false)
     private String address;
+    @Column(name = "recipient_fullname", nullable = false, length = 100)
     private String recipientFullname;
+    @Column(name = "recipient_phone", nullable = false, length = 20)
     private String recipientPhone;
+    @Column(name = "shipping_address", nullable = false, length = 500)
     private String shippingAddress;
+    @Transient
     private String customerFullname;
+    @Transient
     private String customerPhone;
+    @Column(name = "note", columnDefinition = "TEXT")
     private String note;
+    @Column(name = "subtotal", precision = 18, scale = 0)
     private BigDecimal subtotal = BigDecimal.ZERO;
+    @Column(name = "shipping_fee", precision = 18, scale = 0)
     private BigDecimal shippingFee = BigDecimal.ZERO;
+    @Column(name = "discount_amount", precision = 18, scale = 0)
     private BigDecimal discountAmount = BigDecimal.ZERO;
+    @Column(name = "total_amount", precision = 18, scale = 0)
     private BigDecimal totalAmount;
+    @Column(name = "status", length = 50)
     private String status; // Pending, Confirmed, Shipping, Delivered, Completed, Cancelled
+    @Column(name = "payment_method", length = 50)
     private String payment_method;
+    @Column(name = "payment_status", nullable = false)
     private boolean payment_status;
+    @Transient
     private String paymentTransactionStatus;
+    @Transient
     private String paymentVerificationStatus;
+    @Transient
     private String paymentReference;
+    @Transient
     private String paymentVerificationMessage;
+    @Transient
     private Timestamp paymentVerifiedAt;
+    @Column(name = "createdAt")
     private Timestamp createdAt;
+    @Column(name = "status_updated_at")
     private Timestamp statusUpdatedAt;
+    @Transient
     private String ghnOrderId;
+    @Transient
     private String ghnTrackingCode;
+    @Transient
     private String ghnStatus;
+    @Transient
     private Timestamp ghnPushedAt;
+    @Transient
     private Timestamp ghnLastSyncAt;
+    @Transient
     private String ghnErrorMessage;
+    @Transient
     private String signatureStatus;
+    @Transient
     private String signatureStatusCssClass;
+    @Transient
     private String signatureStatusLabel;
+    @Transient
     private List<OrderItem> items;
+    // Allowed association exception (spec §5): LAZY user for JOIN FETCH lists.
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_id", insertable = false, updatable = false)
+    private User user;
 
     public Order() {
         this.totalAmount = BigDecimal.ZERO;
@@ -67,6 +120,7 @@ public class Order {
     public void setId(int id) { this.id = id; }
 
     public int getUserId() { return userId; }
+    public User getUser() { return user; }
     public void setUserId(int userId) { this.userId = userId; }
 
     public String getFullname() { return getRecipientFullname(); }

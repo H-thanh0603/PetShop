@@ -20,7 +20,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
-import com.petshop.dao.OrderDAO;
+import com.petshop.repository.OrderRepository;
 import com.petshop.repository.PaymentTransactionRepository;
 import com.petshop.model.Order;
 
@@ -28,7 +28,7 @@ import com.petshop.model.Order;
 class VnpayIpnControllerTest {
 
     @Mock
-    OrderDAO orderDAO;
+    OrderRepository orderDAO;
     @Mock
     PaymentTransactionRepository paymentTransactionDAO;
 

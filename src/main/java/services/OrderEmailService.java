@@ -1,5 +1,7 @@
 package services;
 
+import org.springframework.stereotype.Service;
+
 import com.petshop.model.Order;
 import com.petshop.model.OrderItem;
 import com.petshop.util.EmailUtil;
@@ -11,6 +13,7 @@ import java.util.Locale;
 /**
  * Sends order confirmation emails asynchronously after checkout.
  */
+@Service
 public class OrderEmailService {
 
     private static final NumberFormat VND = NumberFormat.getNumberInstance(Locale.of("vi", "VN"));

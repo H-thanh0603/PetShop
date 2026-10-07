@@ -1,15 +1,18 @@
 package services;
 
+import org.springframework.stereotype.Service;
+
 import com.petshop.repository.CartRepository;
-import com.petshop.dao.OrderDAO;
+import com.petshop.repository.OrderRepository;
 import com.petshop.model.Order;
 import com.petshop.model.OrderItem;
 
+@Service
 public class ReorderService {
-    private final OrderDAO orderDAO;
+    private final OrderRepository orderDAO;
     private final CartRepository cartDAO;
 
-    public ReorderService(OrderDAO orderDAO, CartRepository cartDAO) {
+    public ReorderService(OrderRepository orderDAO, CartRepository cartDAO) {
         this.orderDAO = orderDAO;
         this.cartDAO = cartDAO;
     }

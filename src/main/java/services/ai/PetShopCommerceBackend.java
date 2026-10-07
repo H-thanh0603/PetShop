@@ -1,7 +1,8 @@
 package services.ai;
 
 import com.petshop.repository.CustomerSupportKnowledgeRepository;
-import com.petshop.dao.OrderDAO;
+import com.petshop.repository.OrderRepository;
+import com.petshop.repository.OrderRepository;
 import com.petshop.repository.ProductRepository;
 import com.petshop.model.CustomerSupportKnowledge;
 import com.petshop.model.Order;
@@ -24,13 +25,14 @@ import java.util.List;
 @Service
 public class PetShopCommerceBackend {
     private final ProductRepository productDAO;
-    private final OrderDAO orderDAO = new OrderDAO();
+    private final OrderRepository orderDAO;
     private final CustomerSupportKnowledgeRepository knowledgeDAO;
 
     @Autowired
-    public PetShopCommerceBackend(ProductRepository productDAO, CustomerSupportKnowledgeRepository knowledgeDAO) {
+    public PetShopCommerceBackend(ProductRepository productDAO, CustomerSupportKnowledgeRepository knowledgeDAO, OrderRepository orderDAO) {
         this.productDAO = productDAO;
         this.knowledgeDAO = knowledgeDAO;
+        this.orderDAO = orderDAO;
     }
 
 

@@ -10,7 +10,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 
-import com.petshop.dao.OrderDAO;
+import com.petshop.repository.OrderRepository;
 import com.petshop.repository.CartRepository;
 import com.petshop.model.CustomerRepurchaseSuggestion;
 import com.petshop.model.Order;
@@ -28,15 +28,15 @@ import services.ReorderService;
 @Controller
 public class MyOrdersController {
 
-    private final OrderDAO orderDAO;
+    private final OrderRepository orderDAO;
     private final ReorderService reorderService;
 
     @Autowired
-    public MyOrdersController(OrderDAO orderDAO, CartRepository cartDAO) {
+    public MyOrdersController(OrderRepository orderDAO, CartRepository cartDAO) {
         this(orderDAO, new ReorderService(orderDAO, cartDAO));
     }
 
-    MyOrdersController(OrderDAO orderDAO, ReorderService reorderService) {
+    MyOrdersController(OrderRepository orderDAO, ReorderService reorderService) {
         this.orderDAO = orderDAO;
         this.reorderService = reorderService;
     }

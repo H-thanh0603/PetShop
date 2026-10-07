@@ -1,5 +1,7 @@
 package services;
 
+import org.springframework.stereotype.Service;
+
 import com.petshop.dao.ProductDAO;
 import com.petshop.model.CartItem;
 import com.petshop.model.Product;
@@ -8,6 +10,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
+@Service
 public class InventoryService {
     public static final int LOW_STOCK_THRESHOLD = 10;
 

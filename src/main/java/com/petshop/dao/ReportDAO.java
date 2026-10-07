@@ -1,4 +1,5 @@
 package com.petshop.dao;
+import org.springframework.stereotype.Component;
 
 import com.petshop.context.DBContext;
 import com.petshop.model.Order;
@@ -16,6 +17,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+@Component
 public class ReportDAO {
 
     private static final Logger logger = LoggerFactory.getLogger(ReportDAO.class);

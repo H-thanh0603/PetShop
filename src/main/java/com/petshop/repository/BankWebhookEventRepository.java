@@ -15,34 +15,25 @@ public interface BankWebhookEventRepository extends JpaRepository<BankWebhookEve
 
     @Transactional
     default BankWebhookEvent findByProviderTransactionId(String providerTransactionId) {
-        try {
-            return findFirstByProviderTransactionId(providerTransactionId);
-        } catch (DataAccessException e) {
-            LoggerFactory.getLogger(BankWebhookEventRepository.class)
-                    .error("DB error", e);
-            return null;
-        }
+        // Preserved: the old DAO threw (callers treat only null as not-found).
+        return findFirstByProviderTransactionId(providerTransactionId);
     }
 
     @Transactional
     default int save(BankWebhookEvent.Status status, String providerTransactionId,
                      java.math.BigDecimal amount, String bankContent, String bankAccount,
                      Integer paymentTransactionId, String rawPayload) {
-        try {
-            BankWebhookEvent event = new BankWebhookEvent();
-            event.setProviderTransactionId(providerTransactionId);
-            event.setAmount(amount);
-            event.setBankContent(bankContent);
-            event.setBankAccount(bankAccount);
-            event.setPaymentTransactionId(paymentTransactionId);
-            event.setStatus(status.name());
-            event.setRawPayload(rawPayload);
-            event.setReceivedAt(Timestamp.valueOf(LocalDateTime.now()));
-            return save(event).getId();
-        } catch (DataAccessException e) {
-            LoggerFactory.getLogger(BankWebhookEventRepository.class)
-                    .error("DB error", e);
-            return -1;
-        }
+        // Preserved: the old DAO threw on SQL failure (callers never checked
+        // the id). Propagate so @Transactional callers roll back identically.
+        BankWebhookEvent event = new BankWebhookEvent();
+        event.setProviderTransactionId(providerTransactionId);
+        event.setAmount(amount);
+        event.setBankContent(bankContent);
+        event.setBankAccount(bankAccount);
+        event.setPaymentTransactionId(paymentTransactionId);
+        event.setStatus(status.name());
+        event.setRawPayload(rawPayload);
+        event.setReceivedAt(Timestamp.valueOf(LocalDateTime.now()));
+        return save(event).getId();
     }
 }

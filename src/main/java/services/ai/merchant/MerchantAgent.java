@@ -1,5 +1,7 @@
 package services.ai.merchant;
 
+import org.springframework.stereotype.Service;
+
 import com.petshop.util.Json;
 import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.node.ArrayNode;
@@ -25,6 +27,7 @@ import java.util.List;
  * model and applied only through host approval. Provider-agnostic — runs on
  * any configured {@code AiProvider}.
  */
+@Service
 public class MerchantAgent {
     private static final Logger log = LoggerFactory.getLogger(MerchantAgent.class);
 

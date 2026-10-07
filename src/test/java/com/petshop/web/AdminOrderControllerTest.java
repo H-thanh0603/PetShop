@@ -28,7 +28,7 @@ import tools.jackson.databind.node.ObjectNode;
 
 import com.petshop.repository.AdminActionLogRepository;
 import com.petshop.repository.NotificationRepository;
-import com.petshop.dao.OrderDAO;
+import com.petshop.repository.OrderRepository;
 import com.petshop.model.Order;
 import com.petshop.model.User;
 import com.petshop.util.Json;
@@ -40,7 +40,7 @@ class AdminOrderControllerTest {
     @Mock
     AdminActionLogRepository actionLog;
     @Mock
-    OrderDAO orderDAO;
+    OrderRepository orderDAO;
     @Mock
     ShippingService shippingService;
     @Mock

@@ -20,7 +20,7 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
 import com.petshop.repository.AddressRepository;
-import com.petshop.dao.OrderDAO;
+import com.petshop.repository.OrderRepository;
 import com.petshop.repository.OrderSignRepository;
 import com.petshop.repository.OrderSignatureRepository;
 import com.petshop.repository.UserRepository;
@@ -32,7 +32,7 @@ class AccountControllerTest {
     @Mock
     AddressRepository addressDao;
     @Mock
-    OrderDAO orderDAO;
+    OrderRepository orderDAO;
     @Mock
     UserRepository userDAO;
     @Mock

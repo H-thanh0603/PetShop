@@ -1,5 +1,7 @@
 package services.ai.merchant;
 
+import org.springframework.stereotype.Repository;
+
 import com.petshop.context.DBContext;
 import com.petshop.util.Json;
 import tools.jackson.databind.JsonNode;
@@ -15,6 +17,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 /** Persists staged changes (audit trail + approval queue survives restarts). */
+@Repository
 public class MerchantChangeDAO {
     private static final Logger log = LoggerFactory.getLogger(MerchantChangeDAO.class);
 

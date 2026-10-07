@@ -96,13 +96,9 @@ public interface InventoryBatchRepository extends JpaRepository<InventoryBatch, 
 
     @Transactional
     default boolean hasTrackedBatchesForProduct(int productId) {
-        try {
-            return hasTrackedBatches(productId);
-        } catch (DataAccessException e) {
-            LoggerFactory.getLogger(InventoryBatchRepository.class)
-                    .error("Unexpected error", e);
-            return false;
-        }
+        // Preserved: the old conn-method threw (no ambient version existed);
+        // propagate so finalize fails loudly instead of skipping batch consume.
+        return hasTrackedBatches(productId);
     }
 
     @Deprecated(forRemoval = true)

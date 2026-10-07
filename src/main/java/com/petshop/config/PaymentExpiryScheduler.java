@@ -1,8 +1,9 @@
 package com.petshop.config;
 
-import com.petshop.dao.PaymentTransactionDAO;
+import com.petshop.repository.OrderRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
@@ -19,12 +20,17 @@ public class PaymentExpiryScheduler {
 
     private static final Logger logger = LoggerFactory.getLogger(PaymentExpiryScheduler.class);
 
-    private final PaymentTransactionDAO paymentTransactionDAO = new PaymentTransactionDAO();
+    private final OrderRepository orderRepository;
+
+    @Autowired
+    public PaymentExpiryScheduler(OrderRepository orderRepository) {
+        this.orderRepository = orderRepository;
+    }
 
     @Scheduled(initialDelay = 60_000, fixedDelay = 300_000)
     public void expirePendingTransactions() {
         try {
-            paymentTransactionDAO.expirePendingTransactions();
+            orderRepository.expirePendingTransactions();
         } catch (Exception e) {
             logger.error("Payment expiry job failed", e);
         }

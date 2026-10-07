@@ -1,5 +1,7 @@
 package services.ai.common;
 
+import org.springframework.stereotype.Service;
+
 import com.petshop.util.AppConfig;
 import com.petshop.util.Json;
 import tools.jackson.databind.JsonNode;
@@ -24,6 +26,7 @@ import java.util.regex.Pattern;
  * delete/purge lifecycle. Memory never changes prompt or tool bytes other
  * than the MEMORY block.
  */
+@Service
 public class MemoryService {
     private static final Logger log = LoggerFactory.getLogger(MemoryService.class);
     private static final Set<String> CATEGORIES = Set.of("preference", "constraint", "context");

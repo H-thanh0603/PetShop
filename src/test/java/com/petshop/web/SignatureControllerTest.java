@@ -18,7 +18,7 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
 import com.petshop.repository.CertificateRepository;
-import com.petshop.dao.OrderDAO;
+import com.petshop.repository.OrderRepository;
 import com.petshop.repository.OrderSignRepository;
 import com.petshop.repository.OrderSignatureRepository;
 import com.petshop.model.OrderSign;
@@ -34,7 +34,7 @@ class SignatureControllerTest {
     @Mock
     CertificateRepository certificateDAO;
     @Mock
-    OrderDAO orderDAO;
+    OrderRepository orderDAO;
 
     MockMvc mockMvc;
     MockHttpSession authed;

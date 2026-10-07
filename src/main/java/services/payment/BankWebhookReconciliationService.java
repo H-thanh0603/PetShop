@@ -1,43 +1,38 @@
 package services.payment;
 
-import com.petshop.context.DBContext;
-import com.petshop.dao.BankWebhookEventDAO;
-import com.petshop.dao.OrderLogDAO;
-import com.petshop.dao.OrderDAO;
-import com.petshop.dao.PaymentTransactionDAO;
+import org.springframework.stereotype.Service;
+
+import org.springframework.transaction.annotation.Transactional;
+import com.petshop.repository.BankWebhookEventRepository;
+import com.petshop.repository.OrderLogRepository;
+import com.petshop.repository.OrderRepository;
+import com.petshop.repository.PaymentTransactionRepository;
 import com.petshop.model.BankWebhookEvent;
 import com.petshop.model.PaymentTransaction;
 
-import java.sql.Connection;
+import org.springframework.beans.factory.annotation.Autowired;
 import java.sql.Timestamp;
 import java.time.LocalDateTime;
 
+@Service
 public class BankWebhookReconciliationService {
-    private final BankWebhookEventDAO eventDAO;
-    private final PaymentTransactionDAO transactionDAO;
-    private final OrderDAO orderDAO;
-    private final OrderLogDAO orderLogDAO;
+    private final BankWebhookEventRepository eventDAO;
+    private final PaymentTransactionRepository transactionDAO;
+    private final OrderRepository orderDAO;
+    private final OrderLogRepository orderLogDAO;
 
-    public BankWebhookReconciliationService() {
-        this(new BankWebhookEventDAO(), new PaymentTransactionDAO(), new OrderDAO(), new OrderLogDAO());
-    }
-
-    public BankWebhookReconciliationService(BankWebhookEventDAO eventDAO,
-                                            PaymentTransactionDAO transactionDAO,
-                                            OrderDAO orderDAO) {
-        this(eventDAO, transactionDAO, orderDAO, new OrderLogDAO());
-    }
-
-    public BankWebhookReconciliationService(BankWebhookEventDAO eventDAO,
-                                            PaymentTransactionDAO transactionDAO,
-                                            OrderDAO orderDAO,
-                                            OrderLogDAO orderLogDAO) {
+    @Autowired
+    public BankWebhookReconciliationService(BankWebhookEventRepository eventDAO,
+                                            PaymentTransactionRepository transactionDAO,
+                                            OrderRepository orderDAO,
+                                            OrderLogRepository orderLogDAO) {
         this.eventDAO = eventDAO;
         this.transactionDAO = transactionDAO;
         this.orderDAO = orderDAO;
         this.orderLogDAO = orderLogDAO;
     }
 
+    @Transactional
     public BankWebhookReconciliationResult reconcile(BankWebhookPayload payload) throws Exception {
         if (payload == null || isBlank(payload.getTransactionId())
                 || payload.getAmount() == null || isBlank(payload.getContent())) {
@@ -49,15 +44,11 @@ public class BankWebhookReconciliationService {
             );
         }
 
-        try (Connection conn = DBContext.getConnection()) {
-            conn.setAutoCommit(false);
-            try {
+        try {
                 BankWebhookEvent existing = eventDAO.findByProviderTransactionId(
-                        conn,
                         payload.getTransactionId()
                 );
                 if (existing != null) {
-                    conn.commit();
                     return BankWebhookReconciliationResult.of(
                             BankWebhookReconciliationResult.Status.DUPLICATE,
                             "Webhook đã được xử lý trước đó.",
@@ -67,13 +58,11 @@ public class BankWebhookReconciliationService {
                 }
 
                 PaymentTransaction transaction = transactionDAO.findPendingByTransferReferenceInContentForUpdate(
-                        conn,
                         payload.getContent()
                 );
 
                 if (transaction == null) {
                     eventDAO.save(
-                            conn,
                             BankWebhookEvent.Status.UNMATCHED,
                             payload.getTransactionId(),
                             payload.getAmount(),
@@ -82,7 +71,6 @@ public class BankWebhookReconciliationService {
                             null,
                             payload.getRawPayload()
                     );
-                    conn.commit();
                     return BankWebhookReconciliationResult.of(
                             BankWebhookReconciliationResult.Status.UNMATCHED,
                             "Không tìm thấy đơn chờ thanh toán khớp nội dung chuyển khoản.",
@@ -93,7 +81,6 @@ public class BankWebhookReconciliationService {
 
                 if (isExpired(transaction)) {
                     eventDAO.save(
-                            conn,
                             BankWebhookEvent.Status.EXPIRED,
                             payload.getTransactionId(),
                             payload.getAmount(),
@@ -102,8 +89,7 @@ public class BankWebhookReconciliationService {
                             transaction.getId(),
                             payload.getRawPayload()
                     );
-                    transactionDAO.applyWebhookResult(
-                            conn,
+                    if (!transactionDAO.applyWebhookResultTx(
                             transaction.getId(),
                             payload.getTransactionId(),
                             payload.getAmount(),
@@ -113,13 +99,16 @@ public class BankWebhookReconciliationService {
                             "EXPIRED",
                             "Giao dịch đến sau thời hạn giữ thanh toán.",
                             null
-                    );
-                    if (!orderDAO.updatePaymentStatus(conn, transaction.getOrderId(), false)
-                            || !orderDAO.releaseReservedStockForOrder(conn, transaction.getOrderId())
-                            || !orderLogDAO.insert(conn, transaction.getOrderId(), "WEBHOOK", null,
+                    )) {
+                        rollbackOnly();
+                        throw new IllegalStateException("applyWebhookResult failed");
+                    }
+                    if (!orderDAO.updatePaymentStatus( transaction.getOrderId(), false)
+                            || !orderDAO.releaseReservedStockForOrder( transaction.getOrderId())
+                            || !orderLogDAO.insert( transaction.getOrderId(), "WEBHOOK", null,
                             "BANK_WEBHOOK_EXPIRED", transaction.getStatus(), "EXPIRED",
                             "Webhook đến sau thời hạn giữ thanh toán.")) {
-                        conn.rollback();
+                        rollbackOnly();
                         return BankWebhookReconciliationResult.of(
                                 BankWebhookReconciliationResult.Status.EXPIRED,
                                 "KhÃ´ng thá»ƒ tráº£ láº¡i tá»“n kho cho giao dá»‹ch háº¿t háº¡n.",
@@ -127,7 +116,6 @@ public class BankWebhookReconciliationService {
                                 transaction.getId()
                         );
                     }
-                    conn.commit();
                     return BankWebhookReconciliationResult.of(
                             BankWebhookReconciliationResult.Status.EXPIRED,
                             "Giao dịch đến sau thời hạn giữ thanh toán.",
@@ -139,7 +127,6 @@ public class BankWebhookReconciliationService {
                 boolean amountMatches = payload.getAmount().compareTo(transaction.getAmount()) == 0;
                 if (!amountMatches) {
                     eventDAO.save(
-                            conn,
                             BankWebhookEvent.Status.AMOUNT_MISMATCH,
                             payload.getTransactionId(),
                             payload.getAmount(),
@@ -148,8 +135,7 @@ public class BankWebhookReconciliationService {
                             transaction.getId(),
                             payload.getRawPayload()
                     );
-                    transactionDAO.applyWebhookResult(
-                            conn,
+                    if (!transactionDAO.applyWebhookResultTx(
                             transaction.getId(),
                             payload.getTransactionId(),
                             payload.getAmount(),
@@ -159,13 +145,16 @@ public class BankWebhookReconciliationService {
                             "MISMATCH",
                             "Số tiền chuyển khoản không khớp đơn hàng.",
                             null
-                    );
-                    if (!orderDAO.updatePaymentStatus(conn, transaction.getOrderId(), false)
-                            || !orderDAO.releaseReservedStockForOrder(conn, transaction.getOrderId())
-                            || !orderLogDAO.insert(conn, transaction.getOrderId(), "WEBHOOK", null,
+                    )) {
+                        rollbackOnly();
+                        throw new IllegalStateException("applyWebhookResult failed");
+                    }
+                    if (!orderDAO.updatePaymentStatus( transaction.getOrderId(), false)
+                            || !orderDAO.releaseReservedStockForOrder( transaction.getOrderId())
+                            || !orderLogDAO.insert( transaction.getOrderId(), "WEBHOOK", null,
                             "BANK_WEBHOOK_AMOUNT_MISMATCH", transaction.getStatus(), "MISMATCH",
                             "Webhook thanh toán gửi số tiền không khớp.")) {
-                        conn.rollback();
+                        rollbackOnly();
                         return BankWebhookReconciliationResult.of(
                                 BankWebhookReconciliationResult.Status.AMOUNT_MISMATCH,
                                 "KhÃ´ng thá»ƒ tráº£ láº¡i tá»“n kho cho giao dá»‹ch chÆ°a khá»›p.",
@@ -173,7 +162,6 @@ public class BankWebhookReconciliationService {
                                 transaction.getId()
                         );
                     }
-                    conn.commit();
                     return BankWebhookReconciliationResult.of(
                             BankWebhookReconciliationResult.Status.AMOUNT_MISMATCH,
                             "Số tiền chuyển khoản không khớp đơn hàng.",
@@ -186,7 +174,6 @@ public class BankWebhookReconciliationService {
                         ? Timestamp.valueOf(LocalDateTime.now())
                         : Timestamp.valueOf(payload.getPaidAt());
                 eventDAO.save(
-                        conn,
                         BankWebhookEvent.Status.MATCHED,
                         payload.getTransactionId(),
                         payload.getAmount(),
@@ -195,8 +182,7 @@ public class BankWebhookReconciliationService {
                         transaction.getId(),
                         payload.getRawPayload()
                 );
-                transactionDAO.applyWebhookResult(
-                        conn,
+                if (!transactionDAO.applyWebhookResultTx(
                         transaction.getId(),
                         payload.getTransactionId(),
                         payload.getAmount(),
@@ -206,14 +192,17 @@ public class BankWebhookReconciliationService {
                         "VERIFIED",
                         "Webhook ngân hàng đã khớp mã thanh toán và số tiền.",
                         verifiedAt
-                );
-                if (!orderDAO.updatePaymentStatus(conn, transaction.getOrderId(), true)
-                        || !orderDAO.markAwaitingPaymentOrderPaid(conn, transaction.getOrderId())
-                        || !orderDAO.finalizeReservedStockForOrder(conn, transaction.getOrderId())
-                        || !orderLogDAO.insert(conn, transaction.getOrderId(), "WEBHOOK", null,
+                )) {
+                    rollbackOnly();
+                    throw new IllegalStateException("applyWebhookResult failed");
+                }
+                if (!orderDAO.updatePaymentStatus( transaction.getOrderId(), true)
+                        || !orderDAO.markAwaitingPaymentOrderPaid( transaction.getOrderId())
+                        || !orderDAO.finalizeReservedStockForOrder( transaction.getOrderId())
+                        || !orderLogDAO.insert( transaction.getOrderId(), "WEBHOOK", null,
                         "BANK_WEBHOOK_VERIFIED", transaction.getStatus(), "VERIFIED",
                         "Webhook ngân hàng đã khớp thanh toán.")) {
-                    conn.rollback();
+                    rollbackOnly();
                     return BankWebhookReconciliationResult.of(
                             BankWebhookReconciliationResult.Status.VERIFIED,
                             "KhÃ´ng thá»ƒ chá»‘t tá»“n kho cho giao dá»‹ch Ä‘Ã£ xÃ¡c nháº­n.",
@@ -221,7 +210,6 @@ public class BankWebhookReconciliationService {
                             transaction.getId()
                     );
                 }
-                conn.commit();
                 return BankWebhookReconciliationResult.of(
                         BankWebhookReconciliationResult.Status.VERIFIED,
                         "Đã xác nhận thanh toán tự động.",
@@ -229,11 +217,17 @@ public class BankWebhookReconciliationService {
                         transaction.getId()
                 );
             } catch (Exception e) {
-                conn.rollback();
+                rollbackOnly();
                 throw e;
-            } finally {
-                conn.setAutoCommit(true);
             }
+    }
+
+    private static void rollbackOnly() {
+        try {
+            org.springframework.transaction.interceptor.TransactionAspectSupport
+                    .currentTransactionStatus().setRollbackOnly();
+        } catch (Exception ignored) {
+            // No ambient transaction (should not happen here).
         }
     }
 

@@ -1,10 +1,10 @@
 package services;
 
 import com.petshop.context.DBContext;
-import com.petshop.dao.CouponDao;
+import com.petshop.repository.CouponRepository;
 import com.petshop.repository.CartRepository;
 import static org.mockito.Mockito.mock;
-import com.petshop.dao.OrderDAO;
+import com.petshop.repository.OrderRepository;
 import com.petshop.repository.PaymentTransactionRepository;
 import com.petshop.dao.ProductDAO;
 import com.petshop.repository.UserRepository;
@@ -111,9 +111,13 @@ class CheckoutConcurrencyTest {
         assertEquals(2, users.size());
 
         CheckoutService checkoutService = new CheckoutService(
-                new ProductDAO(), null, new CouponDao(),
-                new OrderDAO(), mock(PaymentTransactionRepository.class),
-                mock(CartRepository.class), new OrderEmailService());
+                mock(com.petshop.repository.ProductRepository.class), null,
+                mock(com.petshop.repository.CouponRepository.class),
+                mock(com.petshop.repository.OrderRepository.class), mock(PaymentTransactionRepository.class),
+                mock(CartRepository.class), new OrderEmailService(),
+                mock(com.petshop.repository.OrderSignRepository.class),
+                mock(com.petshop.repository.CertificateRepository.class),
+                mock(com.petshop.repository.PromotionRepository.class));
 
         Callable<CheckoutResult> firstCheckout =
                 checkoutFor(checkoutService, productId, users.get(0));

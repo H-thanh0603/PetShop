@@ -1,5 +1,7 @@
 package services.ai.common;
 
+import org.springframework.stereotype.Component;
+
 import com.petshop.context.DBContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -11,6 +13,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 /** JDBC MemoryStore over {@code ai_customer_memory} (see V5 migration). */
+@Component
 public class DbMemoryStore implements MemoryStore {
     private static final Logger log = LoggerFactory.getLogger(DbMemoryStore.class);
 

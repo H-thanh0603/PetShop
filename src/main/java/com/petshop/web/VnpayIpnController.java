@@ -15,7 +15,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 
-import com.petshop.dao.OrderDAO;
+import com.petshop.repository.OrderRepository;
 import com.petshop.repository.PaymentTransactionRepository;
 import com.petshop.model.Order;
 import com.petshop.util.Json;
@@ -33,11 +33,11 @@ public class VnpayIpnController {
 
     private static final Logger logger = LoggerFactory.getLogger(VnpayIpnController.class);
 
-    private final OrderDAO orderDAO;
+    private final OrderRepository orderDAO;
     private final PaymentTransactionRepository paymentTransactionDAO;
 
     @Autowired
-    public VnpayIpnController(OrderDAO orderDAO, PaymentTransactionRepository paymentTransactionDAO) {
+    public VnpayIpnController(OrderRepository orderDAO, PaymentTransactionRepository paymentTransactionDAO) {
         this.orderDAO = orderDAO;
         this.paymentTransactionDAO = paymentTransactionDAO;
     }

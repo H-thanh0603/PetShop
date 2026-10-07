@@ -3,7 +3,6 @@ package com.petshop.web;
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
-import java.sql.Connection;
 import java.sql.Timestamp;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
@@ -22,14 +21,14 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 
-import com.petshop.context.DBContext;
 import com.petshop.repository.AddressRepository;
+import com.petshop.repository.PromotionRepository;
 import com.petshop.repository.CartRepository;
-import com.petshop.dao.CouponDao;
+import com.petshop.repository.CouponRepository;
 import com.petshop.repository.InventoryBatchRepository;
-import com.petshop.dao.OrderDAO;
+import com.petshop.repository.OrderRepository;
 import com.petshop.repository.PaymentTransactionRepository;
-import com.petshop.dao.ProductDAO;
+import com.petshop.repository.ProductRepository;
 import com.petshop.repository.UserRepository;
 import com.petshop.model.Address;
 import com.petshop.model.CartItem;
@@ -68,24 +67,29 @@ public class CheckoutController {
     private static final int DEFAULT_PRICE = 500000;
     private static final String BANK_TRANSFER_REFERENCE_SESSION_KEY = "bankTransferReference";
 
-    private final CouponDao couponDao;
+    private final CouponRepository couponDao;
     private final AddressRepository addressDAO;
     private final InventoryService inventoryService;
     private final CartRepository cartDAO;
-    private final ProductDAO productDAO;
-    private final OrderDAO orderDAO;
+    private final ProductRepository productDAO;
+    private final OrderRepository orderDAO;
     private final PaymentTransactionRepository paymentTransactionDAO;
     private final UserRepository userDAO;
     private final OrderEmailService orderEmailService;
-    private final InventoryBatchRepository inventoryBatchDAO;
     private final com.petshop.repository.NotificationRepository notificationDAO;
+    private final PromotionRepository promotionDAO;
+    private final com.petshop.repository.OrderSignRepository orderSignDAO;
+    private final com.petshop.repository.CertificateRepository certificateDAO;
 
     @Autowired
-    public CheckoutController(CouponDao couponDao, AddressRepository addressDAO, InventoryService inventoryService,
-                              CartRepository cartDAO, ProductDAO productDAO, OrderDAO orderDAO,
+    public CheckoutController(CouponRepository couponDao, AddressRepository addressDAO, InventoryService inventoryService,
+                              CartRepository cartDAO, ProductRepository productDAO, OrderRepository orderDAO,
                               PaymentTransactionRepository paymentTransactionDAO, UserRepository userDAO,
-                              OrderEmailService orderEmailService, InventoryBatchRepository inventoryBatchDAO,
-                              com.petshop.repository.NotificationRepository notificationDAO) {
+                              OrderEmailService orderEmailService,
+                              com.petshop.repository.NotificationRepository notificationDAO,
+                              PromotionRepository promotionDAO,
+                              com.petshop.repository.OrderSignRepository orderSignDAO,
+                              com.petshop.repository.CertificateRepository certificateDAO) {
         this.couponDao = couponDao;
         this.addressDAO = addressDAO;
         this.inventoryService = inventoryService;
@@ -95,8 +99,10 @@ public class CheckoutController {
         this.paymentTransactionDAO = paymentTransactionDAO;
         this.userDAO = userDAO;
         this.orderEmailService = orderEmailService;
-        this.inventoryBatchDAO = inventoryBatchDAO;
         this.notificationDAO = notificationDAO;
+        this.promotionDAO = promotionDAO;
+        this.orderSignDAO = orderSignDAO;
+        this.certificateDAO = certificateDAO;
     }
 
 
@@ -727,7 +733,7 @@ public class CheckoutController {
     private services.CheckoutService buildCheckoutService() {
         return new services.CheckoutService(
                 productDAO, userDAO, couponDao, orderDAO, paymentTransactionDAO, cartDAO,
-                orderEmailService, inventoryBatchDAO
+                orderEmailService, orderSignDAO, certificateDAO, promotionDAO
         );
     }
 

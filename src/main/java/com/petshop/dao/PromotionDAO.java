@@ -1,4 +1,5 @@
 package com.petshop.dao;
+import org.springframework.stereotype.Component;
 
 import com.petshop.context.DBContext;
 import com.petshop.model.Product;
@@ -17,6 +18,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
+@Component
 public class PromotionDAO {
 
     private static final Logger log = LoggerFactory.getLogger(PromotionDAO.class);

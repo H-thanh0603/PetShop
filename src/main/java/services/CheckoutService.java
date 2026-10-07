@@ -1,15 +1,15 @@
 package services;
 
-import com.petshop.context.DBContext;
+
 import com.petshop.repository.CartRepository;
-import com.petshop.dao.CouponDao;
+import com.petshop.repository.CouponRepository;
 import com.petshop.repository.InventoryBatchRepository;
-import com.petshop.dao.OrderDAO;
+import com.petshop.repository.OrderRepository;
 import com.petshop.repository.OrderSignRepository;
 import com.petshop.repository.CertificateRepository;
 import com.petshop.repository.PaymentTransactionRepository;
-import com.petshop.dao.ProductDAO;
-import com.petshop.dao.PromotionDAO;
+import com.petshop.repository.ProductRepository;
+import com.petshop.repository.PromotionRepository;
 import com.petshop.repository.UserRepository;
 import com.petshop.model.CartItem;
 import com.petshop.model.Coupon;
@@ -33,7 +33,8 @@ import java.math.RoundingMode;
 import java.security.KeyPair;
 import java.security.PrivateKey;
 import java.security.PublicKey;
-import java.sql.Connection;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.transaction.annotation.Transactional;
 import java.sql.Timestamp;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -48,41 +49,24 @@ public class CheckoutService {
 
     private static final String SIGNATURE_TOOL_URL = "/tools/CryptoToolMVC.exe";
 
-    private final ProductDAO productDAO;
+    private final ProductRepository productDAO;
     private final UserRepository userDAO;
-    private final CouponDao couponDao;
-    private final OrderDAO orderDAO;
+    private final CouponRepository couponDao;
+    private final OrderRepository orderDAO;
     private final PaymentTransactionRepository paymentTransactionDAO;
     private final CartRepository cartDAO;
     private final OrderEmailService orderEmailService;
-    private final InventoryBatchRepository inventoryBatchDAO;
-    private final PromotionDAO promotionDAO;
+    private final PromotionRepository promotionDAO;
     private final ProductPricingService pricingService;
     private final OrderSignRepository orderSignDAO;
     private final CertificateRepository certificateDAO;
 
-    public CheckoutService(ProductDAO productDAO, UserRepository userDAO, CouponDao couponDao,
-                           OrderDAO orderDAO, PaymentTransactionRepository paymentTransactionDAO,
-                           CartRepository cartDAO, OrderEmailService orderEmailService) {
-        this(productDAO, userDAO, couponDao, orderDAO, paymentTransactionDAO,
-                cartDAO, orderEmailService, null,
-                null, null);
-    }
-
-    public CheckoutService(ProductDAO productDAO, UserRepository userDAO, CouponDao couponDao,
-                           OrderDAO orderDAO, PaymentTransactionRepository paymentTransactionDAO,
+    @Autowired
+    public CheckoutService(ProductRepository productDAO, UserRepository userDAO, CouponRepository couponDao,
+                           OrderRepository orderDAO, PaymentTransactionRepository paymentTransactionDAO,
                            CartRepository cartDAO, OrderEmailService orderEmailService,
-                           InventoryBatchRepository inventoryBatchDAO) {
-        this(productDAO, userDAO, couponDao, orderDAO, paymentTransactionDAO,
-                cartDAO, orderEmailService, inventoryBatchDAO,
-                null, null);
-    }
-
-    public CheckoutService(ProductDAO productDAO, UserRepository userDAO, CouponDao couponDao,
-                           OrderDAO orderDAO, PaymentTransactionRepository paymentTransactionDAO,
-                           CartRepository cartDAO, OrderEmailService orderEmailService,
-                           InventoryBatchRepository inventoryBatchDAO,
-                           OrderSignRepository orderSignDAO, CertificateRepository certificateDAO) {
+                           OrderSignRepository orderSignDAO, CertificateRepository certificateDAO,
+                           PromotionRepository promotionDAO) {
         this.productDAO = productDAO;
         this.userDAO = userDAO;
         this.couponDao = couponDao;
@@ -90,9 +74,10 @@ public class CheckoutService {
         this.paymentTransactionDAO = paymentTransactionDAO;
         this.cartDAO = cartDAO;
         this.orderEmailService = orderEmailService;
-        this.inventoryBatchDAO = inventoryBatchDAO;
-        this.promotionDAO = new PromotionDAO();
-        this.pricingService = new ProductPricingService(this.promotionDAO);
+        this.promotionDAO = promotionDAO;
+        // Pricing reads stay on the JDBC path (ProductDAO.mapProduct shares it);
+        // PromotionDAO.java lives until Task 10. Only the reserve write uses the repo.
+        this.pricingService = new ProductPricingService(new com.petshop.dao.PromotionDAO());
         this.orderSignDAO = orderSignDAO;
         this.certificateDAO = certificateDAO;
     }
@@ -132,6 +117,7 @@ public class CheckoutService {
         );
     }
 
+    @Transactional
     public CheckoutResult processCheckout(User user, Map<Integer, CartItem> cart,
                                           String recipientFullname, String recipientPhone,
                                           String shippingAddress, String note,
@@ -141,9 +127,7 @@ public class CheckoutService {
                                           String reservedTransferReference) throws Exception {
         BigDecimal totalAmount = calculateCartTotal(cart);
 
-        try (Connection conn = DBContext.getConnection()) {
-            conn.setAutoCommit(false);
-            try {
+        try {
                 // Lock products in a deterministic (ascending id) order: with
                 // HashMap iteration two concurrent checkouts holding overlapping
                 // carts could lock the same rows in opposite order and deadlock.
@@ -151,19 +135,19 @@ public class CheckoutService {
                 orderedItems.sort(Comparator.comparingInt(item -> item.getProduct().getId()));
 
                 for (CartItem item : orderedItems) {
-                    Product latestProduct = productDAO.getProductByIdForUpdate(conn, item.getProduct().getId());
+                    Product latestProduct = productDAO.findForUpdateById(item.getProduct().getId());
                     if (latestProduct == null) {
-                        conn.rollback();
+                        rollbackOnly();
                         return new CheckoutResult(false, "Có sản phẩm không còn tồn tại.");
                     }
                     if (latestProduct.getAvailablePurchaseQuantity() < item.getQuantity()) {
-                        conn.rollback();
+                        rollbackOnly();
                         return new CheckoutResult(false, "Sản phẩm \"" + latestProduct.getName() + "\" chỉ còn " + latestProduct.getAvailablePurchaseQuantity() + " sản phẩm có thể mua.");
                     }
-                    pricingService.applyPricing(conn, latestProduct, Timestamp.valueOf(LocalDateTime.now()));
+                    pricingService.applyPricing(latestProduct, Timestamp.valueOf(LocalDateTime.now()));
                     if (!samePromotion(item.getProduct(), latestProduct)
                             || item.getProduct().getEffectivePrice().compareTo(latestProduct.getEffectivePrice()) != 0) {
-                        conn.rollback();
+                        rollbackOnly();
                         return new CheckoutResult(false, "Khuyến mãi của một số sản phẩm đã thay đổi. Vui lòng kiểm tra lại giỏ hàng trước khi đặt hàng.");
                     }
                     item.setProduct(latestProduct);
@@ -173,22 +157,21 @@ public class CheckoutService {
 
                 BigDecimal discount = BigDecimal.ZERO;
                 if (couponState != null && couponState.isValid()) {
-                    Coupon latestCoupon = couponDao.getValidCouponByCode(conn, couponState.getCoupon().getCode());
+                    Coupon latestCoupon = couponDao.getValidCouponByCode(couponState.getCoupon().getCode());
                     if (latestCoupon == null) {
-                        conn.rollback();
+                        rollbackOnly();
                         return new CheckoutResult(false, "Mã giảm giá không hợp lệ hoặc đã hết hạn.");
                     }
                     if (latestCoupon.getMinOrder() != null && totalAmount.compareTo(latestCoupon.getMinOrder()) < 0) {
-                        conn.rollback();
+                        rollbackOnly();
                         return new CheckoutResult(false, "Đơn hàng chưa đạt giá trị tối thiểu để dùng mã giảm giá.");
                     }
-                    // P2-Task4 intermediate: ambient-tx call until Task 9 wraps checkout in @Transactional.
                     if (!userDAO.markDiscountAsUsed(user.getId())) {
-                        conn.rollback();
+                        rollbackOnly();
                         return new CheckoutResult(false, "Tài khoản này đã sử dụng mã giảm giá trước đó.");
                     }
-                    if (!couponDao.increaseUsedIfAvailable(conn, latestCoupon.getId())) {
-                        conn.rollback();
+                    if (couponDao.increaseUsedIfAvailable(latestCoupon.getId()) <= 0) {
+                        rollbackOnly();
                         return new CheckoutResult(false, "Mã giảm giá đã hết lượt sử dụng.");
                     }
                     discount = calculateDiscount(totalAmount, latestCoupon);
@@ -198,12 +181,12 @@ public class CheckoutService {
 
                 PaymentProvider provider = PaymentRegistry.getInstance().get(paymentMethodKey);
                 if (provider == null) {
-                    conn.rollback();
+                    rollbackOnly();
                     return new CheckoutResult(false, "Phương thức thanh toán không hợp lệ.");
                 }
                 PaymentResult paymentResult = provider.process(finalTotal.doubleValue());
                 if (!paymentResult.isSuccess()) {
-                    conn.rollback();
+                    rollbackOnly();
                     return new CheckoutResult(false, paymentResult.getMessage());
                 }
 
@@ -221,15 +204,15 @@ public class CheckoutService {
                 order.setShippingFee(BigDecimal.valueOf(shippingFee));
                 order.setDiscountAmount(discount);
 
-                int orderId = orderDAO.saveOrder(conn, order);
+                int orderId = orderDAO.saveOrder(order);
                 if (orderId <= 0) {
-                    conn.rollback();
+                    rollbackOnly();
                     return new CheckoutResult(false, "Không tạo được đơn hàng.");
                 }
 
                 BankTransferDetails bankTransferDetails = BankTransferDetails.fromConfig();
                 if ("BANK_TRANSFER".equalsIgnoreCase(paymentResult.getPaymentMethodDb()) && !bankTransferDetails.isConfigured()) {
-                    conn.rollback();
+                    rollbackOnly();
                     return new CheckoutResult(false, "Thiếu cấu hình chuyển khoản ngân hàng. Vui lòng liên hệ quản trị viên.");
                 }
 
@@ -239,14 +222,14 @@ public class CheckoutService {
                         Integer promotionId = product.getActivePromotionId();
                         Integer remaining = product.getFlashSaleRemainingQuantity();
                         if (promotionId == null || remaining == null || ci.getQuantity() > remaining
-                                || !promotionDAO.reserveFlashSaleQuantity(conn, promotionId, product.getId(), ci.getQuantity())) {
-                            conn.rollback();
+                                || promotionDAO.reserveFlashSaleQuantity(promotionId, product.getId(), ci.getQuantity()) <= 0) {
+                            rollbackOnly();
                             return new CheckoutResult(false, "Khuyến mãi của một số sản phẩm đã thay đổi. Vui lòng kiểm tra lại giỏ hàng trước khi đặt hàng.");
                         }
                     }
 
-                    if (!productDAO.reserveStock(conn, product.getId(), ci.getQuantity())) {
-                        conn.rollback();
+                    if (!productDAO.reserveStockAmbient(product.getId(), ci.getQuantity())) {
+                        rollbackOnly();
                         return new CheckoutResult(false, "Sản phẩm \"" + product.getName() + "\" đã hết hàng trong lúc thanh toán.");
                     }
 
@@ -264,8 +247,8 @@ public class CheckoutService {
                     orderItem.setProductNameSnapshot(product.getName());
                     orderItem.setProductImageSnapshot(product.getImage());
 
-                    if (!orderDAO.saveOrderItem(conn, orderItem)) {
-                        conn.rollback();
+                    if (!orderDAO.saveOrderItem(orderItem)) {
+                        rollbackOnly();
                         return new CheckoutResult(false, "Không lưu được chi tiết đơn hàng.");
                     }
                 }
@@ -273,17 +256,14 @@ public class CheckoutService {
                 PaymentTransaction paymentTransaction = buildPaymentTransaction(
                         user, orderId, finalTotal, paymentResult, bankTransferDetails, reservedTransferReference
                 );
-                // P2-Task8 intermediate: ambient-tx call until Task 9 wraps checkout in @Transactional.
                 int paymentTransactionId = paymentTransactionDAO.saveTx(paymentTransaction);
                 if (paymentTransactionId <= 0) {
-                    conn.rollback();
+                    rollbackOnly();
                     return new CheckoutResult(false, "Không tạo được giao dịch thanh toán.");
                 }
 
-                // P2-Task6 intermediate: ambient-tx call until Task 9 wraps checkout in @Transactional.
                 cartDAO.clearCart(user.getId());
 
-                conn.commit();
 
                 // Digital-signature material is generated and stored AFTER the
                 // transaction commits: RSA/X.509 work is CPU-heavy and used to
@@ -329,11 +309,17 @@ public class CheckoutService {
                 successResult.setToolUrl(SIGNATURE_TOOL_URL);
                 return successResult;
             } catch (Exception e) {
-                conn.rollback();
+                rollbackOnly();
                 throw e;
-            } finally {
-                conn.setAutoCommit(true);
             }
+    }
+
+    private static void rollbackOnly() {
+        try {
+            org.springframework.transaction.interceptor.TransactionAspectSupport
+                    .currentTransactionStatus().setRollbackOnly();
+        } catch (Exception ignored) {
+            // No ambient transaction (should not happen here).
         }
     }
 

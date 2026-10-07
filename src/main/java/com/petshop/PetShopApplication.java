@@ -12,8 +12,12 @@ import org.springframework.boot.web.servlet.support.SpringBootServletInitializer
  * {@link com.petshop.config.WebRegistrationConfig} during the migration;
  * they keep their existing behaviour. Run with `java -jar petshop-boot.war`
  * or deploy the plain WAR to an external Tomcat 10.1.
+ *
+ * The {@code services} package lives outside {@code com.petshop} (legacy
+ * package consolidation kept its name), so it must be scanned explicitly —
+ * controllers constructor-inject those services as Spring beans.
  */
-@SpringBootApplication
+@SpringBootApplication(scanBasePackages = {"com.petshop", "services"})
 public class PetShopApplication extends SpringBootServletInitializer {
 
     public static void main(String[] args) {

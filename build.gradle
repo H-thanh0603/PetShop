@@ -67,6 +67,15 @@ test {
         environment 'DOCKER_HOST', System.getenv('DOCKER_HOST')
         environment 'DOCKER_API_VERSION', System.getenv('DOCKER_API_VERSION') ?: '1.44'
     }
+    // Repository tests (JpaTestConfig) read the local petshop MySQL password
+    // from the env; forward it for the same reason as DOCKER_HOST (daemon env
+    // is not inherited from the client).
+    if (System.getenv('PETSHOP_DB_PASSWORD')) {
+        environment 'PETSHOP_DB_PASSWORD', System.getenv('PETSHOP_DB_PASSWORD')
+    }
+    if (System.getenv('DB_PASSWORD')) {
+        environment 'DB_PASSWORD', System.getenv('DB_PASSWORD')
+    }
 }
 
 tasks.withType(JavaCompile).configureEach {

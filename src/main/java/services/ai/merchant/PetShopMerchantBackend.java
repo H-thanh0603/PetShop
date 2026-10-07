@@ -1,7 +1,10 @@
 package services.ai.merchant;
 
-import com.petshop.dao.OrderDAO;
+import org.springframework.stereotype.Service;
+
+import com.petshop.repository.OrderRepository;
 import com.petshop.dao.ProductDAO;
+import com.petshop.repository.OrderRepository;
 import com.petshop.repository.PromotionRepository;
 import com.petshop.dao.ReportDAO;
 import com.petshop.model.Order;
@@ -25,11 +28,12 @@ import java.util.Map;
  * fenced data. Reads are free; stage_* records proposals without touching
  * live state; only apply (after host approval) mutates anything.
  */
+@Service
 public class PetShopMerchantBackend {
     private static final Logger log = LoggerFactory.getLogger(PetShopMerchantBackend.class);
 
     private final ReportDAO reportDAO = new ReportDAO();
-    private final OrderDAO orderDAO = new OrderDAO();
+    private final OrderRepository orderDAO;
     private final ProductDAO productDAO = new ProductDAO();
     private final PromotionRepository promotionDAO;
     /**
@@ -42,8 +46,9 @@ public class PetShopMerchantBackend {
     private final ChangeLedger ledger = SHARED_LEDGER;
     private final MerchantChangeDAO changeDAO = new MerchantChangeDAO();
 
-    public PetShopMerchantBackend(PromotionRepository promotionDAO) {
+    public PetShopMerchantBackend(PromotionRepository promotionDAO, OrderRepository orderDAO) {
         this.promotionDAO = promotionDAO;
+        this.orderDAO = orderDAO;
         if (!hydrated) {
             synchronized (PetShopMerchantBackend.class) {
                 if (!hydrated) {

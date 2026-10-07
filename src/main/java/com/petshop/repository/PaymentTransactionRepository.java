@@ -91,32 +91,27 @@ public interface PaymentTransactionRepository extends JpaRepository<PaymentTrans
 
     @Transactional
     default PaymentTransaction findPendingByTransferReferenceInContentForUpdate(String content) {
-        try {
-            PaymentTransaction exactMatch = findPendingByExactReferenceForUpdate(content);
-            if (exactMatch != null) {
-                return exactMatch;
-            }
-            String normalizedContent = normalizeTransferReferenceToken(content);
-            if (normalizedContent.isEmpty()) {
-                return null;
-            }
-            PaymentTransaction bestMatch = null;
-            int bestLength = -1;
-            for (PaymentTransaction candidate : findPendingCandidatesForUpdate()) {
-                String normalizedReference = normalizeTransferReferenceToken(candidate.getTransferReference());
-                if (!normalizedReference.isEmpty()
-                        && normalizedContent.contains(normalizedReference)
-                        && normalizedReference.length() > bestLength) {
-                    bestMatch = candidate;
-                    bestLength = normalizedReference.length();
-                }
-            }
-            return bestMatch;
-        } catch (DataAccessException e) {
-            LoggerFactory.getLogger(PaymentTransactionRepository.class)
-                    .error("DB error", e);
+        // Preserved: the old DAO threw (callers treat only null as not-found).
+        PaymentTransaction exactMatch = findPendingByExactReferenceForUpdate(content);
+        if (exactMatch != null) {
+            return exactMatch;
+        }
+        String normalizedContent = normalizeTransferReferenceToken(content);
+        if (normalizedContent.isEmpty()) {
             return null;
         }
+        PaymentTransaction bestMatch = null;
+        int bestLength = -1;
+        for (PaymentTransaction candidate : findPendingCandidatesForUpdate()) {
+            String normalizedReference = normalizeTransferReferenceToken(candidate.getTransferReference());
+            if (!normalizedReference.isEmpty()
+                    && normalizedContent.contains(normalizedReference)
+                    && normalizedReference.length() > bestLength) {
+                bestMatch = candidate;
+                bestLength = normalizedReference.length();
+            }
+        }
+        return bestMatch;
     }
 
     static String normalizeTransferReferenceToken(String value) {
@@ -155,6 +150,15 @@ public interface PaymentTransactionRepository extends JpaRepository<PaymentTrans
             return false;
         }
     }
+
+    @Query(value = "SELECT * FROM payment_transactions WHERE status = 'PENDING_VERIFICATION' "
+            + "AND COALESCE(expires_at, DATE_ADD(created_at, INTERVAL :minutes MINUTE)) <= NOW()",
+            nativeQuery = true)
+    List<PaymentTransaction> findExpiredPending(@Param("minutes") int pendingMinutes);
+
+    @Query("SELECT t FROM PaymentTransaction t WHERE t.id IN "
+            + "(SELECT MAX(t2.id) FROM PaymentTransaction t2 WHERE t2.orderId IN :orderIds GROUP BY t2.orderId)")
+    List<PaymentTransaction> findLatestForOrders(@Param("orderIds") List<Integer> orderIds);
 
     @Transactional
     default boolean updateLatestProviderResultForOrder(int orderId, String providerKey,

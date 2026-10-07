@@ -16,13 +16,13 @@ import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
-import com.petshop.dao.OrderDAO;
+import com.petshop.repository.OrderRepository;
 
 @ExtendWith(MockitoExtension.class)
 class GhnWebhookControllerTest {
 
     @Mock
-    OrderDAO orderDAO;
+    OrderRepository orderDAO;
 
     MockMvc mockMvc;
     GhnWebhookController controller;

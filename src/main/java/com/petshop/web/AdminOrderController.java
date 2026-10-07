@@ -11,7 +11,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 
 import com.petshop.repository.AdminActionLogRepository;
 import com.petshop.repository.NotificationRepository;
-import com.petshop.dao.OrderDAO;
+import com.petshop.repository.OrderRepository;
 import com.petshop.model.Order;
 import com.petshop.model.OrderLog;
 import com.petshop.model.OrderStatusHistory;
@@ -31,12 +31,12 @@ import tools.jackson.databind.JsonNode;
 public class AdminOrderController {
 
     private final AdminActionLogRepository actionLog;
-    private final OrderDAO orderDAO;
+    private final OrderRepository orderDAO;
     private final ShippingService shippingService;
     private final NotificationRepository notificationDAO;
 
     @Autowired
-    public AdminOrderController(AdminActionLogRepository actionLog, OrderDAO orderDAO,
+    public AdminOrderController(AdminActionLogRepository actionLog, OrderRepository orderDAO,
                                 ShippingService shippingService, NotificationRepository notificationDAO) {
         this.actionLog = actionLog;
         this.orderDAO = orderDAO;

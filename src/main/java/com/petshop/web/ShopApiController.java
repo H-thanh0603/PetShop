@@ -21,7 +21,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 
 import com.petshop.context.DBContext;
-import com.petshop.dao.OrderDAO;
+import com.petshop.repository.OrderRepository;
 import com.petshop.repository.PaymentTransactionRepository;
 import com.petshop.dao.ProductDAO;
 import com.petshop.repository.ReviewRepository;
@@ -45,13 +45,13 @@ import jakarta.servlet.http.HttpSession;
 public class ShopApiController {
 
     private final ProductDAO productDAO;
-    private final OrderDAO orderDAO;
+    private final OrderRepository orderDAO;
     private final PaymentTransactionRepository paymentTransactionDAO;
     private final ReviewRepository reviewDAO;
     private static final Logger logger = LoggerFactory.getLogger(ShopApiController.class);
 
     @Autowired
-    public ShopApiController(ProductDAO productDAO, OrderDAO orderDAO, PaymentTransactionRepository paymentTransactionDAO,
+    public ShopApiController(ProductDAO productDAO, OrderRepository orderDAO, PaymentTransactionRepository paymentTransactionDAO,
                              ReviewRepository reviewDAO) {
         this.productDAO = productDAO;
         this.orderDAO = orderDAO;

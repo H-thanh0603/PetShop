@@ -22,7 +22,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 
 import com.petshop.repository.CertificateRepository;
-import com.petshop.dao.OrderDAO;
+import com.petshop.repository.OrderRepository;
 import com.petshop.repository.OrderSignRepository;
 import com.petshop.repository.OrderSignatureRepository;
 import com.petshop.model.Certificate;
@@ -46,11 +46,11 @@ public class SignatureController {
     private final OrderSignRepository orderSignDAO;
     private final OrderSignatureRepository orderSignatureDAO;
     private final CertificateRepository certificateDAO;
-    private final OrderDAO orderDAO;
+    private final OrderRepository orderDAO;
 
     @Autowired
     public SignatureController(OrderSignRepository orderSignDAO, OrderSignatureRepository orderSignatureDAO,
-                               CertificateRepository certificateDAO, OrderDAO orderDAO) {
+                               CertificateRepository certificateDAO, OrderRepository orderDAO) {
         this.orderSignDAO = orderSignDAO;
         this.orderSignatureDAO = orderSignatureDAO;
         this.certificateDAO = certificateDAO;

@@ -26,7 +26,7 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
 import com.petshop.repository.AdminActionLogRepository;
-import com.petshop.dao.OrderDAO;
+import com.petshop.repository.OrderRepository;
 import com.petshop.repository.UserRepository;
 import com.petshop.model.User;
 
@@ -36,7 +36,7 @@ class AdminUserControllerTest {
     @Mock
     UserRepository userDAO;
     @Mock
-    OrderDAO orderDAO;
+    OrderRepository orderDAO;
     @Mock
     AdminActionLogRepository actionLog;
 

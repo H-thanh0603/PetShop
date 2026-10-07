@@ -17,6 +17,7 @@ import com.petshop.util.Json;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpSession;
 import services.ai.CommerceTools;
+import com.petshop.repository.OrderRepository;
 import com.petshop.repository.PromotionRepository;
 import services.ai.PetShopCommerceBackend;
 import services.ai.ToolDefinition;
@@ -36,11 +37,14 @@ public class McpController {
 
     private final PetShopCommerceBackend commerceBackend;
     private final PromotionRepository promotionDAO;
+    private final OrderRepository orderDAO;
 
     @Autowired
-    public McpController(PetShopCommerceBackend commerceBackend, PromotionRepository promotionDAO) {
+    public McpController(PetShopCommerceBackend commerceBackend, PromotionRepository promotionDAO,
+                               OrderRepository orderDAO) {
         this.commerceBackend = commerceBackend;
         this.promotionDAO = promotionDAO;
+        this.orderDAO = orderDAO;
     }
 
     @PostMapping(value = "/mcp", produces = "application/json;charset=UTF-8")
@@ -81,7 +85,7 @@ public class McpController {
                 PetShopCommerceBackend.SessionContext.of(null));
         for (ToolDefinition d : shopping.definitions()) tools.add(toolJson(d));
         if (isAdmin) {
-            var merchant = new MerchantTools(new PetShopMerchantBackend(promotionDAO), "mcp");
+            var merchant = new MerchantTools(new PetShopMerchantBackend(promotionDAO, orderDAO), "mcp");
             for (ToolDefinition d : merchant.definitions()) tools.add(toolJson(d));
         }
         ObjectNode o = Json.MAPPER.createObjectNode();
@@ -103,7 +107,7 @@ public class McpController {
         String result;
         if (merchantTool) {
             String operator = "mcp:" + (user == null ? "?" : user.getId());
-            result = new MerchantTools(new PetShopMerchantBackend(promotionDAO), operator).execute(name, args);
+            result = new MerchantTools(new PetShopMerchantBackend(promotionDAO, orderDAO), operator).execute(name, args);
         } else {
             result = new CommerceTools(commerceBackend,
                     PetShopCommerceBackend.SessionContext.of(user)).execute(name, args);

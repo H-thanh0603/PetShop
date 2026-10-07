@@ -8,6 +8,7 @@ import org.flywaydb.core.Flyway;
 import org.springframework.boot.persistence.autoconfigure.EntityScan;
 import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Import;
 
 /**
  * Test-only JPA infrastructure: points at the `petshop_test` database
@@ -17,6 +18,12 @@ import org.springframework.context.annotation.Bean;
  */
 @TestConfiguration
 @EntityScan("com.petshop.model")
+@Import({
+        com.petshop.repository.CartRepositoryImpl.class,
+        com.petshop.repository.WishlistRepositoryImpl.class,
+        com.petshop.repository.PromotionRepositoryImpl.class,
+        com.petshop.repository.OrderRepositoryImpl.class
+})
 public class JpaTestConfig {
 
     @Bean(destroyMethod = "close")

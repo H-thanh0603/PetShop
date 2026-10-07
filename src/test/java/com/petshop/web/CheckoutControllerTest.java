@@ -25,11 +25,13 @@ import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
 import com.petshop.repository.AddressRepository;
 import com.petshop.repository.CartRepository;
-import com.petshop.dao.CouponDao;
-import com.petshop.repository.InventoryBatchRepository;
-import com.petshop.dao.OrderDAO;
+import com.petshop.repository.CouponRepository;
+import com.petshop.repository.PromotionRepository;
+import com.petshop.repository.OrderSignRepository;
+import com.petshop.repository.CertificateRepository;
+import com.petshop.repository.OrderRepository;
 import com.petshop.repository.PaymentTransactionRepository;
-import com.petshop.dao.ProductDAO;
+import com.petshop.repository.ProductRepository;
 import com.petshop.repository.UserRepository;
 import com.petshop.model.Address;
 import com.petshop.model.CartItem;
@@ -48,7 +50,7 @@ import services.OrderEmailService;
 class CheckoutControllerTest {
 
     @Mock
-    CouponDao couponDao;
+    CouponRepository couponDao;
     @Mock
     AddressRepository addressDAO;
     @Mock
@@ -56,9 +58,9 @@ class CheckoutControllerTest {
     @Mock
     CartRepository cartDAO;
     @Mock
-    ProductDAO productDAO;
+    ProductRepository productDAO;
     @Mock
-    OrderDAO orderDAO;
+    OrderRepository orderDAO;
     @Mock
     PaymentTransactionRepository paymentTransactionDAO;
     @Mock
@@ -66,7 +68,9 @@ class CheckoutControllerTest {
     @Mock
     OrderEmailService orderEmailService;
     @Mock
-    InventoryBatchRepository inventoryBatchDAO;
+    PromotionRepository promotionDAO;
+    OrderSignRepository orderSignDAO;
+    CertificateRepository certificateDAO;
     @Mock
     com.petshop.repository.NotificationRepository notificationDAO;
 
@@ -79,7 +83,8 @@ class CheckoutControllerTest {
     void setUp() {
         mockMvc = MockMvcBuilders.standaloneSetup(new CheckoutController(
                 couponDao, addressDAO, inventoryService, cartDAO, productDAO,
-                orderDAO, paymentTransactionDAO, userDAO, orderEmailService, inventoryBatchDAO, notificationDAO)).build();
+                orderDAO, paymentTransactionDAO, userDAO, orderEmailService, notificationDAO,
+                promotionDAO, orderSignDAO, certificateDAO)).build();
 
         testUser = new User();
         testUser.setId(1);

@@ -1,4 +1,5 @@
 package com.petshop.dao;
+import org.springframework.stereotype.Component;
 
 import java.math.BigDecimal;
 import java.sql.Connection;
@@ -17,6 +18,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import services.ProductPricingService;
 
+@Component
 public class ProductDAO {
 
     private static final Logger log = LoggerFactory.getLogger(ProductDAO.class);
@@ -48,7 +50,8 @@ public class ProductDAO {
             "JOIN products pp ON pp.id = ppm.product_id " +
             "WHERE prm.status = 'ACTIVE' AND NOW() BETWEEN prm.start_date AND prm.end_date " +
             "GROUP BY ppm.product_id) bp ON bp.product_id = p.id ";
-    private final ProductPricingService pricingService = new ProductPricingService();
+    private final ProductPricingService pricingService =
+            new ProductPricingService(new com.petshop.dao.PromotionDAO());
 
     private Product mapProduct(ResultSet rs) throws Exception {
         String desc = rs.getString("description");

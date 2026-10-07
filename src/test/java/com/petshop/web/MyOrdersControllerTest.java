@@ -19,7 +19,7 @@ import org.springframework.mock.web.MockHttpSession;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
-import com.petshop.dao.OrderDAO;
+import com.petshop.repository.OrderRepository;
 import com.petshop.model.Order;
 import com.petshop.model.User;
 import services.ReorderService;
@@ -28,7 +28,7 @@ import services.ReorderService;
 class MyOrdersControllerTest {
 
     @Mock
-    OrderDAO orderDAO;
+    OrderRepository orderDAO;
     @Mock
     ReorderService reorderService;
 

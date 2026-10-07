@@ -17,7 +17,7 @@ class BankWebhookControllerTest {
     void sepayAuthorizationApiKeyHeaderIsAccepted() throws Exception {
         System.setProperty("payment.bank.webhook-secret", "sepay-secret");
         try {
-            BankWebhookController controller = new BankWebhookController();
+            BankWebhookController controller = new BankWebhookController(org.mockito.Mockito.mock(services.payment.BankWebhookReconciliationService.class));
             assertTrue(controller.isAuthorized(null, null, "Apikey sepay-secret"));
             assertTrue(controller.isAuthorized("sepay-secret", null, null));
             assertFalse(controller.isAuthorized(null, null, null));
@@ -30,7 +30,7 @@ class BankWebhookControllerTest {
     @Test
     void blankConfiguredSecretRejectsAll() {
         System.clearProperty("payment.bank.webhook-secret");
-        BankWebhookController controller = new BankWebhookController();
+        BankWebhookController controller = new BankWebhookController(org.mockito.Mockito.mock(services.payment.BankWebhookReconciliationService.class));
         assertFalse(controller.isAuthorized("anything", null, null));
     }
 
@@ -54,7 +54,7 @@ class BankWebhookControllerTest {
         parsePayload.setAccessible(true);
 
         BankWebhookPayload payload = (BankWebhookPayload) parsePayload.invoke(
-                new BankWebhookController(),
+                new BankWebhookController(org.mockito.Mockito.mock(services.payment.BankWebhookReconciliationService.class)),
                 rawPayload
         );
 

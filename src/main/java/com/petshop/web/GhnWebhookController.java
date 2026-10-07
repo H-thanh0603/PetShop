@@ -11,6 +11,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -22,7 +23,7 @@ import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.node.ObjectNode;
 
 import com.petshop.context.DBContext;
-import com.petshop.dao.OrderDAO;
+import com.petshop.repository.OrderRepository;
 import com.petshop.model.Order;
 import com.petshop.util.AppConfig;
 import com.petshop.util.Json;
@@ -41,13 +42,10 @@ public class GhnWebhookController {
     private static final String QUERY_PARAM_SECRET = "secret";
     private static final String HEADER_SECRET = "X-GHN-Webhook-Secret";
 
-    private final OrderDAO orderDAO;
+    private final OrderRepository orderDAO;
 
-    public GhnWebhookController() {
-        this(new OrderDAO());
-    }
-
-    GhnWebhookController(OrderDAO orderDAO) {
+    @Autowired
+    public GhnWebhookController(OrderRepository orderDAO) {
         this.orderDAO = orderDAO;
     }
 
