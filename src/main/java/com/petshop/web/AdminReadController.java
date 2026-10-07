@@ -20,7 +20,9 @@ import org.springframework.web.bind.annotation.RequestParam;
 
 import com.petshop.context.DBContext;
 import com.petshop.repository.PetTypeRepository;
-import com.petshop.dao.ReportDAO;
+import com.petshop.repository.ProductRepository;
+import com.petshop.repository.ReportRepository;
+import com.petshop.repository.ReviewRepository;
 import com.petshop.model.Order;
 import com.petshop.model.PetType;
 import com.petshop.model.Product;
@@ -40,12 +42,17 @@ public class AdminReadController {
 
     private static final Logger logger = LoggerFactory.getLogger(AdminReadController.class);
 
-    private final ReportDAO reportDAO;
+    private final ReportRepository reportRepository;
+    private final ProductRepository productRepository;
+    private final ReviewRepository reviewRepository;
     private final PetTypeRepository petTypeDAO;
 
     @Autowired
-    public AdminReadController(ReportDAO reportDAO, PetTypeRepository petTypeDAO) {
-        this.reportDAO = reportDAO;
+    public AdminReadController(ReportRepository reportRepository, ProductRepository productRepository,
+                               ReviewRepository reviewRepository, PetTypeRepository petTypeDAO) {
+        this.reportRepository = reportRepository;
+        this.productRepository = productRepository;
+        this.reviewRepository = reviewRepository;
         this.petTypeDAO = petTypeDAO;
     }
 
@@ -56,16 +63,16 @@ public class AdminReadController {
     public String dashboard(Model model) {
         int year = Calendar.getInstance().get(Calendar.YEAR);
 
-        Map<String, Integer> overview = reportDAO.getOverviewStats();
+        ReportRepository.OverviewStatsView overview = reportRepository.getOverviewStats();
         model.addAttribute("overview", overview);
-        model.addAttribute("totalRevenue", reportDAO.getTotalRevenue());
-        model.addAttribute("currentMonthRevenue", reportDAO.getCurrentMonthRevenue());
-        model.addAttribute("completedOrders", reportDAO.getCompletedOrdersCount());
+        model.addAttribute("totalRevenue", reportRepository.getTotalRevenue());
+        model.addAttribute("currentMonthRevenue", reportRepository.getCurrentMonthRevenue());
+        model.addAttribute("completedOrders", reportRepository.getCompletedOrdersCount());
 
-        List<Order> recentOrders = reportDAO.getRecentOrders(5);
-        List<Product> lowStockProducts = reportDAO.getLowStockProducts(10, 5);
-        List<Review> recentReviews = reportDAO.getRecentReviews(5);
-        List<Map<String, Object>> topProducts = reportDAO.getTopSellingProducts(5);
+        List<Order> recentOrders = reportRepository.getRecentOrders(5);
+        List<Product> lowStockProducts = productRepository.findLowStockProducts(10, 5);
+        List<Review> recentReviews = reviewRepository.getRecentReviews(5);
+        List<ReportRepository.TopSellingProductView> topProducts = reportRepository.getTopSellingProducts(5);
 
         model.addAttribute("recentOrders", recentOrders);
         model.addAttribute("lowStockProducts", lowStockProducts);
@@ -73,11 +80,11 @@ public class AdminReadController {
         model.addAttribute("topProducts", topProducts);
 
         // Chart data
-        List<Map<String, Object>> revenueByMonth = reportDAO.getRevenueByMonth(year);
+        List<ReportRepository.RevenueByMonthView> revenueByMonth = reportRepository.getRevenueByMonth(year);
         model.addAttribute("revenueByMonthJson", toJsonRevenue(revenueByMonth));
 
-        List<Map<String, Object>> orderStatus = reportDAO.getOrdersByStatus();
-        model.addAttribute("orderStatusJson", toJsonCount(orderStatus, "status"));
+        List<ReportRepository.OrdersByStatusView> orderStatus = reportRepository.getOrdersByStatus();
+        model.addAttribute("orderStatusJson", toJsonStatusCount(orderStatus));
 
         return "pages/admin/dashboard";
     }
@@ -87,39 +94,52 @@ public class AdminReadController {
         return dashboard(model);
     }
 
-    private String toJsonRevenue(List<Map<String, Object>> list) {
+    private String toJsonRevenue(List<ReportRepository.RevenueByMonthView> list) {
         StringBuilder sb = new StringBuilder("[");
         for (int i = 0; i < list.size(); i++) {
-            Map<String, Object> item = list.get(i);
-            sb.append("{\"month\":").append(item.get("month"))
-              .append(",\"revenue\":").append(item.get("revenue")).append("}");
+            ReportRepository.RevenueByMonthView item = list.get(i);
+            sb.append("{\"month\":").append(item.getMonth())
+              .append(",\"revenue\":").append(item.getRevenue()).append("}");
             if (i < list.size() - 1) sb.append(",");
         }
         sb.append("]");
         return sb.toString();
     }
 
-    private String toJsonCount(List<Map<String, Object>> list, String labelKey) {
+    private String toJsonStatusCount(List<ReportRepository.OrdersByStatusView> list) {
         StringBuilder sb = new StringBuilder("[");
         for (int i = 0; i < list.size(); i++) {
-            Map<String, Object> item = list.get(i);
-            String label = item.get(labelKey) != null ? item.get(labelKey).toString().replace("\"", "\\\"") : "";
+            ReportRepository.OrdersByStatusView item = list.get(i);
+            String label = item.getStatus() != null ? item.getStatus().replace("\"", "\\\"") : "";
             sb.append("{\"label\":\"").append(label)
-              .append("\",\"count\":").append(item.get("count")).append("}");
+              .append("\",\"count\":").append(item.getCount()).append("}");
             if (i < list.size() - 1) sb.append(",");
         }
         sb.append("]");
         return sb.toString();
     }
 
-    private String toJsonOrders(List<Map<String, Object>> list) {
+    private String toJsonProductCount(List<ReportRepository.TopSellingProductView> list) {
         StringBuilder sb = new StringBuilder("[");
         for (int i = 0; i < list.size(); i++) {
-            Map<String, Object> item = list.get(i);
-            sb.append("{\"month\":").append(item.get("month"))
-              .append(",\"pending\":").append(item.get("pending"))
-              .append(",\"completed\":").append(item.get("completed"))
-              .append(",\"total\":").append(item.get("total")).append("}");
+            ReportRepository.TopSellingProductView item = list.get(i);
+            String label = item.getProduct() != null ? item.getProduct().replace("\"", "\\\"") : "";
+            sb.append("{\"label\":\"").append(label)
+              .append("\",\"count\":").append(item.getCount()).append("}");
+            if (i < list.size() - 1) sb.append(",");
+        }
+        sb.append("]");
+        return sb.toString();
+    }
+
+    private String toJsonOrders(List<ReportRepository.OrdersByMonthView> list) {
+        StringBuilder sb = new StringBuilder("[");
+        for (int i = 0; i < list.size(); i++) {
+            ReportRepository.OrdersByMonthView item = list.get(i);
+            sb.append("{\"month\":").append(item.getMonth())
+              .append(",\"pending\":").append(item.getPending())
+              .append(",\"completed\":").append(item.getCompleted())
+              .append(",\"total\":").append(item.getTotal()).append("}");
             if (i < list.size() - 1) sb.append(",");
         }
         sb.append("]");
@@ -323,14 +343,14 @@ public class AdminReadController {
         int currentYear = Calendar.getInstance().get(Calendar.YEAR);
         int year = yearParam != null ? Integer.parseInt(yearParam) : currentYear;
 
-        Map<String, Integer> overview = reportDAO.getOverviewStats();
-        List<Map<String, Object>> topProducts = reportDAO.getTopSellingProducts(10);
-        List<Map<String, Object>> topCustomers = reportDAO.getTopCustomers(10);
-        List<Map<String, Object>> couponUsage = reportDAO.getCouponUsage(10);
-        List<Map<String, Object>> orderStatus = reportDAO.getOrdersByStatus();
-        List<Map<String, Object>> revenueByMonth = reportDAO.getRevenueByMonth(year);
-        List<Product> lowStockProducts = reportDAO.getLowStockProducts(10, 10);
-        List<Review> lowRatingReviews = reportDAO.getRecentLowRatingReviews(10);
+        ReportRepository.OverviewStatsView overview = reportRepository.getOverviewStats();
+        List<ReportRepository.TopSellingProductView> topProducts = reportRepository.getTopSellingProducts(10);
+        List<ReportRepository.TopCustomerView> topCustomers = reportRepository.getTopCustomers(10);
+        List<ReportRepository.CouponUsageView> couponUsage = reportRepository.getCouponUsage(10);
+        List<ReportRepository.OrdersByStatusView> orderStatus = reportRepository.getOrdersByStatus();
+        List<ReportRepository.RevenueByMonthView> revenueByMonth = reportRepository.getRevenueByMonth(year);
+        List<Product> lowStockProducts = productRepository.findLowStockProducts(10, 10);
+        List<Review> lowRatingReviews = reviewRepository.getRecentLowRatingReviews(10);
 
         model.addAttribute("overview", overview);
         model.addAttribute("topProducts", topProducts);
@@ -340,9 +360,9 @@ public class AdminReadController {
         model.addAttribute("revenueByMonth", revenueByMonth);
         model.addAttribute("lowStockProducts", lowStockProducts);
         model.addAttribute("lowRatingReviews", lowRatingReviews);
-        model.addAttribute("totalRevenue", reportDAO.getTotalRevenue());
-        model.addAttribute("currentMonthRevenue", reportDAO.getCurrentMonthRevenue());
-        model.addAttribute("completedOrders", reportDAO.getCompletedOrdersCount());
+        model.addAttribute("totalRevenue", reportRepository.getTotalRevenue());
+        model.addAttribute("currentMonthRevenue", reportRepository.getCurrentMonthRevenue());
+        model.addAttribute("completedOrders", reportRepository.getCompletedOrdersCount());
         model.addAttribute("selectedYear", year);
         model.addAttribute("currentYear", currentYear);
 
@@ -357,23 +377,23 @@ public class AdminReadController {
             Model model) throws IOException {
         int year = yearParam != null ? Integer.parseInt(yearParam) : Calendar.getInstance().get(Calendar.YEAR);
 
-        Map<String, Integer> overview = reportDAO.getOverviewStats();
+        ReportRepository.OverviewStatsView overview = reportRepository.getOverviewStats();
         model.addAttribute("overview", overview);
 
         // 1. Doanh thu theo tháng
-        List<Map<String, Object>> revenueByMonth = reportDAO.getRevenueByMonth(year);
+        List<ReportRepository.RevenueByMonthView> revenueByMonth = reportRepository.getRevenueByMonth(year);
         model.addAttribute("revenueByMonthJson", toJsonRevenue(revenueByMonth));
 
         // 2. Sản phẩm bán chạy
-        List<Map<String, Object>> topProducts = reportDAO.getTopSellingProducts(5);
-        model.addAttribute("topProductsJson", toJsonCount(topProducts, "product"));
+        List<ReportRepository.TopSellingProductView> topProducts = reportRepository.getTopSellingProducts(5);
+        model.addAttribute("topProductsJson", toJsonProductCount(topProducts));
 
         // 3. Trạng thái đơn hàng
-        List<Map<String, Object>> orderStatus = reportDAO.getOrdersByStatus();
-        model.addAttribute("orderStatusJson", toJsonCount(orderStatus, "status"));
+        List<ReportRepository.OrdersByStatusView> orderStatus = reportRepository.getOrdersByStatus();
+        model.addAttribute("orderStatusJson", toJsonStatusCount(orderStatus));
 
         // 4. Đơn hàng theo tháng
-        List<Map<String, Object>> ordersByMonth = reportDAO.getOrdersByMonthWithStatus(year);
+        List<ReportRepository.OrdersByMonthView> ordersByMonth = reportRepository.getOrdersByMonthWithStatus(year);
         model.addAttribute("ordersByMonthJson", toJsonOrders(ordersByMonth));
 
         model.addAttribute("selectedYear", year);
@@ -387,14 +407,14 @@ public class AdminReadController {
     @GetMapping("/admin/notifications")
     public String adminNotifications(Model model) {
         List<Order> pendingOrders = new ArrayList<>();
-        for (Order order : reportDAO.getRecentOrders(10)) {
+        for (Order order : reportRepository.getRecentOrders(10)) {
             if ("Pending".equalsIgnoreCase(order.getStatus())) {
                 pendingOrders.add(order);
             }
         }
-        List<Product> lowStockProducts = reportDAO.getLowStockProducts(10, 10);
-        List<Review> lowRatingReviews = reportDAO.getRecentLowRatingReviews(10);
-        List<Map<String, Object>> storedNotifications = reportDAO.getStoredNotifications(10);
+        List<Product> lowStockProducts = productRepository.findLowStockProducts(10, 10);
+        List<Review> lowRatingReviews = reviewRepository.getRecentLowRatingReviews(10);
+        List<ReportRepository.StoredNotificationView> storedNotifications = reportRepository.getStoredNotifications(10);
 
         model.addAttribute("pendingOrders", pendingOrders);
         model.addAttribute("lowStockProducts", lowStockProducts);

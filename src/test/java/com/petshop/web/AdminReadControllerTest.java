@@ -20,13 +20,19 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
 import com.petshop.repository.PetTypeRepository;
-import com.petshop.dao.ReportDAO;
+import com.petshop.repository.ProductRepository;
+import com.petshop.repository.ReportRepository;
+import com.petshop.repository.ReviewRepository;
 
 @ExtendWith(MockitoExtension.class)
 class AdminReadControllerTest {
 
     @Mock
-    ReportDAO reportDAO;
+    ReportRepository reportRepository;
+    @Mock
+    ProductRepository productRepository;
+    @Mock
+    ReviewRepository reviewRepository;
     @Mock
     PetTypeRepository petTypeDAO;
 
@@ -34,18 +40,20 @@ class AdminReadControllerTest {
 
     @BeforeEach
     void setUp() {
-        mockMvc = MockMvcBuilders.standaloneSetup(new AdminReadController(reportDAO, petTypeDAO)).build();
+        mockMvc = MockMvcBuilders.standaloneSetup(
+                new AdminReadController(reportRepository, productRepository, reviewRepository, petTypeDAO)).build();
     }
 
     @Test
     void dashboardRendersView() throws Exception {
-        when(reportDAO.getOverviewStats()).thenReturn(Map.of("orders", 1));
-        when(reportDAO.getRecentOrders(5)).thenReturn(Collections.emptyList());
-        when(reportDAO.getLowStockProducts(10, 5)).thenReturn(Collections.emptyList());
-        when(reportDAO.getRecentReviews(5)).thenReturn(Collections.emptyList());
-        when(reportDAO.getTopSellingProducts(5)).thenReturn(Collections.emptyList());
-        when(reportDAO.getRevenueByMonth(org.mockito.ArgumentMatchers.anyInt())).thenReturn(Collections.emptyList());
-        when(reportDAO.getOrdersByStatus()).thenReturn(Collections.emptyList());
+        when(reportRepository.getOverviewStats())
+                .thenReturn(org.mockito.Mockito.mock(ReportRepository.OverviewStatsView.class));
+        when(reportRepository.getRecentOrders(5)).thenReturn(Collections.emptyList());
+        when(productRepository.findLowStockProducts(10, 5)).thenReturn(Collections.emptyList());
+        when(reviewRepository.getRecentReviews(5)).thenReturn(Collections.emptyList());
+        when(reportRepository.getTopSellingProducts(5)).thenReturn(Collections.emptyList());
+        when(reportRepository.getRevenueByMonth(org.mockito.ArgumentMatchers.anyInt())).thenReturn(Collections.emptyList());
+        when(reportRepository.getOrdersByStatus()).thenReturn(Collections.emptyList());
 
         mockMvc.perform(get("/pages/admin/dashboard"))
                 .andExpect(status().isOk())
@@ -93,14 +101,15 @@ class AdminReadControllerTest {
 
     @Test
     void reportsRendersView() throws Exception {
-        when(reportDAO.getOverviewStats()).thenReturn(Map.of("orders", 1));
-        when(reportDAO.getTopSellingProducts(10)).thenReturn(Collections.emptyList());
-        when(reportDAO.getTopCustomers(10)).thenReturn(Collections.emptyList());
-        when(reportDAO.getCouponUsage(10)).thenReturn(Collections.emptyList());
-        when(reportDAO.getOrdersByStatus()).thenReturn(Collections.emptyList());
-        when(reportDAO.getRevenueByMonth(org.mockito.ArgumentMatchers.anyInt())).thenReturn(Collections.emptyList());
-        when(reportDAO.getLowStockProducts(10, 10)).thenReturn(Collections.emptyList());
-        when(reportDAO.getRecentLowRatingReviews(10)).thenReturn(Collections.emptyList());
+        when(reportRepository.getOverviewStats())
+                .thenReturn(org.mockito.Mockito.mock(ReportRepository.OverviewStatsView.class));
+        when(reportRepository.getTopSellingProducts(10)).thenReturn(Collections.emptyList());
+        when(reportRepository.getTopCustomers(10)).thenReturn(Collections.emptyList());
+        when(reportRepository.getCouponUsage(10)).thenReturn(Collections.emptyList());
+        when(reportRepository.getOrdersByStatus()).thenReturn(Collections.emptyList());
+        when(reportRepository.getRevenueByMonth(org.mockito.ArgumentMatchers.anyInt())).thenReturn(Collections.emptyList());
+        when(productRepository.findLowStockProducts(10, 10)).thenReturn(Collections.emptyList());
+        when(reviewRepository.getRecentLowRatingReviews(10)).thenReturn(Collections.emptyList());
 
         mockMvc.perform(get("/admin/reports"))
                 .andExpect(status().isOk())
@@ -110,11 +119,12 @@ class AdminReadControllerTest {
 
     @Test
     void statisticsRendersView() throws Exception {
-        when(reportDAO.getOverviewStats()).thenReturn(Map.of("orders", 1));
-        when(reportDAO.getRevenueByMonth(org.mockito.ArgumentMatchers.anyInt())).thenReturn(Collections.emptyList());
-        when(reportDAO.getTopSellingProducts(5)).thenReturn(Collections.emptyList());
-        when(reportDAO.getOrdersByStatus()).thenReturn(Collections.emptyList());
-        when(reportDAO.getOrdersByMonthWithStatus(org.mockito.ArgumentMatchers.anyInt())).thenReturn(Collections.emptyList());
+        when(reportRepository.getOverviewStats())
+                .thenReturn(org.mockito.Mockito.mock(ReportRepository.OverviewStatsView.class));
+        when(reportRepository.getRevenueByMonth(org.mockito.ArgumentMatchers.anyInt())).thenReturn(Collections.emptyList());
+        when(reportRepository.getTopSellingProducts(5)).thenReturn(Collections.emptyList());
+        when(reportRepository.getOrdersByStatus()).thenReturn(Collections.emptyList());
+        when(reportRepository.getOrdersByMonthWithStatus(org.mockito.ArgumentMatchers.anyInt())).thenReturn(Collections.emptyList());
 
         mockMvc.perform(get("/admin/statistics"))
                 .andExpect(status().isOk())
@@ -124,10 +134,10 @@ class AdminReadControllerTest {
 
     @Test
     void adminNotificationsRendersView() throws Exception {
-        when(reportDAO.getRecentOrders(10)).thenReturn(List.of());
-        when(reportDAO.getLowStockProducts(10, 10)).thenReturn(Collections.emptyList());
-        when(reportDAO.getRecentLowRatingReviews(10)).thenReturn(Collections.emptyList());
-        when(reportDAO.getStoredNotifications(10)).thenReturn(Collections.emptyList());
+        when(reportRepository.getRecentOrders(10)).thenReturn(List.of());
+        when(productRepository.findLowStockProducts(10, 10)).thenReturn(Collections.emptyList());
+        when(reviewRepository.getRecentLowRatingReviews(10)).thenReturn(Collections.emptyList());
+        when(reportRepository.getStoredNotifications(10)).thenReturn(Collections.emptyList());
 
         mockMvc.perform(get("/admin/notifications"))
                 .andExpect(status().isOk())

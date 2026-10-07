@@ -8,6 +8,7 @@ import org.springframework.dao.DataAccessException;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.repository.query.Param;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -58,6 +59,35 @@ public interface ReviewRepository extends JpaRepository<Review, Integer> {
     default List<Review> getAllReviews() {
         try {
             List<Review> reviews = findAllOrderByCreatedAtDesc();
+            fillNames(reviews);
+            return reviews;
+        } catch (DataAccessException e) {
+            LoggerFactory.getLogger(ReviewRepository.class).error("DB error", e);
+            return List.of();
+        }
+    }
+
+    @Query("SELECT r FROM Review r ORDER BY r.createdAt DESC")
+    List<Review> findRecentByCreatedAtDesc(Pageable pageable);
+
+    @Query("SELECT r FROM Review r WHERE r.rating <= 2 ORDER BY r.createdAt DESC")
+    List<Review> findLowRatingOrderByCreatedAtDesc(Pageable pageable);
+
+    // ReportDAO variants: LIMIT-ed recent lists, names filled like the old JOIN.
+    default List<Review> getRecentReviews(int limit) {
+        try {
+            List<Review> reviews = findRecentByCreatedAtDesc(Pageable.ofSize(limit));
+            fillNames(reviews);
+            return reviews;
+        } catch (DataAccessException e) {
+            LoggerFactory.getLogger(ReviewRepository.class).error("DB error", e);
+            return List.of();
+        }
+    }
+
+    default List<Review> getRecentLowRatingReviews(int limit) {
+        try {
+            List<Review> reviews = findLowRatingOrderByCreatedAtDesc(Pageable.ofSize(limit));
             fillNames(reviews);
             return reviews;
         } catch (DataAccessException e) {

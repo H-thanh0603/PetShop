@@ -28,7 +28,9 @@ import services.ai.common.AuditLog;
 import services.ai.common.DbMemoryStore;
 import services.ai.common.MemoryService;
 import com.petshop.repository.OrderRepository;
+import com.petshop.repository.ProductRepository;
 import com.petshop.repository.PromotionRepository;
+import com.petshop.repository.ReportRepository;
 import services.ai.merchant.MerchantAgent;
 import services.ai.merchant.MerchantChangeDAO;
 import services.ai.merchant.PetShopMerchantBackend;
@@ -49,9 +51,10 @@ public class AdminMerchantAgentController {
     private final MemoryService memory;
 
     @Autowired
-    public AdminMerchantAgentController(PromotionRepository promotionDAO, OrderRepository orderDAO) {
-        this(new MerchantAgent(new PetShopMerchantBackend(promotionDAO, orderDAO)),
-                new PetShopMerchantBackend(promotionDAO, orderDAO),
+    public AdminMerchantAgentController(PromotionRepository promotionDAO, OrderRepository orderDAO,
+                                        ReportRepository reportRepository, ProductRepository productRepository) {
+        this(new MerchantAgent(new PetShopMerchantBackend(promotionDAO, orderDAO, reportRepository, productRepository)),
+                new PetShopMerchantBackend(promotionDAO, orderDAO, reportRepository, productRepository),
                 new MerchantChangeDAO(), new MemoryService(new DbMemoryStore()));
     }
 

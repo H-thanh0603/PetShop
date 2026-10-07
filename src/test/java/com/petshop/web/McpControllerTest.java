@@ -20,7 +20,9 @@ class McpControllerTest {
         mockMvc = MockMvcBuilders.standaloneSetup(new McpController(
                 org.mockito.Mockito.mock(services.ai.PetShopCommerceBackend.class),
                 org.mockito.Mockito.mock(com.petshop.repository.PromotionRepository.class),
-                org.mockito.Mockito.mock(com.petshop.repository.OrderRepository.class))).build();
+                org.mockito.Mockito.mock(com.petshop.repository.OrderRepository.class),
+                org.mockito.Mockito.mock(com.petshop.repository.ReportRepository.class),
+                org.mockito.Mockito.mock(com.petshop.repository.ProductRepository.class))).build();
     }
 
     @Test

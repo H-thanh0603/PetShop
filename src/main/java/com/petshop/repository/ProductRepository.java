@@ -126,6 +126,12 @@ public interface ProductRepository extends JpaRepository<Product, Integer> {
             nativeQuery = true)
     List<Product> findLowStock(@Param("threshold") int threshold);
 
+    // ReportDAO variant: no is_active filter, stock-ASC then id-DESC order, LIMIT.
+    @Query(value = "SELECT p.* FROM products p WHERE p.stock > 0 AND p.stock <= :threshold "
+            + "ORDER BY p.stock ASC, p.id DESC LIMIT :lim",
+            nativeQuery = true)
+    List<Product> findLowStockProducts(@Param("threshold") int threshold, @Param("lim") int lim);
+
     @Query(value = "SELECT p.* FROM products p WHERE p.is_active = 1 AND p.stock <= 0 ORDER BY p.id DESC",
             nativeQuery = true)
     List<Product> findOutOfStock();
@@ -595,7 +601,7 @@ public interface ProductRepository extends JpaRepository<Product, Integer> {
 
     @Deprecated(forRemoval = true)
     default Product getProductById(java.sql.Connection conn, int id) {
-        // TODO(Task 9/D1): caller waves (CartDAO/C6, ReportDAO/E, PromotionDAO/D1, OrderDAO/D3) remove conn.
+        // All caller waves (Cart/C6, Report/E, Promotion/D1, Order/D3) migrated — no Connection overloads remain.
         return getProductById(id);
     }
 

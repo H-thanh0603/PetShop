@@ -131,7 +131,7 @@ public class CommerceFullPortTest {
 
     @Test
     public void merchantStageRequiresProvenance() {
-        MerchantTools tools = new MerchantTools(new PetShopMerchantBackend(org.mockito.Mockito.mock(com.petshop.repository.PromotionRepository.class), org.mockito.Mockito.mock(com.petshop.repository.OrderRepository.class)), "test");
+        MerchantTools tools = new MerchantTools(new PetShopMerchantBackend(org.mockito.Mockito.mock(com.petshop.repository.PromotionRepository.class), org.mockito.Mockito.mock(com.petshop.repository.OrderRepository.class), org.mockito.Mockito.mock(com.petshop.repository.ReportRepository.class), org.mockito.Mockito.mock(com.petshop.repository.ProductRepository.class)), "test");
         // Unknown listing id (never returned by a tool this session) is held.
         String held = tools.execute("stage_price_update",
                 "{\"items\":[{\"productId\":424242,\"newPrice\":\"100000\"}]}");

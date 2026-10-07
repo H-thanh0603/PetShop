@@ -18,7 +18,9 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpSession;
 import services.ai.CommerceTools;
 import com.petshop.repository.OrderRepository;
+import com.petshop.repository.ProductRepository;
 import com.petshop.repository.PromotionRepository;
+import com.petshop.repository.ReportRepository;
 import services.ai.PetShopCommerceBackend;
 import services.ai.ToolDefinition;
 import services.ai.common.AuditLog;
@@ -38,13 +40,18 @@ public class McpController {
     private final PetShopCommerceBackend commerceBackend;
     private final PromotionRepository promotionDAO;
     private final OrderRepository orderDAO;
+    private final ReportRepository reportRepository;
+    private final ProductRepository productRepository;
 
     @Autowired
     public McpController(PetShopCommerceBackend commerceBackend, PromotionRepository promotionDAO,
-                               OrderRepository orderDAO) {
+                               OrderRepository orderDAO, ReportRepository reportRepository,
+                               ProductRepository productRepository) {
         this.commerceBackend = commerceBackend;
         this.promotionDAO = promotionDAO;
         this.orderDAO = orderDAO;
+        this.reportRepository = reportRepository;
+        this.productRepository = productRepository;
     }
 
     @PostMapping(value = "/mcp", produces = "application/json;charset=UTF-8")
@@ -85,7 +92,7 @@ public class McpController {
                 PetShopCommerceBackend.SessionContext.of(null));
         for (ToolDefinition d : shopping.definitions()) tools.add(toolJson(d));
         if (isAdmin) {
-            var merchant = new MerchantTools(new PetShopMerchantBackend(promotionDAO, orderDAO), "mcp");
+            var merchant = new MerchantTools(new PetShopMerchantBackend(promotionDAO, orderDAO, reportRepository, productRepository), "mcp");
             for (ToolDefinition d : merchant.definitions()) tools.add(toolJson(d));
         }
         ObjectNode o = Json.MAPPER.createObjectNode();
@@ -107,7 +114,7 @@ public class McpController {
         String result;
         if (merchantTool) {
             String operator = "mcp:" + (user == null ? "?" : user.getId());
-            result = new MerchantTools(new PetShopMerchantBackend(promotionDAO, orderDAO), operator).execute(name, args);
+            result = new MerchantTools(new PetShopMerchantBackend(promotionDAO, orderDAO, reportRepository, productRepository), operator).execute(name, args);
         } else {
             result = new CommerceTools(commerceBackend,
                     PetShopCommerceBackend.SessionContext.of(user)).execute(name, args);

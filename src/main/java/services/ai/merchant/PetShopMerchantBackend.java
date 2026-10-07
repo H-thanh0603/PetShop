@@ -5,8 +5,9 @@ import org.springframework.stereotype.Service;
 import com.petshop.repository.OrderRepository;
 import com.petshop.dao.ProductDAO;
 import com.petshop.repository.OrderRepository;
+import com.petshop.repository.ProductRepository;
 import com.petshop.repository.PromotionRepository;
-import com.petshop.dao.ReportDAO;
+import com.petshop.repository.ReportRepository;
 import com.petshop.model.Order;
 import com.petshop.model.Product;
 import com.petshop.model.Promotion;
@@ -32,9 +33,10 @@ import java.util.Map;
 public class PetShopMerchantBackend {
     private static final Logger log = LoggerFactory.getLogger(PetShopMerchantBackend.class);
 
-    private final ReportDAO reportDAO = new ReportDAO();
+    private final ReportRepository reportDAO;
     private final OrderRepository orderDAO;
     private final ProductDAO productDAO = new ProductDAO();
+    private final ProductRepository productRepository;
     private final PromotionRepository promotionDAO;
     /**
      * Shared ledger: every backend instance (agent turns, MCP calls, approval
@@ -46,9 +48,12 @@ public class PetShopMerchantBackend {
     private final ChangeLedger ledger = SHARED_LEDGER;
     private final MerchantChangeDAO changeDAO = new MerchantChangeDAO();
 
-    public PetShopMerchantBackend(PromotionRepository promotionDAO, OrderRepository orderDAO) {
+    public PetShopMerchantBackend(PromotionRepository promotionDAO, OrderRepository orderDAO,
+                                  ReportRepository reportDAO, ProductRepository productRepository) {
         this.promotionDAO = promotionDAO;
         this.orderDAO = orderDAO;
+        this.reportDAO = reportDAO;
+        this.productRepository = productRepository;
         if (!hydrated) {
             synchronized (PetShopMerchantBackend.class) {
                 if (!hydrated) {
@@ -69,14 +74,13 @@ public class PetShopMerchantBackend {
             o.put("monthRevenueVnd", str(reportDAO.getCurrentMonthRevenue()));
             o.put("completedOrders", reportDAO.getCompletedOrdersCount());
             ObjectNode byStatus = Json.MAPPER.createObjectNode();
-            for (Map<String, Object> row : reportDAO.getOrdersByStatus()) {
-                byStatus.put(String.valueOf(row.get("status")),
-                        ((Number) row.get("count")).intValue());
+            for (ReportRepository.OrdersByStatusView row : reportDAO.getOrdersByStatus()) {
+                byStatus.put(String.valueOf(row.getStatus()), row.getCount());
             }
             o.set("ordersByStatus", byStatus);
             ArrayNode top = Json.MAPPER.createArrayNode();
-            for (Map<String, Object> row : reportDAO.getTopSellingProducts(5)) {
-                top.add(row.get("product") + " (đã bán " + row.get("count") + ")");
+            for (ReportRepository.TopSellingProductView row : reportDAO.getTopSellingProducts(5)) {
+                top.add(row.getProduct() + " (đã bán " + row.getCount() + ")");
             }
             o.set("topSellers", top);
         } catch (Exception e) {
@@ -94,29 +98,29 @@ public class PetShopMerchantBackend {
                 case "revenue_by_month" -> {
                     int year = java.time.LocalDate.now().getYear();
                     ArrayNode points = Json.MAPPER.createArrayNode();
-                    for (Map<String, Object> row : reportDAO.getRevenueByMonth(year)) {
+                    for (ReportRepository.RevenueByMonthView row : reportDAO.getRevenueByMonth(year)) {
                         ObjectNode p = Json.MAPPER.createObjectNode();
-                        p.put("month", String.valueOf(row.get("month")));
-                        p.put("revenueVnd", String.valueOf(row.get("revenue")));
+                        p.put("month", String.valueOf(row.getMonth()));
+                        p.put("revenueVnd", String.valueOf(row.getRevenue()));
                         points.add(p);
                     }
                     o.set("points", points);
                 }
                 case "top_sellers" -> {
                     ArrayNode points = Json.MAPPER.createArrayNode();
-                    for (Map<String, Object> row : reportDAO.getTopSellingProducts(10)) {
-                        String name = String.valueOf(row.get("product"));
+                    for (ReportRepository.TopSellingProductView row : reportDAO.getTopSellingProducts(10)) {
+                        String name = String.valueOf(row.getProduct());
                         if (segment != null && !segment.isBlank()) {
                             try {
                                 Product p = productDAO.getProductById(
-                                        ((Number) row.get("productId")).intValue());
+                                        row.getProductId());
                                 if (p == null || !p.getCategory().toLowerCase()
                                         .contains(segment.toLowerCase())) continue;
                             } catch (Exception ignored) {}
                         }
                         ObjectNode pt = Json.MAPPER.createObjectNode();
                         pt.put("product", Fence.sanitize(name));
-                        pt.put("sold", ((Number) row.get("count")).intValue());
+                        pt.put("sold", row.getCount());
                         points.add(pt);
                     }
                     o.set("points", points);
@@ -186,7 +190,7 @@ public class PetShopMerchantBackend {
     public ArrayNode inventoryAlerts() {
         ArrayNode arr = Json.MAPPER.createArrayNode();
         try {
-            for (Product p : reportDAO.getLowStockProducts(5, 20)) {
+            for (Product p : productRepository.findLowStockProducts(5, 20)) {
                 ObjectNode o = Json.MAPPER.createObjectNode();
                 o.put("type", p.getStock() == 0 ? "out_of_stock" : "low_stock");
                 o.put("productId", p.getId());
