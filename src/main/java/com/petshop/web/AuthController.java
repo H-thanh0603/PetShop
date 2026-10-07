@@ -272,8 +272,9 @@ public class AuthController {
     // ── LOGIN (/login) ──
 
     private void populateLoginViewData(HttpServletRequest request) {
-        request.setAttribute("googleAuthUrl", SocialAuthUtil.buildGoogleAuthUrl(request));
-        request.setAttribute("facebookAuthUrl", SocialAuthUtil.buildFacebookAuthUrl(request));
+        HttpSession session = request.getSession(true);
+        request.setAttribute("googleAuthUrl", SocialAuthUtil.buildGoogleAuthUrl(request, session));
+        request.setAttribute("facebookAuthUrl", SocialAuthUtil.buildFacebookAuthUrl(request, session));
         request.setAttribute("googleLoginEnabled", SocialAuthUtil.isGoogleConfigured());
         request.setAttribute("facebookLoginEnabled", SocialAuthUtil.isFacebookConfigured());
     }
@@ -795,6 +796,12 @@ public class AuthController {
             return "redirect:/login";
         }
 
+        // OAuth login-CSRF: state must match the one minted with the auth URL
+        if (!SocialAuthUtil.isStateValid(request, session)) {
+            session.setAttribute("error", "Phiên đăng nhập Google không hợp lệ. Thử lại.");
+            return "redirect:/login";
+        }
+
         // Người dùng bấm hủy hoặc provider trả lỗi
         if (error != null || code == null || code.isEmpty()) {
             session.setAttribute("warning", "Đăng nhập Google đã bị hủy hoặc không thành công.");
@@ -811,7 +818,7 @@ public class AuthController {
                 return "redirect:/login";
             }
 
-            finishSocialLogin(session, acc.getEmail(), acc.getName());
+            finishSocialLogin(request, acc.getEmail(), acc.getName());
             return redirectAfterSocialLogin(request, session);
         } catch (Exception e) {
             logger.error("Google OAuth login failed", e);
@@ -831,6 +838,12 @@ public class AuthController {
             return "redirect:/login";
         }
 
+        // OAuth login-CSRF: state must match the one minted with the auth URL
+        if (!SocialAuthUtil.isStateValid(request, session)) {
+            session.setAttribute("error", "Phiên đăng nhập Facebook không hợp lệ. Thử lại.");
+            return "redirect:/login";
+        }
+
         // Người dùng bấm hủy hoặc provider trả lỗi
         if (error != null || code == null || code.isEmpty()) {
             session.setAttribute("warning", "Đăng nhập Facebook đã bị hủy hoặc không thành công.");
@@ -847,7 +860,7 @@ public class AuthController {
                 return "redirect:/login";
             }
 
-            finishSocialLogin(session, acc.getEmail(), acc.getName());
+            finishSocialLogin(request, acc.getEmail(), acc.getName());
             return redirectAfterSocialLogin(request, session);
         } catch (Exception e) {
             logger.error("Facebook OAuth login failed", e);
@@ -856,7 +869,7 @@ public class AuthController {
         }
     }
 
-    private void finishSocialLogin(HttpSession session, String email, String name) {
+    private void finishSocialLogin(HttpServletRequest request, String email, String name) {
         boolean isEmailAvailable = userDAO.HaveEmail(email);
         User user;
         if (!isEmailAvailable) {
@@ -869,15 +882,31 @@ public class AuthController {
         if (user == null) {
             throw new IllegalStateException("Không thể tạo hoặc tải tài khoản social.");
         }
+        if (!user.getStatus()) {
+            throw new IllegalStateException("Tài khoản đã bị vô hiệu hóa.");
+        }
+
+        // Session regeneration, same as the password login: invalidate the
+        // pre-auth session (fixation) and move the guest cart into the new one.
+        HttpSession oldSession = request.getSession(false);
+        Map<Integer, CartItem> guestCart = null;
+        Integer guestTotalQuantity = null;
+        if (oldSession != null) {
+            guestCart = (Map<Integer, CartItem>) oldSession.getAttribute("cart");
+            guestTotalQuantity = (Integer) oldSession.getAttribute("totalQuantity");
+            oldSession.invalidate();
+        }
+        HttpSession session = request.getSession(true);
 
         session.setAttribute("user", user);
         session.setAttribute("username", user.getUsername());
         session.setAttribute("role", user.getRole());
 
-        @SuppressWarnings("unchecked")
-        Map<Integer, CartItem> sessionCart = (Map<Integer, CartItem>) session.getAttribute("cart");
-        if (sessionCart != null && !sessionCart.isEmpty()) {
-            cartDAO.syncCartFromSession(user.getId(), sessionCart);
+        if (guestCart != null && !guestCart.isEmpty()) {
+            cartDAO.syncCartFromSession(user.getId(), guestCart);
+        }
+        if (guestTotalQuantity != null) {
+            session.setAttribute("totalQuantity", guestTotalQuantity);
         }
 
         Map<Integer, CartItem> cart = cartDAO.getCartByUserId(user.getId());

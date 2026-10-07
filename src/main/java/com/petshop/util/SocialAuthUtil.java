@@ -2,9 +2,13 @@ package com.petshop.util;
 
 import com.petshop.constant.IConstant;
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpSession;
 
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
+import java.security.SecureRandom;
 
 public final class SocialAuthUtil {
     private SocialAuthUtil() {
@@ -18,7 +22,43 @@ public final class SocialAuthUtil {
         return buildAppUrl(request, IConstant.FACEBOOK_REDIRECT_PATH);
     }
 
-    public static String buildGoogleAuthUrl(HttpServletRequest request) {
+    private static final SecureRandom STATE_RANDOM = new SecureRandom();
+    public static final String OAUTH_STATE_SESSION_KEY = "oauth_state";
+
+    /** Generates a CSRF state token, stores it in the session, appends &state=. */
+    private static String newState(HttpSession session) {
+        byte[] bytes = new byte[16];
+        STATE_RANDOM.nextBytes(bytes);
+        StringBuilder sb = new StringBuilder(32);
+        for (byte b : bytes) sb.append(String.format("%02x", b));
+        String state = sb.toString();
+        session.setAttribute(OAUTH_STATE_SESSION_KEY, state);
+        return state;
+    }
+
+    /**
+     * OAuth login-CSRF defense: the callback must present the same state the
+     * login page generated for this session. Constant-time compare.
+     */
+    public static boolean isStateValid(HttpServletRequest request, HttpSession session) {
+        if (session == null) {
+            return false;
+        }
+        Object expected = session.getAttribute(OAUTH_STATE_SESSION_KEY);
+        if (expected == null) {
+            return false;
+        }
+        String provided = request.getParameter("state");
+        session.removeAttribute(OAUTH_STATE_SESSION_KEY); // single use
+        if (provided == null) {
+            return false;
+        }
+        return MessageDigest.isEqual(
+                expected.toString().getBytes(StandardCharsets.UTF_8),
+                provided.getBytes(StandardCharsets.UTF_8));
+    }
+
+    public static String buildGoogleAuthUrl(HttpServletRequest request, HttpSession session) {
         if (!isGoogleConfigured()) {
             return "";
         }
@@ -27,10 +67,11 @@ public final class SocialAuthUtil {
                 + "&redirect_uri=" + redirectUri
                 + "&response_type=code"
                 + "&client_id=" + urlEncode(SecretConfig.get("GOOGLE_CLIENT_ID"))
+                + "&state=" + newState(session)
                 + "&approval_prompt=force";
     }
 
-    public static String buildFacebookAuthUrl(HttpServletRequest request) {
+    public static String buildFacebookAuthUrl(HttpServletRequest request, HttpSession session) {
         if (!isFacebookConfigured()) {
             return "";
         }
@@ -38,7 +79,8 @@ public final class SocialAuthUtil {
         return "https://www.facebook.com/v19.0/dialog/oauth?client_id="
                 + urlEncode(SecretConfig.get("facebook_client_id"))
                 + "&redirect_uri=" + redirectUri
-                + "&scope=email,public_profile";
+                + "&scope=email,public_profile"
+                + "&state=" + newState(session);
     }
 
     public static boolean isGoogleConfigured() {

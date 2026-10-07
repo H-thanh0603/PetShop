@@ -8,6 +8,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.MediaType;
+import org.springframework.mock.web.MockHttpSession;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
@@ -25,9 +26,27 @@ class McpControllerTest {
                 org.mockito.Mockito.mock(com.petshop.repository.ProductRepository.class))).build();
     }
 
+    private MockHttpSession userSession(String role) {
+        MockHttpSession session = new MockHttpSession();
+        com.petshop.model.User user = new com.petshop.model.User();
+        user.setRole(role);
+        session.setAttribute("user", user);
+        return session;
+    }
+
+    @Test
+    void anonymousCallIsRefused() throws Exception {
+        mockMvc.perform(post("/mcp")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"jsonrpc\":\"2.0\",\"id\":1,\"method\":\"tools/list\"}"))
+                .andExpect(status().isOk())
+                .andExpect(content().string(containsString("-32001")));
+    }
+
     @Test
     void toolsListReturnsJsonRpcEnvelope() throws Exception {
         mockMvc.perform(post("/mcp")
+                        .session(userSession("user"))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"jsonrpc\":\"2.0\",\"id\":1,\"method\":\"tools/list\"}"))
                 .andExpect(status().isOk())
@@ -38,6 +57,7 @@ class McpControllerTest {
     @Test
     void unknownMethodReturns32601() throws Exception {
         mockMvc.perform(post("/mcp")
+                        .session(userSession("user"))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"jsonrpc\":\"2.0\",\"id\":1,\"method\":\"nope\"}"))
                 .andExpect(status().isOk())
@@ -47,6 +67,7 @@ class McpControllerTest {
     @Test
     void merchantToolWithoutAdminIsRefused() throws Exception {
         mockMvc.perform(post("/mcp")
+                        .session(userSession("user"))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"jsonrpc\":\"2.0\",\"id\":1,\"method\":\"tools/call\","
                                 + "\"params\":{\"name\":\"get_business_snapshot\",\"arguments\":{}}}"))

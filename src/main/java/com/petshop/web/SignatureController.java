@@ -86,7 +86,14 @@ public class SignatureController {
                 return Json.MAPPER.writeValueAsString(result);
             }
 
-            int orderId = Integer.parseInt(orderIdRaw);
+            int orderId;
+            try {
+                orderId = Integer.parseInt(orderIdRaw);
+            } catch (NumberFormatException e) {
+                result.put("success", false);
+                result.put("message", "orderId không hợp lệ.");
+                return Json.MAPPER.writeValueAsString(result);
+            }
 
             OrderSign orderSign = orderSignDAO.findByOrderId(orderId);
             if (orderSign == null) {

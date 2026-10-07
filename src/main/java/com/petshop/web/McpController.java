@@ -63,7 +63,12 @@ public class McpController {
 
         HttpSession session = request.getSession(false);
         User user = session == null ? null : (User) session.getAttribute("user");
-        boolean isAdmin = user != null && "admin".equals(user.getRole());
+        // The AI tools drive billable LLM calls — anonymous traffic is refused;
+        // merchant tools additionally require the admin role below.
+        if (user == null) {
+            return writeError(id, -32001, "Authentication required for /mcp");
+        }
+        boolean isAdmin = "admin".equals(user.getRole());
 
         try {
             switch (method) {

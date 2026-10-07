@@ -105,7 +105,14 @@ public class ShopApiController {
             return "pages/shop/payment-failed";
         }
 
-        int orderId = Integer.parseInt(orderIdRaw);
+        int orderId;
+        try {
+            orderId = Integer.parseInt(orderIdRaw);
+        } catch (NumberFormatException e) {
+            model.addAttribute("paymentStatus", "failed");
+            model.addAttribute("paymentMessage", "Giao dich khong hop le.");
+            return "pages/shop/payment-failed";
+        }
         Order order = orderDAO.getOrderById(orderId);
         if (order == null || amount == null || amount.setScale(2, RoundingMode.HALF_UP).compareTo(order.getTotalAmount().setScale(2, RoundingMode.HALF_UP)) != 0) {
             paymentTransactionDAO.updateLatestProviderResultForOrder(

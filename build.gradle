@@ -58,6 +58,14 @@ dependencies {
     testImplementation 'org.testcontainers:testcontainers-mysql'
 }
 
+// secrets.properties carries real credentials in local dev (gitignored).
+// Keep it out of packaged artifacts: a WAR/image must never ship secrets —
+// production reads them from the environment (docker-compose .env).
+// Local dev boot needs PETSHOP_DB_PASSWORD / VNPAY_* etc. via env instead.
+processResources {
+    exclude '**/secrets.properties'
+}
+
 test {
     useJUnitPlatform()
     // Docker Desktop exposes the engine API on a user-level socket and rejects

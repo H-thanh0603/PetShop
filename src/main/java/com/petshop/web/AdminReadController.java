@@ -341,7 +341,7 @@ public class AdminReadController {
             @RequestParam(value = "year", required = false) String yearParam,
             Model model) throws IOException {
         int currentYear = Calendar.getInstance().get(Calendar.YEAR);
-        int year = yearParam != null ? Integer.parseInt(yearParam) : currentYear;
+        int year = parseIntSafe(yearParam, currentYear);
 
         ReportRepository.OverviewStatsView overview = reportRepository.getOverviewStats();
         List<ReportRepository.TopSellingProductView> topProducts = reportRepository.getTopSellingProducts(10);
@@ -375,7 +375,7 @@ public class AdminReadController {
     public String statistics(
             @RequestParam(value = "year", required = false) String yearParam,
             Model model) throws IOException {
-        int year = yearParam != null ? Integer.parseInt(yearParam) : Calendar.getInstance().get(Calendar.YEAR);
+        int year = parseIntSafe(yearParam, Calendar.getInstance().get(Calendar.YEAR));
 
         ReportRepository.OverviewStatsView overview = reportRepository.getOverviewStats();
         model.addAttribute("overview", overview);

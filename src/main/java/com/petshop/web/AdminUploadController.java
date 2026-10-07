@@ -43,8 +43,11 @@ public class AdminUploadController {
                 return writeJson(false, "No file uploaded.");
             }
 
+            byte[] head = new byte[16];
+            int headLen = file.getInputStream().read(head);
             FileUploadValidator.ValidationResult validationResult = FileUploadValidator.validate(
-                    file.getOriginalFilename(), file.getContentType(), file.getSize());
+                    file.getOriginalFilename(), file.getContentType(), file.getSize(),
+                    headLen > 0 ? java.util.Arrays.copyOf(head, headLen) : null);
             if (!validationResult.isValid()) {
                 return writeJson(false, validationResult.getErrorMessage());
             }
