@@ -95,6 +95,14 @@ public class SignatureController {
                 return Json.MAPPER.writeValueAsString(result);
             }
 
+            // Ownership check: only the order's owner may upload/verify a
+            // signature for it (same rule as downloadPrivateKey below).
+            if (orderSign.getUserId() != user.getId()) {
+                result.put("success", false);
+                result.put("message", "Bạn không có quyền thao tác trên đơn hàng này.");
+                return Json.MAPPER.writeValueAsString(result);
+            }
+
             Certificate certificate = certificateDAO.findByOrderId(orderId);
             if (certificate == null) {
                 result.put("success", false);

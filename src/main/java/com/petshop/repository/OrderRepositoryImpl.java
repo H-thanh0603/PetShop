@@ -672,17 +672,20 @@ public class OrderRepositoryImpl implements OrderRepositoryCustom {
                         && ("Delivered".equalsIgnoreCase(status) || "Completed".equalsIgnoreCase(status));
                 if (!wasCancelled && willBeCancelled) {
                     if (!releaseReservedStockForOrder(orderId)) {
-                        return false;
+                        // release may have already mutated flash-sale counters
+                        throw new TxFailedException();
                     }
                 } else if (wasCancelled && !willBeCancelled) {
                     for (OrderItem item : loadItemsNative(List.of(orderId))) {
                         if (!productRepository.reserveStockAmbient(item.getProductId(), item.getQuantity())) {
-                            return false;
+                            // earlier items in this loop already reserved stock
+                            throw new TxFailedException();
                         }
                     }
                 } else if (willFinalizeCodPayment) {
                     if (!finalizeReservedStockForOrder(orderId)) {
-                        return false;
+                        // finalize may have already consumed stock for earlier items
+                        throw new TxFailedException();
                     }
                 }
                 if (orderRepository.setStatusNative(orderId, status) <= 0) {
@@ -867,7 +870,8 @@ public class OrderRepositoryImpl implements OrderRepositoryCustom {
                         }
                     }
                     if (!productRepository.releaseReservedStockAmbient(item.getProductId(), item.getQuantity())) {
-                        return false;
+                        // the flash-sale release above already mutated counters
+                        throw new TxFailedException();
                     }
                 }
                 return true;
@@ -886,7 +890,8 @@ public class OrderRepositoryImpl implements OrderRepositoryCustom {
                 int actorUserId = order == null ? 1 : order.getUserId();
                 for (OrderItem item : loadItemsNative(List.of(orderId))) {
                     if (!productRepository.finalizeReservedStockAmbient(item.getProductId(), item.getQuantity())) {
-                        return false;
+                        // earlier items in this loop already consumed stock
+                        throw new TxFailedException();
                     }
                     if (inventoryBatchRepository.hasTrackedBatchesForProduct(item.getProductId())) {
                         boolean consumed = inventoryBatchRepository.consumeProductStock(
