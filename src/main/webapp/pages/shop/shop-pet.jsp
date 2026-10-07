@@ -115,7 +115,7 @@
 <body>
     <jsp:include page="/components/navbar.jsp" />
     <jsp:include page="/components/toast.jsp" />
-    <c:set var="currentPageUrl" value="${pageContext.request.contextPath}/shop${empty pageContext.request.queryString ? '' : '?'}${pageContext.request.queryString}" />
+    <c:set var="currentPageUrl" value="${pageContext.request.contextPath}/shop${empty pageContext.request.queryString ? '' : '?'}${fn:escapeXml(pageContext.request.queryString)}" />
 
     <div class="container">
         <div class="breadcrumb-section">

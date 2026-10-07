@@ -53,8 +53,8 @@
                             </td>
                             <td>
                                 <div class="table-actions">
-                                    <button class="action-btn edit" onclick="openRenameModal('${cat[0]}')" title="Đổi tên"><i class='bx bx-edit-alt'></i></button>
-                                    <button class="action-btn" style="background:#f0fdf4;color:#16a34a;" onclick="openAssignModal('${cat[0]}')" title="Gán loại thú cưng"><i class='bx bxs-dog'></i></button>
+                                    <button class="action-btn edit" data-cat="${fn:escapeXml(cat[0])}" onclick="openRenameModal(this.dataset.cat)" title="Đổi tên"><i class='bx bx-edit-alt'></i></button>
+                                    <button class="action-btn" style="background:#f0fdf4;color:#16a34a;" data-cat="${fn:escapeXml(cat[0])}" onclick="openAssignModal(this.dataset.cat)" title="Gán loại thú cưng"><i class='bx bxs-dog'></i></button>
                                 </div>
                             </td>
                         </tr>

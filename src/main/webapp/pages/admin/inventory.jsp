@@ -218,6 +218,7 @@
             <div class="modal-content">
                 <form action="${pageContext.request.contextPath}/admin/inventory" method="post">
                     <input type="hidden" name="action" value="addBatch">
+                    <input type="hidden" name="csrfToken" value="${csrfToken}">
                     <div class="modal-header">
                         <h5 class="modal-title">Nhập lô hàng mới</h5>
                         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>

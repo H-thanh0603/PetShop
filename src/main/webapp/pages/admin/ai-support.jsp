@@ -352,6 +352,11 @@
 </div>
 
 <script>
+    // HTML-escape for any server/user data interpolated into innerHTML.
+    function esc(v) {
+        return String(v == null ? '' : v).replace(/&/g, '&amp;').replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+    }
     const contextPath = "${pageContext.request.contextPath}";
     let selectedActiveSessionId = 0;
     let selectedWaitingSessionId = 0;
@@ -477,8 +482,8 @@
                                     <span>#\${s.id}</span>
                                     \${statusBadge}
                                 </div>
-                                <div class="session-title">\${s.displayName}</div>
-                                <div class="session-lastmsg">\${s.lastMessage ? s.lastMessage : 'Bắt đầu cuộc chat'}</div>
+                                <div class="session-title">\${esc(s.displayName)}</div>
+                                <div class="session-lastmsg">\${esc(s.lastMessage ? s.lastMessage : 'Bắt đầu cuộc chat')}</div>
                             </div>
                         `;
                     });
@@ -544,7 +549,7 @@
                             <div class="chat-bubble-wrapper \${m.senderType.toLowerCase()}">
                                 <div class="chat-avatar">\${avatarHtml}</div>
                                 <div class="chat-bubble-content">
-                                    \${m.message}
+                                    \${esc(m.message)}
                                     \${detailsHtml}
                                 </div>
                             </div>
@@ -677,8 +682,8 @@
                     const tr = document.createElement("tr");
                     tr.innerHTML = `
                         <td>\${item.id}</td>
-                        <td><strong>\${item.title}</strong></td>
-                        <td><code>\${item.category}</code></td>
+                        <td><strong>\${esc(item.title)}</strong></td>
+                        <td><code>\${esc(item.category)}</code></td>
                         <td><span class="badge-soft \${item.isActive ? 'success' : 'danger'}">\${item.isActive ? 'Kích hoạt' : 'Tạm ẩn'}</span></td>
                         <td>
                             <button class="action-icon-btn edit" onclick="editKnowledge(\${item.id}, '\${item.title.replace(/'/g, "\\\\'")}', '\${item.category}', '\${item.content.replace(/\\n/g, '\\\\n').replace(/'/g, "\\\\'")}', \${item.isActive})" title="Sửa"><i class='bx bxs-edit'></i></button>

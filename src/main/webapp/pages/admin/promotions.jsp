@@ -127,7 +127,8 @@
                                             </button>
                                         </form>
                                         <button type="button" class="promo-action-btn delete"
-                                                onclick="openDeletePromotionModal(${promotion.id}, '${fn:escapeXml(promotion.name)}')"
+                                                data-promo-name="${fn:escapeXml(promotion.name)}"
+                                                onclick="openDeletePromotionModal(${promotion.id}, this.dataset.promoName)"
                                                 title="Xóa">
                                             <i class='bx bx-trash'></i>
                                         </button>

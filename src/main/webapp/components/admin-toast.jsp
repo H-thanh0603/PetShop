@@ -1,5 +1,6 @@
 <%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
 <%@ taglib prefix="c" uri="jakarta.tags.core" %>
+<%@ taglib prefix="fn" uri="jakarta.tags.functions" %>
 <%-- 
     Component: admin-toast.jsp
     Mô tả: Toast notification cho admin - hiển thị message từ session
@@ -214,8 +215,8 @@
                 <i class='bx ${toastIcon}'></i>
             </div>
             <div class="toast-content">
-                <div class="toast-title">${toastTitle}</div>
-                <div class="toast-message">${toastMessage}</div>
+                <div class="toast-title">${fn:escapeXml(toastTitle)}</div>
+                <div class="toast-message">${fn:escapeXml(toastMessage)}</div>
             </div>
             <button class="toast-close" onclick="closeAdminToast(this)">
                 <i class='bx bx-x'></i>

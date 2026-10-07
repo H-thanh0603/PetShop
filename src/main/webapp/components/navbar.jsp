@@ -932,7 +932,10 @@ document.addEventListener('DOMContentLoaded', function() {
     
     function markAllAsRead() {
         const contextPath = "${pageContext.request.contextPath}";
-        fetch(contextPath + "/notifications/mark-read", { method: 'POST' })
+        fetch(contextPath + "/notifications/mark-read", {
+            method: 'POST',
+            headers: { "X-CSRF-Token": "${csrfToken}" }
+        })
             .then(res => res.json())
             .then(data => {
                 if (data && data.success) {

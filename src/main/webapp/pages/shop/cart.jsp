@@ -152,7 +152,8 @@
                                         </td>
                                         <td class="text-center">
                                             <button type="button" class="btn-remove" 
-                                                    onclick="openDeleteModal(${item.product.id}, '${item.product.name}')">
+                                                    data-product-name="${fn:escapeXml(item.product.name)}"
+                                                    onclick="openDeleteModal(${item.product.id}, this.dataset.productName)">
                                                 <i class='bx bx-trash'></i>
                                             </button>
                                         </td>
